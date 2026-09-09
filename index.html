@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Plants Lab — IGCSE Biology 0610 Topics 6, 8, 14.5, 16.3 and 18.2</title>
+<meta name="description" content="An interactive lab on the plant topics of Cambridge IGCSE Biology 0610: germination, roots and water uptake, xylem and phloem, the leaf, photosynthesis, transpiration, translocation, tropic responses, the flower, fertilisation, and the adaptive features of xerophytes and hydrophytes.">
+<meta name="author" content="Dr Daniel Mompel Riera">
+<meta name="copyright" content="Dr Daniel Mompel Riera, NLCS Jeju">
+<meta name="theme-color" content="#14572B">
+<!-- The tab icon: a seedling — two leaves on a stem, on the labs' green. -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%2314572B'/><g fill='none' stroke='%23FFFFFF' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><path d='M16 27 V13'/><path d='M16 18 C11 18 8 14 8 9 C13 9 16 13 16 18Z' fill='%238FE0A8'/><path d='M16 13 C16 8 19 5 24 5 C24 10 21 13 16 13Z' fill='%238FE0A8'/></g><path d='M10 27 H22' stroke='%23FFD48A' stroke-width='2.4' stroke-linecap='round'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- The two plate faces, loaded WITHOUT blocking the first paint: behind a school captive
+     portal a cross-origin stylesheet HANGS rather than failing, so it is fetched at low
+     priority and swapped in when it arrives. Offline, the plate uses the system fallbacks. -->
+<link rel="stylesheet" media="print" onload="this.media='all'"
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&display=swap">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&display=swap"></noscript>
+<link rel="stylesheet" href="css/app.css?v=1788965832">
+</head>
+<body>
+<div class="app">
+
+  <header class="hdr">
+    <div class="hdr__mark">
+      <h1 class="hdr__title">Plants Lab</h1>
+      <span class="hdr__sub">Topics 6 · 8 · 14.5 · 16.3 · 18.2 — the whole plant, seed to fruit</span>
+      <a class="hdr__by" href="mailto:dmompelriera@nlcsjeju.kr"
+         title="Made by Dr Daniel Mompel Riera — Biology, NLCS Jeju. Questions or corrections welcome.">by Dr Daniel Mompel Riera</a>
+    </div>
+    <span class="badge">IGCSE 0610</span>
+    <div class="hdr__spacer"></div>
+    <div class="hdr__stats">
+      <span class="stat" title="Questions answered correctly">
+        <svg class="ring" viewBox="0 0 26 26">
+          <circle class="bg" cx="13" cy="13" r="11"></circle>
+          <circle id="ringFg" class="fg" cx="13" cy="13" r="11" transform="rotate(-90 13 13)" stroke-dasharray="0 69.1"></circle>
+        </svg>
+        <b><span id="qDone">0</span>/<span id="qTotal">0</span></b> <span class="stat__lbl">questions</span>
+      </span>
+      <span class="stat stat--stations" title="Stations finished">
+        <b><span id="stDone">0</span>/<span id="stTotal">11</span></b> <span class="stat__lbl">stations</span>
+      </span>
+      <button class="hbtn hbtn--go" id="btnSubmit" hidden disabled>Hand in</button>
+      <a class="hbtn" href="https://mompel226.github.io/plants-hub/"
+         title="Plants: the plant from seed to fruit, and this lab">← Plants</a>
+      <button class="hbtn" id="btnGloss" title="Every word the labs use, with its definition"><span class="hbtn__long">Glossary</span><span class="hbtn__short" aria-hidden="true">A–Z</span></button>
+      <button class="hbtn" id="btnHelp"><span class="hbtn__long">How to use</span><span class="hbtn__short" aria-hidden="true">?</span></button>
+      <button class="hbtn" id="btnSync" hidden title="Bring back work you did on another computer"><span class="hbtn__long">Sync</span><span class="hbtn__short" aria-hidden="true">⇅</span></button>
+      <button class="hbtn" id="btnReset" title="Clear every answer and start again">Reset</button>
+    </div>
+  </header>
+
+  <main class="stage">
+    <section class="platecol" aria-label="The plant">
+      <div class="field" aria-hidden="true">
+        <div class="field__sun"></div>
+        <div class="field__haze"></div>
+      </div>
+      <div class="platecol__tools">
+        <button class="tool tool--whole" id="tWhole" hidden title="Pull back to the whole plant">⤢ Whole plant</button>
+        <span class="platecol__hint" id="plateHint">Click a part of the plant to open its station</span>
+      </div>
+      <div class="platewrap" id="map">
+        <svg id="plant" preserveAspectRatio="xMidYMid meet" role="group" aria-label="A bean plant in a section of ground, seed to fruit, with a cactus and a water lily beside it. Click a part to open the station that teaches it.">
+          <defs></defs>
+        </svg>
+        <div class="tag" id="tag" aria-hidden="true"><span class="tag__pill"></span></div>
+      </div>
+      <p class="said" id="said"><span class="said__name">One plant, root to fruit</span><span class="said__note">Every plant topic, on one bean</span></p>
+    </section>
+
+    <section class="panel" id="panel">
+      <div class="panel__inner" id="panelInner">
+        <p class="bootnote" role="status">Opening the lab… the first station will appear here.</p>
+      </div>
+    </section>
+  </main>
+
+  <nav class="rail" aria-label="The stations, in order">
+    <div class="rail__track" id="railTrack"></div>
+  </nav>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="toast" id="updBar" role="status" aria-live="polite"></div>
+
+<div class="modal lb" id="lightbox" hidden role="dialog" aria-modal="true" aria-label="Enlarged image">
+  <figure class="lb__box"><div class="lb__stage"><img alt=""></div><figcaption class="lb__cap"></figcaption>
+  <div class="lb__hint">Click anywhere to close</div></figure>
+</div>
+
+<div class="modal" id="subDlg" hidden role="dialog" aria-modal="true" aria-label="Hand in your work">
+  <div class="modal__box modal__box--sm">
+    <button class="modal__close" id="subClose" aria-label="Close">×</button>
+    <h2>Hand in your work</h2>
+    <div id="subBody"></div>
+    <div class="dlgrow"><button class="btn" id="subGo">Hand in</button></div>
+  </div>
+</div>
+
+<div class="modal" id="glossDlg" hidden role="dialog" aria-modal="true" aria-label="Glossary">
+  <div class="modal__box">
+    <button class="modal__close" id="glossClose" aria-label="Close">×</button>
+    <h2>Glossary</h2>
+    <p class="st-sub">Every word the labs use, with the definition it is examined on. The short list at the foot of each station is only the words that are new there.</p>
+    <input class="gloss__find" id="glossFind" type="search" autocomplete="off"
+           placeholder="Type a word — or part of one" aria-label="Search the key words">
+    <p class="gloss__count" id="glossCount"></p>
+    <p class="gloss__known" id="glossKnown" hidden></p>
+    <div id="glossList"></div>
+  </div>
+</div>
+
+<div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-label="How to use the Plants Lab">
+  <div class="modal__box">
+    <button class="modal__close" id="modalClose" aria-label="Close">×</button>
+    <h2>Plants Lab</h2>
+    <p class="st-sub">Cambridge IGCSE Biology 0610 · Topic 6 plant nutrition, Topic 8 transport in plants, 14.5 tropic responses, 16.3 sexual reproduction in plants, 18.2 adaptive features</p>
+
+    <h3>In one minute</h3>
+    <ul>
+      <li><b>Click any part of the plant</b>, or any step on the bar along the bottom. The stations run from the seed under the soil to the fruit at the top, and the plant lights the part each one is about.</li>
+      <li>Each station has two tabs: <b>Learn</b> — what you must know, with something to press, drag or watch in every section — and <b>Practise</b>, the questions.</li>
+      <li><b>Check as often as you like.</b> You are told which parts are wrong, <b>never the answer</b> — you have to work it out. Keep going until it is all right, then <b>Hand in</b>.</li>
+      <li>An underlined word can be clicked: <b>🔍</b> opens a picture there and then, <b>↗</b> jumps to the station that explains it and brings you back, and a faint dotted line opens the definition.</li>
+      <li>Your work is saved <b>in this browser on this device</b>. Use the same computer each time, and hand in before you clear your browsing data.</li>
+    </ul>
+    <p class="fineprint">The answers are never shown. To hand your work to Dr&nbsp;Mompel you sign in with your school Google account, so he knows whose it is; anyone else is welcome to use the lab and will still get a completion code.</p>
+
+    <details class="helpmore">
+      <summary>What the colours mean</summary>
+      <ul>
+        <li><b>Blue</b> words are about water and transport — xylem, root hairs, transpiration. <b>Amber</b> words are photosynthesis and the food it makes — chlorophyll, glucose, phloem, sucrose. <b>Rose</b> words are reproduction — the parts of a flower, pollen, seed, fruit. <b>Violet</b> words are growth and adaptation — tropisms, auxin, xerophytes.</li>
+        <li>The plant on the left lights in the same colours: blue sap running up the stem is water in the xylem, amber sap is sugar in the phloem.</li>
+        <li>A <b>green-bordered box</b> is the mistake students most often make there. A small <b>S</b> badge means Supplement (Paper 4 only). <b>“Beyond the syllabus”</b> is worth knowing but not named in 0610.</li>
+        <li>The <b>colour key sits at the top of every Learn tab</b>, so you never have to remember.</li>
+      </ul>
+    </details>
+
+    <details class="helpmore">
+      <summary>What is simplified here</summary>
+      <ul>
+        <li>The plant is a bean — a dicotyledon — because that is the plant the syllabus sections are drawn from. A grass or a conifer would look different inside.</li>
+        <li>The interactive graphs are models with the exam’s shapes, not measurements from a real leaf.</li>
+        <li>The pollen tube animation shows one nucleus fusing with one; the second fusion real flowering plants make (the endosperm) is left out, as the syllabus says.</li>
+        <li>The cactus and the water lily stand for all xerophytes and hydrophytes; the syllabus asks for the features, not the species.</li>
+      </ul>
+    </details>
+
+    <details class="helpmore">
+      <summary>Where the content and the pictures come from</summary>
+      <ul>
+        <li>The definitions are the 2026–28 syllabus wording. Where the slides use an older wording it is given in brackets.</li>
+        <li>The stations follow Dr&nbsp;Mompel's own Year 11 plant lessons — Topic 6, Topic 8, 14.5, 16.3 and 18.2 — and most of the pictures and every video are the ones shown in those lessons.</li>
+        <li>The micrographs of the stem, the root and the leaf are from the Berkshire Community College Bioscience Image Library on Wikimedia Commons (CC0). Every other picture is credited under it and listed in full below and in <code>assets/photos/CREDITS.md</code>.</li>
+        <li>All questions, the plant, the drawings and the page design are original to this lab.</li>
+      </ul>
+      <p class="fineprint" id="creditsList"></p>
+    </details>
+
+    <p class="fineprint"><b>Dr Daniel Mompel Riera</b> — Biology, North London Collegiate School Jeju.
+       Questions or corrections: <a href="mailto:dmompelriera@nlcsjeju.kr">dmompelriera@nlcsjeju.kr</a>.
+       One of the <a href="https://mompel226.github.io/plants-hub/">Plants</a> labs ·
+       <a href="https://mompel226.github.io/biology-hub/">Biology Hub</a></p>
+  </div>
+</div>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="js/config.js?v=1788965832" defer></script>
+<script src="js/data/glossary.js?v=1788965832" defer></script>
+<script src="js/data/stations.js?v=1788965832" defer></script>
+<script src="js/data/photos.js?v=1788965832" defer></script>
+<script src="js/plant.js?v=1788965832" defer></script>
+<script src="js/plant-draw.js?v=1788965832" defer></script>
+<script src="js/terms.js?v=1788965832" defer></script>
+<script src="js/marking.js?v=1788965832" defer></script>
+<script src="js/sync.js?v=1788965832" defer></script>
+<script src="js/engine.js?v=1788965832" defer></script>
+<script src="js/widgets.js?v=1788965832" defer></script>
+<script src="js/learn.js?v=1788965832" defer></script>
+<script src="js/engine-ext.js?v=1788965832" defer></script>
+<script src="js/plate.js?v=1788965832" defer></script>
+<script src="js/app.js?v=1788965832" defer></script>
+<!-- The lab offline. The worker lives at this lab's root, so on Pages its scope is exactly
+     /<lab>/. It fetches the HTML network-first, so a deploy always reaches an online student
+     and the cache is only the fall-back for when the wifi is not there. -->
+<script>
+(function () {
+  if (!("serviceWorker" in navigator)) return;
+  if (location.protocol.slice(0, 4) !== "http") return;
+  addEventListener("load", function () {
+    navigator.serviceWorker.register(new URL("sw.js", document.baseURI), {
+      scope: new URL("./", document.baseURI).pathname,
+      updateViaCache: "none"
+    }).catch(function () {});
+  });
+})();
+</script>
+</body>
+</html>

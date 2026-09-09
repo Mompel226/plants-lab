@@ -1,0 +1,135 @@
+# Where every picture and video came from
+
+Two kinds of picture are in this lab, and they are credited differently.
+
+**The lesson pictures.** Seventy-four of the seventy-nine pictures are the ones Dr Mompel shows in
+class, taken from his own lesson slides for topics 6, 8, 14.5, 16.3 and 18.2 — chosen on purpose,
+so that a student meets the same picture here as on the board. Their original sources were not
+recorded in the slides; they are used here for teaching, under the same terms as in the lesson.
+Each is credited on the page as "from the … lesson slides". One is Dr Mompel's own photograph.
+
+**The micrographs.** Five stained sections are from Wikimedia Commons, all by the Berkshire
+Community College Bioscience Image Library and all CC0, chosen because they are the kind of
+picture the exam gives a student to label. They are centre-cropped to 16 : 9, shown at 900 and
+1400 px wide, JPEG and WebP; the credit is under each one on the page.
+
+Every base name below stands for four files: `-900.jpg`, `-900.webp`, `-1400.jpg`, `-1400.webp`.
+
+## From Wikimedia Commons
+
+| File | Source | Photographer | Licence |
+|---|---|---|---|
+| `root-section-*` | [Herbaceous Dicot Root Mature Ranunculus (35613584240).jpg](https://commons.wikimedia.org/wiki/File:Herbaceous_Dicot_Root_Mature_Ranunculus_(35613584240).jpg) — a buttercup root cut across | Berkshire Community College Bioscience Image Library | CC0 |
+| `root-stele-*` | [Stele in Herbaceous Dicot root Ranunculus (34758989431).jpg](https://commons.wikimedia.org/wiki/File:Stele_in_Herbaceous_Dicot_root_Ranunculus_(34758989431).jpg) — the middle of a buttercup root: the star of xylem | Berkshire Community College Bioscience Image Library | CC0 |
+| `stem-section-*` | [Herbaceous Dicot Stem Collateral Vascular Bundle in Young Helianthus (36834309183).jpg](https://commons.wikimedia.org/wiki/File:Herbaceous_Dicot_Stem_Collateral_Vascular_Bundle_in_Young_Helianthus_(36834309183).jpg) — one vascular bundle of a sunflower stem | Berkshire Community College Bioscience Image Library | CC0 |
+| `leaf-section-*` | [Angiosperm Morphology Mesophyll Arrangement in Ligustrum (36198182664).jpg](https://commons.wikimedia.org/wiki/File:Angiosperm_Morphology_Mesophyll_Arrangement_in_Ligustrum_(36198182664).jpg) — a privet leaf cut across | Berkshire Community College Bioscience Image Library | CC0 |
+| `leaf-stoma-*` | [Angiosperm Morphology Abaxial Epidermis and Guard Cells in Ligustrum Leaf (37033388255).jpg](https://commons.wikimedia.org/wiki/File:Angiosperm_Morphology_Abaxial_Epidermis_and_Guard_Cells_in_Ligustrum_Leaf_(37033388255).jpg) — a stoma in the lower epidermis of a privet leaf | Berkshire Community College Bioscience Image Library | CC0 |
+
+## From the lesson slides
+
+The deck is the PowerPoint in `IGCSE Lessons/Y11/Plants/`, the slide is its number in that deck.
+`labs/plants-lab-source/deck-pictures.json` holds the same list, with each picture's size.
+
+| File | Deck | Slide |
+|---|---|---|
+| `seed-stages-*` | 16.3 Plant reproduction | 51 |
+| `seed-radicle-*` | 16.3 Seed germination | 4 |
+| `seed-structure-*` | 16.3 Seed germination | 4 |
+| `seedlings-pot-*` | 16.3 Plant reproduction | 48 |
+| `seed-graph-line-*` | 16.3 Seed germination | 8 |
+| `seed-graph-bars-*` | 16.3 Seed germination | 10 |
+| `root-hairs-*` | 8.2–8.3 Water uptake and transpiration | 1 |
+| `root-pathway-*` | 8.2–8.3 Water uptake and transpiration | 2 |
+| `water-pathway-*` | 8.2–8.3 Water uptake and transpiration | 8 |
+| `root-tip-*` | 8.1 Xylem and phloem | 13 |
+| `root-sections-*` | 8.1 Xylem and phloem | 13 |
+| `root-structure-*` | 8.2–8.3 Water uptake and transpiration | 1 |
+| `stem-bundle-*` | 8.1 Xylem and phloem | 8 |
+| `tissues-map-*` | 8.1 Xylem and phloem | 18 |
+| `xylem-vessel-*` | Topic 6–8 revision worksheet | 1 |
+| `sieve-tube-*` | 8.1 Xylem and phloem | 11 |
+| `sections-outline-*` | 8.1 Xylem and phloem | 19 |
+| `stem-block-*` | 8.1 Xylem and phloem | 21 |
+| `bundle-drawing-*` | 8.1 Xylem and phloem | 23 |
+| `leaf-diagram-*` | 6.2 Leaf structure | 15 |
+| `leaf-diagram-blank-*` | 6.2 Leaf structure | 14 |
+| `leaf-micrograph-*` | 8.1 Xylem and phloem | 16 |
+| `leaf-x120-*` | Topic 6 questions lesson | 5 |
+| `stomata-safranin-*` | 6.2 Leaf structure | 13 |
+| `epidermis-stomata-*` | 6.2 Leaf structure | 12 |
+| `stomata-open-closed-*` | 6.2 Leaf structure | 12 |
+| `guard-cells-*` | 6.2 Leaf structure | 13 |
+| `leaf-veins-*` | 6.2 Leaf structure | 9 |
+| `leaf-tissue-map-*` | Topic 6 questions lesson | 5 |
+| `leaf-diagram-beige-*` | Topic 6–8 revision worksheet | 2 |
+| `root-hair-cell-*` | Topic 6–8 revision worksheet | 1 |
+| `limiting-ceilings-*` | 6.1 Photosynthesis | 16 |
+| `limiting-stomata-*` | 6.1 Photosynthesis | 16 |
+| `limiting-graphs-*` | Topic 6 questions lesson | 2 |
+| `light-graph-*` | Topic 6–8 revision worksheet | 2 |
+| `elodea-lamp-*` | Topic 6–8 revision worksheet | 2 |
+| `variegated-diagram-*` | Starch practical | 4 |
+| `variegated-leaves-*` | Starch practical | 4 |
+| `starch-leaves-*` | Starch practical | 2 |
+| `starch-boil-*` | Starch practical | 2 |
+| `starch-decolourised-*` | Starch practical | 2 |
+| `starch-iodine-*` | Starch practical — Dr Mompel's own photograph of the class practical | 2 |
+| `plant-cell-*` | 6.1 Photosynthesis | 6 |
+| `deficiency-yellow-*` | Topic 6 questions lesson | 12 |
+| `starch-family-*` | Starch practical | 9 |
+| `wilted-plant-*` | 8.4 Translocation | 3 |
+| `cohesion-*` | 8.2–8.3 Water uptake and transpiration | 4 |
+| `leaf-water-path-*` | 8.4 Translocation | 1 |
+| `tropism-cartoon-*` | 14.5 Tropic responses | 1 |
+| `auxin-elongation-*` | 14.5 Tropic responses | 7 |
+| `plant-on-side-*` | 14.5 Tropic responses | 10 |
+| `plant-on-side-grown-*` | 14.5 Tropic responses | 11 |
+| `lily-anthers-*` | 16.3 Plant reproduction | 11 |
+| `pollen-mixed-*` | 16.3 Plant reproduction | 12 |
+| `pollen-spiky-*` | 16.3 Plant reproduction | 21 |
+| `ovary-ovules-*` | 16.3 Plant reproduction | 13 |
+| `plantain-flower-*` | 16.3 Plant reproduction | 16 |
+| `grass-anthers-*` | 16.3 Plant reproduction | 20 |
+| `bee-rose-*` | 16.3 Plant reproduction | 21 |
+| `bee-pollen-*` | 16.3 Plant reproduction | 21 |
+| `plantain-2-*` | 16.3 Plant reproduction | 38 |
+| `pollen-tube-*` | 16.3 Plant reproduction | 28 |
+| `pollen-tube-path-*` | 16.3 Plant reproduction | 32 |
+| `ovary-fruit-*` | 16.3 Plant reproduction | 28 |
+| `apple-section-*` | 16.3 Plant reproduction | 47 |
+| `marram-dunes-*` | 18.2 Adaptive features | 5 |
+| `saguaro-desert-*` | 18.2 Adaptive features | 5 |
+| `curled-leaf-*` | 18.2 Adaptive features | 11 |
+| `rolled-leaf-*` | 18.2 Adaptive features | 12 |
+| `hydrophyte-leaf-*` | 18.2 Adaptive features | 20 |
+| `water-lily-drawing-*` | 18.2 Adaptive features | 21 |
+| `root-networks-*` | 18.2 Adaptive features | 15 |
+| `succulents-*` | 18.2 Adaptive features | 7 |
+| `marram-close-*` | 18.2 Adaptive features | 12 |
+
+## The videos (`assets/video/`)
+
+Eight of the videos shown in class, from the same lesson folders, re-encoded to 960 px wide with
+a poster frame beside each (`.jpg`). They are shown with the browser's own controls, muted until
+played, and never start on their own. Their original sources were not recorded in the lesson
+folders either; three of them carry a publisher's mark, noted below, and are used here on the
+same terms as in the lesson.
+
+| File | Lesson folder | Original file | Note |
+|---|---|---|---|
+| `germination.mp4` | 16.3 Plant reproduction · Seed germination practical | Seeds-and-Germination.mp4 | |
+| `water-absorption.mp4` | 8.2–8.3 Water uptake and transpiration | Animation 10.3 Absorption of water in plants.mp4 | Oxford University Press logo in the picture |
+| `dye-flowers.mp4` | 8.2–8.3 Water uptake and transpiration | Color Changing Flowers Experiment (Biology).mp4 | |
+| `transport-animation.mp4` | 8.1 Xylem and phloem | Transport in plant animation.mp4 | |
+| `photosynthesis.mp4` | 6.1 Photosynthesis | Amazing Process Of Photosynthesis.mp4 | designmate.com watermark |
+| `water-transport.mp4` | 8.2–8.3 Water uptake and transpiration | Water Transport In Plants.mp4 | |
+| `potometer.mp4` | 8.2–8.3 Water uptake and transpiration | Practical 10.5 Measurement of the rate of transpiration using a bubble potometer.mp4 | Oxford University Press logo in the picture |
+| `tropism-timelapse.mp4` | 14.5 Tropic responses | Phototropism and Geotropism Time Lapse.mp4 | |
+
+Two longer videos in the lesson folders were left out on length alone (ten and eighteen minutes).
+
+## The drawings
+
+The plant on the left, its parts, the cactus and the water lily, the diagrams in the theory pages
+(the half-flower, the auxin experiment, the potometer, the sources and sinks, the pollen tube) and
+every widget are drawn by the page and are original.
