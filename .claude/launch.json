@@ -1,0 +1,6 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "plants-lab", "runtimeExecutable": "python3", "runtimeArgs": ["-m", "http.server", "8754"], "port": 8754 }
+  ]
+}

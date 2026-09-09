@@ -1,0 +1,290 @@
+/* ============================================================
+   widgets.js — the Learn-tab widgets every lab can use. SHARED: the copy in
+   labs-shared/engine/ is the source; a lab's build copies it in as js/widgets.js.
+
+   A lab's own js/learn.js registers the widgets its topic needs on top of these:
+     Widgets.register('mywidget', function (spec, ctx) { ... return element; });
+   and app.js draws a station's learn.interact entries with Widgets.widget(spec, ctx).
+
+   What is here, because more than one lab wants it:
+     picture   a photograph from assets/photos/<base>-900.jpg (+ -1400 when it exists),
+               WebP first, its box reserved before it loads (window.PHOTO_SIZE)
+     pinned    numbered pins on a picture, named in a column beside it, joined by ruled
+               lines that never cross — the way a labelled figure is drawn
+     finder    a photograph with the features to find on it, built on pinned
+     table     a comparison table, its words marked by the lab's Terms
+     photo     a photograph with its caption and credit, opening full size on a click
+     head      a widget's heading line and the sentence that asks for something
+   The Classification Lab still carries its own copy of the first five inside its
+   js/learn.js, from before this file existed; the two are the same code.
+   ============================================================ */
+(function (global) {
+  'use strict';
+
+  function h(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); }
+  function mk(t) { return (global.Terms && global.Terms.mark) ? global.Terms.mark(t) : esc(t); }
+
+  function head(title, ask, tryWord) {
+    var d = h('div', 'widget__h', esc(title) + (tryWord ? '<span class="widget__try">' + esc(tryWord) + '</span>' : ''));
+    var frag = document.createDocumentFragment(); frag.appendChild(d);
+    if (ask) frag.appendChild(h('p', 'widget__ask', mk(ask)));
+    return frag;
+  }
+
+  /* How wide a picture is really drawn, measured across the widgets at 390, 820, 1100 and
+     1440 px: the widest is about 440. Saying the true width lets the browser pick the
+     smaller file whenever it can. */
+  var SIZES_ATTR = '(max-width: 620px) 92vw, 440px';
+
+  var WEBP = (function () {
+    try { var c = document.createElement('canvas'); c.width = c.height = 1;
+          return !!c.toDataURL && c.toDataURL('image/webp').indexOf('data:image/webp') === 0; }
+    catch (e) { return false; }
+  })();
+  function sizeOf(base) { return (global.PHOTO_SIZE || {})[base.replace('assets/photos/', '')] || null; }
+  function hasBig(base) { return !!(global.PHOTO_SIZE || {})[base.replace('assets/photos/', '') + '-1400.jpg']; }
+  function bigVariant(base) { return base + (hasBig(base) ? '-1400' : '-900') + (WEBP ? '.webp' : '.jpg'); }
+
+  /* a picture: assets/photos/<base>-900.jpg, and -1400 where the build found one. Every
+     base has its WebP twin; <picture> asks for it safely. A picture whose source was small
+     has no -1400, and the srcset simply stops at 900. */
+  function picture(spec) {
+    if (!spec || !spec.img) return null;
+    var base = 'assets/photos/' + spec.img, alt = spec.alt || '', credit = spec.credit || '', url = spec.url || '';
+    var im = new Image();
+    var wh = sizeOf(spec.img + '-900.jpg') || sizeOf(spec.img);
+    if (wh) { im.width = wh[0]; im.height = wh[1]; }
+    var big = hasBig(base);
+    var pic = document.createElement('picture');
+    var wp = document.createElement('source');
+    wp.type = 'image/webp';
+    wp.srcset = base + '-900.webp 900w' + (big ? ', ' + base + '-1400.webp 1400w' : '');
+    wp.sizes = SIZES_ATTR;
+    pic.appendChild(wp);
+    im.src = base + '-900.jpg';
+    im.srcset = base + '-900.jpg 900w' + (big ? ', ' + base + '-1400.jpg 1400w' : '');
+    im.sizes = SIZES_ATTR;
+    im.alt = alt; im.loading = 'lazy'; im.decoding = 'async';
+    pic.appendChild(im);
+    return { img: im, pic: pic, base: base,
+             credit: url ? '<a href="' + esc(url) + '" target="_blank" rel="noopener">' + esc(credit) + '</a>' : esc(credit) };
+  }
+
+  /* every pinned picture on screen, so one listener can lay them all out again */
+  var LIVE = [];
+  window.addEventListener('resize', function () {
+    for (var i = LIVE.length - 1; i >= 0; i--) {
+      if (!LIVE[i].box.isConnected) { LIVE.splice(i, 1); continue; }
+      LIVE[i].layout();
+    }
+  });
+
+  /* ---------- pins on a picture, named in a column, joined by ruled lines ----------
+     Nothing is written on the picture: a pin carries a number, its name sits in a column
+     beside the picture at the same height as the pin, and clicking either rules a line
+     between them. A second click takes the line away. Two lines are never allowed to
+     cross: names are placed level with their pins, kept apart, and swapped if their lines
+     would meet. Beside each found name is a close crop of the feature. */
+  function pinned(box, stage, spotsIn, list, opts) {
+    opts = opts || {};
+    var spots = spotsIn.slice().sort(function (a, b) { return a.y - b.y; });
+    var lines = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    lines.setAttribute('class', 'pins__lines'); lines.setAttribute('aria-hidden', 'true');
+    box.appendChild(lines);
+    var found = {}, pins = [], items = [], zooms = [], Y = [], order = [];
+    var NARROW = 520, MIN_COL = 150;
+    function stacked() {
+      var b = list.parentNode && list.parentNode.getBoundingClientRect();
+      if (b && b.width && b.width < NARROW) return true;
+      var sb = stage.getBoundingClientRect(), lb = list.getBoundingClientRect();
+      if (lb.top >= sb.bottom - 4) return true;
+      if (lb.width && lb.width < MIN_COL) return true;
+      return false;
+    }
+    function crosses(a, b, c, d) {
+      function ccw(p, q, r) { return (r.y - p.y) * (q.x - p.x) > (q.y - p.y) * (r.x - p.x); }
+      return ccw(a, c, d) !== ccw(b, c, d) && ccw(a, b, c) !== ccw(a, b, d);
+    }
+    function layout() {
+      var sb = stage.getBoundingClientRect(), lb = list.getBoundingClientRect();
+      var narrow = stacked();
+      if (list.parentNode) list.parentNode.classList.toggle('finder--narrow', narrow);
+      if (!sb.width || !sb.height || narrow) {
+        items.forEach(function (li) { li.style.position = ''; li.style.top = ''; });
+        list.style.minHeight = ''; list.classList.remove('is-column'); drawLines(); return;
+      }
+      list.classList.add('is-column');
+      var H = items.map(function (li) { return li.offsetHeight; }), gap = 6;
+      var py = spots.map(function (sp) { return sb.top + sp.y / 100 * sb.height - lb.top; });
+      var px = spots.map(function (sp) { return sb.left + sp.x / 100 * sb.width - lb.left; });
+      order = spots.map(function (sp, i) { return i; }).sort(function (a, b) { return py[a] - py[b]; });
+      function place() {
+        var top = order.map(function (i) { return py[i] - H[i] / 2; });
+        for (var pass = 0; pass < 80; pass++) {
+          var moved = false;
+          for (var k = 0; k + 1 < order.length; k++) {
+            var over = (top[k] + H[order[k]] + gap) - top[k + 1];
+            if (over > 0.5) { top[k] -= over / 2; top[k + 1] += over / 2; moved = true; }
+          }
+          if (top[0] < 0) { var d = -top[0]; for (var m = 0; m < top.length; m++) top[m] += d; moved = true; }
+          if (!moved) break;
+        }
+        var out = [];
+        order.forEach(function (i, k) { out[i] = top[k]; });
+        return out;
+      }
+      Y = place();
+      for (var pass2 = 0; pass2 < 20; pass2++) {
+        var swapped = false;
+        for (var k2 = 0; k2 + 1 < order.length && !swapped; k2++) {
+          var i2 = order[k2], j2 = order[k2 + 1];
+          if (crosses({ x: px[i2], y: py[i2] }, { x: 0, y: Y[i2] + H[i2] / 2 }, { x: px[j2], y: py[j2] }, { x: 0, y: Y[j2] + H[j2] / 2 })) {
+            order[k2] = j2; order[k2 + 1] = i2; swapped = true;
+          }
+        }
+        Y = place();
+        if (!swapped) break;
+      }
+      items.forEach(function (li, i) { li.style.position = 'absolute'; li.style.top = Y[i] + 'px'; });
+      var bottom = Math.max.apply(null, items.map(function (li, i) { return Y[i] + H[i]; }));
+      list.style.minHeight = Math.max(sb.height, bottom) + 'px';
+      drawLines();
+    }
+    function drawLines() {
+      var b = box.getBoundingClientRect(), out = '';
+      if (!b.width) return;
+      lines.setAttribute('viewBox', '0 0 ' + b.width + ' ' + b.height);
+      lines.style.width = b.width + 'px'; lines.style.height = b.height + 'px';
+      if (!stacked()) pins.forEach(function (pin, i) {
+        if (!found[i]) return;
+        var a = pin.getBoundingClientRect(), c = items[i].getBoundingClientRect();
+        var x1 = a.left + a.width / 2 - b.left, y1 = a.top + a.height / 2 - b.top;
+        var x2 = c.left - b.left, y2 = c.top + c.height / 2 - b.top;
+        var elbow = Math.min(38, Math.max(14, (x2 - x1) * 0.34));
+        var xe = x2 - elbow;
+        var dx = xe - x1, dy = y2 - y1, len = Math.sqrt(dx * dx + dy * dy) || 1, r = a.width / 2 + 1;
+        x1 += dx / len * r; y1 += dy / len * r;
+        var pts = x1 + ',' + y1 + ' ' + (xe > x1 ? xe : x1) + ',' + y2 + ' ' + x2 + ',' + y2;
+        out += '<polyline class="pins__halo" points="' + pts + '"/><polyline class="pins__line" points="' + pts + '"/>';
+      });
+      lines.innerHTML = out;
+    }
+    var ZOOM_W = 64, ZOOM_FRAC = 0.13;
+    function zoomInto(i) {
+      var z = zooms[i], sb = stage.getBoundingClientRect(); if (!z || !opts.zoom || !sb.width) return;
+      var frac = spots[i].z || ZOOM_FRAC;
+      var bgW = ZOOM_W / frac, bgH = bgW * (sb.height / sb.width);
+      if (bgH < ZOOM_W) { bgW *= ZOOM_W / bgH; bgH = ZOOM_W; }
+      z.style.backgroundImage = 'url("' + opts.zoom + '")';
+      z.style.backgroundSize = bgW + 'px ' + bgH + 'px';
+      var cx = spots[i].cx != null ? spots[i].cx : spots[i].x;
+      var cy = spots[i].cy != null ? spots[i].cy : spots[i].y;
+      var x = cx / 100 * bgW - ZOOM_W / 2, y = cy / 100 * bgH - ZOOM_W / 2;
+      x = Math.max(0, Math.min(x, bgW - ZOOM_W)); y = Math.max(0, Math.min(y, bgH - ZOOM_W));
+      z.style.backgroundPosition = (-x) + 'px ' + (-y) + 'px';
+    }
+    function toggle(i, on) {
+      var now = on == null ? !found[i] : !!on;
+      if (now === !!found[i]) return;
+      if (now) { found[i] = 1; zoomInto(i); } else delete found[i];
+      pins[i].classList.toggle('is-found', now); items[i].classList.toggle('is-found', now);
+      pins[i].setAttribute('aria-pressed', now ? 'true' : 'false');
+      layout();
+      if (opts.onChange) opts.onChange(Object.keys(found).length, spots.length);
+    }
+    spots.forEach(function (sp, i) {
+      var pin = h('button', 'pin' + (opts.pinClass ? ' ' + opts.pinClass : '') + (sp.extra ? ' pin--extra' : ''), String(i + 1)); pin.type = 'button';
+      pin.style.left = sp.x + '%'; pin.style.top = sp.y + '%';
+      pin.setAttribute('aria-label', (opts.pinWord || 'Spot') + ' ' + (i + 1) + ': ' + sp.label); pin.setAttribute('aria-pressed', 'false');
+      pin.addEventListener('click', function () { toggle(i); });
+      stage.appendChild(pin); pins.push(pin);
+      var li = h('li', 'pins__item' + (sp.extra ? ' pins__item--extra' : ''), '<span class="n">' + (i + 1) + '</span><span class="pins__txt"><b>' + esc(sp.label) + '</b>' +
+        (sp.extra ? '<span class="pins__tag">not in 0610</span>' : '') +
+        (sp.note ? '<small>' + esc(sp.note) + '</small>' : '') + '</span>' + (opts.zoom ? '<span class="pins__zoom" aria-hidden="true">' +
+          (sp.mark ? '<svg class="pins__mark" viewBox="0 0 100 100" preserveAspectRatio="none">' +
+            (sp.mark.line || []).map(function (l) {
+              return '<line class="pins__markl" x1="' + l[0] + '" y1="' + l[1] + '" x2="' + l[2] + '" y2="' + l[3] + '"/>';
+            }).join('') + '</svg>' : '') + '</span>' : ''));
+      li.setAttribute('role', 'button'); li.tabIndex = 0;
+      li.addEventListener('click', function () { toggle(i); });
+      li.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(i); } });
+      list.appendChild(li); items.push(li); zooms.push(li.querySelector('.pins__zoom'));
+    });
+    var im = stage.querySelector('img');
+    if (im) { im.addEventListener('load', layout); if (im.complete) setTimeout(layout, 0); }
+    LIVE.push({ box: box, layout: layout });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(layout);
+    setTimeout(layout, 50);
+    return { toggle: toggle, layout: layout, count: function () { return Object.keys(found).length; },
+             all: function (on) { spots.forEach(function (sp, i) { toggle(i, on); }); } };
+  }
+
+  /* ---------- finder: a photograph and the features to find on it ---------- */
+  function finder(spec) {
+    var box = h('div', 'widget'); if (spec.group) box.setAttribute('data-group', spec.group);
+    box.appendChild(head(spec.title || 'Find the features', spec.ask || 'Click a numbered pin on the picture, or its name beside it, and a line is ruled between them — the way a labelled figure is drawn. Click again to take the line away. The small picture beside a name is a close-up of that feature.', spec.tryWord || 'Click the pins'));
+    var wrap = h('div', 'finder pins');
+    var stage = h('div', 'finder__stage');
+    var pic = picture(spec); if (pic) stage.appendChild(pic.pic);
+    var list = h('ul', 'finder__list');
+    var left = h('div', 'finder__left'); left.appendChild(stage);
+    var done = null, all;
+    var ctl = pinned(wrap, stage, spec.spots, list, {
+      zoom: pic ? bigVariant(pic.base) : null,
+      onChange: function (n, total) {
+        all.textContent = n === total ? 'Hide every label' : 'Show every label';
+        if (n === total && !done) { done = h('p', 'widget__done', mk(spec.done || ('All ' + total + ' found.'))); box.appendChild(done); }
+        if (n < total && done) { done.remove(); done = null; }
+      }
+    });
+    var tools = h('div', 'finder__tools');
+    all = h('button', 'wbtn wbtn--quiet', 'Show every label'); all.type = 'button';
+    all.addEventListener('click', function () { ctl.all(ctl.count() < spec.spots.length); });
+    tools.appendChild(all);
+    if (pic && pic.credit) tools.appendChild(h('p', 'finder__credit', pic.credit));
+    left.appendChild(tools);
+    wrap.appendChild(left); wrap.appendChild(list);
+    box.appendChild(wrap);
+    if (spec.note) box.appendChild(h('p', 'widget__note', mk(spec.note)));
+    return box;
+  }
+
+  /* ---------- table: a comparison, its words marked ---------- */
+  function table(spec) {
+    var box = h('div', 'ctable'); if (spec.group) box.setAttribute('data-group', spec.group);
+    box.innerHTML = '<table>' + (spec.caption ? '<caption>' + esc(spec.caption) + '</caption>' : '') +
+      '<thead><tr>' + spec.head.map(function (c) { return '<th>' + mk(c) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+      spec.rows.map(function (r) { return '<tr>' + r.map(function (c, i) { return i === 0 ? '<th scope="row">' + mk(c) + '</th>' : '<td>' + mk(c) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table>';
+    return box;
+  }
+
+  /* ---------- photo: a photograph with its credit, full size on a click ---------- */
+  function photo(spec) {
+    var f = h('figure', 'photo'); if (spec.group) f.setAttribute('data-group', spec.group);
+    var pic = picture(spec);
+    if (pic) {
+      f.appendChild(pic.pic);
+      pic.img.addEventListener('click', function () { if (global.LabLightbox) global.LabLightbox(pic.img.currentSrc || pic.img.src, spec.cap || '', spec.kind || 'Photograph', pic.credit); });
+    }
+    f.appendChild(h('figcaption', null, (spec.cap ? mk(spec.cap) + ' · ' : '') + (pic ? pic.credit : '')));
+    return f;
+  }
+
+  var MAKERS = { finder: finder, table: table, photo: photo };
+  global.Widgets = {
+    register: function (type, maker) { MAKERS[type] = maker; },
+    widget: function (spec, ctx) {
+      var maker = MAKERS[spec.type];
+      if (!maker) return h('p', 'widget__note', 'Unknown widget: ' + esc(spec.type));
+      var e = maker(spec, ctx || {});
+      if (spec.group && !e.getAttribute('data-group')) e.setAttribute('data-group', spec.group);
+      return e;
+    },
+    /* drop the pinned pictures that have left the page; call after a station is cleared
+       and before the next is built */
+    reap: function () { for (var i = LIVE.length - 1; i >= 0; i--) if (!LIVE[i].box.isConnected) LIVE.splice(i, 1); },
+    has: function (type) { return !!MAKERS[type]; },
+    h: h, esc: esc, mk: mk, head: head, picture: picture, pinned: pinned, bigVariant: bigVariant, hasBig: hasBig
+  };
+})(window);
