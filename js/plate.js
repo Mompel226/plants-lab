@@ -52,6 +52,10 @@
     current = st;
     var s = spec(st), ids = s.light || [];
     plant.flow(s.flow || null); plant.breathe(!!s.breathe); plant.bend(!!s.bend);
+    /* the pod grows where the flower was, so the plate shows the plant in flower or in fruit, never both:
+       a station about the fruit (or the sinks the sugar goes to) sees the petals fallen and the pod hanging */
+    var fruiting = ids.indexOf('fruit') >= 0;
+    plant.showParts(plant.ALL.filter(function (p) { return fruiting ? p !== 'flower' : p !== 'fruit'; }).concat(fruiting ? ['flower-spent'] : []));
     var r = ids.length ? plant.lightMany(ids, plant.G[ids[0]] ? plant.G[ids[0]].colour : null) : (plant.clear(), { colour: null });
     var names = ids.map(function (id) { return plant.G[id] ? plant.G[id].label.toLowerCase() : id; });
     say(st.name, names.length ? names.join(' · ') : 'the whole plant', r.colour);
