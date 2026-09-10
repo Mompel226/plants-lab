@@ -1308,3 +1308,27 @@ picture{display:block;line-height:0}
 /* the shoot in the auxin widget: a stack of cells; the shaded half tints as the auxin arrives and its cells grow longer */
 .ax__shade{fill:#F6D98A;opacity:0;transition:opacity .3s}
 .ax__cells{fill:none;stroke:#2F7D46;stroke-width:.9;opacity:.6}
+/* the lines of the potometer's graph: tabs above the table (one a line), the line's name, a legend that hides and shows */
+.po__linetabs{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0}
+.po__linetab{font:inherit;font-size:13px;font-weight:700;border:1.5px solid var(--edge);border-radius:var(--r-pill);background:#fff;padding:4px 12px 4px 8px;cursor:pointer;color:var(--ink);display:inline-flex;align-items:center;gap:6px}
+.po__linetab small{font-weight:500;color:var(--grey);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.po__linetab[aria-pressed="true"]{border-color:var(--lc);box-shadow:inset 0 0 0 1.5px var(--lc)}
+.po__swatch{width:12px;height:12px;border-radius:50%;background:var(--lc);flex:none;display:inline-block}
+.po__linehead{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:10px 0 6px}
+.po__linename{font:inherit;font-size:13.5px;font-weight:600;color:var(--ink);border:0;border-bottom:1px dashed var(--edge);background:transparent;padding:2px 4px;min-width:min(280px,100%)}
+.po__linename:focus{outline:none;border-bottom-color:var(--green)}
+.po__linehead small{color:var(--grey);font-size:12px}
+.po__delline{margin-left:auto;font-size:12px;padding:3px 9px}
+.po__legend{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:6px 0 2px}
+.po__legend__b{font:inherit;font-size:12.5px;font-weight:600;border:1px solid var(--edge);border-radius:var(--r-pill);background:#fff;padding:2px 10px 2px 6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;color:var(--ink)}
+.po__legend__b[aria-pressed="false"]{opacity:.45;text-decoration:line-through}
+.po__legend small{color:var(--grey);font-size:12px}
+.po__band{opacity:.16}
+/* what each bench button is for, at once on hover or keyboard focus */
+.wbtn[data-tip]{position:relative}
+.wbtn[data-tip]::after{content:attr(data-tip);position:absolute;left:0;top:calc(100% + 7px);z-index:40;width:max-content;max-width:min(300px,72vw);white-space:normal;text-align:left;background:#1F2A1F;color:#fff;font-size:12.5px;font-weight:500;line-height:1.38;letter-spacing:0;text-transform:none;padding:7px 11px;border-radius:7px;box-shadow:var(--shadow-lg);opacity:0;transform:translateY(-3px);pointer-events:none;transition:opacity .1s,transform .1s}
+.wbtn[data-tip]::before{content:"";position:absolute;left:12px;top:calc(100% + 1px);border:6px solid transparent;border-top-width:0;border-bottom-color:#1F2A1F;opacity:0;pointer-events:none;transition:opacity .1s}
+.wbtn[data-tip]:hover::after,.wbtn[data-tip]:hover::before,.wbtn[data-tip]:focus-visible::after,.wbtn[data-tip]:focus-visible::before{opacity:1;transform:none}
+.po__resetall[data-tip]::after{left:auto;right:0}
+.po__resetall[data-tip]::before{left:auto;right:14px}
+.po__btns,.po__right,.po{overflow:visible}
