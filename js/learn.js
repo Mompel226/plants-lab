@@ -288,65 +288,65 @@
         '<path class="po__vein" d="M' + bx + ' ' + by + ' L' + (tx - ux * 6).toFixed(1) + ' ' + (ty - uy * 6).toFixed(1) + '"/>' +
         '<circle class="po__vap" cx="' + (tx - ux * 12).toFixed(1) + '" cy="' + (ty - uy * 12 - 5).toFixed(1) + '" r="3.4"/></g>';
     }
-    stage.innerHTML = '<svg viewBox="0 0 900 440" class="po__svg" role="img" aria-label="A bubble potometer on a bench: a leafy shoot held in an airtight rubber bung on a clamp stand, joined to a capillary tube lying along a millimetre scale, with a reservoir and tap rising from it and the far end of the tube in a beaker of water. A thermometer hangs on the stand; a fan and a lamp stand by the shoot.">' +
+    stage.innerHTML = '<svg viewBox="0 8 860 432" class="po__svg" role="img" aria-label="A bubble potometer on a bench: a leafy shoot held in an airtight rubber bung on a clamp stand, joined to a capillary tube lying along a millimetre scale, with a reservoir and tap rising from it and the far end of the tube in a beaker of water. A thermometer hangs on the stand; a fan and a lamp stand by the shoot.">' +
       '<rect x="0" y="0" width="900" height="440" fill="#F7F4EC"/>' +
       /* the bench */
       '<path d="M0 414 H900" stroke="#C9BFA6" stroke-width="3"/>' +
+      /* the fan, on its stand */
+      '<g class="po__fan"><rect x="426" y="396" width="48" height="10" rx="3" fill="#4A4F55"/><rect x="447" y="196" width="6" height="200" fill="#6B7178"/>' +
+      '<g class="po__blades"><circle cx="450" cy="166" r="30" fill="#EAEDEF" stroke="#7F94A2" stroke-width="2"/><path d="M450 166 L450 138 A28 28 0 0 1 471 152 Z M450 166 L473 180 A28 28 0 0 1 441 194 Z M450 166 L427 157 A28 28 0 0 1 436 141 Z" fill="#7F94A2"/><circle cx="450" cy="166" r="4.5" fill="#4A4F55"/></g>' +
+      '<g class="po__air"><path d="M414 150 H382"/><path d="M412 166 H376"/><path d="M414 182 H382"/></g></g>' +
+      /* the lamp, on the bench */
+      '<g class="po__lamp"><rect x="520" y="396" width="64" height="10" rx="3" fill="#4A4F55"/><path d="M552 396 L546 120 L508 104" stroke="#6B7178" stroke-width="5" stroke-linecap="round" fill="none"/>' +
+      '<path d="M516 84 L476 78 L470 128 L512 122 Z" fill="#6B7178"/><path class="po__bulb" d="M476 80 L470 126 L456 104 Z" fill="#FFE99A"/></g>' +
       /* the lamp's light: a beam from the lamp, and a glow over the shoot */
       '<path class="po__beam" d="M478 92 L112 34 L112 214 L478 114 Z" fill="#FFE99A"/><ellipse class="po__glow" cx="220" cy="112" rx="140" ry="100" fill="#FFE99A"/>' +
       /* the bag over the shoot, for humid air */
       '<path class="po__bag" d="M108 26 H330 Q346 26 346 42 V208 Q346 224 330 224 H108 Q92 224 92 208 V42 Q92 26 108 26 Z"/>' +
       /* the clamp stand, with a thermometer hung on it */
-      '<rect x="30" y="402" width="170" height="12" rx="3" fill="#4A4F55"/><rect x="108" y="40" width="9" height="364" fill="#6B7178"/>' +
+      '<rect x="30" y="402" width="170" height="12" rx="3" fill="#4A4F55"/><rect x="108" y="54" width="9" height="350" fill="#6B7178"/>' +
       '<rect x="100" y="168" width="34" height="24" rx="3" fill="#4A4F55"/><rect x="132" y="176" width="40" height="8" fill="#4A4F55"/>' +
       '<path d="M170 168 v24 M204 168 v24" stroke="#4A4F55" stroke-width="6" stroke-linecap="round"/>' +
-      '<g class="po__therm"><path d="M66 64 H100" stroke="#6B7178" stroke-width="3"/><rect x="60" y="56" width="12" height="120" rx="6" fill="#fff" stroke="#7F94A2" stroke-width="2"/><rect class="po__merc" x="64" y="120" width="4" height="50" fill="#D64545"/><circle cx="66" cy="182" r="8" fill="#D64545"/>' +
-      '<text class="po__read po__tread" x="66" y="206" text-anchor="middle">20 °C</text><text class="po__read po__hread" x="66" y="222" text-anchor="middle">50 % humidity</text></g>' +
+      '<g class="po__therm"><path d="M56 64 H104" stroke="#6B7178" stroke-width="3"/><rect x="50" y="56" width="12" height="120" rx="6" fill="#fff" stroke="#7F94A2" stroke-width="2"/><rect class="po__merc" x="54" y="120" width="4" height="50" fill="#D64545"/><circle cx="56" cy="182" r="8" fill="#D64545"/>' +
+      '<text class="po__read po__tread" x="56" y="210" text-anchor="middle">20 °C</text><text class="po__read po__hread" x="30" y="32">50 % humidity</text></g>' +
       /* the water: the vertical tube, the capillary, the bend into the beaker, and the reservoir */
       '<path class="po__water" d="M178 178 V294 H754 V386 H766 V300 H202 V178 Z"/>' +
-      '<rect class="po__water" x="295" y="140" width="10" height="160"/>' +
+      '<rect class="po__water" x="331" y="140" width="10" height="160"/>' +
       /* the glass */
       '<path class="po__glass" d="M176 150 V296 M204 150 V294 M204 294 H758 Q766 294 766 302 V386 M178 300 Q178 306 184 306 H754 Q760 306 760 310 V386"/>' +
-      '<path class="po__glass" d="M294 300 V122 M306 300 V122 M276 100 L294 122 M324 100 L306 122 M276 100 H324"/>' +
+      '<path class="po__glass" d="M330 300 V122 M342 300 V122 M312 100 L330 122 M360 100 L342 122 M312 100 H360"/>' +
       /* the tap: a screw clip on the reservoir */
-      '<g class="po__tap"><rect x="284" y="194" width="32" height="14" rx="3" fill="#6B7178"/><rect x="316" y="197" width="12" height="8" rx="2" fill="#9AA1A8"/><circle cx="332" cy="201" r="5" fill="#4A4F55"/></g>' +
+      '<g class="po__tap"><rect x="320" y="232" width="32" height="14" rx="3" fill="#6B7178"/><rect x="352" y="235" width="12" height="8" rx="2" fill="#9AA1A8"/><circle cx="368" cy="239" r="5" fill="#4A4F55"/></g>' +
       /* the rubber bung, and the shoot in it */
       '<rect x="174" y="150" width="32" height="26" rx="4" fill="#6E4A33"/>' +
       '<path d="M190 262 V28" stroke="#3E9A57" stroke-width="7" stroke-linecap="round"/><path d="M190 262 V178" stroke="#2F7D46" stroke-width="7" stroke-linecap="round" opacity=".55"/>' +
       '<g class="po__leaves">' + LEAVES.map(function (L) { return leafPath(L[0], L[1], L[2], L[3], L[4]); }).join('') + '</g>' +
-      /* the fan, on its stand */
-      '<g class="po__fan"><rect x="376" y="396" width="48" height="10" rx="3" fill="#4A4F55"/><rect x="397" y="196" width="6" height="200" fill="#6B7178"/>' +
-      '<g class="po__blades"><circle cx="400" cy="166" r="30" fill="#EAEDEF" stroke="#7F94A2" stroke-width="2"/><path d="M400 166 L400 138 A28 28 0 0 1 421 152 Z M400 166 L423 180 A28 28 0 0 1 391 194 Z M400 166 L377 157 A28 28 0 0 1 386 141 Z" fill="#7F94A2"/><circle cx="400" cy="166" r="4.5" fill="#4A4F55"/></g>' +
-      '<g class="po__air"><path d="M364 150 H336"/><path d="M362 166 H330"/><path d="M364 182 H336"/></g></g>' +
-      /* the lamp, on the bench */
-      '<g class="po__lamp"><rect x="520" y="396" width="64" height="10" rx="3" fill="#4A4F55"/><path d="M552 396 L546 120 L508 104" stroke="#6B7178" stroke-width="5" stroke-linecap="round" fill="none"/>' +
-      '<path d="M516 84 L476 78 L470 128 L512 122 Z" fill="#6B7178"/><path class="po__bulb" d="M476 80 L470 126 L456 104 Z" fill="#FFE99A"/></g>' +
       /* the beaker */
-      '<path d="M720 330 V408 Q720 412 724 412 H816 Q820 412 820 408 V330" fill="#DDF0FA" stroke="#7F94A2" stroke-width="2.5" stroke-linejoin="round"/>' +
-      '<rect x="722" y="350" width="96" height="60" fill="#BFE0F5" opacity=".8"/>' +
+      '<path d="M730 330 V408 Q730 412 734 412 H826 Q830 412 830 408 V330" fill="#DDF0FA" stroke="#7F94A2" stroke-width="2.5" stroke-linejoin="round"/>' +
+      '<rect x="732" y="350" width="96" height="60" fill="#BFE0F5" opacity=".8"/>' +
       /* the scale */
       '<rect x="292" y="310" width="436" height="36" rx="3" fill="#FFF9E6" stroke="#C9B77A" stroke-width="1.2"/>' +
-      '<g class="po__ticks">' + ticks() + '</g><text class="po__unit" x="726" y="338" text-anchor="start">mm</text>' +
+      '<g class="po__ticks">' + ticks() + '</g>' +
       /* the bubble */
       '<ellipse class="po__bubble" cx="' + PO_X0 + '" cy="300" rx="7" ry="4.6"/>' +
       /* the names of the parts */
-      '<g class="po__names"><text x="66" y="46" text-anchor="middle">thermometer</text><text x="100" y="300" text-anchor="end">clamp stand</text><text x="212" y="166">rubber bung — airtight</text><text x="332" y="112">reservoir</text><text x="342" y="204">tap</text>' +
-      '<text x="440" y="170">fan</text><text x="522" y="80">lamp</text>' +
-      '<text x="470" y="288" text-anchor="middle">capillary tube</text><text x="770" y="428" text-anchor="middle">beaker of water</text><text x="682" y="286" text-anchor="middle">air bubble</text><text x="510" y="358" text-anchor="middle">scale</text></g>' +
+      '<g class="po__names"><text x="30" y="432">clamp stand</text><text x="210" y="198">rubber bung,</text><text x="210" y="226">airtight</text><text x="368" y="112">reservoir</text><text x="380" y="246">tap</text>' +
+      '<text x="490" y="172">fan</text><text x="524" y="82">lamp</text>' +
+      '<text class="po__names--small" x="267" y="284" text-anchor="middle">capillary tube</text><text x="780" y="434" text-anchor="middle">beaker of water</text><text x="660" y="284" text-anchor="middle">air bubble</text><text x="510" y="368" text-anchor="middle">scale, in mm</text></g>' +
       '</svg>';
     var svg = stage.firstChild, bubble = svg.querySelector('.po__bubble'), leafEls = svg.querySelectorAll('.po__leaf');
     var tread = svg.querySelector('.po__tread'), hread = svg.querySelector('.po__hread'), merc = svg.querySelector('.po__merc'), glow = svg.querySelector('.po__glow');
 
     /* ----- the clock and the reading ----- */
-    var clock = h('div', 'po__clock', '<b>0:00</b><span>of <i></i></span>');
+    var clock = h('div', 'po__clock', '<b>0:00</b><span>of <i></i> · runs at ×30</span>');
     var clockB = clock.querySelector('b'), clockOf = clock.querySelector('i');
-    var read = h('div', 'po__reading', '<span class="po__at">bubble at <b>0</b> mm</span>');
+    var read = h('div', 'po__reading', '<span class="po__at">bubble at <b>0</b> mm</span>'); read.setAttribute('aria-live', 'polite');
     var atB = read.querySelector('b');
     var btns = h('div', 'po__btns');
     var bStart = h('button', 'wbtn po__start', '▶ Start the clock'), bReset = h('button', 'wbtn wbtn--quiet', 'Open the tap: bubble back to 0'), bRecord = h('button', 'wbtn po__rec', 'Record this run');
     [bStart, bReset, bRecord].forEach(function (b) { b.type = 'button'; btns.appendChild(b); });
     bRecord.disabled = true;
-    var result = h('div', 'po__result'); result.hidden = true;
+    var result = h('div', 'po__result'); result.hidden = true; result.setAttribute('aria-live', 'polite');
     var say = h('p', 'po__say');
 
     /* ----- the model ----- */
@@ -367,7 +367,7 @@
       leafEls.forEach(function (l, i) { l.classList.toggle('is-off', i >= s.leaves); });
       glow.style.opacity = (s.light / 100 * .55).toFixed(2);
       svg.querySelector('.po__bulb').style.opacity = (.25 + s.light / 100 * .75).toFixed(2);
-      merc.setAttribute('y', (172 - (s.temp - 5) / 30 * 104).toFixed(1)); merc.setAttribute('height', ((s.temp - 5) / 30 * 104 + 4).toFixed(1));
+      merc.setAttribute('y', (172 - (s.temp - 5) / 30 * 104).toFixed(1)); merc.setAttribute('x', 54); merc.setAttribute('height', ((s.temp - 5) / 30 * 104 + 4).toFixed(1));
       svg.querySelector('.po__beam').style.opacity = (s.light / 100 * .22).toFixed(2);
       tread.textContent = s.temp + ' °C'; hread.textContent = s.hum + ' % humidity';
       svg.classList.toggle('is-bagged', s.hum >= 85);
@@ -422,8 +422,8 @@
       lastRun = { s: r.s, distance: distance, rate: rate };
       result.hidden = false;
       result.innerHTML = '<div class="po__stat"><span>Distance moved</span><b>' + distance.toFixed(1) + ' mm</b><small>from ' + r.from.toFixed(0) + ' to ' + (r.from + distance).toFixed(0) + ' on the scale</small></div>' +
-        '<div class="po__stat"><span>Rate of uptake</span><b>' + rate.toFixed(2) + ' mm / min</b><small>' + distance.toFixed(1) + ' mm ÷ ' + mins + ' min</small></div>' +
-        '<div class="po__stat"><span>Volume taken up</span><b>' + vol.toFixed(2) + ' mm³ / min</b><small>π × 0.5² × ' + rate.toFixed(2) + ' — a 1 mm bore</small></div>' +
+        '<div class="po__stat"><span>Rate of uptake</span><b>' + rate.toFixed(2) + ' mm/min</b><small>' + distance.toFixed(1) + ' mm ÷ ' + mins + ' min</small></div>' +
+        '<div class="po__stat"><span>Volume taken up</span><b>' + vol.toFixed(2) + ' mm³/min</b><small>π × 0.5² × ' + rate.toFixed(2) + ', for a 1 mm bore</small></div>' +
         (r.capped ? '<p class="po__warn">The bubble reached the end of the scale before the time was up, so this reading is too small. Open the tap, and measure for less time or slow the shoot down.</p>' : '');
       bRecord.disabled = !!r.capped;
       say.textContent = r.capped ? 'Not a fair reading — the bubble ran out of scale.' : 'Read the scale, then record the run. Repeat it to get a mean, or change one factor and run again.';
@@ -527,7 +527,8 @@
         if (!numeric) s += '<rect class="po__gbar" x="' + (x - 14).toFixed(1) + '" y="' + Y(p.mean).toFixed(1) + '" width="28" height="' + (H - B - Y(p.mean)).toFixed(1) + '"/>';
         p.all.forEach(function (v) { s += '<circle class="po__dot' + (p.all.length > 1 ? ' po__dot--rep' : '') + '" cx="' + x.toFixed(1) + '" cy="' + Y(v).toFixed(1) + '" r="3"/>'; });
         if (p.all.length > 1) s += '<circle class="po__dotmean" cx="' + x.toFixed(1) + '" cy="' + Y(p.mean).toFixed(1) + '" r="4.5"/>';
-        s += '<text class="po__gt" x="' + x.toFixed(1) + '" y="' + (H - B + 14) + '" text-anchor="middle">' + esc(String(p.x)) + '</text>';
+        var every = pts.length > 8 ? Math.ceil(pts.length / 8) : 1;
+        if (i % every === 0 || i === pts.length - 1) s += '<text class="po__gt" x="' + x.toFixed(1) + '" y="' + (H - B + 14) + '" text-anchor="middle">' + esc(String(p.x)) + '</text>';
       });
       s += '</svg><small class="po__gnote">' + esc(note) + '</small>';
       return s;
