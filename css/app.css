@@ -1019,6 +1019,9 @@ picture{display:block;line-height:0}
 .po__tube-out{fill:none;stroke:#7F94A2;stroke-width:14;stroke-linejoin:round;stroke-linecap:butt}
 .po__tube-glass{fill:none;stroke:#EDF1F3;stroke-width:11;stroke-linejoin:round;stroke-linecap:butt}
 .po__tube-water{fill:none;stroke:#BFE0F5;stroke-width:9;stroke-linejoin:round;stroke-linecap:butt}
+.po__tube-out.po__tube--wide{stroke-width:30;stroke-linecap:round}
+.po__tube-glass.po__tube--wide{stroke-width:27;stroke-linecap:round}
+.po__tube-water.po__tube--wide{stroke-width:25;stroke-linecap:round}
 .po__bubble{fill:#fff;stroke:#7F94A2;stroke-width:1.4}
 .po__ticks line{stroke:#7A6B3C;stroke-width:1}
 .po__ticks text,.po__unit{font-size:18px;fill:#7A6B3C;font-family:var(--font)}
