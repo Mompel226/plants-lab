@@ -368,7 +368,7 @@
     }
     var LEAVES = [[136, -1, .15, 86, 40], [118, 1, -.05, 80, 38], [100, -1, -.2, 84, 40], [84, 1, -.3, 74, 36], [66, -1, -.3, 64, 32], [50, 1, -.42, 52, 26]];
     /* marram grass is a tuft, not a stem with leaves: long blades fanning up from the bung */
-    var GRASS = [[156, -1, -1.9, 150, 14], [154, 1, -2.1, 160, 14], [158, -1, -1.1, 140, 13], [156, 1, -1.2, 150, 13], [160, -1, -.6, 120, 12], [158, 1, -.7, 128, 12]];
+    var GRASS = [[150, -.55, -1, 132, 13], [150, .38, -1, 136, 13], [150, -.1, -1, 138, 12], [150, .8, -1, 122, 13], [150, -1, -1.05, 116, 12], [150, .16, -1, 128, 12]];   /* fanned from the sheath, the third one upright where a stem would be */
     /* a leaf's outline in its own frame: the base at 0,0, the tip along +x at L, half-width W.
        Each plant has the leaf it really has, simplified to one outline and its veins. */
     function outline(kind, L, W, rough) {
@@ -471,7 +471,10 @@
       '<path d="M30 330 V408 Q30 412 34 412 H126 Q130 412 130 408 V330" fill="none" stroke="#7F94A2" stroke-width="2.5" stroke-linejoin="round"/><path d="M30 350 H130" stroke="#8FB3C7" stroke-width="1.2" opacity=".8"/>' +
       /* the rubber bung, and the shoot in it */
       '<rect x="558" y="150" width="32" height="26" rx="4" fill="#6E4A33"/>' +
-      '<path d="M' + PO_STEM + ' 262 V28" stroke="#3E9A57" stroke-width="7" stroke-linecap="round"/><path d="M' + PO_STEM + ' 262 V178" stroke="#2F7D46" stroke-width="7" stroke-linecap="round" opacity=".55"/>' +
+      '<g class="po__stem"><path d="M' + PO_STEM + ' 262 V28" stroke="#3E9A57" stroke-width="7" stroke-linecap="round"/><path d="M' + PO_STEM + ' 262 V178" stroke="#2F7D46" stroke-width="7" stroke-linecap="round" opacity=".55"/></g>' +
+      /* a grass has no stem: the cut leaf bases stand in the water, and a short sheath at the bung holds the tuft */
+      '<g class="po__tuft" style="display:none"><path d="M' + (PO_STEM - 5) + ' 262 L' + (PO_STEM - 3) + ' 178 M' + PO_STEM + ' 262 V178 M' + (PO_STEM + 5) + ' 262 L' + (PO_STEM + 3) + ' 178" stroke="#8FAA76" stroke-width="2.6" stroke-linecap="round" opacity=".85"/>' +
+      '<path d="M' + (PO_STEM - 9) + ' 152 Q' + PO_STEM + ' 126 ' + (PO_STEM + 9) + ' 152 Z" fill="#C9D9A6" stroke="#5E7A4B" stroke-width="1.2"/></g>' +
       '<g class="po__leaves">' + LEAVES.map(function (L) { return leafPath(L[0], L[1], L[2], L[3], L[4], PO_SPECIES[0].leaf); }).join('') + '</g>' +
       /* the scale under the capillary */
       '<rect x="98" y="310" width="440" height="36" rx="3" fill="#FFF9E6" stroke="#C9B77A" stroke-width="1.2"/>' +
@@ -485,6 +488,8 @@
     function growLeaves(sp) {
       if (sp.id === leafKind) return; leafKind = sp.id;
       leavesG.innerHTML = (sp.leaf.kind === 'grass' ? GRASS : LEAVES).map(function (L) { return leafPath(L[0], L[1], L[2], L[3], L[4], sp.leaf); }).join('');
+      svg.querySelector('.po__stem').style.display = sp.leaf.kind === 'grass' ? 'none' : '';
+      svg.querySelector('.po__tuft').style.display = sp.leaf.kind === 'grass' ? '' : 'none';
       leafEls = svg.querySelectorAll('.po__leaf');
     }
     var tread = svg.querySelector('.po__tread'), hread = svg.querySelector('.po__hread'), merc = svg.querySelector('.po__merc'), glow = svg.querySelector('.po__glow');
