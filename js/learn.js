@@ -558,7 +558,7 @@
     bRecord.setAttribute('data-tip', 'Keeps this run as a trial of these conditions, in the table — up to five trials a row.');
     bNew.setAttribute('data-tip', 'A shoot cut from a different plant of the same kind: a true replicate. Repeating on one shoot is a technical replicate — it shows how steady your measuring is, not how plants differ.');
     bLine.setAttribute('data-tip', 'Keeps what you have and starts a new line on the graph, in its own colour and with its own table, so you can compare: another plant, the fan on, the dark…');
-    bAll.setAttribute('data-tip', 'Everything back to the start: the settings, the bubble, the shoot, the tables and the graph.');
+    bAll.setAttribute('data-tip', 'Everything back to the start: the settings, the bubble, the shoot, the tables and the graph. When there is a table to lose it asks first: press it twice.');
     [bStart, bReset, bRecord, bNew, bLine, bAll].forEach(function (b) { b.type = 'button'; btns.appendChild(b); });
     bRecord.disabled = true;
     var result = h('div', 'po__result'); result.hidden = true; result.setAttribute('aria-live', 'polite');
@@ -683,9 +683,22 @@
       setBubble(0); paintConditions(); paintData();
       say.textContent = 'Back to the start: the settings as they were, the bubble at 0, shoot A, and the table cleared.';
     }
+    /* a button that would lose recorded work asks first: pressed once it becomes the question and waits five seconds
+       for the second press; left alone, it forgets. With nothing to lose it just does the thing. */
+    function armed(b, question, sure, doIt) {
+      var timer = null, label = b.textContent;
+      function disarm() { clearTimeout(timer); timer = null; b.classList.remove('is-armed'); b.textContent = label; }
+      b.addEventListener('click', function () {
+        if (!sure()) { doIt(); return; }
+        if (b.classList.contains('is-armed')) { disarm(); doIt(); return; }
+        b.classList.add('is-armed'); b.textContent = question;
+        say.textContent = 'That would lose the runs you have recorded. Press it again to go ahead, or leave it and it forgets in a few seconds.';
+        timer = setTimeout(disarm, 5000);
+      });
+    }
     bStart.addEventListener('click', start);
     bReset.addEventListener('click', resetBubble);
-    bAll.addEventListener('click', resetAll);
+    armed(bAll, 'Sure? Press again to reset', function () { return runs.length > 0; }, resetAll);
     bNew.addEventListener('click', function () {
       if (run) return;
       PO_STATE.shoot = (PO_STATE.shoot || 1) + 1; PO_STATE.shootF = .84 + Math.random() * .32;
@@ -753,7 +766,7 @@
       paintData();
       say.textContent = 'Recorded as trial ' + n + ' of these conditions. Open the tap before the next run.' + (n >= MAX_TRIALS ? ' That is five — enough for a mean; change something for the next row.' : '');
     });
-    bClear.addEventListener('click', function () { runs.length = 0; PO_STATE.line = 0; PO_STATE.lineNames = []; PO_STATE.hidden = []; paintData(); });
+    armed(bClear, 'Sure? Press again to clear', function () { return runs.length > 0; }, function () { runs.length = 0; PO_STATE.line = 0; PO_STATE.lineNames = []; PO_STATE.hidden = []; paintData(); });
     bLine.addEventListener('click', function () {
       if (run) return;
       var have = runs.some(function (r) { return (r.line || 0) === PO_STATE.line; });
@@ -811,7 +824,7 @@
       tableWrap.querySelectorAll('.po__del').forEach(function (b) { b.addEventListener('click', function () { runs.splice(+b.getAttribute('data-i'), 1); paintData(); }); });
       tableWrap.querySelectorAll('.po__term').forEach(function (b) { b.addEventListener('click', function () { showTerm(b.getAttribute('data-term')); }); });
       var del = tableWrap.querySelector('.po__delline');
-      if (del) del.addEventListener('click', function () {
+      if (del) armed(del, 'Sure? Press again to delete', function () { return true; }, function () {
         for (var k = runs.length - 1; k >= 0; k--) if ((runs[k].line || 0) === cur) runs.splice(k, 1);
         PO_STATE.hidden = PO_STATE.hidden.filter(function (x) { return x !== cur; });
         var left = []; runs.forEach(function (r) { if (left.indexOf(r.line || 0) < 0) left.push(r.line || 0); });

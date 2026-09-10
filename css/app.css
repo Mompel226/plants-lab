@@ -1337,3 +1337,5 @@ picture{display:block;line-height:0}
 .po__resetall:disabled{background:#F5F7F4}
 /* the trials toggle sits with the statistic toggle; a struck-through pill means the trials are hidden */
 .po__dots[aria-pressed="false"]{text-decoration:line-through;opacity:.7}
+/* a button asking to be pressed again before it loses work */
+.po .wbtn.is-armed,.po__data .wbtn.is-armed{background:#B4532A!important;border-color:#B4532A!important;color:#fff!important}
