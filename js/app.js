@@ -439,7 +439,8 @@
   function openGroup(gid) {
     var id = OWNER[gid];
     if (!id) { toast('No station is about that part yet.'); return; }
-    if (current !== id || tab !== 'learn') { current = id; tab = 'learn'; p(id).opened = true; save(); paintPanel(); paintRail(); }
+    var changed = current !== id;
+    if (changed || tab !== 'learn') { current = id; tab = 'learn'; p(id).opened = true; save(); if (changed && window.Plate) window.Plate.showStation(S[id]); paintPanel(); paintRail(); }   /* the plate must hear of the new station too: its bend, sap, breathing and hint belong to a station */
     if (window.Plate) window.Plate.focus(gid);
     history.replaceState(null, '', '#' + gid);
     var target = document.querySelector('#panelInner [data-group="' + gid + '"]');

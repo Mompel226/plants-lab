@@ -110,7 +110,7 @@
 
     /* ---------- the ground ---------- */
     var ground = el('g', { 'class': 'pl-ground' }, root);
-    el('circle', { cx: 760, cy: 150, r: 130, fill: 'url(#pl-sun)' }, ground);
+    var sunGlow = el('circle', { cx: 760, cy: 150, r: 130, fill: 'url(#pl-sun)' }, ground);
     var sunG = part('sun', 'pl-sun');
     el('circle', { cx: 760, cy: 150, r: 46, fill: '#F7CF5A', stroke: '#E4B43C', 'stroke-width': 2 }, sunG);
     /* the pond, cut into the ground on the wet side */
@@ -186,17 +186,44 @@
     /* the seedling: what the seed sends up first — a hooked shoot and two seed leaves */
     var seedling = part('seedling', 'pl-seedling', true, [X, 800]);
     shoot.appendChild(seedling);
-    var seedStem = el('path', { d: 'M' + (X - 2) + ' 782 C' + (X - 6) + ' 740 ' + (X + 8) + ' 710 ' + (X + 26) + ' 690', fill: 'none', stroke: '#7CC97A', 'stroke-width': 9, 'stroke-linecap': 'round' }, seedling);
+    /* the hypocotyl: an outline round a curved centre line, thick at the soil and slender at the top — its shape is
+       drawn afresh whenever it bends (see paintSeedling). The seed leaves are the two halves of the bean, lifted into
+       the light, each with the crease where they parted; the first true leaves unfold between them. */
+    var seedStem = el('path', { fill: '#8AD087', stroke: '#3F9A55', 'stroke-width': 1.4, 'stroke-linejoin': 'round' }, seedling);
     var cotyls = el('g', { 'class': 'pl-cotyls' }, seedling);
-    el('ellipse', { cx: X + 4, cy: 672, rx: 26, ry: 15, transform: 'rotate(-28 ' + (X + 4) + ' 672)', fill: '#8FD48A', stroke: '#3F9A55', 'stroke-width': 1.5 }, cotyls);
-    el('ellipse', { cx: X + 46, cy: 668, rx: 26, ry: 15, transform: 'rotate(22 ' + (X + 46) + ' 668)', fill: '#8FD48A', stroke: '#3F9A55', 'stroke-width': 1.5 }, cotyls);
+    [[X + 2, 674, -30], [X + 48, 670, 24]].forEach(function (c) {
+      var g2 = el('g', { transform: 'rotate(' + c[2] + ' ' + c[0] + ' ' + c[1] + ')' }, cotyls);
+      el('path', { d: 'M' + (c[0] - 27) + ' ' + c[1] + ' C' + (c[0] - 27) + ' ' + (c[1] - 19) + ' ' + (c[0] + 27) + ' ' + (c[1] - 19) + ' ' + (c[0] + 27) + ' ' + c[1] + ' C' + (c[0] + 27) + ' ' + (c[1] + 17) + ' ' + (c[0] - 27) + ' ' + (c[1] + 17) + ' ' + (c[0] - 27) + ' ' + c[1] + ' Z', fill: '#9BD98F', stroke: '#3F9A55', 'stroke-width': 1.5 }, g2);
+      el('path', { d: 'M' + (c[0] - 22) + ' ' + (c[1] + 1) + ' Q' + c[0] + ' ' + (c[1] - 4) + ' ' + (c[0] + 22) + ' ' + (c[1] + 1), fill: 'none', stroke: '#5FAE66', 'stroke-width': 1.2, opacity: .9 }, g2);
+    });
+
+    /* ---------- the bend: how a whole plant grows towards the light ----------
+       A shoot bends by growing, not by tilting: the cells on the shaded side elongate more than the lit side's,
+       most in the young stem near the tip, so the stem curves increasingly towards the light and everything it
+       carries turns with it. Here every point of the stem above the pivot is carried sideways by an amount that
+       grows with the square of its height above the pivot — a curve, steepest at the tip — and each part above
+       the pivot (the upper leaves, the next flower, the growing tip) is carried and turned by the stem's lean at
+       the node it grows from. The base and everything below the pivot never move. */
+    var PV = 560, TOP = 248, BEND_D = 96, bendDir = 1, bendT = 0, bendRaf = null;
+    function warpS(y) { return Math.max(0, Math.min(1.15, (PV - y) / (PV - TOP))); }
+    function warpDx(y, t) { var q = warpS(y); return bendDir * BEND_D * t * q * q; }
+    function warpAng(y, t) { return bendDir * Math.atan2(2 * BEND_D * t * warpS(y), PV - TOP) * 180 / Math.PI; }
+    function warpP(p, t) { return [p[0] + warpDx(p[1], t), p[1]]; }
+    function rigidP(p, ny, t) {   /* carried and turned with the node at (X, ny) */
+      var a = warpAng(ny, t) * Math.PI / 180, c = Math.cos(a), sn = Math.sin(a), dx = p[0] - X, dy = p[1] - ny;
+      return [X + dx * c - dy * sn + warpDx(ny, t), ny + dx * sn + dy * c];
+    }
+    function buildPath(tpl, t) { return tpl.map(function (q) { if (typeof q === 'string') return q; var p = warpP(q, t); return f(p[0]) + ' ' + f(p[1]); }).join(' '); }
+    var WARPED = [], BRANCHES = [], HITWARP = [], leafEls = {};
+    function warpPart(g, ny) { var w = el('g', { 'class': 'pl-warp' }); while (g.firstChild) w.appendChild(g.firstChild); g.appendChild(w); WARPED.push([w, ny]); }
 
     /* the stem */
     var stem = part('stem', 'pl-stem', 'up', [X, 805]);
     shoot.appendChild(stem);
-    el('path', { d: 'M' + (X - 9) + ' 805 C' + (X - 13) + ' 690 ' + (X - 5) + ' 560 ' + (X - 9) + ' 430 C' + (X - 11) + ' 340 ' + (X - 4) + ' 290 ' + (X - 2) + ' 248 L' + (X + 2) + ' 248 C' + (X + 4) + ' 290 ' + (X + 11) + ' 340 ' + (X + 9) + ' 430 C' + (X + 5) + ' 560 ' + (X + 13) + ' 690 ' + (X + 9) + ' 805 Z',
-               fill: '#3E9A57', stroke: '#2F7D46', 'stroke-width': 1.5, 'stroke-linejoin': 'round' }, stem);
-    el('path', { d: 'M' + (X - 3) + ' 790 C' + (X - 6) + ' 690 ' + (X + 1) + ' 560 ' + (X - 3) + ' 430 C' + (X - 5) + ' 340 ' + (X - 1) + ' 300 ' + (X - 1) + ' 262', fill: 'none', stroke: '#6FC482', 'stroke-width': 2, opacity: .7 }, stem);
+    var STEM_T = ['M', [X - 9, 805], 'C', [X - 13, 690], [X - 5, 560], [X - 9, 430], 'C', [X - 11, 340], [X - 4, 290], [X - 2, 248], 'L', [X + 2, 248], 'C', [X + 4, 290], [X + 11, 340], [X + 9, 430], 'C', [X + 5, 560], [X + 13, 690], [X + 9, 805], 'Z'];
+    var STEMHL_T = ['M', [X - 3, 790], 'C', [X - 6, 690], [X + 1, 560], [X - 3, 430], 'C', [X - 5, 340], [X - 1, 300], [X - 1, 262]];
+    var stemPath = el('path', { d: buildPath(STEM_T, 0), fill: '#3E9A57', stroke: '#2F7D46', 'stroke-width': 1.5, 'stroke-linejoin': 'round' }, stem);
+    var stemLine = el('path', { d: buildPath(STEMHL_T, 0), fill: 'none', stroke: '#6FC482', 'stroke-width': 2, opacity: .7 }, stem);
 
     /* a leaf: base, direction, length and width; midrib and a net of veins. The blade is
        two quadratic curves whose control points sit 38% along and 62% of the width out,
@@ -234,16 +261,20 @@
     function leaf(id, bx, by, dx, dy, len, wid, petiole, sink) {
       var m = Math.sqrt(dx * dx + dy * dy), ux = dx / m, uy = dy / m, nx = -uy, ny = ux;
       LEAVES[id] = { bx: bx, by: by, ux: ux, uy: uy, nx: nx, ny: ny, len: len, wid: wid, petiole: petiole, sink: !!sink };
-      var g = part(id, 'pl-leaf', true, [bx, by]);
+      var g = part(id, 'pl-leaf', true, [bx, by]); leafEls[id] = g;
       shoot.appendChild(g);
       if (petiole) el('path', { d: 'M' + f(petiole[0]) + ' ' + f(petiole[1]) + ' Q' + f((petiole[0] + bx) / 2 + nx * 6) + ' ' + f((petiole[1] + by) / 2 + ny * 6) + ' ' + f(bx) + ' ' + f(by), fill: 'none', stroke: '#2F7D46', 'stroke-width': 4, 'stroke-linecap': 'round' }, g);
       blade(g, bx, by, dx, dy, len, wid, false);
       return g;
     }
     /* the growing tip: a bud with two young leaves folded up round it, part of the stem */
-    blade(stem, X - 2, 254, -.42, -1, 46, 24, true);
-    blade(stem, X + 2, 254, .42, -1, 42, 22, true);
-    el('ellipse', { cx: X, cy: 241, rx: 4.5, ry: 8.5, fill: '#8FD48A', stroke: '#3F9A55', 'stroke-width': 1.4 }, stem);
+    var apex = el('g', { 'class': 'pl-warp' }, stem);
+    blade(apex, X - 2, 254, -.42, -1, 46, 24, true);
+    blade(apex, X + 2, 254, .42, -1, 42, 22, true);
+    el('ellipse', { cx: X, cy: 241, rx: 4.5, ry: 8.5, fill: '#8FD48A', stroke: '#3F9A55', 'stroke-width': 1.4 }, apex);
+    WARPED.push([apex, 254]);
+    blade(cotyls, X + 22, 678, -.5, -1, 26, 14, true);   /* the seedling's first true leaves, between its seed leaves */
+    blade(cotyls, X + 30, 678, .5, -1, 24, 13, true);
 
     leaf('leaf-1', X - 14, 604, -1, .42, 232, 118, [X - 4, 596]);      /* the big leaf, low on the left */
     leaf('leaf-2', X + 14, 522, 1, -.34, 196, 100, [X + 4, 514]);      /* right, reaching up a little */
@@ -324,6 +355,9 @@
     var tipP = podAt(1), tipN = podNormal(1);
     el('line', { x1: f(tipP[0]), y1: f(tipP[1]), x2: f(tipP[0] + tipN[2] * 9), y2: f(tipP[1] + tipN[3] * 9), stroke: '#6B4F2A', 'stroke-width': 1.8, 'stroke-linecap': 'round' }, fruit);
 
+    /* what the bend carries, each turned about the node it grows from */
+    [[leafEls['leaf-2'], 514], [leafEls['leaf-3'], 430], [leafEls['leaf-4'], 350], [flower2, 424], [spent, NB[1]], [flower, NB[1]], [fruit, NB[1]]].forEach(function (p) { warpPart(p[0], p[1]); });
+
     /* ---------- the two plants built for hard places ---------- */
     var xero = part('xerophyte', 'pl-xero', 'up', [250, H]);
     el('path', { d: 'M198 ' + H + ' C192 700 200 622 250 616 C300 622 308 700 302 ' + H + ' Z', fill: '#5E9E4E', stroke: '#3F7A33', 'stroke-width': 1.8 }, xero);
@@ -361,17 +395,24 @@
        roots out to the leaf tips, sugar from the leaves down to the roots and up into the
        pod. */
     var flows = el('g', { 'class': 'pl-flows' }, root);
-    el('path', { 'class': 'pl-flow pl-flow--xylem', d: 'M' + (X - 4) + ' 1060 C' + (X - 10) + ' 980 ' + (X - 2) + ' 900 ' + (X - 4) + ' 805 C' + (X - 8) + ' 690 ' + X + ' 560 ' + (X - 4) + ' 430 C' + (X - 6) + ' 340 ' + (X - 3) + ' 290 ' + (X - 3) + ' 262' }, flows);
-    el('path', { 'class': 'pl-flow pl-flow--phloem', d: 'M' + (X + 4) + ' 350 C' + (X + 8) + ' 440 ' + (X + 6) + ' 520 ' + (X + 6) + ' 640 C' + (X + 6) + ' 720 ' + (X + 6) + ' 805 ' + (X + 6) + ' 805 C' + (X + 8) + ' 900 ' + (X + 12) + ' 980 ' + (X + 8) + ' 1060' }, flows);
+    var XY_T = ['M', [X - 4, 1060], 'C', [X - 10, 980], [X - 2, 900], [X - 4, 805], 'C', [X - 8, 690], [X, 560], [X - 4, 430], 'C', [X - 6, 340], [X - 3, 290], [X - 3, 262]];
+    var PH_T = ['M', [X + 4, 350], 'C', [X + 8, 440], [X + 6, 520], [X + 6, 640], 'C', [X + 6, 720], [X + 6, 805], [X + 6, 805], 'C', [X + 8, 900], [X + 12, 980], [X + 8, 1060]];
+    var xylemTrunk = el('path', { 'class': 'pl-flow pl-flow--xylem', d: buildPath(XY_T, 0) }, flows);
+    var phloemTrunk = el('path', { 'class': 'pl-flow pl-flow--phloem', d: buildPath(PH_T, 0) }, flows);
     Object.keys(LEAVES).forEach(function (id) {
       var L = LEAVES[id], o = 3, y0 = L.petiole ? L.petiole[1] : L.by;
       var b1 = [L.bx + L.nx * o, L.by + L.ny * o], e1 = [L.bx + L.ux * L.len * .84 + L.nx * o, L.by + L.uy * L.len * .84 + L.ny * o];
       var b2 = [L.bx - L.nx * o, L.by - L.ny * o], e2 = [L.bx + L.ux * L.len * .84 - L.nx * o, L.by + L.uy * L.len * .84 - L.ny * o];
-      el('path', { 'class': 'pl-flow pl-flow--xylem pl-flow--branch', 'data-for': id, d: 'M' + (X - 4) + ' ' + f(y0) + ' L' + f(b1[0]) + ' ' + f(b1[1]) + ' L' + f(e1[0]) + ' ' + f(e1[1]) }, flows);
-      if (!L.sink) el('path', { 'class': 'pl-flow pl-flow--phloem pl-flow--branch', 'data-for': id, d: 'M' + f(e2[0]) + ' ' + f(e2[1]) + ' L' + f(b2[0]) + ' ' + f(b2[1]) + ' L' + (X + 4) + ' ' + f(y0) }, flows);
+      var P = function (p) { return f(p[0]) + ' ' + f(p[1]); }, ny = y0;
+      var bx1 = function (t) { return 'M' + P(warpP([X - 4, y0], t)) + ' L' + P(rigidP(b1, ny, t)) + ' L' + P(rigidP(e1, ny, t)); };
+      var bp2 = function (t) { return 'M' + P(rigidP(e2, ny, t)) + ' L' + P(rigidP(b2, ny, t)) + ' L' + P(warpP([X + 4, y0], t)); };
+      var xb = el('path', { 'class': 'pl-flow pl-flow--xylem pl-flow--branch', 'data-for': id, d: bx1(0) }, flows);
+      if (y0 < PV) BRANCHES.push([xb, bx1]);
+      if (!L.sink) { var pb = el('path', { 'class': 'pl-flow pl-flow--phloem pl-flow--branch', 'data-for': id, d: bp2(0) }, flows); if (y0 < PV) BRANCHES.push([pb, bp2]); }
     });
     /* sugar into the pod: down the trunk to its node, out along the drooping stalk, and down the pod's centre line */
-    el('path', { 'class': 'pl-flow pl-flow--phloem pl-flow--branch', 'data-for': 'fruit', d: 'M' + (X + 4) + ' ' + f(NB[1]) + ' Q' + f(X + 36) + ' 528 ' + f(FB[0]) + ' ' + f(FB[1]) + ' C' + f(POD[1][0]) + ' ' + f(POD[1][1]) + ' ' + f(POD[2][0]) + ' ' + f(POD[2][1]) + ' ' + f(podAt(.72)[0]) + ' ' + f(podAt(.72)[1]) }, flows);
+    var fruitBranch = function (t) { var P = function (p) { return f(p[0]) + ' ' + f(p[1]); }, R = function (p) { return P(rigidP(p, NB[1], t)); }; return 'M' + P(warpP([X + 4, NB[1]], t)) + ' Q' + R([X + 36, 528]) + ' ' + R(FB) + ' C' + R(POD[1]) + ' ' + R(POD[2]) + ' ' + R(podAt(.72)); };
+    BRANCHES.push([el('path', { 'class': 'pl-flow pl-flow--phloem pl-flow--branch', 'data-for': 'fruit', d: fruitBranch(0) }, flows), fruitBranch]);
 
     /* ---------- water vapour off the leaves ---------- */
     var vap = el('g', { 'class': 'pl-vapour' }, root);
@@ -381,7 +422,7 @@
     });
 
     /* ---------- what can be pointed at ---------- */
-    var hits = el('g', { 'class': 'pl-hits' }, root);
+    var hits = el('g', { 'class': 'pl-hits' }, root), stemHit = null;
     var HIT = [
       ['plant', 'rect', { x: X - 300, y: 100, width: 600, height: 1000 }],
       ['roots', 'rect', { x: X - 160, y: 820, width: 320, height: 300 }],
@@ -404,7 +445,10 @@
       var id = HITID[h[0]] || h[0];
       var g = el('g', { 'class': 'pl-hit', 'data-hit': id, tabindex: 0, role: 'button', 'aria-label': (G[id] || {}).label || id }, hits);
       var a = {}; for (var k3 in h[2]) a[k3] = h[2][k3]; a['class'] = 'pl-hot';
-      el(h[1], a, g);
+      var hot = el(h[1], a, g);
+      var HN = { 'leaf-2': 514, 'leaf-3': 430, 'leaf-4': 350 }[h[0]] || (h[0] === 'flower' && h[2].cy === 330 ? 424 : null);
+      if (HN) HITWARP.push([g, HN]);
+      if (h[0] === 'stem') stemHit = hot;
       ['mouseenter', 'focus'].forEach(function (ev) { g.addEventListener(ev, function () { hooks.enter('part', id); }); });
       ['mouseleave', 'blur'].forEach(function (ev) { g.addEventListener(ev, function () { hooks.leave('part', id); }); });
       g.addEventListener('click', function (ev) { ev.stopPropagation(); hooks.click('part', id); });
@@ -466,29 +510,52 @@
       if (kind) svg.classList.add('flow-' + kind);
     }
     function breathe(on) { svg.classList.toggle('is-breathing', !!on); }
-    /* The seedling bends to the light the way a real one does — not by tilting from the ground, but by growing:
-       the cells on the shaded side elongate more, so the upper stem curves towards the sun (top right) and the
-       seed leaves are carried round with the tip. The base stays where it is. The bent shape is longer than the
-       straight one, because bending IS growth. */
     var SEED_STRAIGHT = [[X - 2, 782], [X - 6, 740], [X + 8, 710], [X + 26, 690]], SEED_BENT = [[X - 2, 782], [X - 4, 748], [X + 16, 712], [X + 52, 694]];
-    var bendT = 0, bendRaf = null;
-    function paintBend(t) {
+    function paintSeedling(t) {
       var p = SEED_STRAIGHT.map(function (q, i) { return [q[0] + (SEED_BENT[i][0] - q[0]) * t, q[1] + (SEED_BENT[i][1] - q[1]) * t]; });
-      seedStem.setAttribute('d', 'M' + f(p[0][0]) + ' ' + f(p[0][1]) + ' C' + f(p[1][0]) + ' ' + f(p[1][1]) + ' ' + f(p[2][0]) + ' ' + f(p[2][1]) + ' ' + f(p[3][0]) + ' ' + f(p[3][1]));
+      var L = [], R = [], n = 14;
+      for (var i = 0; i <= n; i++) {
+        var u = i / n, c = bez(p[0], p[1], p[2], p[3], u), c2 = bez(p[0], p[1], p[2], p[3], Math.min(1, u + .01)), dx = c2[0] - c[0], dy = c2[1] - c[1], m = Math.sqrt(dx * dx + dy * dy) || 1, w = 6.8 - 2.8 * u;
+        L.push([c[0] - dy / m * w, c[1] + dx / m * w]); R.push([c[0] + dy / m * w, c[1] - dx / m * w]);
+      }
+      var tip = bez(p[0], p[1], p[2], p[3], 1), d = 'M' + L.map(function (q) { return f(q[0]) + ' ' + f(q[1]); }).join(' L') + ' Q' + f(tip[0] + (tip[0] - p[2][0]) * .12) + ' ' + f(tip[1] + (tip[1] - p[2][1]) * .12) + ' ' + f(R[n][0]) + ' ' + f(R[n][1]) + ' L' + R.reverse().map(function (q) { return f(q[0]) + ' ' + f(q[1]); }).join(' L') + ' Z';
+      seedStem.setAttribute('d', d);
       cotyls.setAttribute('transform', 'translate(' + f((SEED_BENT[3][0] - SEED_STRAIGHT[3][0]) * t) + ' ' + f((SEED_BENT[3][1] - SEED_STRAIGHT[3][1]) * t) + ') rotate(' + f(16 * t) + ' ' + f(SEED_STRAIGHT[3][0]) + ' ' + f(SEED_STRAIGHT[3][1]) + ')');
     }
-    function bend(on) {
-      var target = on ? 1 : 0; svg.classList.toggle('is-bent', !!on);
+    function paintBend(t) {
+      bendT = t;
+      stemPath.setAttribute('d', buildPath(STEM_T, t)); stemLine.setAttribute('d', buildPath(STEMHL_T, t));
+      xylemTrunk.setAttribute('d', buildPath(XY_T, t)); phloemTrunk.setAttribute('d', buildPath(PH_T, t));
+      WARPED.concat(HITWARP).forEach(function (w) { var y = w[1]; w[0].setAttribute('transform', t ? 'translate(' + f(warpDx(y, t)) + ' 0) rotate(' + f(warpAng(y, t)) + ' ' + f(X) + ' ' + f(y) + ')' : ''); });
+      BRANCHES.forEach(function (b) { b[0].setAttribute('d', b[1](t)); });
+      if (stemHit) { stemHit.setAttribute('x', f(X - 26 - (bendDir < 0 ? BEND_D * t : 0))); stemHit.setAttribute('width', f(52 + BEND_D * t)); }
+      paintSeedling(t);
+    }
+    function animateBend(target, then) {
       if (bendRaf) cancelAnimationFrame(bendRaf); bendRaf = null;
-      if (still || bendT === target) { bendT = target; paintBend(bendT); return; }
+      if (still || bendT === target) { paintBend(target); if (then) then(); return; }
       var from = bendT, t0 = null;
       bendRaf = requestAnimationFrame(function step(now) {
         if (t0 == null) t0 = now;
         var k = Math.min(1, (now - t0) / 1400), e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
-        bendT = from + (target - from) * e; paintBend(bendT);
-        bendRaf = k < 1 ? requestAnimationFrame(step) : null;
+        paintBend(from + (target - from) * e);
+        if (k < 1) bendRaf = requestAnimationFrame(step); else { bendRaf = null; if (then) then(); }
       });
     }
+    /* bend(on, dir): towards the light on the right (dir 1, the sun where it is drawn) or the left (−1). A plant
+       already bent one way and asked to bend the other straightens first, then grows the new way. */
+    function bend(on, dir) {
+      var want = dir ? (dir < 0 ? -1 : 1) : bendDir;
+      svg.classList.toggle('is-bent', !!on);
+      if (on && want !== bendDir && bendT > 0) { animateBend(0, function () { bendDir = want; animateBend(1); }); return; }
+      bendDir = want; animateBend(on ? 1 : 0);
+    }
+    /* the sun on the right, as drawn, or moved to the same height on the left of the plant */
+    function sunSide(dir) {
+      var tx = dir < 0 ? 2 * X - 1520 : 0, tr = tx ? 'translate(' + tx + ' 0)' : '';
+      [sunGlow, sunG, root.querySelector('.pl-hit[data-hit="sun"]')].forEach(function (e) { if (e) e.setAttribute('transform', tr); });
+    }
+    paintBend(0);
     function grow(stageId) {
       var st = null;
       (P.stages || []).forEach(function (s) { if (s.id === stageId) st = s; });
@@ -551,7 +618,7 @@
 
     return {
       G: G, FULL: FULL, MEMBERS: MEMBERS,
-      light: light, lightMany: lightMany, clear: clear, grow: grow, flow: flow, breathe: breathe, bend: bend,
+      light: light, lightMany: lightMany, clear: clear, grow: grow, flow: flow, breathe: breathe, bend: bend, sunSide: sunSide,
       pin: pin, elFor: elFor, flyTo: flyTo, boxOf: boxOf, boxOfLit: boxOfLit, frame: frame,
       showParts: show, ALL: ALL_SHOW.slice(),
       view: function () { return view; }, isZoomed: function () { return view.w < FULL.w - 1 || view.h < FULL.h - 1; }
