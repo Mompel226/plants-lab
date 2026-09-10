@@ -229,9 +229,9 @@
       leaf: { kind: 'heart', scale: 1.3, fill: '#4FAE5E', stroke: '#245B33', rough: true } },
     { id: 'geranium',  name: 'Geranium',      base: 2.6, note: 'hairy leaves that hold a layer of still, humid air',
       leaf: { kind: 'round', scale: .9, fill: '#7CC46A', stroke: '#3F7F3A' } },
-    { id: 'privet',    name: 'Privet',        base: 1.5, note: 'small waxy leaves with a thick cuticle',
+    { id: 'privet',    name: 'Privet',        base: 1.7, note: 'small waxy leaves with a thick cuticle',
       leaf: { kind: 'oval', scale: .72, fill: '#3F8F4E', stroke: '#1F5A2C', gloss: true } },
-    { id: 'ivy',       name: 'Ivy',           base: 1.2, note: 'tough leaves, a waxy cuticle and fewer stomata',
+    { id: 'ivy',       name: 'Ivy',           base: 1.5, note: 'tough leaves, a waxy cuticle and fewer stomata',
       leaf: { kind: 'lobed', scale: .95, fill: '#3E8A4A', stroke: '#1F5A2C', gloss: true, paleVeins: true } },
     { id: 'marram',    name: 'Marram grass',  base: 0.5, note: 'a xerophyte: rolled leaves with the stomata inside — see the last station',
       leaf: { kind: 'grass', scale: 1.2, fill: '#9DB884', stroke: '#5E7A4B' } }
@@ -239,8 +239,8 @@
   var PO_WIND = ['still air', 'a gentle breeze', 'fan on low', 'fan on high'];
   var PO_WINDF = [1, 1.4, 1.9, 2.5];
   var PO_GREASE = [['none', 'no grease', 1], ['upper', 'grease on the upper surface', .9], ['lower', 'grease on the lower surface', .2], ['both', 'grease on both surfaces', .05]];
-  var PO_MM = 4.2, PO_X0 = 720, PO_BORE_R = 0.5;
-  var PO_STATE = { runs: [], pos: 0, set: null };            /* kept while the lab is open: a trip to Practise and back keeps the table */              /* px per mm on the scale; the 0 mm mark; the capillary's radius, mm */
+  var PO_MM = 4.2, PO_X0 = 108, PO_STEM = 574, PO_BORE_R = 0.5;   /* the scale's 0 mark, and the shoot's stem, in the drawing's units */
+  var PO_STATE = { runs: [], pos: 0, set: null, shoot: 1, shootF: 1 };            /* kept while the lab is open: a trip to Practise and back keeps the table */              /* px per mm on the scale; the 0 mm mark; the capillary's radius, mm */
 
   function poLightF(L) { return .15 + .85 * (1 - Math.exp(-L / 35)) / (1 - Math.exp(-100 / 35)); }
   function poTempF(T) { return Math.pow(2, (T - 20) / 10); }
@@ -272,15 +272,16 @@
     var hum = range('Humidity', 'hum', 20, 100, 50, ' %', 5);
     var wind = range('Wind', 'wind', 0, 3, 0, '');
     var grease = sel('Petroleum jelly on the leaves', 'grease', PO_GREASE.map(function (g) { return [g[0], g[1]]; }), 'none');
+    var joint = sel('The joint at the bung', 'joint', [['sealed', 'sealed with petroleum jelly'], ['open', 'not sealed']], 'sealed');
     var time = sel('Measure for', 'time', [['1', '1 minute'], ['2', '2 minutes'], ['3', '3 minutes'], ['5', '5 minutes'], ['10', '10 minutes']], '5');
-    if (PO_STATE.set) { var S0 = PO_STATE.set; species.value = S0.sp.id; leaves.inp.value = S0.leaves; light.inp.value = S0.light; temp.inp.value = S0.temp; hum.inp.value = S0.hum; wind.inp.value = S0.wind; grease.value = S0.grease; time.value = String(S0.time); }
+    if (PO_STATE.set) { var S0 = PO_STATE.set; species.value = S0.sp.id; leaves.inp.value = S0.leaves; light.inp.value = S0.light; temp.inp.value = S0.temp; hum.inp.value = S0.hum; wind.inp.value = S0.wind; grease.value = S0.grease; joint.value = S0.joint || 'sealed'; time.value = String(S0.time); }
 
     /* ----- the bench ----- */
     var stage = h('div', 'po__stage');
     function ticks() {
       var s = '';
       for (var mm = 0; mm <= 100; mm += 5) {
-        var x = PO_X0 - mm * PO_MM, tall = mm % 10 === 0;
+        var x = PO_X0 + mm * PO_MM, tall = mm % 10 === 0;
         s += '<line x1="' + x.toFixed(1) + '" y1="314" x2="' + x.toFixed(1) + '" y2="' + (tall ? 326 : 321) + '"/>';
         if (tall) s += '<text x="' + x.toFixed(1) + '" y="338" text-anchor="middle">' + mm + '</text>';
       }
@@ -333,7 +334,7 @@
       return v;
     }
     function leafPath(y, dx, dy, len, wid, spec) {
-      var bx = 190, by = y, m = Math.sqrt(dx * dx + dy * dy), ux = dx / m, uy = dy / m;
+      var bx = PO_STEM, by = y, m = Math.sqrt(dx * dx + dy * dy), ux = dx / m, uy = dy / m;
       var lf = spec || PO_SPECIES[0].leaf, L = len * lf.scale, W = (wid / 2) * lf.scale;
       if (lf.kind === 'grass') { L = len; W = wid * .5; }
       var ang = Math.atan2(uy, ux) * 180 / Math.PI;
@@ -344,55 +345,63 @@
         veins(lf.kind, L, W, lf.paleVeins) +
         '<circle class="po__vap" cx="' + (L * .86).toFixed(1) + '" cy="' + (-W * .6 - 4).toFixed(1) + '" r="3.4" transform="rotate(' + (-ang).toFixed(1) + ' ' + (L * .86).toFixed(1) + ' ' + (-W * .6 - 4).toFixed(1) + ')"/></g>';
     }
-    stage.innerHTML = '<svg viewBox="0 0 860 440" class="po__svg" role="img" aria-label="A bubble potometer on a bench: a leafy shoot held in an airtight rubber bung on a clamp stand, joined to a capillary tube lying along a millimetre scale, with a reservoir and tap rising from it and the far end of the tube in a beaker of water. A thermometer hangs on the stand; a fan and a lamp stand by the shoot.">' +
-      '<rect x="0" y="0" width="900" height="440" fill="#F7F4EC"/>' +
-      /* the bench */
-      '<path d="M0 414 H900" stroke="#C9BFA6" stroke-width="3"/>' +
-      /* the fan, on its stand */
-      '<g class="po__fan"><rect x="426" y="396" width="48" height="10" rx="3" fill="#4A4F55"/><rect x="447" y="196" width="6" height="200" fill="#6B7178"/>' +
-      '<rect x="443" y="192" width="14" height="18" rx="4" fill="#5B6167"/>' +
-      '<circle cx="450" cy="166" r="33" fill="#F4F6F7" stroke="#7F94A2" stroke-width="2"/>' +
-      '<g class="po__blades" fill="#9AA6AE">' + [0, 90, 180, 270].map(function (a) { return '<path transform="rotate(' + a + ' 450 166)" d="M450 166 C458 158 474 150 478 161 C481 169 466 176 450 166 Z"/>'; }).join('') + '</g>' +
-      '<g class="po__grille">' + (function () { var g = ''; for (var i = 0; i < 12; i++) { var t = i * Math.PI / 6; g += '<line x1="' + (450 + Math.cos(t) * 11).toFixed(1) + '" y1="' + (166 + Math.sin(t) * 11).toFixed(1) + '" x2="' + (450 + Math.cos(t) * 32).toFixed(1) + '" y2="' + (166 + Math.sin(t) * 32).toFixed(1) + '"/>'; } return g; })() + '<circle cx="450" cy="166" r="24"/><circle cx="450" cy="166" r="11" fill="#C9D0D5"/></g>' +
-      '<circle cx="450" cy="166" r="4" fill="#4A4F55"/>' +
-      '<g class="po__air"><path d="M414 150 H382"/><path d="M412 166 H376"/><path d="M414 182 H382"/></g></g>' +
-      /* the lamp, on the bench */
-      '<g class="po__lamp"><rect x="520" y="396" width="64" height="10" rx="3" fill="#4A4F55"/><path d="M552 396 L546 120 L508 104" stroke="#6B7178" stroke-width="5" stroke-linecap="round" fill="none"/>' +
-      '<path d="M516 84 L476 78 L470 128 L512 122 Z" fill="#6B7178"/><path class="po__bulb" d="M476 80 L470 126 L456 104 Z" fill="#FFE99A"/></g>' +
-      /* the lamp's light: a beam from the lamp, and a glow over the shoot */
-      '<path class="po__beam" d="M478 92 L112 34 L112 214 L478 114 Z" fill="#FFE99A"/><ellipse class="po__glow" cx="220" cy="112" rx="140" ry="100" fill="#FFE99A"/>' +
-      /* the bag over the shoot, for humid air */
-      '<path class="po__bag" d="M108 26 H330 Q346 26 346 42 V208 Q346 224 330 224 H108 Q92 224 92 208 V42 Q92 26 108 26 Z"/>' +
-      /* the clamp stand, with a thermometer hung on it */
-      '<rect x="30" y="402" width="170" height="12" rx="3" fill="#4A4F55"/><rect x="108" y="54" width="9" height="350" fill="#6B7178"/>' +
-      '<rect x="100" y="168" width="34" height="24" rx="3" fill="#4A4F55"/><rect x="132" y="176" width="40" height="8" fill="#4A4F55"/>' +
-      '<path d="M170 168 v24 M204 168 v24" stroke="#4A4F55" stroke-width="6" stroke-linecap="round"/>' +
-      '<g class="po__therm"><path d="M56 64 H104" stroke="#6B7178" stroke-width="3"/><rect x="50" y="56" width="12" height="120" rx="6" fill="#fff" stroke="#7F94A2" stroke-width="2"/><rect class="po__merc" x="54" y="120" width="4" height="50" fill="#D64545"/><circle cx="56" cy="182" r="8" fill="#D64545"/>' +
-      '<text class="po__read po__tread" x="56" y="210" text-anchor="middle">20 °C</text><text class="po__read po__hread" x="838" y="32" text-anchor="end">50 % humidity</text></g>' +
-      /* the water: the vertical tube, the capillary, the bend into the beaker, and the reservoir */
-      '<path class="po__water" d="M178 178 V294 H754 V386 H766 V300 H202 V178 Z"/>' +
-      '<rect class="po__water" x="331" y="140" width="10" height="160"/>' +
-      /* the glass */
-      '<path class="po__glass" d="M176 150 V296 M204 150 V294 M204 294 H758 Q766 294 766 302 V386 M178 300 Q178 306 184 306 H754 Q760 306 760 310 V386"/>' +
-      '<path class="po__glass" d="M330 300 V122 M342 300 V122 M312 100 L330 122 M360 100 L342 122 M312 100 H360"/>' +
-      /* the tap: a screw clip on the reservoir */
-      '<g class="po__tap"><rect x="320" y="232" width="32" height="14" rx="3" fill="#6B7178"/><rect x="352" y="235" width="12" height="8" rx="2" fill="#9AA1A8"/><circle cx="368" cy="239" r="5" fill="#4A4F55"/></g>' +
+    /* The bench, drawn in the order things really stand: the fan and the lamp at the back, then
+       the stand, then the tubing as one continuous tube — an outer glass line, a lighter glass
+       body and the water inside, all on the same path, so the capillary, its bend into the beaker
+       and the reservoir's T-junction fill without a gap — then the beaker's water over the part
+       of the tube that dips into it, the beaker's glass in front, then the scale and the shoot,
+       and the words last. Nothing stands behind the tube or the scale. The reservoir is open at
+       the top, as it is on the bench. */
+    var TUBE = 'M70 392 V312 Q70 300 82 300 H566';                 /* the capillary: up out of the beaker, along the scale, into the shoot's tube */
+    var RES = 'M420 300 V140';                                      /* the reservoir, joined to it from above; its water stands at 140 */
+    stage.innerHTML = '<svg viewBox="0 0 860 440" class="po__svg" role="img" aria-label="A bubble potometer on a bench: a leafy shoot held in an airtight rubber bung on a clamp stand, its tube joined to a capillary tube that lies along a millimetre scale and dips into a beaker of water at the far end, with an open reservoir and a tap rising from the capillary. A thermometer hangs on the stand; a fan and a lamp stand beyond the shoot.">' +
+      '<rect x="0" y="0" width="860" height="440" fill="#F7F4EC"/>' +
+      '<path d="M0 414 H860" stroke="#C9BFA6" stroke-width="3"/>' +
+      /* the fan, on its stand, beyond the shoot */
+      '<g class="po__fan"><rect x="745" y="396" width="50" height="10" rx="3" fill="#4A4F55"/><rect x="767" y="206" width="6" height="190" fill="#6B7178"/>' +
+      '<rect x="763" y="202" width="14" height="18" rx="4" fill="#5B6167"/>' +
+      '<circle cx="770" cy="176" r="33" fill="#F4F6F7" stroke="#7F94A2" stroke-width="2"/>' +
+      '<g class="po__blades" fill="#9AA6AE">' + [0, 90, 180, 270].map(function (a) { return '<path transform="rotate(' + a + ' 770 176)" d="M770 176 C778 168 794 160 798 171 C801 179 786 186 770 176 Z"/>'; }).join('') + '</g>' +
+      '<g class="po__grille">' + (function () { var g = ''; for (var i = 0; i < 12; i++) { var t = i * Math.PI / 6; g += '<line x1="' + (770 + Math.cos(t) * 11).toFixed(1) + '" y1="' + (176 + Math.sin(t) * 11).toFixed(1) + '" x2="' + (770 + Math.cos(t) * 32).toFixed(1) + '" y2="' + (176 + Math.sin(t) * 32).toFixed(1) + '"/>'; } return g; })() + '<circle cx="770" cy="176" r="24"/><circle cx="770" cy="176" r="11" fill="#C9D0D5"/></g>' +
+      '<circle cx="770" cy="176" r="4" fill="#4A4F55"/>' +
+      '<g class="po__air"><path d="M732 160 H704"/><path d="M730 176 H698"/><path d="M732 192 H704"/></g></g>' +
+      /* the lamp, on the bench beyond the fan, shining back over the shoot */
+      '<g class="po__lamp"><rect x="812" y="396" width="46" height="10" rx="3" fill="#4A4F55"/><path d="M835 396 L831 118 L806 104" stroke="#6B7178" stroke-width="5" stroke-linecap="round" fill="none"/>' +
+      '<path d="M812 84 L772 78 L766 128 L808 122 Z" fill="#6B7178"/><path class="po__bulb" d="M772 80 L766 126 L752 104 Z" fill="#FFE99A"/></g>' +
+      '<path class="po__beam" d="M762 92 L470 30 L470 214 L762 116 Z" fill="#FFE99A"/><ellipse class="po__glow" cx="' + PO_STEM + '" cy="112" rx="130" ry="100" fill="#FFE99A"/>' +
+      '<path class="po__bag" d="M486 26 H664 Q680 26 680 42 V208 Q680 224 664 224 H486 Q470 224 470 208 V42 Q470 26 486 26 Z"/>' +
+      /* the clamp stand, right of the shoot, with a thermometer hung on it */
+      '<rect x="600" y="402" width="160" height="12" rx="3" fill="#4A4F55"/><rect x="690" y="54" width="9" height="350" fill="#6B7178"/>' +
+      '<rect x="674" y="168" width="34" height="24" rx="3" fill="#4A4F55"/><rect x="620" y="176" width="56" height="8" fill="#4A4F55"/>' +
+      '<path d="M588 168 v24 M622 168 v24" stroke="#4A4F55" stroke-width="6" stroke-linecap="round"/>' +
+      '<g class="po__therm"><path d="M699 64 H728" stroke="#6B7178" stroke-width="3"/><rect x="716" y="56" width="12" height="120" rx="6" fill="#fff" stroke="#7F94A2" stroke-width="2"/><rect class="po__merc" x="720" y="120" width="4" height="50" fill="#D64545"/><circle cx="722" cy="182" r="8" fill="#D64545"/>' +
+      '<text class="po__read po__tread" x="722" y="224" text-anchor="middle">20 °C</text><text class="po__read po__hread" x="30" y="32">50 % humidity</text></g>' +
+      /* the beaker's back, so the tube shows inside it */
+      '<path d="M30 330 V408 Q30 412 34 412 H126 Q130 412 130 408 V330" fill="#EAF4FA" stroke="none"/>' +
+      /* the shoot's tube: wider glass, full of water, closed by the bung */
+      '<rect x="560" y="176" width="28" height="130" rx="6" fill="#BFE0F5"/>' +
+      /* the tubing, as one tube: glass outside, glass body, water inside */
+      '<path class="po__tube-out" d="' + TUBE + ' ' + RES + ' V122"/>' +
+      '<path class="po__tube-glass" d="' + TUBE + ' ' + RES + ' V122"/>' +
+      '<path class="po__tube-water" d="' + TUBE + ' ' + RES + '"/>' +
+      '<path class="po__glass" d="M560 150 V300 Q560 306 566 306 H582 Q588 306 588 300 V150"/>' +
+      /* the reservoir's funnel, open at the top */
+      '<path class="po__glass" d="M396 100 L414 122 V128 M444 100 L426 122 V128"/>' +
+      '<g class="po__tap"><rect x="404" y="232" width="32" height="14" rx="3" fill="#6B7178"/><rect x="392" y="235" width="12" height="8" rx="2" fill="#9AA1A8"/><circle cx="388" cy="239" r="5" fill="#4A4F55"/></g>' +
+      /* the beaker's water over the dipped end, then its glass in front */
+      '<rect x="32" y="350" width="96" height="60" fill="#BFE0F5" opacity=".62"/>' +
+      '<path d="M30 330 V408 Q30 412 34 412 H126 Q130 412 130 408 V330" fill="none" stroke="#7F94A2" stroke-width="2.5" stroke-linejoin="round"/><path d="M30 350 H130" stroke="#8FB3C7" stroke-width="1.2" opacity=".8"/>' +
       /* the rubber bung, and the shoot in it */
-      '<rect x="174" y="150" width="32" height="26" rx="4" fill="#6E4A33"/>' +
-      '<path d="M190 262 V28" stroke="#3E9A57" stroke-width="7" stroke-linecap="round"/><path d="M190 262 V178" stroke="#2F7D46" stroke-width="7" stroke-linecap="round" opacity=".55"/>' +
+      '<rect x="558" y="150" width="32" height="26" rx="4" fill="#6E4A33"/>' +
+      '<path d="M' + PO_STEM + ' 262 V28" stroke="#3E9A57" stroke-width="7" stroke-linecap="round"/><path d="M' + PO_STEM + ' 262 V178" stroke="#2F7D46" stroke-width="7" stroke-linecap="round" opacity=".55"/>' +
       '<g class="po__leaves">' + LEAVES.map(function (L) { return leafPath(L[0], L[1], L[2], L[3], L[4], PO_SPECIES[0].leaf); }).join('') + '</g>' +
-      /* the beaker */
-      '<path d="M730 330 V408 Q730 412 734 412 H826 Q830 412 830 408 V330" fill="#DDF0FA" stroke="#7F94A2" stroke-width="2.5" stroke-linejoin="round"/>' +
-      '<rect x="732" y="350" width="96" height="60" fill="#BFE0F5" opacity=".8"/>' +
-      /* the scale */
-      '<rect x="292" y="310" width="436" height="36" rx="3" fill="#FFF9E6" stroke="#C9B77A" stroke-width="1.2"/>' +
+      /* the scale under the capillary */
+      '<rect x="98" y="310" width="440" height="36" rx="3" fill="#FFF9E6" stroke="#C9B77A" stroke-width="1.2"/>' +
       '<g class="po__ticks">' + ticks() + '</g>' +
-      /* the bubble */
-      '<ellipse class="po__bubble" cx="' + PO_X0 + '" cy="300" rx="7" ry="4.6"/>' +
-      /* the names of the parts */
-      '<g class="po__names"><text x="30" y="432">clamp stand</text><text x="210" y="198">rubber bung,</text><text x="210" y="226">airtight</text><text x="368" y="112">reservoir</text><text x="380" y="246">tap</text>' +
-      '<text x="490" y="172">fan</text><text x="524" y="82">lamp</text>' +
-      '<text class="po__names--small" x="267" y="284" text-anchor="middle">capillary tube</text><text x="780" y="434" text-anchor="middle">beaker of water</text><text x="660" y="284" text-anchor="middle">air bubble</text><text x="510" y="368" text-anchor="middle">scale, in mm</text></g>' +
+      '<ellipse class="po__bubble" cx="' + PO_X0 + '" cy="300" rx="6" ry="3.4"/>' +
+      '<g class="po__names"><text x="30" y="434">beaker of water</text><text x="160" y="284" text-anchor="middle">air bubble</text><text x="300" y="284" text-anchor="middle">capillary tube</text><text x="318" y="368" text-anchor="middle">scale, in mm</text>' +
+      '<text x="388" y="112" text-anchor="end">reservoir</text><text x="378" y="246" text-anchor="end">tap</text><text x="436" y="198">rubber bung,</text><text x="436" y="226">airtight</text>' +
+      '<text x="640" y="434">clamp stand</text><text x="780" y="230">fan</text><text x="816" y="66">lamp</text></g>' +
       '</svg>';
     var svg = stage.firstChild, bubble = svg.querySelector('.po__bubble'), leavesG = svg.querySelector('.po__leaves'), leafEls = svg.querySelectorAll('.po__leaf'), leafKind = 'bean';
     function growLeaves(sp) {
@@ -408,8 +417,9 @@
     var read = h('div', 'po__reading', '<span class="po__at">bubble at <b>0</b> mm</span>'); read.setAttribute('aria-live', 'polite');
     var atB = read.querySelector('b');
     var btns = h('div', 'po__btns');
-    var bStart = h('button', 'wbtn po__start', '▶ Start the clock'), bReset = h('button', 'wbtn wbtn--quiet', 'Open the tap: bubble back to 0'), bRecord = h('button', 'wbtn po__rec', 'Record this run');
-    [bStart, bReset, bRecord].forEach(function (b) { b.type = 'button'; btns.appendChild(b); });
+    var bStart = h('button', 'wbtn po__start', '▶ Start the clock'), bReset = h('button', 'wbtn wbtn--quiet', 'Open the tap: bubble back to 0'), bRecord = h('button', 'wbtn po__rec', 'Record this run'), bNew = h('button', 'wbtn wbtn--quiet', 'Use a new shoot');
+    bNew.title = 'Another shoot of the same kind, from another plant: its own leaves, its own rate';
+    [bStart, bReset, bRecord, bNew].forEach(function (b) { b.type = 'button'; btns.appendChild(b); });
     bRecord.disabled = true;
     var result = h('div', 'po__result'); result.hidden = true; result.setAttribute('aria-live', 'polite');
     var say = h('p', 'po__say');
@@ -417,14 +427,14 @@
     /* ----- the model ----- */
     function settings() {
       var sp = PO_SPECIES.filter(function (s) { return s.id === species.value; })[0];
-      return { sp: sp, leaves: +leaves.inp.value, light: +light.inp.value, temp: +temp.inp.value, hum: +hum.inp.value, wind: +wind.inp.value, grease: grease.value, time: +time.value };
+      return { sp: sp, leaves: +leaves.inp.value, light: +light.inp.value, temp: +temp.inp.value, hum: +hum.inp.value, wind: +wind.inp.value, grease: grease.value, joint: joint.value, time: +time.value, shoot: PO_STATE.shoot };
     }
     function rateOf(s) {
       var g = PO_GREASE.filter(function (x) { return x[0] === s.grease; })[0][2];
       return s.sp.base * (s.leaves / 5) * poLightF(s.light) * poTempF(s.temp) * poHumF(s.hum) * PO_WINDF[s.wind] * g;
     }
     var pos = 0, run = null, raf = null, lastRun = null;
-    function remember() { PO_STATE.set = settings(); PO_STATE.pos = pos; PO_STATE.runs = runs; }
+    function remember() { PO_STATE.set = settings(); PO_STATE.pos = pos; PO_STATE.runs = runs; }   /* the shoot and its factor already live in PO_STATE */
     function paintConditions() {
       var s = settings();
       speciesNote.textContent = s.sp.note; growLeaves(s.sp);
@@ -433,7 +443,7 @@
       leafEls.forEach(function (l, i) { l.classList.toggle('is-off', i >= s.leaves); });
       glow.style.opacity = (s.light / 100 * .55).toFixed(2);
       svg.querySelector('.po__bulb').style.opacity = (.25 + s.light / 100 * .75).toFixed(2);
-      merc.setAttribute('y', (172 - (s.temp - 5) / 30 * 104).toFixed(1)); merc.setAttribute('x', 54); merc.setAttribute('height', ((s.temp - 5) / 30 * 104 + 4).toFixed(1));
+      merc.setAttribute('y', (172 - (s.temp - 5) / 30 * 104).toFixed(1)); merc.setAttribute('x', 720); merc.setAttribute('height', ((s.temp - 5) / 30 * 104 + 4).toFixed(1));
       svg.querySelector('.po__beam').style.opacity = (s.light / 100 * .22).toFixed(2);
       tread.textContent = s.temp + ' °C'; hread.textContent = s.hum + ' % humidity';
       svg.classList.toggle('is-bagged', s.hum >= 85);
@@ -451,17 +461,18 @@
       }
     }
     [leaves, light, temp, hum, wind].forEach(function (r) { r.inp.addEventListener('input', paintConditions); });
-    [species, grease, time].forEach(function (s) { s.addEventListener('change', paintConditions); });
+    [species, grease, joint, time].forEach(function (s) { s.addEventListener('change', paintConditions); });
 
-    function setBubble(mm) { pos = mm; PO_STATE.pos = mm; bubble.setAttribute('cx', (PO_X0 - mm * PO_MM).toFixed(1)); atB.textContent = mm.toFixed(mm < 10 ? 1 : 0); }
+    function setBubble(mm) { pos = mm; PO_STATE.pos = mm; bubble.setAttribute('cx', (PO_X0 + mm * PO_MM).toFixed(1)); atB.textContent = mm.toFixed(mm < 10 ? 1 : 0); }
     function fmt(sec) { var m = Math.floor(sec / 60), s2 = Math.floor(sec % 60); return m + ':' + (s2 < 10 ? '0' : '') + s2; }
 
     function start() {
       if (run) { finish(); return; }                       /* a second press skips to the end */
-      var s = settings(), rate = rateOf(s) * (1 + (Math.random() - .5) * .08);
-      var d = rate * s.time, from = pos, capped = false;
+      var s = settings(), rate = rateOf(s) * PO_STATE.shootF * (1 + (Math.random() - .5) * .2);   /* repeats on a real bench differ by a few per cent: hand timing, a bubble that hesitates */
+      var d = rate * s.time, from = pos, capped = false, leak = s.joint === 'open', stuck = false;
+      if (leak) { d *= .35 + Math.random() * .5; if (Math.random() < .25) { d *= .3; stuck = true; } }   /* air drawn in at the joint instead of water: the bubble moves less, and by a different amount each time */
       if (from + d > 100) { d = 100 - from; capped = true; }
-      run = { s: s, rate: rate, d: d, from: from, capped: capped, t0: null, T: s.time * 2000 };
+      run = { s: s, rate: rate, d: d, from: from, capped: capped, leak: leak, stuck: stuck, t0: null, T: s.time * 2000 };
       result.hidden = true; bRecord.disabled = true; bStart.textContent = 'Skip to the end';
       ctl.classList.add('is-locked'); ctl.querySelectorAll('input,select').forEach(function (e) { e.disabled = true; });
       svg.classList.add('is-running');
@@ -485,15 +496,16 @@
       svg.classList.remove('is-running');
       ctl.classList.remove('is-locked'); ctl.querySelectorAll('input,select').forEach(function (e) { e.disabled = false; });
       bStart.textContent = '▶ Start the clock';
-      var distance = r.d, mins = r.s.time, rate = distance / mins, vol = Math.PI * PO_BORE_R * PO_BORE_R * rate;
-      lastRun = { s: r.s, distance: distance, rate: rate };
+      var distance = Math.round(r.from + r.d) - Math.round(r.from), mins = r.s.time, rate = distance / mins, vol = Math.PI * PO_BORE_R * PO_BORE_R * rate;   /* read to the nearest millimetre, as the scale allows */
+      lastRun = { s: r.s, distance: distance, rate: rate, leak: r.leak };
       result.hidden = false;
-      result.innerHTML = '<div class="po__stat"><span>Distance moved</span><b>' + distance.toFixed(1) + ' mm</b><small>from ' + r.from.toFixed(0) + ' to ' + (r.from + distance).toFixed(0) + ' on the scale</small></div>' +
-        '<div class="po__stat"><span>Rate of uptake</span><b>' + rate.toFixed(2) + ' mm/min</b><small>' + distance.toFixed(1) + ' mm ÷ ' + mins + ' min</small></div>' +
+      result.innerHTML = '<div class="po__stat"><span>Distance moved</span><b>' + distance + ' mm</b><small>from ' + Math.round(r.from) + ' to ' + Math.round(r.from + r.d) + ' on the scale, read to the nearest mm (± 0.5)</small></div>' +
+        '<div class="po__stat"><span>Rate of uptake</span><b>' + rate.toFixed(2) + ' mm/min</b><small>' + distance + ' mm ÷ ' + mins + ' min</small></div>' +
         '<div class="po__stat"><span>Volume taken up</span><b>' + vol.toFixed(2) + ' mm³/min</b><small>π × 0.5² × ' + rate.toFixed(2) + ', for a 1 mm bore</small></div>' +
-        (r.capped ? '<p class="po__warn">The bubble reached the end of the scale before the time was up, so this reading is too small. Open the tap, and measure for less time or slow the shoot down.</p>' : '');
+        (r.capped ? '<p class="po__warn">The bubble reached the end of the scale before the time was up, so this reading is too small. Open the tap, and measure for less time or slow the shoot down.</p>' : '') +
+        (r.leak ? '<p class="po__warn">The joint at the bung was not sealed. Air was drawn in there instead of water from the tube, so the bubble moved less than the shoot took up' + (r.stuck ? ' — and stuck for part of the run' : '') + '. Every leaking reading is too small (a systematic error) and by a different amount each time (a random one on top). Seal the joint with petroleum jelly.</p>' : '');
       bRecord.disabled = !!r.capped;
-      say.textContent = r.capped ? 'Not a fair reading — the bubble ran out of scale.' : 'Read the scale, then record the run. Repeat it to get a mean, or change one factor and run again.';
+      say.textContent = r.capped ? 'Not a fair reading — the bubble ran out of scale.' : r.leak ? 'You can record it — a leaking reading in the table is worth seeing next to a sealed one.' : 'Read the scale, then record the run. Repeat it to get a mean, or change one factor and run again.';
     }
     function resetBubble() {
       if (run) return;
@@ -511,6 +523,12 @@
     }
     bStart.addEventListener('click', start);
     bReset.addEventListener('click', resetBubble);
+    bNew.addEventListener('click', function () {
+      if (run) return;
+      PO_STATE.shoot = (PO_STATE.shoot || 1) + 1; PO_STATE.shootF = .84 + Math.random() * .32;
+      resetBubble();
+      say.textContent = 'Shoot ' + String.fromCharCode(64 + PO_STATE.shoot) + ': another plant of the same kind, with its own leaves and its own rate. Repeats on one shoot are technical replicates; different shoots are true replicates — only they say something about the species.';
+    });
 
     /* ----- the table, the means, the graph ----- */
     var runs = PO_STATE.runs;
@@ -520,11 +538,11 @@
     var bCopy = h('button', 'wbtn wbtn--quiet', 'Copy the table'), bClear = h('button', 'wbtn wbtn--quiet', 'Clear the table');
     [bCopy, bClear].forEach(function (b) { b.type = 'button'; tools.appendChild(b); });
     tableWrap.appendChild(table); tableBox.appendChild(tableWrap); tableBox.appendChild(means); tableBox.appendChild(chart); tableBox.appendChild(tools);
-    var COLS = [['n', 'Run'], ['plant', 'Plant'], ['leaves', 'Leaves'], ['light', 'Light / %'], ['temp', 'Temp / °C'], ['hum', 'Humidity / %'], ['wind', 'Wind'], ['grease', 'Grease'], ['time', 'Time / min'], ['distance', 'Distance / mm'], ['rate', 'Rate / mm min⁻¹']];
+    var COLS = [['n', 'Run'], ['plant', 'Plant'], ['shoot', 'Shoot'], ['leaves', 'Leaves'], ['light', 'Light / %'], ['temp', 'Temp / °C'], ['hum', 'Humidity / %'], ['wind', 'Wind'], ['grease', 'Grease'], ['joint', 'Joint'], ['time', 'Time / min'], ['distance', 'Distance / mm'], ['rate', 'Rate / mm min⁻¹']];
     function rowOf(r, i) {
-      return { n: i + 1, plant: r.s.sp.name, leaves: r.s.leaves, light: r.s.light, temp: r.s.temp, hum: r.s.hum, wind: PO_WIND[r.s.wind], grease: r.s.grease === 'none' ? '—' : r.s.grease, time: r.s.time, distance: r.distance.toFixed(1), rate: r.rate.toFixed(2) };
+      return { n: i + 1, plant: r.s.sp.name, shoot: String.fromCharCode(64 + (r.s.shoot || 1)), leaves: r.s.leaves, light: r.s.light, temp: r.s.temp, hum: r.s.hum, wind: PO_WIND[r.s.wind], grease: r.s.grease === 'none' ? '—' : r.s.grease, joint: r.s.joint === 'open' ? 'leaking' : 'sealed', time: r.s.time, distance: String(r.distance), rate: r.rate.toFixed(2) };
     }
-    function keyOf(r) { return [r.s.sp.id, r.s.leaves, r.s.light, r.s.temp, r.s.hum, r.s.wind, r.s.grease, r.s.time].join('|'); }
+    function keyOf(r) { return [r.s.sp.id, r.s.leaves, r.s.light, r.s.temp, r.s.hum, r.s.wind, r.s.grease, r.s.joint, r.s.time].join('|'); }
     bRecord.addEventListener('click', function () {
       if (!lastRun) return;
       runs.push(lastRun); lastRun = null; bRecord.disabled = true;
@@ -551,14 +569,14 @@
       var reps = order.filter(function (k) { return groups[k].length > 1; });
       means.innerHTML = reps.length ? '<b>Means of repeated runs</b>' + reps.map(function (k) {
         var g = groups[k], rs = g.map(function (r) { return r.rate; }), mean = rs.reduce(function (a, b) { return a + b; }, 0) / rs.length;
-        var s = g[0].s;
-        return '<div class="po__mean">' + esc(s.sp.name) + ', ' + s.leaves + ' leaves, ' + s.light + ' % light, ' + s.temp + ' °C, ' + s.hum + ' % humidity, ' + esc(PO_WIND[s.wind]) + (s.grease === 'none' ? '' : ', grease ' + esc(s.grease)) + ', ' + s.time + ' min: <b>' + mean.toFixed(2) + ' mm / min</b> <small>(' + g.length + ' runs, ' + Math.min.apply(null, rs).toFixed(2) + '–' + Math.max.apply(null, rs).toFixed(2) + ')</small></div>';
+        var s = g[0].s, shoots = {}; g.forEach(function (r) { shoots[r.s.shoot || 1] = 1; }); var ns = Object.keys(shoots).length;
+        return '<div class="po__mean">' + esc(s.sp.name) + ', ' + s.leaves + ' leaves, ' + s.light + ' % light, ' + s.temp + ' °C, ' + s.hum + ' % humidity, ' + esc(PO_WIND[s.wind]) + (s.grease === 'none' ? '' : ', grease ' + esc(s.grease)) + (s.joint === 'open' ? ', joint leaking' : '') + ', ' + s.time + ' min: <b>' + mean.toFixed(2) + ' mm / min</b> <small>(' + g.length + ' runs on ' + ns + (ns === 1 ? ' shoot — technical replicates' : ' shoots') + ', ' + Math.min.apply(null, rs).toFixed(2) + '–' + Math.max.apply(null, rs).toFixed(2) + ')</small></div>';
       }).join('') : (runs.length >= 2 ? '<small>Repeat a run with the same settings and its mean appears here.</small>' : '');
       chart.innerHTML = graph(groups, order);
     }
     /* the graph picks its x-axis: the one factor that changed between runs */
-    var FACT = [['leaves', 'Leaves on the shoot', true], ['light', 'Light / %', true], ['temp', 'Temperature / °C', true], ['hum', 'Humidity / %', true], ['wind', 'Wind', false], ['time', 'Time / min', true], ['sp', 'Plant', false], ['grease', 'Grease', false]];
-    function fval(r, f) { return f === 'sp' ? r.s.sp.name : f === 'wind' ? PO_WIND[r.s.wind] : r.s[f]; }
+    var FACT = [['leaves', 'Leaves on the shoot', true], ['light', 'Light / %', true], ['temp', 'Temperature / °C', true], ['hum', 'Humidity / %', true], ['wind', 'Wind', false], ['time', 'Time / min', true], ['sp', 'Plant', false], ['grease', 'Grease', false], ['joint', 'Joint at the bung', false]];
+    function fval(r, f) { return f === 'sp' ? r.s.sp.name : f === 'wind' ? PO_WIND[r.s.wind] : f === 'joint' ? (r.s.joint === 'open' ? 'not sealed' : 'sealed') : r.s[f]; }
     function graph(groups, order) {
       if (runs.length < 2) return '<small class="po__gnote">Record a second run and the graph draws itself.</small>';
       var varying = FACT.filter(function (F) { var vals = {}; runs.forEach(function (r) { vals[fval(r, F[0])] = 1; }); return Object.keys(vals).length > 1; });
@@ -568,7 +586,7 @@
         var F = varying[0]; xlab = F[1]; numeric = F[2];
         var byX = {}; runs.forEach(function (r) { var x = fval(r, F[0]); (byX[x] = byX[x] || []).push(r.rate); });
         pts = Object.keys(byX).map(function (x) { var rs = byX[x]; return { x: numeric ? +x : x, mean: rs.reduce(function (a, b) { return a + b; }, 0) / rs.length, all: rs }; });
-        var ORDER = { wind: PO_WIND, sp: PO_SPECIES.map(function (q) { return q.name; }), grease: PO_GREASE.map(function (q) { return q[0]; }) }[F[0]];
+        var ORDER = { wind: PO_WIND, sp: PO_SPECIES.map(function (q) { return q.name; }), grease: PO_GREASE.map(function (q) { return q[0]; }), joint: ['sealed', 'not sealed'] }[F[0]];
         pts.sort(function (a, b) { return numeric ? a.x - b.x : ORDER.indexOf(a.x) - ORDER.indexOf(b.x); });
         note = 'Rate of uptake against ' + F[1].toLowerCase().replace(/ \/ .*/, '') + ' — the one factor you changed' + (pts.some(function (p) { return p.all.length > 1; }) ? '; a point is the mean of its repeats' : '') + '.';
       } else {
@@ -611,7 +629,7 @@
     var right = h('div', 'po__right'); right.appendChild(ctl); right.appendChild(btns); right.appendChild(say);
     wrap2.appendChild(slot); wrap2.appendChild(right);
     box.appendChild(wrap2); box.appendChild(tableBox);
-    box.appendChild(h('p', 'widget__note', 'A model built to be fair to the biology, not measured data: a leafy shoot in a 1 mm bore tube moves a bubble a few millimetres a minute in still air, and several times that in a warm, dry wind. Every run starts where the last one left the bubble unless you open the tap.'));
+    box.appendChild(h('p', 'widget__note', 'A model, scaled to published class results rather than measured here: a leafy shoot in still room air moves the bubble about 2–4 mm a minute in a 1 mm bore tube, a fan or a warm dry room multiplies that, the dark almost stops it; the plants are ranked by the leaf rates in the literature — a sunflower leaf transpires several times faster than an ivy or privet leaf, and marram grass with its rolled leaves far less. Every run starts where the last one left the bubble unless you open the tap. Sources: assets/photos/CREDITS.md.'));
     var wideQ = window.matchMedia('(min-width: 1001px)');
     function mount() {
       var host = document.getElementById('benchHost');

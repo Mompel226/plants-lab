@@ -133,3 +133,32 @@ Two longer videos in the lesson folders were left out on length alone (ten and e
 The plant on the left, its parts, the cactus and the water lily, the diagrams in the theory pages
 (the half-flower, the auxin experiment, the potometer, the sources and sinks, the pollen tube) and
 every widget are drawn by the page and are original.
+
+## The numbers in the potometer
+
+The rates the potometer gives are a model, scaled so that the bubble does what it does on a real
+bench, not measured here. What it is scaled to:
+
+- Class results and worked examples for a leafy shoot in still room air in a 1 mm bore tube: 15 mm
+  in 5 min, 40 mm in 20 min, 2.3 mm in 1 min — about 2–4 mm per minute (AQA-style worked examples,
+  https://www.elevise.co.uk/gab2u.html; the SAPS potometer practical, which expects a visible change
+  within about ten minutes under normal classroom conditions and asks for readings every ten
+  minutes for forty, https://www.saps.org.uk/teaching-resources/resources/1263/investigating-transpiration-with-a-potometer/;
+  Southern Biological's Year 11–12 sheet, which records how far the bubble moves in ten minutes under
+  each condition and names geranium, laurel and privet as the shoots to use,
+  https://www.southernbiological.com/content/BIO_P_CEL_Y11&12_17.pdf).
+- The direction and rough size of each factor: a fan roughly doubles to trebles uptake by thinning
+  the still air round the leaf; evaporation and diffusion roughly double for a 10 °C rise; uptake
+  falls in step with the water vapour already in the air, to almost nothing under a bag; the dark
+  closes the stomata and leaves only what escapes through the cuticle.
+- The ranking of the plants, from leaf-level rates in the literature: ivy leaves transpire 0.1–2.5
+  mmol m⁻² s⁻¹ and a whole ivy plant about 0.23, a conservative, waxy-leaved plant
+  (https://pubmed.ncbi.nlm.nih.gov/21293876/ ; https://academic.oup.com/jxb/article/55/401/1411/478991);
+  sunflower and bean leaves several times more under the same light; privet like ivy; geranium in
+  between; marram grass, with its stomata rolled inside the leaf, far less.
+- Petroleum jelly on a leaf surface blocks the stomata on that surface; on most dicot leaves nearly
+  all are on the lower surface, so grease there cuts uptake to a fraction, grease above hardly at
+  all. Petroleum jelly at the joint with the bung is what makes the joint airtight: without it, air
+  is drawn in there instead of water from the tube, the bubble moves less than the shoot takes up,
+  and by a different amount each time (SAPS, above: leaks at the joints are one of the two reasons a
+  potometer fails, and jelly is what fixes them).
