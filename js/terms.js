@@ -31,21 +31,22 @@
 
   var PLAIN_WORDS = {
     water: ['xylem', 'xylem vessel', 'xylem vessels', 'phloem', 'vascular bundle', 'vascular bundles', 'root hair cell', 'root hair cells', 'root hair', 'root hairs',
-            'root cortex', 'cortex', 'transpiration', 'transpiration pull', 'transpiration stream', 'wilting', 'wilts', 'wilted', 'turgid', 'flaccid', 'humidity', 'potometer',
+            'root cortex', 'cortex', 'transpiration', 'transpiration pull', 'transpiration stream', 'wilting', 'wilt', 'wilts', 'wilted', 'turgid', 'flaccid', 'humidity', 'potometer',
             'lignin', 'osmosis', 'active transport', 'mineral ion', 'mineral ions', 'nitrate ion', 'nitrate ions', 'nitrate', 'magnesium ion', 'magnesium ions', 'magnesium',
             'water vapour', 'stoma', 'stomata', 'guard cell', 'guard cells', 'air space', 'air spaces', 'cuticle', 'epidermis', 'upper epidermis', 'lower epidermis'],
     food:  ['photosynthesis', 'photosynthesise', 'photosynthesises', 'chlorophyll', 'chloroplast', 'chloroplasts', 'glucose', 'starch', 'cellulose', 'sucrose', 'nectar',
-            'carbohydrate', 'carbohydrates', 'limiting factor', 'limiting factors', 'palisade mesophyll', 'spongy mesophyll', 'mesophyll', 'mesophyll cells', 'palisade cells', 'palisade layer',
+            'carbohydrate', 'carbohydrates', 'limiting factor', 'limiting factors', 'palisade mesophyll', 'spongy mesophyll', 'mesophyll', 'mesophyll cell', 'mesophyll cells', 'palisade cell', 'palisade cells', 'palisade layer',
             'translocation', 'source', 'sources', 'sink', 'sinks', 'amino acid', 'amino acids', 'iodine solution', 'variegated leaf', 'variegated', 'de-starching', 'de-starched', 'hydrogencarbonate indicator',
             'respiration', 'respire', 'respires', 'enzyme', 'enzymes'],
     repro: ['flower', 'flowers', 'sepal', 'sepals', 'petal', 'petals', 'stamen', 'stamens', 'filament', 'filaments', 'anther', 'anthers', 'carpel', 'carpels', 'stigma', 'stigmas', 'style', 'ovary', 'ovaries',
             'ovule', 'ovules', 'pollen', 'pollen grain', 'pollen grains', 'pollination', 'pollinated', 'self-pollination', 'cross-pollination', 'fertilisation', 'fertilised', 'pollen tube',
             'seed', 'seeds', 'fruit', 'fruits', 'germination', 'germinate', 'germinates', 'germinating', 'radicle', 'plumule', 'testa', 'seed coat', 'cotyledon', 'cotyledons', 'embryo',
             'gamete', 'gametes', 'male gamete', 'female gamete', 'insect-pollinated', 'wind-pollinated'],
-    grow:  ['tropism', 'tropisms', 'gravitropism', 'phototropism', 'auxin', 'shoot tip', 'cell elongation', 'elongation', 'stimulus', 'stimuli', 'adaptive feature', 'adaptive features',
+    grow:  ['tropism', 'tropisms', 'gravitropism', 'phototropism', 'auxin', 'auxins', 'shoot tip', 'shoot tips', 'cell elongation', 'elongation', 'stimulus', 'stimuli', 'adaptive feature', 'adaptive features',
             'xerophyte', 'xerophytes', 'hydrophyte', 'hydrophytes', 'adaptation', 'adaptations', 'sensitivity'],
-    plain: ['diffusion', 'diffuse', 'diffuses', 'concentration gradient', 'partially permeable', 'cell membrane', 'cell wall', 'vacuole', 'nucleus', 'mitochondria', 'surface area',
-            'dry mass', 'organ', 'tissue', 'dicotyledon', 'dicotyledons', 'monocotyledon', 'monocotyledons', 'species', 'population', 'variation', 'natural selection']
+    plain: ['diffusion', 'diffuse', 'diffuses', 'concentration gradient', 'partially permeable', 'cell membrane', 'cell wall', 'cell walls', 'vacuole', 'vacuoles', 'nucleus', 'nuclei', 'mitochondrion', 'mitochondria', 'surface area',
+            'dry mass', 'organ', 'organs', 'tissue', 'tissues', 'dicotyledon', 'dicotyledons', 'monocotyledon', 'monocotyledons', 'species', 'population', 'populations', 'variation', 'variations', 'natural selection',
+            'standard deviation', 'standard error', '95 % confidence interval', 'confidence interval']
   };
 
   /* --------- what happens when you click a term ---------
@@ -82,16 +83,19 @@
   /* the same word, different station: a picture that is right in one place can be wrong in another */
   var CONTEXT = {};
 
+  /* the statistics of the potometer's table: bold every time, and a click shows what each is and how it is worked out */
+  var STAT = { 'standard deviation': 'sd', 'standard error': 'se', '95 % confidence interval': 'ci', 'confidence interval': 'ci' };
+
   var JUMP = {};
   function jump(list, st) { list.forEach(function (w) { JUMP[w] = st; }); }
   jump(['germination', 'germinate', 'germinates', 'germinating', 'radicle', 'plumule', 'testa', 'seed coat', 'cotyledon', 'cotyledons', 'dry mass'], 'seed');
   jump(['root hair cell', 'root hair cells', 'root hair', 'root hairs', 'root cortex', 'cortex', 'mineral ion', 'mineral ions', 'nitrate ion', 'nitrate ions', 'nitrate', 'magnesium ion', 'magnesium ions', 'magnesium', 'osmosis', 'active transport'], 'root');
   jump(['xylem', 'xylem vessel', 'xylem vessels', 'phloem', 'vascular bundle', 'vascular bundles', 'lignin'], 'stem');
-  jump(['stoma', 'stomata', 'guard cell', 'guard cells', 'air space', 'air spaces', 'cuticle', 'epidermis', 'upper epidermis', 'lower epidermis', 'palisade mesophyll', 'spongy mesophyll', 'mesophyll', 'mesophyll cells', 'palisade cells', 'palisade layer', 'surface area'], 'leaf');
+  jump(['stoma', 'stomata', 'guard cell', 'guard cells', 'air space', 'air spaces', 'cuticle', 'epidermis', 'upper epidermis', 'lower epidermis', 'palisade mesophyll', 'spongy mesophyll', 'mesophyll', 'mesophyll cell', 'mesophyll cells', 'palisade cell', 'palisade cells', 'palisade layer', 'surface area'], 'leaf');
   jump(['photosynthesis', 'photosynthesise', 'photosynthesises', 'chlorophyll', 'chloroplast', 'chloroplasts', 'glucose', 'starch', 'cellulose', 'nectar', 'carbohydrate', 'carbohydrates', 'limiting factor', 'limiting factors', 'iodine solution', 'variegated leaf', 'variegated', 'de-starching', 'de-starched', 'hydrogencarbonate indicator'], 'photosynthesis');
-  jump(['transpiration', 'transpiration pull', 'transpiration stream', 'wilting', 'wilts', 'wilted', 'turgid', 'flaccid', 'humidity', 'potometer', 'water vapour'], 'transpiration');
+  jump(['transpiration', 'transpiration pull', 'transpiration stream', 'wilting', 'wilt', 'wilts', 'wilted', 'turgid', 'flaccid', 'humidity', 'potometer', 'water vapour'], 'transpiration');
   jump(['translocation', 'source', 'sources', 'sink', 'sinks', 'sucrose', 'amino acid', 'amino acids'], 'translocation');
-  jump(['tropism', 'tropisms', 'gravitropism', 'phototropism', 'auxin', 'shoot tip', 'cell elongation', 'elongation', 'stimulus', 'stimuli', 'sensitivity'], 'tropisms');
+  jump(['tropism', 'tropisms', 'gravitropism', 'phototropism', 'auxin', 'auxins', 'shoot tip', 'shoot tips', 'cell elongation', 'elongation', 'stimulus', 'stimuli', 'sensitivity'], 'tropisms');
   jump(['flower', 'flowers', 'sepal', 'sepals', 'petal', 'petals', 'stamen', 'stamens', 'filament', 'filaments', 'anther', 'anthers', 'carpel', 'carpels', 'stigma', 'stigmas', 'style', 'ovary', 'ovaries', 'pollen', 'pollen grain', 'pollen grains',
         'pollination', 'pollinated', 'self-pollination', 'cross-pollination', 'insect-pollinated', 'wind-pollinated', 'gamete', 'gametes', 'male gamete', 'female gamete'], 'flower');
   jump(['fertilisation', 'fertilised', 'pollen tube', 'ovule', 'ovules', 'seed', 'seeds', 'fruit', 'fruits', 'embryo'], 'fruit');
@@ -108,6 +112,7 @@
   /* a plural or an inflection opens the singular's definition */
   function defined(low) {
     if (DEFINED[low]) return DEFINED[low];
+    var F = global.GLOSSARY_FORMS || {}; if (F[low]) return F[low];   /* the plural, the singular, the verb, an alias: worked out at build time */
     var tries = [low.replace(/ies$/, 'y'), low.replace(/ata$/, 'a'), low.replace(/s$/, ''), low.replace(/es$/, ''), low.replace(/ed$/, ''), low.replace(/ing$/, 'e'), low.replace(/ing$/, '')];
     for (var i = 0; i < tries.length; i++) if (tries[i] !== low && DEFINED[tries[i]]) return DEFINED[tries[i]];
     return null;
@@ -162,6 +167,7 @@
     return underlineTags(underlineMarks(esc(text)).replace(RE, function (m, _g, at, whole) {
       var low = m.toLowerCase(), e = INFO[low];
       if (!e) return m;
+      if (STAT[low]) return '<b class="t t--plain is-stat" data-stat="' + STAT[low] + '" data-term="' + esc(m) + '" tabindex="0" role="button">' + m + '</b>';
       var before = String(whole).slice(0, at).replace(/<[^>]*>/g, '');
       if (NEGATED.test(before)) return m;
       var cat = e[1], act = '', cls = '';
