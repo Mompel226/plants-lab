@@ -41,16 +41,17 @@
     '.pl-grows{transition:transform .9s cubic-bezier(.2,.7,.2,1),opacity .55s ease}' +
     '.pl-grows:not(.is-shown){opacity:0;transform:scale(.02)}' +
     '.pl-grows--up:not(.is-shown){transform:scale(1,.02)}' +
-    /* the flower opens when it arrives; when it goes, its petals fall one by one and only then does it fade */
+    /* the flower opens when it arrives. When it goes because the pod is coming (svg.is-fruiting), its
+       petals fall one by one and only then does it fade; at any other time it goes as fast as everything else */
     '@keyframes pl-bloom{from{transform:scale(.12)}}' +
     '.pl-flower.is-shown{animation:pl-bloom .9s cubic-bezier(.2,.7,.2,1)}' +
-    '.pl-flower.pl-grows:not(.is-shown){transform:none;opacity:0;transition:opacity .4s ease 1.4s}' +
+    'svg.is-fruiting .pl-flower.pl-grows:not(.is-shown){transform:none;opacity:0;transition:opacity .4s ease 1.4s}' +
     '.pl-petal{transform-box:fill-box;transform-origin:50% 100%}' +
-    '.pl-flower:not(.is-shown) .pl-petal{transform:translateY(96px) rotate(24deg);opacity:0;transition:transform 1.5s cubic-bezier(.5,0,.9,.5),opacity 1.35s ease-in}' +
-    '.pl-flower:not(.is-shown) .pl-petal:nth-child(2){transition-delay:.14s}.pl-flower:not(.is-shown) .pl-petal:nth-child(3){transition-delay:.3s}' +
-    '.pl-flower:not(.is-shown) .pl-petal:nth-child(4){transition-delay:.08s}.pl-flower:not(.is-shown) .pl-petal:nth-child(5){transition-delay:.22s}' +
+    'svg.is-fruiting .pl-flower:not(.is-shown) .pl-petal{transform:translateY(96px) rotate(24deg);opacity:0;transition:transform 1.5s cubic-bezier(.5,0,.9,.5),opacity 1.35s ease-in}' +
+    'svg.is-fruiting .pl-flower:not(.is-shown) .pl-petal:nth-child(2){transition-delay:.14s}svg.is-fruiting .pl-flower:not(.is-shown) .pl-petal:nth-child(3){transition-delay:.3s}' +
+    'svg.is-fruiting .pl-flower:not(.is-shown) .pl-petal:nth-child(4){transition-delay:.08s}svg.is-fruiting .pl-flower:not(.is-shown) .pl-petal:nth-child(5){transition-delay:.22s}' +
     /* the pod waits for the petals, then grows out of the cup the flower left */
-    '.pl-fruit.pl-grows.is-shown{transition:transform 1.3s cubic-bezier(.2,.7,.2,1) 1.2s,opacity .5s ease 1.2s}' +
+    'svg.is-fruiting .pl-fruit.pl-grows.is-shown{transition:transform 1.3s cubic-bezier(.2,.7,.2,1) 1.2s,opacity .5s ease 1.2s}' +
     '.pl-fruit.pl-grows:not(.is-shown){transition:transform .5s,opacity .35s}' +
     /* the sap: dashed lines that only show when asked for */
     '.pl-flow{fill:none;stroke-width:4;stroke-linecap:round;stroke-dasharray:6 12;opacity:0;transition:opacity .4s}' +
@@ -453,6 +454,7 @@
     /* at rest the plant carries the next flower and the first pod — never a flower and a pod in one place */
     var ALL_SHOW = ['seed', 'roots', 'stem', 'leaf-1', 'leaf-2', 'leaf-3', 'leaf-4', 'flower-2', 'flower-spent', 'fruit', 'xerophyte', 'hydrophyte'];
     function show(list) {
+      svg.classList.toggle('is-fruiting', list.indexOf('fruit') >= 0);   /* the pod is coming: the flower's petals fall, and the pod waits for them */
       root.querySelectorAll('.pl-grows').forEach(function (e) {
         e.classList.toggle('is-shown', list.indexOf(e.getAttribute('data-part')) >= 0);
       });
