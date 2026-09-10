@@ -1068,7 +1068,7 @@ picture{display:block;line-height:0}
 .po__clock b{font-size:26px;font-variant-numeric:tabular-nums;color:var(--ink);letter-spacing:.02em;line-height:1}
 .po__clock span{font-size:12px;color:var(--grey)} .po__clock i{font-style:normal;font-weight:600}
 .po__reading{font-size:13.5px;color:#3C3C3C} .po__reading b{color:var(--k-water);font-size:16px;font-variant-numeric:tabular-nums}
-.po__btns{display:flex;flex-wrap:wrap;gap:7px;margin-left:auto}
+.po__btns{display:flex;flex-wrap:wrap;gap:7px;margin-left:auto;align-items:flex-start}   /* the stacked resets must not stretch the buttons beside them */
 .po__start{background:var(--green);color:#fff}
 .po__start:hover{background:var(--green-2);color:#fff}
 .po__result{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
