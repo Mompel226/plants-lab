@@ -9,7 +9,7 @@
   'use strict';
 
   var P = global.PLANT || { parts: [], scene: { w: 1600, h: 1120, horizon: 700, plantX: 560 } };
-  var plant = null, svg, map, tag, said, whole, hint;
+  var plant = null, svg, map, tag, said, whole, hint, col, bench;
   var onPick = function () {};
   var current = null;
   var still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -28,6 +28,7 @@
   function init(opts) {
     svg = document.getElementById('plant'); map = document.getElementById('map'); tag = document.getElementById('tag');
     said = document.getElementById('said'); whole = document.getElementById('tWhole'); hint = document.getElementById('plateHint');
+    col = document.querySelector('.platecol'); bench = document.getElementById('benchHost');
     onPick = (opts && opts.onPick) || onPick;
     if (!svg || !global.PlantDraw) return;
     plant = global.PlantDraw(svg, P, {
@@ -51,6 +52,11 @@
     if (!plant) return;
     current = st;
     var s = spec(st), ids = s.light || [];
+    /* a station may stand something else on the bench — the potometer — in place of the plant */
+    var onBench = !!s.bench;
+    if (col) col.classList.toggle('is-bench', onBench);
+    if (bench) { bench.hidden = !onBench; bench.innerHTML = ''; }
+    if (onBench) { plant.clear(); plant.flow(null); plant.breathe(false); plant.bend(false); if (tag) tag.classList.remove('on'); return; }
     plant.flow(s.flow || null); plant.breathe(!!s.breathe); plant.bend(!!s.bend);
     /* the lower flower is the one that becomes the pod, in the same place, so the plate shows that node in
        flower or in fruit, never both: a station about the fruit (or the sinks the sugar goes to) sees the

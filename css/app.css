@@ -656,6 +656,16 @@ picture{display:block;line-height:0}
   .card,.act,.golden{padding:14px 15px}
   :root{--rail-h:58px}
 }
+/* a narrow phone: the header wraps onto two rows rather than running off the screen */
+@media (max-width:540px){
+  .hdr{flex-wrap:wrap;row-gap:6px;padding:8px 10px}
+  .hdr__mark{flex:1 1 100%;overflow:visible}
+  .hdr__spacer{display:none}
+  .hdr__stats{flex:1 1 100%;flex-wrap:wrap;gap:6px}
+  .hbtn{padding:5px 9px;font-size:12.5px}
+  .stat{padding:3px 9px 3px 4px}
+  #btnReset .hbtn__long{display:none} #btnReset .hbtn__short{display:inline;font-size:13px;font-weight:600}
+}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 
 /* ---- round 13: Supplement / extension badges, question tables, figure hints, peek sheet ---- */
@@ -745,6 +755,23 @@ picture{display:block;line-height:0}
   background:linear-gradient(180deg,rgba(90,58,32,0),rgba(70,44,24,.55))}
 .said__name{display:block;font-family:var(--sans);font-size:15px;font-weight:500;color:var(--c,#FFF7E6)}
 .said__note{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#F1DDBF;margin-top:3px}
+/* a station that stands something else on the bench: the potometer takes the whole column */
+.platecol.is-bench{background:#F3EFE4;background-image:none}
+.platecol.is-bench .field,.platecol.is-bench .platewrap,.platecol.is-bench .platecol__tools,.platecol.is-bench .said{display:none}
+.bench{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;justify-content:center;gap:14px;padding:18px 18px 20px}
+.bench[hidden]{display:none}
+.bench .po__stage{width:100%;flex:none}
+.bench .po__live{flex:none}
+.po__live{display:flex;flex-direction:column;gap:10px}
+.po__live .po__clock{margin-top:2px}
+.po__live .po__result{margin-top:0}
+.po__slot:empty{display:none}
+.po__slot{display:flex;flex-direction:column;gap:10px}
+.po--split .po{grid-template-columns:1fr}
+.po--split .po__ctl{display:grid;grid-template-columns:1fr 1fr;gap:8px 18px;align-items:end}
+.po--split .po__ctl .po__row:first-child,.po--split .po__ctl .po__snote{grid-column:1 / -1}
+.po--split .po__btns{margin-left:0;margin-top:12px}
+@media (max-width:1000px){ .platecol.is-bench{display:none} }
 .tag{position:absolute;z-index:5;pointer-events:none;opacity:0;transform:translate(-50%,-100%) scale(.96);transition:opacity .22s,transform .22s;white-space:nowrap}
 .tag.on{opacity:1;transform:translate(-50%,-100%) scale(1)}
 .platewrap.is-flying .tag{opacity:0}
@@ -972,7 +999,7 @@ picture{display:block;line-height:0}
 @media (max-width:620px){ .ind{grid-template-columns:1fr} }
 
 /* the potometer practical */
-.po{display:grid;grid-template-columns:232px minmax(0,1fr);gap:14px;align-items:start}
+.po{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;align-items:start}
 .po__ctl{display:flex;flex-direction:column;gap:8px}
 .po__ctl.is-locked{opacity:.6}
 .po__row{display:flex;flex-direction:column;gap:3px;font-size:12.5px;font-weight:600;color:#3C3C3C}
@@ -1025,6 +1052,7 @@ picture{display:block;line-height:0}
 .po__start{background:var(--green);color:#fff}
 .po__start:hover{background:var(--green-2);color:#fff}
 .po__result{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.po__right{display:flex;flex-direction:column;gap:10px}
 .po__stat{background:#fff;border:1px solid var(--edge);border-radius:var(--r);padding:8px 10px;min-width:0}
 .po__stat span{display:block;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--grey)}
 .po__stat b{display:block;font-size:16px;color:var(--k-water);margin:2px 0;font-variant-numeric:tabular-nums;white-space:nowrap}
@@ -1050,7 +1078,7 @@ picture{display:block;line-height:0}
 .po__dotmean{fill:var(--k-water)}
 .po__gnote{display:block;margin-top:6px;font-size:12px;color:var(--grey);line-height:1.4}
 .po__tools{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
-@media (max-width:700px){ .po{grid-template-columns:1fr} .po__result{grid-template-columns:1fr} .po__btns{margin-left:0} .po__names{display:none} }
+@media (max-width:700px){ .po__result{grid-template-columns:1fr} .po__btns{margin-left:0} .po__names{display:none} }
 
 /* sources and sinks */
 .ss__tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px}

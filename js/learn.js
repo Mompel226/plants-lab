@@ -233,7 +233,8 @@
   var PO_WIND = ['still air', 'a gentle breeze', 'fan on low', 'fan on high'];
   var PO_WINDF = [1, 1.4, 1.9, 2.5];
   var PO_GREASE = [['none', 'no grease', 1], ['upper', 'grease on the upper surface', .9], ['lower', 'grease on the lower surface', .2], ['both', 'grease on both surfaces', .05]];
-  var PO_MM = 4.2, PO_X0 = 720, PO_BORE_R = 0.5;              /* px per mm on the scale; the 0 mm mark; the capillary's radius, mm */
+  var PO_MM = 4.2, PO_X0 = 720, PO_BORE_R = 0.5;
+  var PO_STATE = { runs: [], pos: 0, set: null };            /* kept while the lab is open: a trip to Practise and back keeps the table */              /* px per mm on the scale; the 0 mm mark; the capillary's radius, mm */
 
   function poLightF(L) { return .15 + .85 * (1 - Math.exp(-L / 35)) / (1 - Math.exp(-100 / 35)); }
   function poTempF(T) { return Math.pow(2, (T - 20) / 10); }
@@ -243,8 +244,6 @@
     var box = h('div', 'widget');
     box.appendChild(head(spec.title || 'Run the potometer', spec.ask, 'Set it up and press start'));
     var still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var wrap = h('div', 'po');
-
     /* ----- the controls ----- */
     var ctl = h('div', 'po__ctl');
     function sel(label, id, opts, v) {
@@ -268,6 +267,7 @@
     var wind = range('Wind', 'wind', 0, 3, 0, '');
     var grease = sel('Petroleum jelly on the leaves', 'grease', PO_GREASE.map(function (g) { return [g[0], g[1]]; }), 'none');
     var time = sel('Measure for', 'time', [['1', '1 minute'], ['2', '2 minutes'], ['3', '3 minutes'], ['5', '5 minutes'], ['10', '10 minutes']], '5');
+    if (PO_STATE.set) { var S0 = PO_STATE.set; species.value = S0.sp.id; leaves.inp.value = S0.leaves; light.inp.value = S0.light; temp.inp.value = S0.temp; hum.inp.value = S0.hum; wind.inp.value = S0.wind; grease.value = S0.grease; time.value = String(S0.time); }
 
     /* ----- the bench ----- */
     var stage = h('div', 'po__stage');
@@ -359,6 +359,7 @@
       return s.sp.base * (s.leaves / 5) * poLightF(s.light) * poTempF(s.temp) * poHumF(s.hum) * PO_WINDF[s.wind] * g;
     }
     var pos = 0, run = null, raf = null, lastRun = null;
+    function remember() { PO_STATE.set = settings(); PO_STATE.pos = pos; PO_STATE.runs = runs; }
     function paintConditions() {
       var s = settings();
       speciesNote.textContent = s.sp.note;
@@ -375,6 +376,7 @@
       svg.setAttribute('data-wind', s.wind);
       svg.classList.toggle('is-greased', s.grease !== 'none');
       var r = rateOf(s);
+      remember();
       svg.style.setProperty('--vap', (2.6 / Math.max(.15, r / 2.5)).toFixed(2) + 's');
       if (!run) {
         var expected = r * s.time;
@@ -386,7 +388,7 @@
     [leaves, light, temp, hum, wind].forEach(function (r) { r.inp.addEventListener('input', paintConditions); });
     [species, grease, time].forEach(function (s) { s.addEventListener('change', paintConditions); });
 
-    function setBubble(mm) { pos = mm; bubble.setAttribute('cx', (PO_X0 - mm * PO_MM).toFixed(1)); atB.textContent = mm.toFixed(mm < 10 ? 1 : 0); }
+    function setBubble(mm) { pos = mm; PO_STATE.pos = mm; bubble.setAttribute('cx', (PO_X0 - mm * PO_MM).toFixed(1)); atB.textContent = mm.toFixed(mm < 10 ? 1 : 0); }
     function fmt(sec) { var m = Math.floor(sec / 60), s2 = Math.floor(sec % 60); return m + ':' + (s2 < 10 ? '0' : '') + s2; }
 
     function start() {
@@ -446,7 +448,7 @@
     bReset.addEventListener('click', resetBubble);
 
     /* ----- the table, the means, the graph ----- */
-    var runs = [];
+    var runs = PO_STATE.runs;
     var tableBox = h('div', 'po__data'); tableBox.hidden = true;
     var tableWrap = h('div', 'po__tablewrap'), table = h('table', 'po__table'), means = h('div', 'po__means'), chart = h('div', 'po__chart');
     var tools = h('div', 'po__tools');
@@ -464,7 +466,7 @@
       paintData();
       say.textContent = 'Recorded as run ' + runs.length + '. Open the tap to reset the bubble before the next one.';
     });
-    bClear.addEventListener('click', function () { runs = []; paintData(); });
+    bClear.addEventListener('click', function () { runs.length = 0; paintData(); });
     bCopy.addEventListener('click', function () {
       var tsv = [COLS.map(function (c) { return c[1]; }).join('\t')].concat(runs.map(function (r, i) { var o = rowOf(r, i); return COLS.map(function (c) { return o[c[0]]; }).join('\t'); })).join('\n');
       var done = function () { bCopy.textContent = 'Copied — paste into a spreadsheet'; setTimeout(function () { bCopy.textContent = 'Copy the table'; }, 2200); };
@@ -534,15 +536,32 @@
       return s;
     }
 
-    /* ----- put it together ----- */
-    var right = h('div', 'po__right');
-    right.appendChild(stage);
-    var bar = h('div', 'po__bar'); bar.appendChild(clock); bar.appendChild(read); bar.appendChild(btns); right.appendChild(bar);
-    right.appendChild(result); right.appendChild(say);
-    wrap.appendChild(ctl); wrap.appendChild(right);
-    box.appendChild(wrap); box.appendChild(tableBox);
-    box.appendChild(h('p', 'widget__note', 'A model built to be fair to the biology, not measured data: a leafy shoot in a 1 mm bore tube moves a bubble a few millimetres a minute in still air, and several times that in a warm, dry wind. The scale here is the ruler under the tube; every run starts where the last one left the bubble unless you open the tap.'));
-    setBubble(0); paintConditions();
+    /* ----- put it together -----
+       On a wide screen the bench and its live numbers stand in the plate column on the left
+       (plate.js empties and shows #benchHost for this station), and this widget keeps the
+       controls, the buttons and the data. On a phone everything stacks inside the widget. */
+    var live = h('div', 'po__live'); live.appendChild(clock); live.appendChild(read); live.appendChild(result);
+    var slot = h('div', 'po__slot');
+    var wrap2 = h('div', 'po');
+    var right = h('div', 'po__right'); right.appendChild(ctl); right.appendChild(btns); right.appendChild(say);
+    wrap2.appendChild(slot); wrap2.appendChild(right);
+    box.appendChild(wrap2); box.appendChild(tableBox);
+    box.appendChild(h('p', 'widget__note', 'A model built to be fair to the biology, not measured data: a leafy shoot in a 1 mm bore tube moves a bubble a few millimetres a minute in still air, and several times that in a warm, dry wind. Every run starts where the last one left the bubble unless you open the tap.'));
+    var wideQ = window.matchMedia('(min-width: 1001px)');
+    function mount() {
+      var host = document.getElementById('benchHost');
+      var wide = wideQ.matches && host && !host.hidden;
+      var target = wide ? host : slot;
+      if (stage.parentNode !== target) {
+        if (wide) host.innerHTML = '';
+        target.appendChild(stage); target.appendChild(live);
+      }
+      box.classList.toggle('po--split', !!wide);
+    }
+    var onWide = function () { if (box.isConnected) mount(); else wideQ.removeEventListener('change', onWide); };
+    wideQ.addEventListener('change', onWide);
+    mount();
+    setBubble(PO_STATE.pos || 0); paintConditions(); paintData();
     return box;
   }
 
