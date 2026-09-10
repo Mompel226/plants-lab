@@ -462,7 +462,7 @@
     [leaves, light, temp, hum, wind].forEach(function (r) { r.inp.addEventListener('input', paintConditions); });
     [species, grease, joint, time].forEach(function (s) { s.addEventListener('change', paintConditions); });
 
-    function setBubble(mm) { pos = mm; PO_STATE.pos = mm; bubble.setAttribute('cx', (PO_X0 + mm * PO_MM).toFixed(1)); atB.textContent = mm.toFixed(mm < 10 ? 1 : 0); }
+    function setBubble(mm) { pos = mm; PO_STATE.pos = mm; bubble.setAttribute('cx', (PO_X0 + mm * PO_MM).toFixed(1)); atB.textContent = String(Math.round(mm)); }   /* read as the scale is read: to the nearest millimetre */
     function fmt(sec) { var m = Math.floor(sec / 60), s2 = Math.floor(sec % 60); return m + ':' + (s2 < 10 ? '0' : '') + s2; }
 
     function start() {
@@ -491,14 +491,16 @@
     function finish() {
       if (raf) cancelAnimationFrame(raf); raf = null;
       var r = run; run = null;
-      setBubble(r.from + r.d); clockB.textContent = fmt(r.s.time * 60);
+      /* the bubble settles on the millimetre mark it will be read at, so the drawing and the numbers agree exactly */
+      var start = Math.round(r.from), end = Math.round(r.from + r.d);
+      setBubble(end); clockB.textContent = fmt(r.s.time * 60);
       svg.classList.remove('is-running');
       ctl.classList.remove('is-locked'); ctl.querySelectorAll('input,select').forEach(function (e) { e.disabled = false; });
       bStart.textContent = '▶ Start the clock';
-      var distance = Math.round(r.from + r.d) - Math.round(r.from), mins = r.s.time, rate = distance / mins, vol = Math.PI * PO_BORE_R * PO_BORE_R * rate;   /* read to the nearest millimetre, as the scale allows */
+      var distance = end - start, mins = r.s.time, rate = distance / mins, vol = Math.PI * PO_BORE_R * PO_BORE_R * rate;
       lastRun = { s: r.s, distance: distance, rate: rate, leak: r.leak };
       result.hidden = false;
-      result.innerHTML = '<div class="po__stat"><span>Distance moved</span><b>' + distance + ' mm</b><small>from ' + Math.round(r.from) + ' to ' + Math.round(r.from + r.d) + ' on the scale, read to the nearest mm (± 0.5)</small></div>' +
+      result.innerHTML = '<div class="po__stat"><span>Distance moved</span><b>' + distance + ' mm</b><small>from ' + start + ' to ' + end + ' on the scale, read to the nearest mm (± 0.5)</small></div>' +
         '<div class="po__stat"><span>Rate of uptake</span><b>' + rate.toFixed(2) + ' mm/min</b><small>' + distance + ' mm ÷ ' + mins + ' min</small></div>' +
         '<div class="po__stat"><span>Volume taken up</span><b>' + vol.toFixed(2) + ' mm³/min</b><small>π × 0.5² × ' + rate.toFixed(2) + ', for a 1 mm bore</small></div>' +
         (r.capped ? '<p class="po__warn">The bubble reached the end of the scale before the time was up, so this reading is too small. Open the tap, and measure for less time or slow the shoot down.</p>' : '') +
