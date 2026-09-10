@@ -1044,7 +1044,7 @@ picture{display:block;line-height:0}
 @keyframes povap{0%{opacity:0;transform:translateY(0)}20%{opacity:.9}100%{opacity:0;transform:translateY(-22px)}}
 .po__glow,.po__beam{opacity:0;transition:opacity .3s}
 .po__rec:not(:disabled){background:var(--green);color:#fff}
-.po__btns .wbtn:disabled{opacity:.45;cursor:default}
+.po__btns .wbtn:disabled{color:#9AA39C;border-color:#D8DED9;background:#F5F7F4;cursor:default}   /* greyed by colour, not opacity: an opacity would drop its tooltip behind the next button */
 .po__stat b{overflow-wrap:anywhere}
 .po__bag{fill:rgba(255,255,255,.4);stroke:#8FB3C7;stroke-width:2;stroke-dasharray:6 5;opacity:0;transition:opacity .3s}
 .po__svg.is-bagged .po__bag{opacity:1}
@@ -1332,3 +1332,6 @@ picture{display:block;line-height:0}
 .po__resetall[data-tip]::after{left:auto;right:0}
 .po__resetall[data-tip]::before{left:auto;right:14px}
 .po__btns,.po__right,.po{overflow:visible}
+/* a hovered button's tooltip sits above its neighbours in the row */
+.wbtn[data-tip]:hover,.wbtn[data-tip]:focus-visible{z-index:41}
+.po__resetall:disabled{background:#F5F7F4}
