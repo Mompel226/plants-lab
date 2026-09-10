@@ -223,12 +223,18 @@
      own x-axis from whichever factor you changed. The rates are a model built to be fair to
      the biology (the widget says so), not measured data. */
   var PO_SPECIES = [
-    { id: 'bean',      name: 'French bean',   base: 3.2, note: 'broad, thin leaves with plenty of stomata: a fast transpirer' },
-    { id: 'sunflower', name: 'Sunflower',     base: 4.4, note: 'very large leaves — a huge surface — and the fastest here' },
-    { id: 'geranium',  name: 'Geranium',      base: 2.6, note: 'hairy leaves that hold a layer of still, humid air' },
-    { id: 'privet',    name: 'Privet',        base: 1.5, note: 'small waxy leaves with a thick cuticle' },
-    { id: 'ivy',       name: 'Ivy',           base: 1.2, note: 'tough leaves, a waxy cuticle and fewer stomata' },
-    { id: 'marram',    name: 'Marram grass',  base: 0.5, note: 'a xerophyte: rolled leaves with the stomata inside — see the last station' }
+    { id: 'bean',      name: 'French bean',   base: 3.2, note: 'broad, thin leaves with plenty of stomata: a fast transpirer',
+      leaf: { kind: 'heart', scale: 1.05, fill: '#5DBF6E', stroke: '#2A6B3B' } },
+    { id: 'sunflower', name: 'Sunflower',     base: 4.4, note: 'very large leaves — a huge surface — and the fastest here',
+      leaf: { kind: 'heart', scale: 1.3, fill: '#4FAE5E', stroke: '#245B33', rough: true } },
+    { id: 'geranium',  name: 'Geranium',      base: 2.6, note: 'hairy leaves that hold a layer of still, humid air',
+      leaf: { kind: 'round', scale: .9, fill: '#7CC46A', stroke: '#3F7F3A' } },
+    { id: 'privet',    name: 'Privet',        base: 1.5, note: 'small waxy leaves with a thick cuticle',
+      leaf: { kind: 'oval', scale: .72, fill: '#3F8F4E', stroke: '#1F5A2C', gloss: true } },
+    { id: 'ivy',       name: 'Ivy',           base: 1.2, note: 'tough leaves, a waxy cuticle and fewer stomata',
+      leaf: { kind: 'lobed', scale: .95, fill: '#3E8A4A', stroke: '#1F5A2C', gloss: true, paleVeins: true } },
+    { id: 'marram',    name: 'Marram grass',  base: 0.5, note: 'a xerophyte: rolled leaves with the stomata inside — see the last station',
+      leaf: { kind: 'grass', scale: 1.2, fill: '#9DB884', stroke: '#5E7A4B' } }
   ];
   var PO_WIND = ['still air', 'a gentle breeze', 'fan on low', 'fan on high'];
   var PO_WINDF = [1, 1.4, 1.9, 2.5];
@@ -280,21 +286,75 @@
       }
       return s;
     }
-    var LEAVES = [[136, -1, .15, 86, 40], [118, 1, -.05, 80, 38], [100, -1, -.2, 84, 40], [84, 1, -.3, 74, 36], [66, -1, -.45, 64, 32], [50, 1, -.6, 52, 26]];
-    function leafPath(y, dx, dy, len, wid) {
-      var bx = 190, by = y, m = Math.sqrt(dx * dx + dy * dy), ux = dx / m, uy = dy / m, nx = -uy, ny = ux;
-      var tx = bx + ux * len, ty = by + uy * len, c1x = bx + ux * len * .38 + nx * wid * .62, c1y = by + uy * len * .38 + ny * wid * .62, c2x = bx + ux * len * .38 - nx * wid * .62, c2y = by + uy * len * .38 - ny * wid * .62;
-      return '<g class="po__leaf"><path d="M' + bx + ' ' + by + ' Q' + c1x.toFixed(1) + ' ' + c1y.toFixed(1) + ' ' + tx.toFixed(1) + ' ' + ty.toFixed(1) + ' Q' + c2x.toFixed(1) + ' ' + c2y.toFixed(1) + ' ' + bx + ' ' + by + ' Z"/>' +
-        '<path class="po__vein" d="M' + bx + ' ' + by + ' L' + (tx - ux * 6).toFixed(1) + ' ' + (ty - uy * 6).toFixed(1) + '"/>' +
-        '<circle class="po__vap" cx="' + (tx - ux * 12).toFixed(1) + '" cy="' + (ty - uy * 12 - 5).toFixed(1) + '" r="3.4"/></g>';
+    var LEAVES = [[136, -1, .15, 86, 40], [118, 1, -.05, 80, 38], [100, -1, -.2, 84, 40], [84, 1, -.3, 74, 36], [66, -1, -.3, 64, 32], [50, 1, -.42, 52, 26]];
+    /* marram grass is a tuft, not a stem with leaves: long blades fanning up from the bung */
+    var GRASS = [[156, -1, -1.9, 150, 14], [154, 1, -2.1, 160, 14], [158, -1, -1.1, 140, 13], [156, 1, -1.2, 150, 13], [160, -1, -.6, 120, 12], [158, 1, -.7, 128, 12]];
+    /* a leaf's outline in its own frame: the base at 0,0, the tip along +x at L, half-width W.
+       Each plant has the leaf it really has, simplified to one outline and its veins. */
+    function outline(kind, L, W, rough) {
+      var f = function (v) { return v.toFixed(1); };
+      if (kind === 'heart') {          /* bean, sunflower: heart-shaped, widest near the base */
+        var d = 'M0 0 C' + f(-L * .06) + ' ' + f(-W * .7) + ' ' + f(L * .3) + ' ' + f(-W * 1.15) + ' ' + f(L * .5) + ' ' + f(-W * .95) + ' C' + f(L * .72) + ' ' + f(-W * .75) + ' ' + f(L * .92) + ' ' + f(-W * .32) + ' ' + f(L) + ' 0';
+        d += ' C' + f(L * .92) + ' ' + f(W * .32) + ' ' + f(L * .72) + ' ' + f(W * .75) + ' ' + f(L * .5) + ' ' + f(W * .95) + ' C' + f(L * .3) + ' ' + f(W * 1.15) + ' ' + f(-L * .06) + ' ' + f(W * .7) + ' 0 0 Z';
+        return d;
+      }
+      if (kind === 'oval') {           /* privet: a small blunt oval */
+        return 'M0 0 C' + f(L * .1) + ' ' + f(-W * .9) + ' ' + f(L * .7) + ' ' + f(-W * .95) + ' ' + f(L) + ' 0 C' + f(L * .7) + ' ' + f(W * .95) + ' ' + f(L * .1) + ' ' + f(W * .9) + ' 0 0 Z';
+      }
+      if (kind === 'round') {          /* geranium: a scalloped disc on its stalk, the stalk joining near the middle */
+        var pts = [], n = 9, cx = L * .5, r = L * .5;
+        for (var i = 0; i < n; i++) { var a = -Math.PI + i * 2 * Math.PI / n, a2 = a + Math.PI / n, r1 = r * .9, r2 = r * 1.16; pts.push([cx + Math.cos(a) * r1, Math.sin(a) * r1 * (W / (L * .5)), cx + Math.cos(a2) * r2, Math.sin(a2) * r2 * (W / (L * .5))]); }
+        var d2 = 'M' + f(pts[0][0]) + ' ' + f(pts[0][1]);
+        for (var k = 0; k < n; k++) { var p = pts[k], q = pts[(k + 1) % n]; d2 += ' Q' + f(p[2]) + ' ' + f(p[3]) + ' ' + f(q[0]) + ' ' + f(q[1]); }
+        return d2 + ' Z';
+      }
+      if (kind === 'lobed') {          /* ivy: five rounded lobes, the middle one longest, on a broad blade */
+        var pt = function (a, rr) { var t = a * Math.PI / 180; return [Math.cos(t) * L * rr, Math.sin(t) * W * 1.9 * rr]; };
+        var lobes = [[-66, .56], [-33, .8], [0, 1], [33, .8], [66, .56]], sin = .46, d3 = 'M0 0';
+        var first = pt(-88, .3); d3 += ' L' + f(first[0]) + ' ' + f(first[1]);
+        lobes.forEach(function (lb, i) {
+          var a = lb[0], rr = lb[1], s1 = pt(a - 15, sin), c1 = pt(a - 13, rr * 1.06), c2 = pt(a + 13, rr * 1.06), s2 = pt(a + 15, sin);
+          if (i) { var pv = lobes[i - 1]; var mid = pt((pv[0] + a) / 2, sin * .92); d3 += ' Q' + f(mid[0]) + ' ' + f(mid[1]) + ' ' + f(s1[0]) + ' ' + f(s1[1]); } else d3 += ' L' + f(s1[0]) + ' ' + f(s1[1]);
+          d3 += ' C' + f(c1[0]) + ' ' + f(c1[1]) + ' ' + f(c2[0]) + ' ' + f(c2[1]) + ' ' + f(s2[0]) + ' ' + f(s2[1]);
+        });
+        var last = pt(88, .3); d3 += ' L' + f(last[0]) + ' ' + f(last[1]);
+        return d3 + ' Z';
+      }
+      /* grass: a long narrow blade, tapering to a point, that bends back a little at the tip */
+      return 'M0 ' + f(-W * .5) + ' C' + f(L * .45) + ' ' + f(-W * .7) + ' ' + f(L * .85) + ' ' + f(-W * .1) + ' ' + f(L) + ' ' + f(W * .9) + ' C' + f(L * .82) + ' ' + f(W * .25) + ' ' + f(L * .45) + ' ' + f(W * .1) + ' 0 ' + f(W * .5) + ' Z';
     }
-    stage.innerHTML = '<svg viewBox="0 8 860 432" class="po__svg" role="img" aria-label="A bubble potometer on a bench: a leafy shoot held in an airtight rubber bung on a clamp stand, joined to a capillary tube lying along a millimetre scale, with a reservoir and tap rising from it and the far end of the tube in a beaker of water. A thermometer hangs on the stand; a fan and a lamp stand by the shoot.">' +
+    function veins(kind, L, W, pale) {
+      var f = function (v) { return v.toFixed(1); }, cls = 'po__vein' + (pale ? ' po__vein--pale' : ''), v = '';
+      if (kind === 'grass') { v += '<path class="' + cls + '" d="M0 0 C' + f(L * .4) + ' ' + f(-W * .05) + ' ' + f(L * .8) + ' 0 ' + f(L * .96) + ' ' + f(W * .06) + '"/><path class="' + cls + '" d="M0 ' + f(-W * .14) + ' C' + f(L * .4) + ' ' + f(-W * .2) + ' ' + f(L * .7) + ' ' + f(-W * .1) + ' ' + f(L * .85) + ' 0"/>'; return v; }
+      if (kind === 'round' || kind === 'lobed') { [-58, -30, 0, 30, 58].forEach(function (a) { var t = a * Math.PI / 180, r = kind === 'round' ? L * .78 : L * (Math.abs(a) > 40 ? .5 : Math.abs(a) > 10 ? .72 : .9); v += '<path class="' + cls + '" d="M' + (kind === 'round' ? f(L * .25) + ' 0' : '0 0') + ' L' + f((kind === 'round' ? L * .25 : 0) + Math.cos(t) * r) + ' ' + f(Math.sin(t) * (kind === 'round' ? W * .8 : W * 1.5) * (r / L)) + '"/>'; }); return v; }
+      v += '<path class="' + cls + '" d="M0 0 L' + f(L * .94) + ' 0"/>';
+      var pairs = kind === 'heart' ? [.16, .36, .56, .74] : [.3, .55];
+      pairs.forEach(function (t) { var reach = W * (kind === 'heart' ? .8 : .7) * (1 - Math.abs(t - .4) * 1.1); v += '<path class="' + cls + '" d="M' + f(L * t) + ' 0 Q' + f(L * (t + .06)) + ' ' + f(-reach * .45) + ' ' + f(L * (t + .14)) + ' ' + f(-reach) + ' M' + f(L * t) + ' 0 Q' + f(L * (t + .06)) + ' ' + f(reach * .45) + ' ' + f(L * (t + .14)) + ' ' + f(reach) + '"/>'; });
+      return v;
+    }
+    function leafPath(y, dx, dy, len, wid, spec) {
+      var bx = 190, by = y, m = Math.sqrt(dx * dx + dy * dy), ux = dx / m, uy = dy / m;
+      var lf = spec || PO_SPECIES[0].leaf, L = len * lf.scale, W = (wid / 2) * lf.scale;
+      if (lf.kind === 'grass') { L = len; W = wid * .5; }
+      var ang = Math.atan2(uy, ux) * 180 / Math.PI;
+      var tipX = bx + ux * L, tipY = by + uy * L;
+      return '<g class="po__leaf" transform="translate(' + bx + ' ' + by + ') rotate(' + ang.toFixed(1) + ')">' +
+        '<path class="po__blade" d="' + outline(lf.kind, L, W, lf.rough) + '" fill="' + lf.fill + '" stroke="' + lf.stroke + '"/>' +
+        (lf.gloss ? '<path class="po__gloss" d="M' + (L * .12).toFixed(1) + ' ' + (-W * .35).toFixed(1) + ' Q' + (L * .45).toFixed(1) + ' ' + (-W * .7).toFixed(1) + ' ' + (L * .8).toFixed(1) + ' ' + (-W * .25).toFixed(1) + '"/>' : '') +
+        veins(lf.kind, L, W, lf.paleVeins) +
+        '<circle class="po__vap" cx="' + (L * .86).toFixed(1) + '" cy="' + (-W * .6 - 4).toFixed(1) + '" r="3.4" transform="rotate(' + (-ang).toFixed(1) + ' ' + (L * .86).toFixed(1) + ' ' + (-W * .6 - 4).toFixed(1) + ')"/></g>';
+    }
+    stage.innerHTML = '<svg viewBox="0 0 860 440" class="po__svg" role="img" aria-label="A bubble potometer on a bench: a leafy shoot held in an airtight rubber bung on a clamp stand, joined to a capillary tube lying along a millimetre scale, with a reservoir and tap rising from it and the far end of the tube in a beaker of water. A thermometer hangs on the stand; a fan and a lamp stand by the shoot.">' +
       '<rect x="0" y="0" width="900" height="440" fill="#F7F4EC"/>' +
       /* the bench */
       '<path d="M0 414 H900" stroke="#C9BFA6" stroke-width="3"/>' +
       /* the fan, on its stand */
       '<g class="po__fan"><rect x="426" y="396" width="48" height="10" rx="3" fill="#4A4F55"/><rect x="447" y="196" width="6" height="200" fill="#6B7178"/>' +
-      '<g class="po__blades"><circle cx="450" cy="166" r="30" fill="#EAEDEF" stroke="#7F94A2" stroke-width="2"/><path d="M450 166 L450 138 A28 28 0 0 1 471 152 Z M450 166 L473 180 A28 28 0 0 1 441 194 Z M450 166 L427 157 A28 28 0 0 1 436 141 Z" fill="#7F94A2"/><circle cx="450" cy="166" r="4.5" fill="#4A4F55"/></g>' +
+      '<rect x="443" y="192" width="14" height="18" rx="4" fill="#5B6167"/>' +
+      '<circle cx="450" cy="166" r="33" fill="#F4F6F7" stroke="#7F94A2" stroke-width="2"/>' +
+      '<g class="po__blades" fill="#9AA6AE">' + [0, 90, 180, 270].map(function (a) { return '<path transform="rotate(' + a + ' 450 166)" d="M450 166 C458 158 474 150 478 161 C481 169 466 176 450 166 Z"/>'; }).join('') + '</g>' +
+      '<g class="po__grille">' + (function () { var g = ''; for (var i = 0; i < 12; i++) { var t = i * Math.PI / 6; g += '<line x1="' + (450 + Math.cos(t) * 11).toFixed(1) + '" y1="' + (166 + Math.sin(t) * 11).toFixed(1) + '" x2="' + (450 + Math.cos(t) * 32).toFixed(1) + '" y2="' + (166 + Math.sin(t) * 32).toFixed(1) + '"/>'; } return g; })() + '<circle cx="450" cy="166" r="24"/><circle cx="450" cy="166" r="11" fill="#C9D0D5"/></g>' +
+      '<circle cx="450" cy="166" r="4" fill="#4A4F55"/>' +
       '<g class="po__air"><path d="M414 150 H382"/><path d="M412 166 H376"/><path d="M414 182 H382"/></g></g>' +
       /* the lamp, on the bench */
       '<g class="po__lamp"><rect x="520" y="396" width="64" height="10" rx="3" fill="#4A4F55"/><path d="M552 396 L546 120 L508 104" stroke="#6B7178" stroke-width="5" stroke-linecap="round" fill="none"/>' +
@@ -308,7 +368,7 @@
       '<rect x="100" y="168" width="34" height="24" rx="3" fill="#4A4F55"/><rect x="132" y="176" width="40" height="8" fill="#4A4F55"/>' +
       '<path d="M170 168 v24 M204 168 v24" stroke="#4A4F55" stroke-width="6" stroke-linecap="round"/>' +
       '<g class="po__therm"><path d="M56 64 H104" stroke="#6B7178" stroke-width="3"/><rect x="50" y="56" width="12" height="120" rx="6" fill="#fff" stroke="#7F94A2" stroke-width="2"/><rect class="po__merc" x="54" y="120" width="4" height="50" fill="#D64545"/><circle cx="56" cy="182" r="8" fill="#D64545"/>' +
-      '<text class="po__read po__tread" x="56" y="210" text-anchor="middle">20 °C</text><text class="po__read po__hread" x="30" y="32">50 % humidity</text></g>' +
+      '<text class="po__read po__tread" x="56" y="210" text-anchor="middle">20 °C</text><text class="po__read po__hread" x="838" y="32" text-anchor="end">50 % humidity</text></g>' +
       /* the water: the vertical tube, the capillary, the bend into the beaker, and the reservoir */
       '<path class="po__water" d="M178 178 V294 H754 V386 H766 V300 H202 V178 Z"/>' +
       '<rect class="po__water" x="331" y="140" width="10" height="160"/>' +
@@ -320,7 +380,7 @@
       /* the rubber bung, and the shoot in it */
       '<rect x="174" y="150" width="32" height="26" rx="4" fill="#6E4A33"/>' +
       '<path d="M190 262 V28" stroke="#3E9A57" stroke-width="7" stroke-linecap="round"/><path d="M190 262 V178" stroke="#2F7D46" stroke-width="7" stroke-linecap="round" opacity=".55"/>' +
-      '<g class="po__leaves">' + LEAVES.map(function (L) { return leafPath(L[0], L[1], L[2], L[3], L[4]); }).join('') + '</g>' +
+      '<g class="po__leaves">' + LEAVES.map(function (L) { return leafPath(L[0], L[1], L[2], L[3], L[4], PO_SPECIES[0].leaf); }).join('') + '</g>' +
       /* the beaker */
       '<path d="M730 330 V408 Q730 412 734 412 H826 Q830 412 830 408 V330" fill="#DDF0FA" stroke="#7F94A2" stroke-width="2.5" stroke-linejoin="round"/>' +
       '<rect x="732" y="350" width="96" height="60" fill="#BFE0F5" opacity=".8"/>' +
@@ -334,7 +394,12 @@
       '<text x="490" y="172">fan</text><text x="524" y="82">lamp</text>' +
       '<text class="po__names--small" x="267" y="284" text-anchor="middle">capillary tube</text><text x="780" y="434" text-anchor="middle">beaker of water</text><text x="660" y="284" text-anchor="middle">air bubble</text><text x="510" y="368" text-anchor="middle">scale, in mm</text></g>' +
       '</svg>';
-    var svg = stage.firstChild, bubble = svg.querySelector('.po__bubble'), leafEls = svg.querySelectorAll('.po__leaf');
+    var svg = stage.firstChild, bubble = svg.querySelector('.po__bubble'), leavesG = svg.querySelector('.po__leaves'), leafEls = svg.querySelectorAll('.po__leaf'), leafKind = 'bean';
+    function growLeaves(sp) {
+      if (sp.id === leafKind) return; leafKind = sp.id;
+      leavesG.innerHTML = (sp.leaf.kind === 'grass' ? GRASS : LEAVES).map(function (L) { return leafPath(L[0], L[1], L[2], L[3], L[4], sp.leaf); }).join('');
+      leafEls = svg.querySelectorAll('.po__leaf');
+    }
     var tread = svg.querySelector('.po__tread'), hread = svg.querySelector('.po__hread'), merc = svg.querySelector('.po__merc'), glow = svg.querySelector('.po__glow');
 
     /* ----- the clock and the reading ----- */
@@ -362,7 +427,7 @@
     function remember() { PO_STATE.set = settings(); PO_STATE.pos = pos; PO_STATE.runs = runs; }
     function paintConditions() {
       var s = settings();
-      speciesNote.textContent = s.sp.note;
+      speciesNote.textContent = s.sp.note; growLeaves(s.sp);
       leaves.val.textContent = s.leaves; light.val.textContent = s.light + ' %'; temp.val.textContent = s.temp + ' °C'; hum.val.textContent = s.hum + ' %'; wind.val.textContent = PO_WIND[s.wind];
       clockOf.textContent = s.time + ' min';
       leafEls.forEach(function (l, i) { l.classList.toggle('is-off', i >= s.leaves); });

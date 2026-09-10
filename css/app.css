@@ -1015,8 +1015,11 @@ picture{display:block;line-height:0}
 .po__bubble{fill:#fff;stroke:#7F94A2;stroke-width:1.4}
 .po__ticks line{stroke:#7A6B3C;stroke-width:1}
 .po__ticks text,.po__unit{font-size:18px;fill:#7A6B3C;font-family:var(--font)}
-.po__leaf path{fill:#5DBF6E;stroke:#2A6B3B;stroke-width:1.4;stroke-linejoin:round}
-.po__leaf .po__vein{fill:none;stroke:#2A6B3B;stroke-width:1.2;opacity:.75}
+.po__leaf .po__blade{stroke-width:1.4;stroke-linejoin:round}
+.po__leaf .po__vein{fill:none;stroke:#2A6B3B;stroke-width:1.1;opacity:.6}
+.po__leaf .po__vein--pale{stroke:#CFE9C8;opacity:.9}
+.po__leaf .po__gloss{fill:none;stroke:rgba(255,255,255,.5);stroke-width:2;stroke-linecap:round}
+.po__grille line,.po__grille circle{stroke:#B8C1C8;stroke-width:1;fill:none}
 .po__leaf.is-off{display:none}
 .po__vap{fill:#9FCDE8;opacity:0}
 .po__svg.is-running .po__vap{animation:povap var(--vap,2.6s) ease-out infinite}
