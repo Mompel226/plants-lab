@@ -38,13 +38,13 @@
     'svg.lit .pl-part.is-on{opacity:1;filter:drop-shadow(0 0 7px var(--c,#B8F08E)) drop-shadow(0 0 20px color-mix(in srgb,var(--c,#B8F08E) 60%,transparent))}' +
     'svg.lit .pl-ground{opacity:.8}' +
     /* growing: a part not yet grown is folded down to nothing at its base */
-    '.pl-grows{transition:transform .9s cubic-bezier(.2,.7,.2,1),opacity .55s ease}' +
+    '.pl-grows{transition:transform 1.5s cubic-bezier(.2,.7,.2,1),opacity .7s ease}' +   /* growth you can watch: most of a tour step is movement, not a still */
     '.pl-grows:not(.is-shown){opacity:0;transform:scale(.02)}' +
     '.pl-grows--up:not(.is-shown){transform:scale(1,.02)}' +
     /* the flower opens when it arrives. When it goes because the pod is coming (svg.is-fruiting), its
        petals fall one by one and only then does it fade; at any other time it goes as fast as everything else */
     '@keyframes pl-bloom{from{transform:scale(.12)}}' +
-    '.pl-flower.is-shown{animation:pl-bloom .9s cubic-bezier(.2,.7,.2,1)}' +
+    '.pl-flower.is-shown{animation:pl-bloom 1.2s cubic-bezier(.2,.7,.2,1)}' +
     'svg.is-fruiting .pl-flower.pl-grows:not(.is-shown){transform:none;opacity:0;transition:opacity .4s ease 1.4s}' +
     '.pl-petal{transform-box:fill-box;transform-origin:50% 100%}' +
     'svg.is-fruiting .pl-flower:not(.is-shown) .pl-petal{transform:translateY(96px) rotate(24deg);opacity:0;transition:transform 1.5s cubic-bezier(.5,0,.9,.5),opacity 1.35s ease-in}' +
