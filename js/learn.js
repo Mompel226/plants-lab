@@ -551,7 +551,7 @@
     var read = h('div', 'po__reading', '<span class="po__at">bubble at <b>0</b> mm</span>'); read.setAttribute('aria-live', 'polite');
     var atB = read.querySelector('b');
     var btns = h('div', 'po__btns');
-    var bStart = h('button', 'wbtn po__start', '▶ Start the clock'), bReset = h('button', 'wbtn wbtn--quiet', 'Open the tap: bubble back to 0'), bRecord = h('button', 'wbtn po__rec', 'Record this run'), bNew = h('button', 'wbtn wbtn--quiet', 'Use a shoot from another plant');
+    var bStart = h('button', 'wbtn po__start', '▶ Start the clock'), bReset = h('button', 'wbtn wbtn--quiet po__tapbtn', 'Open the tap'), bRecord = h('button', 'wbtn po__rec', 'Record this run'), bNew = h('button', 'wbtn wbtn--quiet po__newshoot', 'Use a shoot from another plant');
     var bLine = h('button', 'wbtn wbtn--quiet po__newline', '＋ New line on the graph');
     var bSet = h('button', 'wbtn wbtn--quiet po__resetset', '↺ Reset the settings'), bAll = h('button', 'wbtn po__resetall', '↺ Reset the practical');
     bSet.setAttribute('data-tip', 'The settings back to the start — the plant, the leaves, the light, the temperature, the humidity, the wind, the grease, the joint and the time. Your recorded runs are kept.');
@@ -562,8 +562,12 @@
     bNew.setAttribute('data-tip', 'A shoot cut from a different plant of the same kind: a true replicate. Repeating on one shoot is a technical replicate — it shows how steady your measuring is, not how plants differ.');
     bLine.setAttribute('data-tip', 'Keeps what you have and starts a new line on the graph, in its own colour and with its own table, so you can compare: another plant, the fan on, the dark…');
     bAll.setAttribute('data-tip', 'Everything back to the start: the settings, the bubble, the shoot, the tables and the graph. When there is a table to lose it asks first: press it twice.');
-    [bStart, bReset, bRecord, bNew, bLine].forEach(function (b) { b.type = 'button'; btns.appendChild(b); });
-    var resets = h('div', 'po__resets'); [bSet, bAll].forEach(function (b) { b.type = 'button'; resets.appendChild(b); }); btns.appendChild(resets);
+    /* two rows: the run — start, tap, record — with the settings reset at its end; the comparisons — another plant, a new
+       line — with the practical's reset at its end */
+    var rowA = h('div', 'po__brow'), rowB = h('div', 'po__brow');
+    [bStart, bReset, bRecord, bSet].forEach(function (b) { b.type = 'button'; rowA.appendChild(b); });
+    [bNew, bLine, bAll].forEach(function (b) { b.type = 'button'; rowB.appendChild(b); });
+    btns.appendChild(rowA); btns.appendChild(rowB);
     bRecord.disabled = true;
     var result = h('div', 'po__result'); result.hidden = true; result.setAttribute('aria-live', 'polite');
     var say = h('p', 'po__say');
@@ -668,7 +672,7 @@
         setBubble(from * (1 - k)); clockB.textContent = '0:00';
         if (k < 1 && stage.isConnected) requestAnimationFrame(back); else { svg.classList.remove('is-tapping'); remember(); }
       }
-      requestAnimationFrame(back);
+      if (still) back(0); else requestAnimationFrame(back);   /* without motion the bubble is back at once, so a run can start straight after */
       result.hidden = true; bRecord.disabled = true;
       say.textContent = 'Tap opened: water from the reservoir pushed the bubble back to the start. Close it and you are ready to go again.';
     }
