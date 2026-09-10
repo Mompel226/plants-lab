@@ -31,7 +31,7 @@ the pictures from the lessons, the videos, and questions that say right or wrong
 | 🔬 **The exam's pictures** | a real leaf, root and stem cut across and stained, with the layers to find; a half-flower to label; wheat anthers to point at; a leaf tested for starch |
 | 🧪 **The investigations** | germination, the starch test, limiting factors, a seedling on its side — each one worked through as the exam sets it |
 | 🔬 **A potometer you run** | choose the plant, set light, temperature, humidity, wind, the leaves, the joint at the bung and the time, start the clock and watch the bubble; record runs into a table, get a mean when you repeat one, use a new shoot for a true replicate, and a graph that picks its own axis from what you changed |
-| 🎯 **Evaluating it** | systematic and random error, accuracy, precision, reliability and validity, in the potometer — taught from the students' own guide and tested in the questions |
+| 🎯 **Evaluating it** | systematic and random error, accuracy, precision, reliability and validity, in the potometer — taught from the students' own guide and tested in the questions; the results table keeps up to five trials per set of conditions and works out the mean, standard deviation, standard error and a 95 % confidence interval, each explained on a click, with error bars or a confidence band on the graph |
 | 🎞 **Eight lesson videos** | germination, the coloured-flower experiment, water uptake, water transport, the potometer, transport in the stem, photosynthesis, a tropism time-lapse — the ones shown in class, built in |
 | 📖 **A shared glossary** | one wording per term, the same in every lab |
 

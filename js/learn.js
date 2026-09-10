@@ -475,7 +475,7 @@
       var d = rate * s.time, from = pos, capped = false, leak = s.joint === 'open', stuck = false;
       if (leak) { d *= .35 + Math.random() * .5; if (Math.random() < .25) { d *= .3; stuck = true; } }   /* air drawn in at the joint instead of water: the bubble moves less, and by a different amount each time */
       if (from + d > 100) { d = 100 - from; capped = true; }
-      run = { s: s, rate: rate, d: d, from: from, capped: capped, leak: leak, stuck: stuck, t0: null, T: s.time * 2000 };
+      run = { s: s, rate: rate, d: d, from: from, capped: capped, leak: leak, stuck: stuck, notReset: from >= .5, t0: null, T: s.time * 2000 };
       result.hidden = true; bRecord.disabled = true; bStart.textContent = 'Skip to the end';
       ctl.classList.add('is-locked'); ctl.querySelectorAll('input,select').forEach(function (e) { e.disabled = true; });
       svg.classList.add('is-running');
@@ -501,16 +501,18 @@
       svg.classList.remove('is-running');
       ctl.classList.remove('is-locked'); ctl.querySelectorAll('input,select').forEach(function (e) { e.disabled = false; });
       bStart.textContent = '▶ Start the clock';
-      var distance = end - start, mins = r.s.time, rate = distance / mins, vol = Math.PI * PO_BORE_R * PO_BORE_R * rate;
+      var distance = r.notReset ? end : end - start, mins = r.s.time, rate = distance / mins, vol = Math.PI * PO_BORE_R * PO_BORE_R * rate;   /* without the tap the scale is read from 0 */
       lastRun = { s: r.s, distance: distance, rate: rate, leak: r.leak };
       result.hidden = false;
-      result.innerHTML = '<div class="po__stat"><span>Distance moved</span><b>' + distance + ' mm</b><small>from ' + start + ' to ' + end + ' on the scale, read to the nearest mm (± 0.5)</small></div>' +
+      result.innerHTML = '<div class="po__stat"><span>Distance moved</span><b>' + distance + ' mm</b><small>' + (r.notReset ? 'read from 0 to ' + end + ' on the scale — but the bubble started at ' + start : 'from ' + start + ' to ' + end + ' on the scale, read to the nearest mm (± 0.5)') + '</small></div>' +
         '<div class="po__stat"><span>Rate of uptake</span><b>' + rate.toFixed(2) + ' mm/min</b><small>' + distance + ' mm ÷ ' + mins + ' min</small></div>' +
         '<div class="po__stat"><span>Volume taken up</span><b>' + vol.toFixed(2) + ' mm³/min</b><small>π × 0.5² × ' + rate.toFixed(2) + ', for a 1 mm bore</small></div>' +
+        (r.notReset ? '<p class="po__warn">The tap was not opened before this run. Every reading starts with the bubble at the 0 mark: the scale was read from 0, but the bubble started at ' + start + ' mm, so this distance is ' + start + ' mm too long and the rate is wrong. Open the tap, then run again.</p>' : '') +
         (r.capped ? '<p class="po__warn">The bubble reached the end of the scale before the time was up, so this reading is too small. Open the tap, and measure for less time or slow the shoot down.</p>' : '') +
         (r.leak ? '<p class="po__warn">The joint at the bung was not sealed. Air was drawn in there instead of water from the tube, so the bubble moved less than the shoot took up' + (r.stuck ? ' — and stuck for part of the run' : '') + '. Every leaking reading is too small (a systematic error) and by a different amount each time (a random one on top). Seal the joint with petroleum jelly.</p>' : '');
-      bRecord.disabled = !!r.capped;
-      say.textContent = r.capped ? 'Not a fair reading — the bubble ran out of scale.' : r.leak ? 'You can record it — a leaking reading in the table is worth seeing next to a sealed one.' : 'Read the scale, then record the run. Repeat it to get a mean, or change one factor and run again.';
+      var full = trialsFor(r.s) >= MAX_TRIALS;
+      bRecord.disabled = !!r.capped || !!r.notReset || full;
+      say.textContent = r.notReset ? 'Not a reading — the run did not start from the tap.' : r.capped ? 'Not a fair reading — the bubble ran out of scale.' : full ? 'Five trials for these conditions already: change something for the next row.' : r.leak ? 'You can record it — a leaking reading in the table is worth seeing next to a sealed one.' : 'Read the scale, then record the run as a trial. Repeat it for a mean, or change one factor for a new row.';
     }
     function resetBubble() {
       if (run) return;
@@ -535,8 +537,14 @@
       say.textContent = 'Shoot ' + String.fromCharCode(64 + PO_STATE.shoot) + ': another plant of the same kind, with its own leaves and its own rate. Repeats on one shoot are technical replicates; different shoots are true replicates — only they say something about the species.';
     });
 
-    /* ----- the table, the means, the graph ----- */
+    /* ----- the results table: one row per set of conditions, up to five trials, and what the trials say -----
+       A run is recorded as a trial of its conditions (everything set, the shoot aside); five is the
+       most for one row. From two trials on, the row shows the mean, the standard deviation, the
+       standard error and a 95 % confidence interval, each with a plain-words note on what it is
+       and how it was worked out. The graph plots the means, with the error you choose: whiskers for
+       the SD or the SE, a band for the confidence interval. */
     var runs = PO_STATE.runs;
+    var MAX_TRIALS = 5, T95 = { 2: 12.71, 3: 4.30, 4: 3.18, 5: 2.78 };
     var tableBox = h('div', 'po__data'); tableBox.hidden = true;
     /* the reveal: a word from the teacher shows the table and the graph the page has kept */
     var NEED = (global.LAB_CONFIG && global.LAB_CONFIG.potometerUnlock) || '';
@@ -548,29 +556,76 @@
       ev.preventDefault();
       var word = gateIn.value.trim().toLowerCase(); if (!word) return;
       sha256hex(word).then(function (hex) {
-        if (hex === NEED) { unlocked = true; PO_STATE.unlocked = true; try { sessionStorage.setItem('plants-lab.potometer.unlocked', '1'); } catch (e) {} gateIn.value = ''; paintData(); }
+        if (hex === NEED) { unlocked = true; PO_STATE.unlocked = true; try { sessionStorage.setItem('plants-lab.potometer.unlocked', '1'); } catch (e) {} gateIn.value = ''; gateSay.textContent = ''; paintData(); }
         else { gateSay.textContent = 'Not that word.'; gateIn.select(); }
       });
     });
-    var tableWrap = h('div', 'po__tablewrap'), table = h('table', 'po__table'), means = h('div', 'po__means'), chart = h('div', 'po__chart');
+    var tableWrap = h('div', 'po__tablewrap'), table = h('table', 'po__table'), pop = h('div', 'po__pop'), chart = h('div', 'po__chart');
+    pop.hidden = true;
     var tools = h('div', 'po__tools');
+    var errLab = h('label', 'po__err', '<span>Error bars</span>');
+    var errSel = document.createElement('select');
+    [['none', 'none'], ['sd', 'standard deviation'], ['se', 'standard error'], ['ci', '95 % confidence interval, as a band']].forEach(function (o) { var op = document.createElement('option'); op.value = o[0]; op.textContent = o[1]; errSel.appendChild(op); });
+    errSel.value = PO_STATE.err || 'none'; errLab.appendChild(errSel); tools.appendChild(errLab);
+    errSel.addEventListener('change', function () { PO_STATE.err = errSel.value; paintData(); });
     var bCopy = h('button', 'wbtn wbtn--quiet', 'Copy the table'), bClear = h('button', 'wbtn wbtn--quiet', 'Clear the table');
     [bCopy, bClear].forEach(function (b) { b.type = 'button'; tools.appendChild(b); });
-    tableWrap.appendChild(table); tableBox.appendChild(tableWrap); tableBox.appendChild(means); tableBox.appendChild(chart); tableBox.appendChild(tools);
-    var COLS = [['n', 'Run'], ['plant', 'Plant'], ['shoot', 'Shoot'], ['leaves', 'Leaves'], ['light', 'Light / %'], ['temp', 'Temp / °C'], ['hum', 'Humidity / %'], ['wind', 'Wind'], ['grease', 'Grease'], ['joint', 'Joint'], ['time', 'Time / min'], ['distance', 'Distance / mm'], ['rate', 'Rate / mm min⁻¹']];
-    function rowOf(r, i) {
-      return { n: i + 1, plant: r.s.sp.name, shoot: String.fromCharCode(64 + (r.s.shoot || 1)), leaves: r.s.leaves, light: r.s.light, temp: r.s.temp, hum: r.s.hum, wind: PO_WIND[r.s.wind], grease: r.s.grease === 'none' ? '—' : r.s.grease, joint: r.s.joint === 'open' ? 'leaking' : 'sealed', time: r.s.time, distance: String(r.distance), rate: r.rate.toFixed(2) };
+    tableWrap.appendChild(table); tableBox.appendChild(tableWrap); tableBox.appendChild(pop); tableBox.appendChild(chart); tableBox.appendChild(tools);
+
+    function keyOf(s) { return [s.sp.id, s.leaves, s.light, s.temp, s.hum, s.wind, s.grease, s.joint, s.time].join('|'); }
+    function condText(s) {
+      return esc(s.sp.name) + ' · ' + s.leaves + ' leaves · light ' + s.light + ' % · ' + s.temp + ' °C · humidity ' + s.hum + ' % · ' + esc(PO_WIND[s.wind]) +
+        (s.grease === 'none' ? '' : ' · grease on the ' + esc(s.grease === 'both' ? 'two surfaces' : s.grease + ' surface')) + (s.joint === 'open' ? ' · <b>joint leaking</b>' : '') + ' · ' + s.time + ' min';
     }
-    function keyOf(r) { return [r.s.sp.id, r.s.leaves, r.s.light, r.s.temp, r.s.hum, r.s.wind, r.s.grease, r.s.joint, r.s.time].join('|'); }
+    function groups() {
+      var G = {}, order = [];
+      runs.forEach(function (r, i) { var k = keyOf(r.s); if (!G[k]) { G[k] = { key: k, s: r.s, trials: [] }; order.push(k); } G[k].trials.push({ r: r, i: i }); });
+      return order.map(function (k) { return G[k]; });
+    }
+    function trialsFor(s) { var k = keyOf(s); return runs.filter(function (r) { return keyOf(r.s) === k; }).length; }
+    function stats(vals) {
+      var n = vals.length, mean = vals.reduce(function (a, b) { return a + b; }, 0) / n;
+      if (n < 2) return { n: n, mean: mean };
+      var sd = Math.sqrt(vals.reduce(function (a, v) { return a + (v - mean) * (v - mean); }, 0) / (n - 1)), se = sd / Math.sqrt(n), t = T95[n] || 2.78;
+      return { n: n, mean: mean, sd: sd, se: se, t: t, ci: t * se };
+    }
+    var TERMS = {
+      mean: { name: 'Mean', what: 'Add the trials up and divide by how many there are. It is your best single answer for that set of conditions — the number to plot.',
+              how: function (st, vals) { return vals.map(function (v) { return v.toFixed(2); }).join(' + ') + ' = ' + vals.reduce(function (a, b) { return a + b; }, 0).toFixed(2) + ', ÷ ' + st.n + ' = <b>' + st.mean.toFixed(2) + '</b> mm/min'; } },
+      sd: { name: 'Standard deviation (SD)', what: 'How spread out the trials are around their mean. Take each trial\'s distance from the mean, square it, add the squares up, divide by one less than the number of trials, and take the square root. A small SD means the repeats agree with one another — good precision. It has the same unit as the trials.',
+            how: function (st, vals) { var sq = vals.map(function (v) { return '(' + v.toFixed(2) + ' − ' + st.mean.toFixed(2) + ')²'; }).join(' + '); return sq + ' = ' + vals.reduce(function (a, v) { return a + (v - st.mean) * (v - st.mean); }, 0).toFixed(3) + ', ÷ ' + (st.n - 1) + ', then √ = <b>' + st.sd.toFixed(2) + '</b> mm/min'; } },
+      se: { name: 'Standard error (SE)', what: 'How well you know the mean itself, not how spread the trials are. It is the standard deviation divided by the square root of the number of trials. More trials make it smaller, because a mean of many repeats settles down even when the repeats themselves do not.',
+            how: function (st) { return st.sd.toFixed(2) + ' ÷ √' + st.n + ' = ' + st.sd.toFixed(2) + ' ÷ ' + Math.sqrt(st.n).toFixed(2) + ' = <b>' + st.se.toFixed(2) + '</b> mm/min'; } },
+      ci: { name: '95 % confidence interval', what: 'The range the true mean is likely to be in, given your trials: the mean, plus and minus a number times the standard error. The number comes from a table and depends on how many trials you took — 12.71 for two, 4.30 for three, 3.18 for four, 2.78 for five — so few trials give a wide interval and more trials narrow it. If the intervals for two sets of conditions do not overlap, the difference between them is real, not chance. On the graph it is drawn as a band round the mean.',
+            how: function (st) { return st.t + ' × ' + st.se.toFixed(2) + ' = <b>± ' + st.ci.toFixed(2) + '</b> mm/min, so the true mean is probably between ' + (st.mean - st.ci).toFixed(2) + ' and ' + (st.mean + st.ci).toFixed(2); } }
+    };
+    function showTerm(term) {
+      var T = TERMS[term]; if (!T) return;
+      var ex = groups().filter(function (g) { return g.trials.length >= 2; })[0];
+      var worked = '';
+      if (ex) { var vals = ex.trials.map(function (t) { return t.r.rate; }), st = stats(vals); worked = '<p class="po__pop__how"><b>Worked out for your first row with repeats</b> (' + condText(ex.s) + '): ' + T.how(st, vals) + '</p>'; }
+      else worked = '<p class="po__pop__how">Record a second trial for the same conditions and the working appears here with your numbers.</p>';
+      pop.innerHTML = '<div class="po__pop__h">' + esc(T.name) + '<button type="button" class="po__pop__x" aria-label="Close">✕</button></div><p>' + esc(T.what) + '</p>' + worked + (term === 'sd' || term === 'se' || term === 'ci' ? '<p class="po__pop__note">Standard deviation, standard error and confidence intervals are asked for at IB, not IGCSE — but they are what a scientist would put on this graph.</p>' : '');
+      pop.hidden = false;
+      pop.querySelector('.po__pop__x').addEventListener('click', function () { pop.hidden = true; });
+    }
     bRecord.addEventListener('click', function () {
       if (!lastRun) return;
-      runs.push(lastRun); lastRun = null; bRecord.disabled = true;
+      if (trialsFor(lastRun.s) >= MAX_TRIALS) { say.textContent = 'Five trials for these conditions already. Change something for the next row, or clear the table.'; bRecord.disabled = true; return; }
+      runs.push(lastRun); var n = trialsFor(lastRun.s); lastRun = null; bRecord.disabled = true;
       paintData();
-      say.textContent = 'Recorded as run ' + runs.length + '. Open the tap to reset the bubble before the next one.';
+      say.textContent = 'Recorded as trial ' + n + ' of these conditions. Open the tap before the next run.' + (n >= MAX_TRIALS ? ' That is five — enough for a mean; change something for the next row.' : '');
     });
-    bClear.addEventListener('click', function () { runs.length = 0; paintData(); });
+    bClear.addEventListener('click', function () { runs.length = 0; pop.hidden = true; paintData(); });
     bCopy.addEventListener('click', function () {
-      var tsv = [COLS.map(function (c) { return c[1]; }).join('\t')].concat(runs.map(function (r, i) { var o = rowOf(r, i); return COLS.map(function (c) { return o[c[0]]; }).join('\t'); })).join('\n');
+      var head = ['Conditions'].concat([1, 2, 3, 4, 5].map(function (i) { return 'Trial ' + i + ' / mm min⁻¹'; })).concat(['Mean', 'SD', 'SE', '95 % CI']);
+      var lines = [head.join('\t')].concat(groups().map(function (g) {
+        var vals = g.trials.map(function (t) { return t.r.rate; }), st = stats(vals), cells = [condText(g.s).replace(/<[^>]+>/g, '')];
+        for (var i = 0; i < MAX_TRIALS; i++) cells.push(vals[i] != null ? vals[i].toFixed(2) : '');
+        cells.push(st.mean.toFixed(2), st.sd != null ? st.sd.toFixed(2) : '', st.se != null ? st.se.toFixed(2) : '', st.ci != null ? '±' + st.ci.toFixed(2) : '');
+        return cells.join('\t');
+      }));
+      var tsv = lines.join('\n');
       var done = function () { bCopy.textContent = 'Copied — paste into a spreadsheet'; setTimeout(function () { bCopy.textContent = 'Copy the table'; }, 2200); };
       if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(tsv).then(done, function () { fallback(); });
       else fallback();
@@ -580,44 +635,49 @@
       kept.textContent = runs.length ? runs.length + (runs.length === 1 ? ' run recorded' : ' runs recorded') + ' — write each one in your own table as you go.' : 'Nothing recorded yet.';
       gate.hidden = unlocked || !NEED;
       tableBox.hidden = !runs.length || !unlocked;
-      if (!runs.length) { table.innerHTML = ''; means.innerHTML = ''; chart.innerHTML = ''; return; }
-      table.innerHTML = '<thead><tr>' + COLS.map(function (c) { return '<th>' + c[1] + '</th>'; }).join('') + '<th></th></tr></thead><tbody>' +
-        runs.map(function (r, i) { var o = rowOf(r, i); return '<tr>' + COLS.map(function (c) { return '<td>' + esc(String(o[c[0]])) + '</td>'; }).join('') + '<td><button type="button" class="po__del" aria-label="Delete run ' + (i + 1) + '" data-i="' + i + '">✕</button></td></tr>'; }).join('') + '</tbody>';
+      if (!runs.length) { table.innerHTML = ''; chart.innerHTML = ''; return; }
+      var G = groups();
+      table.innerHTML = '<thead><tr><th>Conditions</th>' + [1, 2, 3, 4, 5].map(function (i) { return '<th>Trial ' + i + '<small>mm/min</small></th>'; }).join('') +
+        ['mean', 'sd', 'se', 'ci'].map(function (t) { return '<th><button type="button" class="po__term" data-term="' + t + '" title="What this is, and how it was worked out">' + (t === 'mean' ? 'Mean' : t === 'sd' ? 'SD' : t === 'se' ? 'SE' : '95 % CI') + ' <i>?</i></button></th>'; }).join('') + '</tr></thead><tbody>' +
+        G.map(function (g) {
+          var vals = g.trials.map(function (t) { return t.r.rate; }), st = stats(vals), cells = '';
+          for (var i = 0; i < MAX_TRIALS; i++) {
+            var t = g.trials[i];
+            cells += t ? '<td class="po__trial' + (t.r.leak ? ' po__trial--leak' : '') + '">' + t.r.rate.toFixed(2) + '<small title="' + t.r.distance + ' mm on shoot ' + String.fromCharCode(64 + (t.r.s.shoot || 1)) + '">' + t.r.distance + ' mm · ' + String.fromCharCode(64 + (t.r.s.shoot || 1)) + '</small><button type="button" class="po__del" data-i="' + t.i + '" aria-label="Delete this trial">✕</button></td>' : '<td class="po__trial po__trial--empty">—</td>';
+          }
+          return '<tr><td class="po__cond">' + condText(g.s) + '</td>' + cells +
+            '<td class="po__statcell"><b>' + st.mean.toFixed(2) + '</b></td><td class="po__statcell">' + (st.sd != null ? st.sd.toFixed(2) : '—') + '</td><td class="po__statcell">' + (st.se != null ? st.se.toFixed(2) : '—') + '</td><td class="po__statcell">' + (st.ci != null ? '± ' + st.ci.toFixed(2) : '—') + '</td></tr>';
+        }).join('') + '</tbody>';
       table.querySelectorAll('.po__del').forEach(function (b) { b.addEventListener('click', function () { runs.splice(+b.getAttribute('data-i'), 1); paintData(); }); });
-      /* means of repeated conditions */
-      var groups = {}, order = [];
-      runs.forEach(function (r) { var k = keyOf(r); if (!groups[k]) { groups[k] = []; order.push(k); } groups[k].push(r); });
-      var reps = order.filter(function (k) { return groups[k].length > 1; });
-      means.innerHTML = reps.length ? '<b>Means of repeated runs</b>' + reps.map(function (k) {
-        var g = groups[k], rs = g.map(function (r) { return r.rate; }), mean = rs.reduce(function (a, b) { return a + b; }, 0) / rs.length;
-        var s = g[0].s, shoots = {}; g.forEach(function (r) { shoots[r.s.shoot || 1] = 1; }); var ns = Object.keys(shoots).length;
-        return '<div class="po__mean">' + esc(s.sp.name) + ', ' + s.leaves + ' leaves, ' + s.light + ' % light, ' + s.temp + ' °C, ' + s.hum + ' % humidity, ' + esc(PO_WIND[s.wind]) + (s.grease === 'none' ? '' : ', grease ' + esc(s.grease)) + (s.joint === 'open' ? ', joint leaking' : '') + ', ' + s.time + ' min: <b>' + mean.toFixed(2) + ' mm / min</b> <small>(' + g.length + ' runs on ' + ns + (ns === 1 ? ' shoot — technical replicates' : ' shoots') + ', ' + Math.min.apply(null, rs).toFixed(2) + '–' + Math.max.apply(null, rs).toFixed(2) + ')</small></div>';
-      }).join('') : (runs.length >= 2 ? '<small>Repeat a run with the same settings and its mean appears here.</small>' : '');
-      chart.innerHTML = graph(groups, order);
+      table.querySelectorAll('.po__term').forEach(function (b) { b.addEventListener('click', function () { showTerm(b.getAttribute('data-term')); }); });
+      chart.innerHTML = graph(G);
     }
-    /* the graph picks its x-axis: the one factor that changed between runs */
+    /* the graph plots one point per row of the table — its mean — and picks its x-axis: the one factor that changed */
     var FACT = [['leaves', 'Leaves on the shoot', true], ['light', 'Light / %', true], ['temp', 'Temperature / °C', true], ['hum', 'Humidity / %', true], ['wind', 'Wind', false], ['time', 'Time / min', true], ['sp', 'Plant', false], ['grease', 'Grease', false], ['joint', 'Joint at the bung', false]];
-    function fval(r, f) { return f === 'sp' ? r.s.sp.name : f === 'wind' ? PO_WIND[r.s.wind] : f === 'joint' ? (r.s.joint === 'open' ? 'not sealed' : 'sealed') : r.s[f]; }
-    function graph(groups, order) {
-      if (runs.length < 2) return '<small class="po__gnote">Record a second run and the graph draws itself.</small>';
-      var varying = FACT.filter(function (F) { var vals = {}; runs.forEach(function (r) { vals[fval(r, F[0])] = 1; }); return Object.keys(vals).length > 1; });
-      var W = 560, H = 230, L = 54, R = 16, T = 18, B = 54;
+    function fval(s, f) { return f === 'sp' ? s.sp.name : f === 'wind' ? PO_WIND[s.wind] : f === 'joint' ? (s.joint === 'open' ? 'not sealed' : 'sealed') : s[f]; }
+    function graph(G) {
+      if (G.length < 2 && !(G.length === 1 && G[0].trials.length >= 2)) return '<small class="po__gnote">Record a second trial, or a second set of conditions, and the graph draws itself.</small>';
+      var varying = FACT.filter(function (F) { var vals = {}; G.forEach(function (g) { vals[fval(g.s, F[0])] = 1; }); return Object.keys(vals).length > 1; });
+      var W = 560, H = 240, L = 54, R = 16, T = 18, B = 54, errK = errSel.value;
       var pts, xlab, numeric = false, note = '';
+      var mk = function (g, x) { var vals = g.trials.map(function (t) { return t.r.rate; }), st = stats(vals); var e = errK === 'sd' ? st.sd : errK === 'se' ? st.se : errK === 'ci' ? st.ci : null; return { x: x, mean: st.mean, all: vals, err: e == null || isNaN(e) ? null : e }; };
       if (varying.length === 1) {
         var F = varying[0]; xlab = F[1]; numeric = F[2];
-        var byX = {}; runs.forEach(function (r) { var x = fval(r, F[0]); (byX[x] = byX[x] || []).push(r.rate); });
-        pts = Object.keys(byX).map(function (x) { var rs = byX[x]; return { x: numeric ? +x : x, mean: rs.reduce(function (a, b) { return a + b; }, 0) / rs.length, all: rs }; });
+        pts = G.map(function (g) { return mk(g, numeric ? +fval(g.s, F[0]) : fval(g.s, F[0])); });
         var ORDER = { wind: PO_WIND, sp: PO_SPECIES.map(function (q) { return q.name; }), grease: PO_GREASE.map(function (q) { return q[0]; }), joint: ['sealed', 'not sealed'] }[F[0]];
         pts.sort(function (a, b) { return numeric ? a.x - b.x : ORDER.indexOf(a.x) - ORDER.indexOf(b.x); });
-        note = 'Rate of uptake against ' + F[1].toLowerCase().replace(/ \/ .*/, '') + ' — the one factor you changed' + (pts.some(function (p) { return p.all.length > 1; }) ? '; a point is the mean of its repeats' : '') + '.';
+        note = 'Mean rate of uptake against ' + F[1].toLowerCase().replace(/ \/ .*/, '') + ' — the one factor you changed; each point is the mean of its trials.';
+      } else if (varying.length === 0) {
+        xlab = 'Trial'; pts = G[0].trials.map(function (t, i) { return { x: i + 1, mean: t.r.rate, all: [t.r.rate], err: null }; }); numeric = false;
+        note = 'One set of conditions so far: its trials, one by one. Change a factor and run again for a graph of means.';
       } else {
-        xlab = 'Run'; pts = runs.map(function (r, i) { return { x: i + 1, mean: r.rate, all: [r.rate] }; });
-        note = varying.length ? 'More than one factor changed between runs (' + varying.map(function (F) { return F[1].toLowerCase().replace(/ \/ .*/, ''); }).join(', ') + '), so this is rate by run. Change one thing at a time to see what it does.' : 'Every run had the same settings: rate by run, with the mean above.';
-        numeric = false;
+        xlab = 'Row'; pts = G.map(function (g, i) { return mk(g, i + 1); }); numeric = false;
+        note = 'More than one factor changed between rows (' + varying.map(function (F) { return F[1].toLowerCase().replace(/ \/ .*/, ''); }).join(', ') + '), so this is the mean by row. Change one thing at a time to see what it does.';
       }
-      var ymax = Math.max.apply(null, pts.map(function (p) { return Math.max.apply(null, p.all); })) * 1.15 || 1;
+      var top = Math.max.apply(null, pts.map(function (p) { return Math.max(Math.max.apply(null, p.all), p.err != null ? p.mean + p.err : 0); }));
+      var ymax = top * 1.15 || 1;
       var ystep = ymax > 10 ? 5 : ymax > 4 ? 2 : ymax > 2 ? 1 : ymax > 1 ? .5 : .25;
-      function Y(v) { return T + (H - T - B) * (1 - v / ymax); }
+      function Y(v) { return T + (H - T - B) * (1 - Math.max(0, v) / ymax); }
       var xs = pts.map(function (p) { return p.x; });
       function X(i, v) {
         if (numeric) { var lo = Math.min.apply(null, xs), hi = Math.max.apply(null, xs); return lo === hi ? (L + W - R) / 2 : L + (W - L - R) * (v - lo) / (hi - lo); }
@@ -627,16 +687,27 @@
       for (var v = 0; v <= ymax; v += ystep) s += '<line class="po__grid" x1="' + L + '" y1="' + Y(v).toFixed(1) + '" x2="' + (W - R) + '" y2="' + Y(v).toFixed(1) + '"/><text class="po__gt" x="' + (L - 6) + '" y="' + (Y(v) + 3.5).toFixed(1) + '" text-anchor="end">' + (ystep < 1 ? v.toFixed(2) : v) + '</text>';
       s += '<line class="po__axis" x1="' + L + '" y1="' + T + '" x2="' + L + '" y2="' + (H - B) + '"/><line class="po__axis" x1="' + L + '" y1="' + (H - B) + '" x2="' + (W - R) + '" y2="' + (H - B) + '"/>';
       s += '<text class="po__gl" transform="rotate(-90)" x="' + (-(T + H - B) / 2) + '" y="14" text-anchor="middle">Rate / mm min⁻¹</text><text class="po__gl" x="' + ((L + W - R) / 2) + '" y="' + (H - 8) + '" text-anchor="middle">' + esc(xlab) + '</text>';
+      /* the confidence interval as a band: along the line for a numeric axis, a box on each bar otherwise */
+      var withErr = pts.filter(function (p) { return p.err != null; });
+      if (errK === 'ci' && numeric && withErr.length >= 2) {
+        var up = withErr.map(function (p) { return X(pts.indexOf(p), p.x).toFixed(1) + ',' + Y(p.mean + p.err).toFixed(1); }), dn = withErr.slice().reverse().map(function (p) { return X(pts.indexOf(p), p.x).toFixed(1) + ',' + Y(p.mean - p.err).toFixed(1); });
+        s += '<polygon class="po__band" points="' + up.concat(dn).join(' ') + '"/>';
+      }
       if (numeric && pts.length > 1) s += '<polyline class="po__line" points="' + pts.map(function (p, i) { return X(i, p.x).toFixed(1) + ',' + Y(p.mean).toFixed(1); }).join(' ') + '"/>';
       pts.forEach(function (p, i) {
         var x = X(i, p.x);
         if (!numeric) s += '<rect class="po__gbar" x="' + (x - 14).toFixed(1) + '" y="' + Y(p.mean).toFixed(1) + '" width="28" height="' + (H - B - Y(p.mean)).toFixed(1) + '"/>';
+        if (p.err != null) {
+          if (errK === 'ci' && !numeric) s += '<rect class="po__band" x="' + (x - 20).toFixed(1) + '" y="' + Y(p.mean + p.err).toFixed(1) + '" width="40" height="' + (Y(p.mean - p.err) - Y(p.mean + p.err)).toFixed(1) + '"/>';
+          if (errK !== 'ci') s += '<path class="po__whisker" d="M' + x.toFixed(1) + ' ' + Y(p.mean + p.err).toFixed(1) + ' V' + Y(p.mean - p.err).toFixed(1) + ' M' + (x - 6).toFixed(1) + ' ' + Y(p.mean + p.err).toFixed(1) + ' h12 M' + (x - 6).toFixed(1) + ' ' + Y(p.mean - p.err).toFixed(1) + ' h12"/>';
+        }
         p.all.forEach(function (v) { s += '<circle class="po__dot' + (p.all.length > 1 ? ' po__dot--rep' : '') + '" cx="' + x.toFixed(1) + '" cy="' + Y(v).toFixed(1) + '" r="3"/>'; });
         if (p.all.length > 1) s += '<circle class="po__dotmean" cx="' + x.toFixed(1) + '" cy="' + Y(p.mean).toFixed(1) + '" r="4.5"/>';
         var every = pts.length > 8 ? Math.ceil(pts.length / 8) : 1;
         if (i % every === 0 || i === pts.length - 1) s += '<text class="po__gt" x="' + x.toFixed(1) + '" y="' + (H - B + 14) + '" text-anchor="middle">' + esc(String(p.x)) + '</text>';
       });
-      s += '</svg><small class="po__gnote">' + esc(note) + '</small>';
+      var errNote = errK === 'none' ? '' : errK === 'ci' ? ' The band is the 95 % confidence interval of each mean; where two bands do not overlap, the difference is real.' : ' The whiskers are one ' + (errK === 'sd' ? 'standard deviation' : 'standard error') + ' either side of each mean.';
+      s += '</svg><small class="po__gnote">' + esc(note + errNote) + '</small>';
       return s;
     }
 
