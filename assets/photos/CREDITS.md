@@ -156,9 +156,13 @@ bench, not measured here. What it is scaled to:
   (https://pubmed.ncbi.nlm.nih.gov/21293876/ ; https://academic.oup.com/jxb/article/55/401/1411/478991);
   sunflower and bean leaves several times more under the same light; privet like ivy; geranium in
   between; marram grass, with its stomata rolled inside the leaf, far less.
-- Petroleum jelly on a leaf surface blocks the stomata on that surface; on most dicot leaves nearly
-  all are on the lower surface, so grease there cuts uptake to a fraction, grease above hardly at
-  all. Petroleum jelly at the joint with the bung is what makes the joint airtight: without it, air
+- Petroleum jelly on a leaf surface blocks the stomata on that surface. The bench gives each plant a
+  share of its stomata on the lower surface — nearly all on privet and ivy, whose leaves have stomata
+  only underneath; two thirds or so on bean, sunflower and geranium, which have them on both
+  surfaces with more below; almost none on marram grass, whose stomata line the inside of the
+  rolled leaf, its upper surface — and a greased surface keeps only the other surface's share,
+  plus a little loss through the cuticle. Typical values for those leaf types, not measurements
+  of these plants. Petroleum jelly at the joint with the bung is what makes the joint airtight: without it, air
   is drawn in there instead of water from the tube, the bubble moves less than the shoot takes up,
   and by a different amount each time (SAPS, above: leaks at the joints are one of the two reasons a
   potometer fails, and jelly is what fixes them).
