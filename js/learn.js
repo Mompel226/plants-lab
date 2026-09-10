@@ -1150,60 +1150,116 @@
     receptacle: ['Receptacle', 'The top of the flower stalk, which all the parts are attached to. Not asked for in 0610.']
   };
 
-  /* ---------- water: a polar molecule, hydrogen bonds, cohesion and adhesion (opens from the words in the text) ---------- */
+  /* ---------- water: where the charges come from, a polar molecule, hydrogen bonds, cohesion and adhesion
+     (opens from the words in the text) ---------- */
   function waterSvg() {
     var R = 21, r = 12.5, L = 29, HALF = 52.25 * Math.PI / 180;
-    /* one molecule: the oxygen at (x, y), its two hydrogens 104.5° apart about the direction phi (degrees) */
-    function mol(x, y, phi, tag) {
-      var p = phi * Math.PI / 180, hs = [p - HALF, p + HALF].map(function (a) { return [x + L * Math.cos(a), y + L * Math.sin(a)]; });
-      var s = '<g class="wm" data-tag="' + tag + '">';
-      hs.forEach(function (h) { s += '<line x1="' + x + '" y1="' + y + '" x2="' + h[0].toFixed(1) + '" y2="' + h[1].toFixed(1) + '" stroke="#B9C2C8" stroke-width="7" stroke-linecap="round"/>'; });
-      s += '<circle cx="' + x + '" cy="' + y + '" r="' + R + '" fill="#D9534F" stroke="#9E2F2B" stroke-width="1.4"/>';
-      s += '<text x="' + x + '" y="' + (y + 5) + '" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">O</text>';
-      hs.forEach(function (h) { s += '<circle cx="' + h[0].toFixed(1) + '" cy="' + h[1].toFixed(1) + '" r="' + r + '" fill="#F5F7F8" stroke="#7F8F9A" stroke-width="1.3"/><text x="' + h[0].toFixed(1) + '" y="' + (h[1] + 4.5).toFixed(1) + '" text-anchor="middle" font-size="12" font-weight="700" fill="#33414A">H</text>'; });
-      return { svg: s + '</g>', h: hs };
+    function pt(x, y, d, a) { return [x + d * Math.cos(a), y + d * Math.sin(a)]; }
+    function f(n) { return (+n).toFixed(1); }
+    function txt(x, y, t, size, weight, fill, anchor) { return '<text x="' + f(x) + '" y="' + f(y) + '" font-size="' + size + '"' + (weight ? ' font-weight="' + weight + '"' : '') + ' fill="' + fill + '"' + (anchor ? ' text-anchor="' + anchor + '"' : '') + '>' + t + '</text>'; }
+    function delta(p, sign) { return txt(p[0], p[1] + 5, 'δ' + sign, 14.5, 700, sign === '−' ? '#9E2F2B' : '#2F5F8F', 'middle'); }
+    function title(y, t) { return txt(16, y, t, 16.5, 700, '#3D7A54'); }
+    function note(x, y, t, anchor) { return txt(x, y, t, 13.2, 0, '#5B6B63', anchor); }
+    function hb(a, b) { return '<line x1="' + f(a[0]) + '" y1="' + f(a[1]) + '" x2="' + f(b[0]) + '" y2="' + f(b[1]) + '" stroke="#2F6FB3" stroke-width="2.2" stroke-dasharray="5 4" stroke-linecap="round"/>'; }
+    /* a space-filling molecule: the oxygen at (x, y), its hydrogens 104.5° apart about the direction phi (degrees).
+       h: the hydrogens; beyond(i): a spot clear of hydrogen i; back(off): a spot behind the oxygen, off px to one side */
+    function mol(x, y, phi) {
+      var p = phi * Math.PI / 180, angs = [p - HALF, p + HALF], hs = angs.map(function (a) { return pt(x, y, L, a); });
+      var s = '<g>';
+      hs.forEach(function (h) { s += '<line x1="' + x + '" y1="' + y + '" x2="' + f(h[0]) + '" y2="' + f(h[1]) + '" stroke="#B9C2C8" stroke-width="7" stroke-linecap="round"/>'; });
+      s += '<circle cx="' + x + '" cy="' + y + '" r="' + R + '" fill="#D9534F" stroke="#9E2F2B" stroke-width="1.4"/>' + txt(x, y + 5, 'O', 14, 700, '#fff', 'middle');
+      hs.forEach(function (h) { s += '<circle cx="' + f(h[0]) + '" cy="' + f(h[1]) + '" r="' + r + '" fill="#F5F7F8" stroke="#7F8F9A" stroke-width="1.3"/>' + txt(h[0], h[1] + 4.5, 'H', 12, 700, '#33414A', 'middle'); });
+      return { svg: s + '</g>', h: hs, edge: function (a) { return pt(x, y, R, a); },
+               beyond: function (i) { return pt(x, y, L + r + 14, angs[i]); },
+               back: function (off) { var b = pt(x, y, R + 16, p + Math.PI); return [b[0] - Math.sin(p) * (off || 0), b[1] + Math.cos(p) * (off || 0)]; } };
     }
-    function delta(x, y, sign) { return '<text x="' + x + '" y="' + y + '" text-anchor="middle" font-size="14.5" font-weight="700" fill="' + (sign === '−' ? '#9E2F2B' : '#2F5F8F') + '">δ' + sign + '</text>'; }
-    function hb(x1, y1, x2, y2) { return '<line x1="' + x1.toFixed(1) + '" y1="' + y1.toFixed(1) + '" x2="' + x2.toFixed(1) + '" y2="' + y2.toFixed(1) + '" stroke="#2F6FB3" stroke-width="2.2" stroke-dasharray="5 4" stroke-linecap="round"/>'; }
-    function title(y, t) { return '<text x="16" y="' + y + '" font-size="16.5" font-weight="700" fill="#3D7A54">' + t + '</text>'; }
-    function note(x, y, t, anchor) { return '<text x="' + x + '" y="' + y + '" font-size="13.2" fill="#5B6B63"' + (anchor ? ' text-anchor="' + anchor + '"' : '') + '>' + t + '</text>'; }
-    var s = '<svg viewBox="0 0 440 488" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Two drawings: water molecules hydrogen-bonded to one another (cohesion), and a water molecule hydrogen-bonded to the cellulose of the xylem wall (adhesion)">';
-    /* ---- one molecule, charged ends ---- */
-    s += title(24, 'A polar molecule');
-    var A = mol(70, 88, 0, 'polar'); s += A.svg;
-    s += delta(40, 68, '−') + delta(A.h[0][0] + 20, A.h[0][1] - 6, '+') + delta(A.h[1][0] + 20, A.h[1][1] + 16, '+');
-    s += note(132, 76, 'The oxygen pulls the shared electrons') + note(132, 92, 'towards itself: slightly negative (δ−).') + note(132, 112, 'Each hydrogen is left slightly') + note(132, 128, 'positive (δ+).');
-    /* ---- cohesion: a chain ---- */
-    s += title(176, 'Cohesion — water holds on to water');
-    var B = mol(62, 232, 0, 'b'), C = mol(178, 258, -18, 'c'), D = mol(300, 232, -30, 'd');
-    s += hb(B.h[1][0], B.h[1][1], C.h ? 178 - 21 : 0, 258) + hb(C.h[1][0], C.h[1][1], 300 - 21, 232 + 8);
-    s += B.svg + C.svg + D.svg;
-    s += delta(B.h[1][0] - 6, B.h[1][1] + 20, '+') + delta(144, 244, '−') + delta(C.h[1][0] + 4, C.h[1][1] + 21, '+') + delta(274, 262, '−');
-    s += note(112, 302, 'hydrogen bond', 'middle') + '<line x1="114" y1="290" x2="120" y2="262" stroke="#2F6FB3" stroke-width="1"/>';
-    s += note(385, 210, 'and so on,', 'middle') + note(385, 226, 'up the xylem', 'middle');
-    s += note(228, 306, 'δ+ H to δ− O, again and again:') + note(228, 322, 'one continuous column.');
-    /* ---- adhesion: the wall ---- */
-    s += title(354, 'Adhesion — water holds on to the xylem wall');
-    s += '<rect x="16" y="364" width="38" height="104" rx="3" fill="#D8C39A" stroke="#9A7B4F" stroke-width="1.2"/>';
-    for (var i = 0; i < 6; i++) s += '<line x1="20" y1="' + (372 + i * 16) + '" x2="50" y2="' + (376 + i * 16) + '" stroke="#B89A62" stroke-width="1"/>';
-    s += '<text transform="translate(40 416) rotate(-90)" text-anchor="middle" font-size="11.5" font-weight="700" fill="#5B4425">cellulose</text>';
-    /* two –OH groups on the cellulose, the oxygen δ− */
-    [390, 444].forEach(function (y) {
-      s += '<line x1="54" y1="' + y + '" x2="84" y2="' + y + '" stroke="#B9C2C8" stroke-width="6" stroke-linecap="round"/><line x1="84" y1="' + y + '" x2="100" y2="' + (y - 12) + '" stroke="#B9C2C8" stroke-width="6" stroke-linecap="round"/>';
-      s += '<circle cx="84" cy="' + y + '" r="13" fill="#D9534F" stroke="#9E2F2B" stroke-width="1.2"/><text x="84" y="' + (y + 4.5) + '" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">O</text>';
-      s += '<circle cx="100" cy="' + (y - 12) + '" r="9" fill="#F5F7F8" stroke="#7F8F9A" stroke-width="1.2"/><text x="100" y="' + (y - 8.5) + '" text-anchor="middle" font-size="10" font-weight="700" fill="#33414A">H</text>';
-      s += delta(84, y + 28, '−');
+    var s = '<svg viewBox="0 0 440 684" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Four drawings: a dot-and-cross diagram of water with the shared electrons nearer the oxygen; a polar molecule with its δ− and δ+ ends; water molecules hydrogen-bonded to one another (cohesion); a water molecule hydrogen-bonded to the cellulose of the xylem wall (adhesion)">';
+    /* ---- 1. dot and cross: the shared electrons sit nearer the oxygen ---- */
+    s += title(24, 'Where the charges come from');
+    var ox = 104, oy = 104, RO = 36, RH = 17, DH = 42;
+    s += '<circle cx="' + ox + '" cy="' + oy + '" r="' + RO + '" fill="#FBEBEA" stroke="#9E2F2B" stroke-width="1.4"/>';
+    [-1, 1].forEach(function (sg) {
+      var a = sg * HALF, hc = pt(ox, oy, DH, a), u = [Math.cos(a), Math.sin(a)], n = [-Math.sin(a) * sg, Math.cos(a) * sg];
+      s += '<circle cx="' + f(hc[0]) + '" cy="' + f(hc[1]) + '" r="' + RH + '" fill="#EEF3F7" fill-opacity=".9" stroke="#7F8F9A" stroke-width="1.3"/>';
+      var hl = pt(ox, oy, DH + 7, a); s += txt(hl[0], hl[1] + 4.5, 'H', 12.5, 700, '#33414A', 'middle');
+      /* the shared pair, drawn nearer the oxygen than the middle of the overlap */
+      var c = pt(ox, oy, 28, a), perp = [-Math.sin(a), Math.cos(a)], d = [c[0] + perp[0] * 4.5, c[1] + perp[1] * 4.5], x = [c[0] - perp[0] * 4.5, c[1] - perp[1] * 4.5];
+      s += '<circle cx="' + f(d[0]) + '" cy="' + f(d[1]) + '" r="2.7" fill="#9E2F2B"/>';
+      s += '<path d="M' + f(x[0] - 3) + ' ' + f(x[1] - 3) + 'L' + f(x[0] + 3) + ' ' + f(x[1] + 3) + 'M' + f(x[0] - 3) + ' ' + f(x[1] + 3) + 'L' + f(x[0] + 3) + ' ' + f(x[1] - 3) + '" stroke="#2F5F8F" stroke-width="1.7" stroke-linecap="round"/>';
+      /* the pull: an arrow alongside the bond, from the hydrogen towards the oxygen */
+      var a1 = pt(ox, oy, 50, a), a2 = pt(ox, oy, 27, a); a1 = [a1[0] + n[0] * 15, a1[1] + n[1] * 15]; a2 = [a2[0] + n[0] * 15, a2[1] + n[1] * 15];
+      s += '<line x1="' + f(a1[0]) + '" y1="' + f(a1[1]) + '" x2="' + f(a2[0] + u[0] * 5) + '" y2="' + f(a2[1] + u[1] * 5) + '" stroke="#2F6FB3" stroke-width="1.6"/>';
+      s += '<path d="M' + f(a2[0]) + ' ' + f(a2[1]) + 'L' + f(a2[0] + u[0] * 7 + perp[0] * 3.5) + ' ' + f(a2[1] + u[1] * 7 + perp[1] * 3.5) + 'L' + f(a2[0] + u[0] * 7 - perp[0] * 3.5) + ' ' + f(a2[1] + u[1] * 7 - perp[1] * 3.5) + 'Z" fill="#2F6FB3"/>';
+      s += delta(pt(ox, oy, DH + RH + 13, a), '+');
     });
-    var E = mol(170, 417, 180, 'e');
-    s += hb(97, 392, E.h[1][0], E.h[1][1]) + hb(97, 442, E.h[0][0], E.h[0][1]) + E.svg;
-    s += delta(E.h[1][0] + 2, E.h[1][1] - 18, '+') + delta(E.h[0][0] + 2, E.h[0][1] + 25, '+');
-    s += note(226, 392, '–OH groups on the cellulose') + note(226, 408, 'are polar too, so the same') + note(226, 424, 'hydrogen bonds form between') + note(226, 440, 'water and the wall: the column') + note(226, 456, 'clings to the xylem and does') + note(226, 472, 'not slip back.');
+    /* the two lone pairs, on the back of the oxygen's shell */
+    [Math.PI - 0.5, Math.PI + 0.5].forEach(function (a) { var c = pt(ox, oy, RO, a), t = [-Math.sin(a), Math.cos(a)]; [-4, 4].forEach(function (k) { s += '<circle cx="' + f(c[0] + t[0] * k) + '" cy="' + f(c[1] + t[1] * k) + '" r="2.7" fill="#9E2F2B"/>'; }); });
+    s += txt(ox, oy + 6, 'O', 16, 700, '#9E2F2B', 'middle');
+    s += delta([ox - RO - 15, oy], '−');
+    s += note(176, 62, 'Oxygen has 6 outer electrons (•),') + note(176, 78, 'each hydrogen 1 (×). Two shared') + note(176, 94, 'pairs make the two bonds.');
+    s += note(176, 118, 'Oxygen attracts the shared electrons') + note(176, 134, 'more strongly than hydrogen does,') + note(176, 150, 'so they sit nearer the oxygen (the') + note(176, 166, 'arrows): δ− there, δ+ on each hydrogen.');
+    /* ---- 2. the result: a polar molecule ---- */
+    s += title(214, 'The result: a polar molecule');
+    var A = mol(70, 278, 0); s += A.svg;
+    s += delta(A.back(), '−') + delta(A.beyond(0), '+') + delta(A.beyond(1), '+');
+    s += note(132, 262, 'Slightly negative at the back of the') + note(132, 278, 'oxygen (δ−), slightly positive at each') + note(132, 294, 'hydrogen (δ+): a polar molecule.');
+    /* ---- 3. cohesion: a chain ---- */
+    s += title(366, 'Cohesion — water holds on to water');
+    var B = mol(62, 422, 0), C = mol(178, 448, -18), D = mol(300, 422, -30);
+    s += hb(B.h[1], C.edge(162 * Math.PI / 180)) + hb(C.h[1], D.edge(150 * Math.PI / 180));
+    s += B.svg + C.svg + D.svg;
+    s += delta(B.beyond(1), '+') + delta(C.back(14), '−') + delta(C.beyond(1), '+') + delta(D.back(14), '−');
+    s += note(112, 500, 'hydrogen bond', 'middle') + '<line x1="114" y1="488" x2="120" y2="452" stroke="#2F6FB3" stroke-width="1"/>';
+    s += note(385, 400, 'and so on,', 'middle') + note(385, 416, 'up the xylem', 'middle');
+    s += note(228, 496, 'δ+ H to δ− O, again and again:') + note(228, 512, 'one continuous column.');
+    /* ---- 4. adhesion: the wall ---- */
+    s += title(548, 'Adhesion — water holds on to the xylem wall');
+    s += '<rect x="16" y="558" width="38" height="104" rx="3" fill="#D8C39A" stroke="#9A7B4F" stroke-width="1.2"/>';
+    for (var i = 0; i < 6; i++) s += '<line x1="20" y1="' + (566 + i * 16) + '" x2="50" y2="' + (570 + i * 16) + '" stroke="#B89A62" stroke-width="1"/>';
+    s += '<text transform="translate(40 610) rotate(-90)" text-anchor="middle" font-size="11.5" font-weight="700" fill="#5B4425">cellulose</text>';
+    /* two –OH groups on the cellulose, the oxygen δ− */
+    [584, 638].forEach(function (y) {
+      s += '<line x1="54" y1="' + y + '" x2="84" y2="' + y + '" stroke="#B9C2C8" stroke-width="6" stroke-linecap="round"/><line x1="84" y1="' + y + '" x2="100" y2="' + (y - 12) + '" stroke="#B9C2C8" stroke-width="6" stroke-linecap="round"/>';
+      s += '<circle cx="84" cy="' + y + '" r="13" fill="#D9534F" stroke="#9E2F2B" stroke-width="1.2"/>' + txt(84, y + 4.5, 'O', 12, 700, '#fff', 'middle');
+      s += '<circle cx="100" cy="' + (y - 12) + '" r="9" fill="#F5F7F8" stroke="#7F8F9A" stroke-width="1.2"/>' + txt(100, y - 8.5, 'H', 10, 700, '#33414A', 'middle');
+      s += delta([84, y + 23], '−');
+    });
+    var E = mol(170, 611, 180);
+    s += hb([97, 586], E.h[1]) + hb([97, 636], E.h[0]) + E.svg;
+    s += delta(E.back(), '−') + delta(E.beyond(1), '+') + delta(E.beyond(0), '+');
+    s += note(226, 586, '–OH groups on the cellulose') + note(226, 602, 'are polar too, so the same') + note(226, 618, 'hydrogen bonds form between') + note(226, 634, 'water and the wall: the column') + note(226, 650, 'clings to the xylem and does') + note(226, 666, 'not slip back.');
+    return s + '</svg>';
+  }
+
+  /* ---------- trunk: a tree cut across — cork, phloem, cambium, and the rings of xylem it makes (opens from the words) ---------- */
+  function trunkSvg() {
+    var cx = 132, cy = 196, s = '<svg viewBox="0 0 440 372" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A tree trunk cut across: bark on the outside, then a thin layer of phloem, the cambium, and ring after ring of xylem, the oldest at the centre">';
+    function ring(r, fill, stroke) { return '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="' + fill + '"' + (stroke ? ' stroke="' + stroke + '" stroke-width="1"' : '') + '/>'; }
+    function txt(x, y, t, size, weight, fill, anchor) { return '<text x="' + x + '" y="' + y + '" font-size="' + size + '"' + (weight ? ' font-weight="' + weight + '"' : '') + ' fill="' + fill + '"' + (anchor ? ' text-anchor="' + anchor + '"' : '') + '>' + t + '</text>'; }
+    function lead(ang, r, x, y) { var a = ang * Math.PI / 180, px = cx + r * Math.cos(a), py = cy + r * Math.sin(a); return '<line x1="' + px.toFixed(1) + '" y1="' + py.toFixed(1) + '" x2="' + x + '" y2="' + y + '" stroke="#1F2A24" stroke-width="1"/><circle cx="' + px.toFixed(1) + '" cy="' + py.toFixed(1) + '" r="2.6" fill="#1F2A24"/>'; }
+    s += txt(16, 24, 'A tree trunk, cut across', 16.5, 700, '#3D7A54');
+    s += ring(124, '#5B3E27');                                  /* bark: cork on the outside */
+    s += ring(112, '#8FB08A', '#5F7F5A');                       /* phloem: a thin living layer */
+    s += ring(103, '#2E6B3E');                                  /* cambium: one layer of dividing cells */
+    var r = 100, k = 0;                                         /* the rings: pale, wide spring wood, then darker, narrow summer wood — one pair a year */
+    while (r > 34) { var w = 9 - k * 0.35, sw = 3; s += ring(r, '#E8D6B0') + ring(r - w + sw, '#B9895A'); r -= w; k++; }
+    s += ring(r, '#9A6A45') + ring(4, '#5B3E27');               /* heartwood: old xylem, then the pith */
+    var L = [
+      [-38, 121, 250, 60, ['Bark: cork on the outside —', 'dead, waterproof cells']],
+      [-20, 108, 250, 114, ['Phloem: a thin living layer', 'just under the bark']],
+      [-4, 103, 250, 168, ['Cambium: one layer of', 'dividing cells — new xylem', 'inwards, new phloem outwards']],
+      [22, 78, 250, 236, ['Xylem = wood, a ring a year:', 'pale wide spring wood, then', 'darker narrow summer wood']],
+      [48, 22, 250, 300, ['Heartwood: old xylem, no', 'longer carrying water']]
+    ];
+    L.forEach(function (e) { s += lead(e[0], e[1], e[2] - 6, e[3] - 4); e[4].forEach(function (t, i) { s += txt(e[2], e[3] + i * 16, t, 13.2, i === 0 ? 700 : 0, i === 0 ? '#1F2A24' : '#5B6B63'); }); });
+    s += txt(16, 344, 'Each year the cambium adds one ring of xylem: that is how a trunk', 13.2, 0, '#5B6B63') + txt(16, 360, 'thickens, and why the rings count its years.', 13.2, 0, '#5B6B63');
     return s + '</svg>';
   }
   var DIAGRAMS = {
     'flower': { svg: flowerSvg(true) },
     'flower-blank': { svg: flowerSvg(false) },
-    'water': { svg: waterSvg() }
+    'water': { svg: waterSvg() },
+    'trunk': { svg: trunkSvg() }
   };
   function svgFor(name) { return DIAGRAMS[name] ? DIAGRAMS[name].svg : ''; }
 

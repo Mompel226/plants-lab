@@ -889,6 +889,8 @@ picture{display:block;line-height:0}
 .ctable tbody th{font-weight:600;background:#fff;white-space:nowrap}
 .ctable caption{caption-side:bottom;text-align:left;font-size:12.5px;color:var(--grey);padding:6px 2px 0}
 .photo{margin:12px 0 4px}
+.photo.photo--small{max-width:236px;margin-left:auto;margin-right:auto}
+.photo.photo--small img{width:100%;height:auto}
 .photo img{width:100%;height:auto;display:block;border-radius:var(--r);cursor:zoom-in;background:#1B2226}
 .photo figcaption{font-size:12.5px;color:var(--grey);margin-top:6px;line-height:1.45}
 .photo figcaption a{color:inherit}
