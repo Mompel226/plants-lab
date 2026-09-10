@@ -1109,8 +1109,11 @@ picture{display:block;line-height:0}
 .po__pop__how{background:var(--card-2);border-radius:var(--r);padding:8px 10px;font-size:13px}
 .po__pop__how b{color:var(--k-water)}
 .po__pop__note{font-size:12px;color:var(--grey);margin:0}
-.po__err{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:#3C3C3C}
-.po__err select{font:inherit;font-size:12.5px;font-weight:400;padding:4px 8px;border:1.5px solid var(--edge);border-radius:8px;background:#fff}
+.po__errbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:10px;font-size:12.5px;color:#3C3C3C}
+.po__errbar__l{font-weight:600;margin-right:4px}
+.po__errbar__b{font:inherit;font-size:12.5px;color:var(--green);background:#fff;border:1.5px solid var(--edge);border-radius:var(--r-pill);padding:4px 11px;cursor:pointer}
+.po__errbar__b:hover{border-color:var(--green)}
+.po__errbar__b[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:#fff}
 .po__band{fill:#BFE0F5;opacity:.55;stroke:none}
 .po__whisker{fill:none;stroke:#2F6F8E;stroke-width:1.4}
 .po__chart{margin-top:12px}

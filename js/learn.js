@@ -563,14 +563,16 @@
     var tableWrap = h('div', 'po__tablewrap'), table = h('table', 'po__table'), pop = h('div', 'po__pop'), chart = h('div', 'po__chart');
     pop.hidden = true;
     var tools = h('div', 'po__tools');
-    var errLab = h('label', 'po__err', '<span>Error bars</span>');
-    var errSel = document.createElement('select');
-    [['none', 'none'], ['sd', 'standard deviation'], ['se', 'standard error'], ['ci', '95 % confidence interval, as a band']].forEach(function (o) { var op = document.createElement('option'); op.value = o[0]; op.textContent = o[1]; errSel.appendChild(op); });
-    errSel.value = PO_STATE.err || 'none'; errLab.appendChild(errSel); tools.appendChild(errLab);
-    errSel.addEventListener('change', function () { PO_STATE.err = errSel.value; paintData(); });
+    var errK = PO_STATE.err || 'none';
+    var errBar = h('div', 'po__errbar', '<span class="po__errbar__l">Show, with the mean</span>');
+    [['none', 'the mean only'], ['sd', 'standard deviation'], ['se', 'standard error'], ['ci', '95 % confidence interval']].forEach(function (o) {
+      var b = h('button', 'po__errbar__b', esc(o[1])); b.type = 'button'; b.setAttribute('data-k', o[0]); b.setAttribute('aria-pressed', o[0] === errK ? 'true' : 'false');
+      b.addEventListener('click', function () { errK = o[0]; PO_STATE.err = errK; errBar.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', x.getAttribute('data-k') === errK ? 'true' : 'false'); }); paintData(); });
+      errBar.appendChild(b);
+    });
     var bCopy = h('button', 'wbtn wbtn--quiet', 'Copy the table'), bClear = h('button', 'wbtn wbtn--quiet', 'Clear the table');
     [bCopy, bClear].forEach(function (b) { b.type = 'button'; tools.appendChild(b); });
-    tableWrap.appendChild(table); tableBox.appendChild(tableWrap); tableBox.appendChild(pop); tableBox.appendChild(chart); tableBox.appendChild(tools);
+    tableWrap.appendChild(table); tableBox.appendChild(errBar); tableBox.appendChild(tableWrap); tableBox.appendChild(pop); tableBox.appendChild(chart); tableBox.appendChild(tools);
 
     function keyOf(s) { return [s.sp.id, s.leaves, s.light, s.temp, s.hum, s.wind, s.grease, s.joint, s.time].join('|'); }
     function condText(s) {
@@ -638,7 +640,7 @@
       if (!runs.length) { table.innerHTML = ''; chart.innerHTML = ''; return; }
       var G = groups();
       table.innerHTML = '<thead><tr><th>Conditions</th>' + [1, 2, 3, 4, 5].map(function (i) { return '<th>Trial ' + i + '<small>mm/min</small></th>'; }).join('') +
-        ['mean', 'sd', 'se', 'ci'].map(function (t) { return '<th><button type="button" class="po__term" data-term="' + t + '" title="What this is, and how it was worked out">' + (t === 'mean' ? 'Mean' : t === 'sd' ? 'SD' : t === 'se' ? 'SE' : '95 % CI') + ' <i>?</i></button></th>'; }).join('') + '</tr></thead><tbody>' +
+        ['mean'].concat(errK === 'none' ? [] : [errK]).map(function (t) { return '<th><button type="button" class="po__term" data-term="' + t + '" title="What this is, and how it was worked out">' + (t === 'mean' ? 'Mean' : t === 'sd' ? 'SD' : t === 'se' ? 'SE' : '95 % CI') + ' <i>?</i></button></th>'; }).join('') + '</tr></thead><tbody>' +
         G.map(function (g) {
           var vals = g.trials.map(function (t) { return t.r.rate; }), st = stats(vals), cells = '';
           for (var i = 0; i < MAX_TRIALS; i++) {
@@ -646,7 +648,7 @@
             cells += t ? '<td class="po__trial' + (t.r.leak ? ' po__trial--leak' : '') + '">' + t.r.rate.toFixed(2) + '<small title="' + t.r.distance + ' mm on shoot ' + String.fromCharCode(64 + (t.r.s.shoot || 1)) + '">' + t.r.distance + ' mm · ' + String.fromCharCode(64 + (t.r.s.shoot || 1)) + '</small><button type="button" class="po__del" data-i="' + t.i + '" aria-label="Delete this trial">✕</button></td>' : '<td class="po__trial po__trial--empty">—</td>';
           }
           return '<tr><td class="po__cond">' + condText(g.s) + '</td>' + cells +
-            '<td class="po__statcell"><b>' + st.mean.toFixed(2) + '</b></td><td class="po__statcell">' + (st.sd != null ? st.sd.toFixed(2) : '—') + '</td><td class="po__statcell">' + (st.se != null ? st.se.toFixed(2) : '—') + '</td><td class="po__statcell">' + (st.ci != null ? '± ' + st.ci.toFixed(2) : '—') + '</td></tr>';
+            '<td class="po__statcell"><b>' + st.mean.toFixed(2) + '</b></td>' + (errK === 'none' ? '' : '<td class="po__statcell">' + (st[errK] != null ? (errK === 'ci' ? '± ' : '') + st[errK].toFixed(2) : '—') + '</td>') + '</tr>';
         }).join('') + '</tbody>';
       table.querySelectorAll('.po__del').forEach(function (b) { b.addEventListener('click', function () { runs.splice(+b.getAttribute('data-i'), 1); paintData(); }); });
       table.querySelectorAll('.po__term').forEach(function (b) { b.addEventListener('click', function () { showTerm(b.getAttribute('data-term')); }); });
@@ -658,7 +660,7 @@
     function graph(G) {
       if (G.length < 2 && !(G.length === 1 && G[0].trials.length >= 2)) return '<small class="po__gnote">Record a second trial, or a second set of conditions, and the graph draws itself.</small>';
       var varying = FACT.filter(function (F) { var vals = {}; G.forEach(function (g) { vals[fval(g.s, F[0])] = 1; }); return Object.keys(vals).length > 1; });
-      var W = 560, H = 240, L = 54, R = 16, T = 18, B = 54, errK = errSel.value;
+      var W = 560, H = 240, L = 54, R = 16, T = 18, B = 54;
       var pts, xlab, numeric = false, note = '';
       var mk = function (g, x) { var vals = g.trials.map(function (t) { return t.r.rate; }), st = stats(vals); var e = errK === 'sd' ? st.sd : errK === 'se' ? st.se : errK === 'ci' ? st.ci : null; return { x: x, mean: st.mean, all: vals, err: e == null || isNaN(e) ? null : e }; };
       if (varying.length === 1) {
