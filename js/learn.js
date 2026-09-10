@@ -275,6 +275,10 @@
   var PO_LINE = ['#1F6FB2', '#D9772B', '#6E43A8', '#C23B3B', '#188F8F', '#7A5A1E'], PO_LINE_WORD = ['blue', 'orange', 'purple', 'red', 'teal', 'brown'];
   function poLineColour(i) { return PO_LINE[i % PO_LINE.length]; }
   function poLineName(i) { return (PO_STATE.lineNames[i] || '').trim() || 'Line ' + (i + 1); }
+  /* the random error of a real reading — the watch started a moment early or late, a bubble that hesitates, a reading
+     taken a little off the mark: about a millimetre either way, bell-shaped, never more than two and a half. It is what
+     makes repeats differ, and so what gives a standard deviation something to measure. */
+  function poJitter() { var u = Math.random() || 1e-9, v = Math.random(); var g = Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); return Math.max(-2.5, Math.min(2.5, g * .9)); }
   var PO_T95 = { 2: 12.71, 3: 4.30, 4: 3.18, 5: 2.78 };
   function poStats(vals) {
     var n = vals.length, mean = vals.reduce(function (a, b) { return a + b; }, 0) / n;
@@ -606,7 +610,8 @@
       if (run) { finish(); return; }                       /* a second press skips to the end */
       var s = settings(), rate = rateOf(s) * PO_STATE.shootF * (1 + (Math.random() - .5) * .2);   /* repeats on a real bench differ by a few per cent: hand timing, a bubble that hesitates */
       var d = rate * s.time, from = pos, capped = false, leak = s.joint === 'open', stuck = false;
-      if (leak) { d *= .35 + Math.random() * .5; if (Math.random() < .25) { d *= .3; stuck = true; } }   /* air drawn in at the joint instead of water: the bubble moves less, and by a different amount each time */
+      if (leak) { d *= .35 + Math.random() * .5; if (Math.random() < .25) { d *= .3; stuck = true; } }
+      d += poJitter(); if (d < .6) d = .6 + Math.random() * .4;   /* the bench's own random error, on top of the shoot's few per cent */   /* air drawn in at the joint instead of water: the bubble moves less, and by a different amount each time */
       if (from + d > 100) { d = 100 - from; capped = true; }
       run = { s: s, rate: rate, d: d, from: from, capped: capped, leak: leak, stuck: stuck, notReset: from >= .5, t0: null, T: s.time * 2000 };
       result.hidden = true; bRecord.disabled = true; bStart.textContent = 'Skip to the end';
@@ -899,7 +904,7 @@
     var right = h('div', 'po__right'); right.appendChild(ctl); right.appendChild(btns); right.appendChild(say);
     wrap2.appendChild(slot); wrap2.appendChild(right);
     box.appendChild(wrap2); box.appendChild(gate); box.appendChild(tableBox);
-    box.appendChild(h('p', 'widget__note', 'A model, scaled to published class results rather than measured here (the sources are in the lab\'s credits file). Every run starts where the last one left the bubble unless you open the tap.'));
+    box.appendChild(h('p', 'widget__note', 'A model, scaled to published class results rather than measured here (the sources are in the lab\'s credits file). Every run starts where the last one left the bubble unless you open the tap. Each run carries the small random errors of a real bench — hand timing, a bubble that hesitates, a reading to the nearest millimetre — so repeats differ, as they should.'));
     var wideQ = window.matchMedia('(min-width: 1001px)');
     function mount() {
       var host = document.getElementById('benchHost');

@@ -156,6 +156,11 @@ bench, not measured here. What it is scaled to:
   (https://pubmed.ncbi.nlm.nih.gov/21293876/ ; https://academic.oup.com/jxb/article/55/401/1411/478991);
   sunflower and bean leaves several times more under the same light; privet like ivy; geranium in
   between; marram grass, with its stomata rolled inside the leaf, far less.
+- Every run varies as a real one does: the shoot's rate is a few per cent off the model each
+  time (±10 %, uniform), and each reading carries a bell-shaped error of about a millimetre
+  (SD 0.9 mm, never more than 2.5) for hand timing, a hesitating bubble and a scale read to the
+  nearest millimetre. That is what a class's repeats look like, and what gives the standard
+  deviation something to measure.
 - Petroleum jelly on a leaf surface blocks the stomata on that surface. The bench gives each plant a
   share of its stomata on the lower surface — nearly all on privet and ivy, whose leaves have stomata
   only underneath; two thirds or so on bean, sunflower and geranium, which have them on both
