@@ -186,16 +186,23 @@
     /* the seedling: what the seed sends up first — a hooked shoot and two seed leaves */
     var seedling = part('seedling', 'pl-seedling', true, [X, 800]);
     shoot.appendChild(seedling);
-    /* the hypocotyl: an outline round a curved centre line, thick at the soil and slender at the top — its shape is
-       drawn afresh whenever it bends (see paintSeedling). The seed leaves are the two halves of the bean, lifted into
-       the light, each with the crease where they parted; the first true leaves unfold between them. */
-    var seedStem = el('path', { fill: '#8AD087', stroke: '#3F9A55', 'stroke-width': 1.4, 'stroke-linejoin': 'round' }, seedling);
+    /* A bean seedling as it stands a week after sowing: the hypocotyl — the stem below the seed leaves — comes up as a
+       hook and straightens, thick and pale near the soil, slimmer above, with a light along its sunny side; at its top
+       the two halves of the bean, the seed leaves, thick and plump, have opened into a V; and between them the
+       plumule, a short stalk with the first pair of true leaves, is unfolding. The hypocotyl's outline is drawn afresh
+       whenever it bends (paintSeedling); everything above the node rides with the tip. */
+    var seedStem = el('path', { fill: '#A5DB93', stroke: '#4E9E5E', 'stroke-width': 1.3, 'stroke-linejoin': 'round' }, seedling);
+    var seedHi = el('path', { fill: 'none', stroke: '#E4F7D8', 'stroke-width': 1.7, 'stroke-linecap': 'round', opacity: .85 }, seedling);
     var cotyls = el('g', { 'class': 'pl-cotyls' }, seedling);
-    [[X + 2, 674, -30], [X + 48, 670, 24]].forEach(function (c) {
-      var g2 = el('g', { transform: 'rotate(' + c[2] + ' ' + c[0] + ' ' + c[1] + ')' }, cotyls);
-      el('path', { d: 'M' + (c[0] - 27) + ' ' + c[1] + ' C' + (c[0] - 27) + ' ' + (c[1] - 19) + ' ' + (c[0] + 27) + ' ' + (c[1] - 19) + ' ' + (c[0] + 27) + ' ' + c[1] + ' C' + (c[0] + 27) + ' ' + (c[1] + 17) + ' ' + (c[0] - 27) + ' ' + (c[1] + 17) + ' ' + (c[0] - 27) + ' ' + c[1] + ' Z', fill: '#9BD98F', stroke: '#3F9A55', 'stroke-width': 1.5 }, g2);
-      el('path', { d: 'M' + (c[0] - 22) + ' ' + (c[1] + 1) + ' Q' + c[0] + ' ' + (c[1] - 4) + ' ' + (c[0] + 22) + ' ' + (c[1] + 1), fill: 'none', stroke: '#5FAE66', 'stroke-width': 1.2, opacity: .9 }, g2);
-    });
+    var TIP = [X + 26, 690];
+    function cotyledon(left) {   /* drawn with the node at 0,0 and the half reaching along −x; the right one is the mirror */
+      var g2 = el('g', { transform: 'translate(' + f(TIP[0]) + ' ' + f(TIP[1]) + ') rotate(' + (left ? 34 : -26) + ')' + (left ? '' : ' scale(-1 1)') }, cotyls);
+      el('path', { d: 'M-2 4 C-10 13 -34 13 -41 4 C-37 -2 -12 -4 -2 4 Z', fill: '#7FB56A', stroke: 'none', opacity: .9 }, g2);            /* the underside: the thickness of the seed half */
+      el('path', { d: 'M-2 0 C-8 -12 -35 -12 -41 1 C-37 9 -10 11 -2 3 Z', fill: '#C3DD96', stroke: '#6FA55A', 'stroke-width': 1.3, 'stroke-linejoin': 'round' }, g2);
+      el('path', { d: 'M-9 -2 C-19 -6 -31 -6 -37 -1', fill: 'none', stroke: '#93C27A', 'stroke-width': 1, opacity: .8 }, g2);           /* the seam where the halves parted */
+    }
+    cotyledon(true); cotyledon(false);
+    el('path', { d: 'M' + f(TIP[0]) + ' ' + f(TIP[1]) + ' C' + f(TIP[0] + 1) + ' ' + f(TIP[1] - 7) + ' ' + f(TIP[0] + 2) + ' ' + f(TIP[1] - 11) + ' ' + f(TIP[0] + 3) + ' ' + f(TIP[1] - 15), fill: 'none', stroke: '#4E9E5E', 'stroke-width': 3.2, 'stroke-linecap': 'round' }, cotyls);   /* the plumule's stalk */
 
     /* ---------- the bend: how a whole plant grows towards the light ----------
        A shoot bends by growing, not by tilting: the cells on the shaded side elongate more than the lit side's,
@@ -273,8 +280,8 @@
     blade(apex, X + 2, 254, .42, -1, 42, 22, true);
     el('ellipse', { cx: X, cy: 241, rx: 4.5, ry: 8.5, fill: '#8FD48A', stroke: '#3F9A55', 'stroke-width': 1.4 }, apex);
     WARPED.push([apex, 254]);
-    blade(cotyls, X + 22, 678, -.5, -1, 26, 14, true);   /* the seedling's first true leaves, between its seed leaves */
-    blade(cotyls, X + 30, 678, .5, -1, 24, 13, true);
+    blade(cotyls, X + 29, 675, -.62, -1, 31, 18, true);   /* the seedling's first true leaves, opening from the plumule between its seed leaves */
+    blade(cotyls, X + 29, 675, .62, -1, 29, 17, true);
 
     leaf('leaf-1', X - 14, 604, -1, .42, 232, 118, [X - 4, 596]);      /* the big leaf, low on the left */
     leaf('leaf-2', X + 14, 522, 1, -.34, 196, 100, [X + 4, 514]);      /* right, reaching up a little */
@@ -514,13 +521,15 @@
     var SEED_STRAIGHT = [[X - 2, 782], [X - 6, 740], [X + 8, 710], [X + 26, 690]], SEED_BENT = [[X - 2, 782], [X - 4, 748], [X + 16, 712], [X + 52, 694]];
     function paintSeedling(t) {
       var p = SEED_STRAIGHT.map(function (q, i) { return [q[0] + (SEED_BENT[i][0] - q[0]) * t, q[1] + (SEED_BENT[i][1] - q[1]) * t]; });
-      var L = [], R = [], n = 14;
+      var L = [], R = [], HI = [], n = 16;
       for (var i = 0; i <= n; i++) {
-        var u = i / n, c = bez(p[0], p[1], p[2], p[3], u), c2 = bez(p[0], p[1], p[2], p[3], Math.min(1, u + .01)), dx = c2[0] - c[0], dy = c2[1] - c[1], m = Math.sqrt(dx * dx + dy * dy) || 1, w = 6.8 - 2.8 * u;
+        var u = i / n, c = bez(p[0], p[1], p[2], p[3], u), c2 = bez(p[0], p[1], p[2], p[3], Math.min(1, u + .01)), dx = c2[0] - c[0], dy = c2[1] - c[1], m = Math.sqrt(dx * dx + dy * dy) || 1, w = 7.4 - 2.6 * u;
         L.push([c[0] - dy / m * w, c[1] + dx / m * w]); R.push([c[0] + dy / m * w, c[1] - dx / m * w]);
+        if (u > .08 && u < .93) HI.push([c[0] + dy / m * w * .45, c[1] - dx / m * w * .45]);
       }
-      var tip = bez(p[0], p[1], p[2], p[3], 1), d = 'M' + L.map(function (q) { return f(q[0]) + ' ' + f(q[1]); }).join(' L') + ' Q' + f(tip[0] + (tip[0] - p[2][0]) * .12) + ' ' + f(tip[1] + (tip[1] - p[2][1]) * .12) + ' ' + f(R[n][0]) + ' ' + f(R[n][1]) + ' L' + R.reverse().map(function (q) { return f(q[0]) + ' ' + f(q[1]); }).join(' L') + ' Z';
+      var d = 'M' + L.map(function (q) { return f(q[0]) + ' ' + f(q[1]); }).join(' L') + ' Q' + f(p[3][0] + (p[3][0] - p[2][0]) * .1) + ' ' + f(p[3][1] + (p[3][1] - p[2][1]) * .1) + ' ' + f(R[n][0]) + ' ' + f(R[n][1]) + ' L' + R.reverse().map(function (q) { return f(q[0]) + ' ' + f(q[1]); }).join(' L') + ' Z';
       seedStem.setAttribute('d', d);
+      seedHi.setAttribute('d', 'M' + HI.map(function (q) { return f(q[0]) + ' ' + f(q[1]); }).join(' L'));
       cotyls.setAttribute('transform', 'translate(' + f((SEED_BENT[3][0] - SEED_STRAIGHT[3][0]) * t) + ' ' + f((SEED_BENT[3][1] - SEED_STRAIGHT[3][1]) * t) + ') rotate(' + f(16 * t) + ' ' + f(SEED_STRAIGHT[3][0]) + ' ' + f(SEED_STRAIGHT[3][1]) + ')');
     }
     function paintBend(t) {
