@@ -352,39 +352,38 @@
        of the tube that dips into it, the beaker's glass in front, then the scale and the shoot,
        and the words last. Nothing stands behind the tube or the scale. The reservoir is open at
        the top, as it is on the bench. */
-    var TUBE = 'M70 392 V312 Q70 300 82 300 H566';                 /* the capillary: up out of the beaker, along the scale, into the shoot's tube */
+    var TUBE = 'M70 392 V312 Q70 300 82 300 H574';                 /* the capillary meets the shoot's tube at its centre line */
+    var WIDE = 'M574 150 V293';                                     /* the shoot's tube: the same tubing, drawn wide */                 /* the capillary: up out of the beaker, along the scale, into the shoot's tube */
     var RES = 'M420 300 V140';                                      /* the reservoir, joined to it from above; its water stands at 140 */
-    stage.innerHTML = '<svg viewBox="0 0 860 440" class="po__svg" role="img" aria-label="A bubble potometer on a bench: a leafy shoot held in an airtight rubber bung on a clamp stand, its tube joined to a capillary tube that lies along a millimetre scale and dips into a beaker of water at the far end, with an open reservoir and a tap rising from the capillary. A thermometer hangs on the stand; a fan and a lamp stand beyond the shoot.">' +
-      '<rect x="0" y="0" width="860" height="440" fill="#F7F4EC"/>' +
-      '<path d="M0 414 H860" stroke="#C9BFA6" stroke-width="3"/>' +
+    stage.innerHTML = '<svg viewBox="0 0 960 440" class="po__svg" role="img" aria-label="A bubble potometer on a bench: a leafy shoot held in an airtight rubber bung on a clamp stand, its tube joined to a capillary tube that lies along a millimetre scale and dips into a beaker of water at the far end, with an open reservoir and a tap rising from the capillary. A thermometer hangs on the stand; a fan and a lamp stand beyond the shoot.">' +
+      '<rect x="0" y="0" width="960" height="440" fill="#F7F4EC"/>' +
+      '<path d="M0 414 H960" stroke="#C9BFA6" stroke-width="3"/>' +
       /* the fan, on its stand, beyond the shoot */
-      '<g class="po__fan"><rect x="745" y="396" width="50" height="10" rx="3" fill="#4A4F55"/><rect x="767" y="206" width="6" height="190" fill="#6B7178"/>' +
-      '<rect x="763" y="202" width="14" height="18" rx="4" fill="#5B6167"/>' +
-      '<circle cx="770" cy="176" r="33" fill="#F4F6F7" stroke="#7F94A2" stroke-width="2"/>' +
-      '<g class="po__blades" fill="#9AA6AE">' + [0, 90, 180, 270].map(function (a) { return '<path transform="rotate(' + a + ' 770 176)" d="M770 176 C778 168 794 160 798 171 C801 179 786 186 770 176 Z"/>'; }).join('') + '</g>' +
-      '<g class="po__grille">' + (function () { var g = ''; for (var i = 0; i < 12; i++) { var t = i * Math.PI / 6; g += '<line x1="' + (770 + Math.cos(t) * 11).toFixed(1) + '" y1="' + (176 + Math.sin(t) * 11).toFixed(1) + '" x2="' + (770 + Math.cos(t) * 32).toFixed(1) + '" y2="' + (176 + Math.sin(t) * 32).toFixed(1) + '"/>'; } return g; })() + '<circle cx="770" cy="176" r="24"/><circle cx="770" cy="176" r="11" fill="#C9D0D5"/></g>' +
-      '<circle cx="770" cy="176" r="4" fill="#4A4F55"/>' +
-      '<g class="po__air"><path d="M732 160 H704"/><path d="M730 176 H698"/><path d="M732 192 H704"/></g></g>' +
+      '<g class="po__fan"><rect x="795" y="396" width="50" height="10" rx="3" fill="#4A4F55"/><rect x="817" y="206" width="6" height="190" fill="#6B7178"/>' +
+      '<rect x="813" y="202" width="14" height="18" rx="4" fill="#5B6167"/>' +
+      '<circle cx="820" cy="176" r="33" fill="#F4F6F7" stroke="#7F94A2" stroke-width="2"/>' +
+      '<g class="po__blades" fill="#9AA6AE">' + [0, 90, 180, 270].map(function (a) { return '<path transform="rotate(' + a + ' 820 176)" d="M820 176 C828 168 844 160 848 171 C851 179 836 186 820 176 Z"/>'; }).join('') + '</g>' +
+      '<g class="po__grille">' + (function () { var g = ''; for (var i = 0; i < 12; i++) { var t = i * Math.PI / 6; g += '<line x1="' + (820 + Math.cos(t) * 11).toFixed(1) + '" y1="' + (176 + Math.sin(t) * 11).toFixed(1) + '" x2="' + (820 + Math.cos(t) * 32).toFixed(1) + '" y2="' + (176 + Math.sin(t) * 32).toFixed(1) + '"/>'; } return g; })() + '<circle cx="820" cy="176" r="24"/><circle cx="820" cy="176" r="11" fill="#C9D0D5"/></g>' +
+      '<circle cx="820" cy="176" r="4" fill="#4A4F55"/>' +
+      '<g class="po__air"><path d="M782 160 H752"/><path d="M780 176 H746"/><path d="M782 192 H752"/></g></g>' +
       /* the lamp, on the bench beyond the fan, shining back over the shoot */
-      '<g class="po__lamp"><rect x="812" y="396" width="46" height="10" rx="3" fill="#4A4F55"/><path d="M835 396 L831 118 L806 104" stroke="#6B7178" stroke-width="5" stroke-linecap="round" fill="none"/>' +
-      '<path d="M812 84 L772 78 L766 128 L808 122 Z" fill="#6B7178"/><path class="po__bulb" d="M772 80 L766 126 L752 104 Z" fill="#FFE99A"/></g>' +
-      '<path class="po__beam" d="M762 92 L470 30 L470 214 L762 116 Z" fill="#FFE99A"/><ellipse class="po__glow" cx="' + PO_STEM + '" cy="112" rx="130" ry="100" fill="#FFE99A"/>' +
+      '<g class="po__lamp"><rect x="902" y="396" width="48" height="10" rx="3" fill="#4A4F55"/><path d="M926 396 L922 74 L890 62" stroke="#6B7178" stroke-width="5" stroke-linecap="round" fill="none"/>' +
+      '<path d="M896 42 L856 36 L850 86 L892 80 Z" fill="#6B7178"/><path class="po__bulb" d="M856 38 L850 84 L836 62 Z" fill="#FFE99A"/></g>' +
+      '<path class="po__beam" d="M846 50 L470 30 L470 214 L846 76 Z" fill="#FFE99A"/><ellipse class="po__glow" cx="' + PO_STEM + '" cy="112" rx="130" ry="100" fill="#FFE99A"/>' +
       '<path class="po__bag" d="M486 26 H664 Q680 26 680 42 V208 Q680 224 664 224 H486 Q470 224 470 208 V42 Q470 26 486 26 Z"/>' +
       /* the clamp stand, right of the shoot, with a thermometer hung on it */
-      '<rect x="600" y="402" width="160" height="12" rx="3" fill="#4A4F55"/><rect x="690" y="54" width="9" height="350" fill="#6B7178"/>' +
-      '<rect x="674" y="168" width="34" height="24" rx="3" fill="#4A4F55"/><rect x="620" y="176" width="56" height="8" fill="#4A4F55"/>' +
+      '<rect x="610" y="402" width="170" height="12" rx="3" fill="#4A4F55"/><rect x="700" y="54" width="9" height="350" fill="#6B7178"/>' +
+      '<rect x="684" y="168" width="34" height="24" rx="3" fill="#4A4F55"/><rect x="620" y="176" width="66" height="8" fill="#4A4F55"/>' +
       '<path d="M588 168 v24 M622 168 v24" stroke="#4A4F55" stroke-width="6" stroke-linecap="round"/>' +
-      '<g class="po__therm"><path d="M699 64 H728" stroke="#6B7178" stroke-width="3"/><rect x="716" y="56" width="12" height="120" rx="6" fill="#fff" stroke="#7F94A2" stroke-width="2"/><rect class="po__merc" x="720" y="120" width="4" height="50" fill="#D64545"/><circle cx="722" cy="182" r="8" fill="#D64545"/>' +
-      '<text class="po__read po__tread" x="722" y="224" text-anchor="middle">20 °C</text><text class="po__read po__hread" x="30" y="32">50 % humidity</text></g>' +
+      '<g class="po__therm"><path d="M709 64 H740" stroke="#6B7178" stroke-width="3"/><rect x="734" y="56" width="12" height="120" rx="6" fill="#fff" stroke="#7F94A2" stroke-width="2"/><rect class="po__merc" x="738" y="120" width="4" height="50" fill="#D64545"/><circle cx="740" cy="182" r="8" fill="#D64545"/>' +
+      '<text class="po__read po__tread" x="740" y="224" text-anchor="middle">20 °C</text><text class="po__read po__hread" x="30" y="32">50 % humidity</text></g>' +
       /* the beaker's back, so the tube shows inside it */
       '<path d="M30 330 V408 Q30 412 34 412 H126 Q130 412 130 408 V330" fill="#EAF4FA" stroke="none"/>' +
       /* the shoot's tube: wider glass, full of water, closed by the bung */
-      '<rect x="560" y="176" width="28" height="130" rx="6" fill="#BFE0F5"/>' +
-      /* the tubing, as one tube: glass outside, glass body, water inside */
-      '<path class="po__tube-out" d="' + TUBE + ' ' + RES + ' V122"/>' +
-      '<path class="po__tube-glass" d="' + TUBE + ' ' + RES + ' V122"/>' +
-      '<path class="po__tube-water" d="' + TUBE + ' ' + RES + '"/>' +
-      '<path class="po__glass" d="M560 150 V300 Q560 306 566 306 H582 Q588 306 588 300 V150"/>' +
+      /* the tubing, as one tube: glass outside, glass body, water inside — the capillary, the reservoir and the shoot's wide tube each layer at a time, so every join merges */
+      '<path class="po__tube-out" d="' + TUBE + ' ' + RES + ' V122"/><path class="po__tube-out po__tube--wide" d="' + WIDE + '"/>' +
+      '<path class="po__tube-glass" d="' + TUBE + ' ' + RES + ' V122"/><path class="po__tube-glass po__tube--wide" d="' + WIDE + '"/>' +
+      '<path class="po__tube-water" d="' + TUBE + ' ' + RES + '"/><path class="po__tube-water po__tube--wide" d="' + WIDE + '"/>' +
       /* the reservoir's funnel, open at the top */
       '<path class="po__glass" d="M396 100 L414 122 V128 M444 100 L426 122 V128"/>' +
       '<g class="po__tap"><rect x="404" y="232" width="32" height="14" rx="3" fill="#6B7178"/><rect x="392" y="235" width="12" height="8" rx="2" fill="#9AA1A8"/><circle cx="388" cy="239" r="5" fill="#4A4F55"/></g>' +
@@ -401,7 +400,7 @@
       '<ellipse class="po__bubble" cx="' + PO_X0 + '" cy="300" rx="6" ry="3.4"/>' +
       '<g class="po__names"><text x="30" y="434">beaker of water</text><text x="160" y="284" text-anchor="middle">air bubble</text><text x="300" y="284" text-anchor="middle">capillary tube</text><text x="318" y="368" text-anchor="middle">scale, in mm</text>' +
       '<text x="388" y="112" text-anchor="end">reservoir</text><text x="378" y="246" text-anchor="end">tap</text><text x="436" y="198">rubber bung,</text><text x="436" y="226">airtight</text>' +
-      '<text x="640" y="434">clamp stand</text><text x="780" y="230">fan</text><text x="816" y="66">lamp</text></g>' +
+      '<text x="650" y="434">clamp stand</text><text x="862" y="182">fan</text><text x="900" y="30">lamp</text></g>' +
       '</svg>';
     var svg = stage.firstChild, bubble = svg.querySelector('.po__bubble'), leavesG = svg.querySelector('.po__leaves'), leafEls = svg.querySelectorAll('.po__leaf'), leafKind = 'bean';
     function growLeaves(sp) {
@@ -443,7 +442,7 @@
       leafEls.forEach(function (l, i) { l.classList.toggle('is-off', i >= s.leaves); });
       glow.style.opacity = (s.light / 100 * .55).toFixed(2);
       svg.querySelector('.po__bulb').style.opacity = (.25 + s.light / 100 * .75).toFixed(2);
-      merc.setAttribute('y', (172 - (s.temp - 5) / 30 * 104).toFixed(1)); merc.setAttribute('x', 720); merc.setAttribute('height', ((s.temp - 5) / 30 * 104 + 4).toFixed(1));
+      merc.setAttribute('y', (172 - (s.temp - 5) / 30 * 104).toFixed(1)); merc.setAttribute('x', 738); merc.setAttribute('height', ((s.temp - 5) / 30 * 104 + 4).toFixed(1));
       svg.querySelector('.po__beam').style.opacity = (s.light / 100 * .22).toFixed(2);
       tread.textContent = s.temp + ' °C'; hread.textContent = s.hum + ' % humidity';
       svg.classList.toggle('is-bagged', s.hum >= 85);
