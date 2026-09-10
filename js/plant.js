@@ -15,7 +15,9 @@
      box      the camera frame for it, in the drawing's coordinates (x y w h)
    stages   the growth stages the hub walks, in order — seed to fruit and then the
             two plants built for hard places. Each says which parts are on the page
-            and which are lit; the drawing does the rest.
+            and which are lit; the drawing does the rest. 'flower-spent' is the flower's
+            cup — stalk, sepals, receptacle — which stays when the petals fall and
+            which the pod grows out of, so it is shown with the flower and with the fruit.
    scene    the drawing's size and the horizon, so a page can plan around it
    ============================================================ */
 window.PLANT = {
@@ -26,9 +28,9 @@ window.PLANT = {
     { id: 'roots',      label: 'Roots',           note: 'water and mineral ions come in',   colour: '#F2D8A8', box: { x: 300, y: 660, w: 520, h: 420 } },
     { id: 'stem',       label: 'Stem',            note: 'xylem up, phloem to every sink',   colour: '#8CE0A6', box: { x: 300, y: 180, w: 520, h: 600 } },
     { id: 'leaf',       label: 'Leaf',            note: 'where the food is made',           colour: '#B8F08E', box: { x: 280, y: 380, w: 400, h: 300 } },
-    { id: 'leaves',     label: 'Leaves',          note: 'the food factory',                 colour: '#B8F08E', box: { x: 260, y: 180, w: 600, h: 520 } },
-    { id: 'flower',     label: 'Flower',          note: 'pollination, then fertilisation',  colour: '#FFB3D1', box: { x: 400, y: 30, w: 340, h: 300 } },
-    { id: 'fruit',      label: 'Fruit and seeds', note: 'the ovary, after fertilisation',   colour: '#FFD27A', box: { x: 390, y: 130, w: 300, h: 250 } },
+    { id: 'leaves',     label: 'Leaves',          note: 'the food factory',                 colour: '#B8F08E', box: { x: 260, y: 160, w: 600, h: 540 } },
+    { id: 'flower',     label: 'Flower',          note: 'pollination, then fertilisation',  colour: '#FFB3D1', box: { x: 486, y: 130, w: 260, h: 220 } },
+    { id: 'fruit',      label: 'Fruit and seeds', note: 'the ovary, after fertilisation',   colour: '#FFD27A', box: { x: 490, y: 170, w: 260, h: 230 } },
     { id: 'sun',        label: 'Light',           note: 'what the shoot grows towards',     colour: '#FFE08A', box: { x: 560, y: -20, w: 420, h: 300 } },
     { id: 'xerophyte',  label: 'A xerophyte',     note: 'built for dry ground',             colour: '#FFD27A', box: { x: 120, y: 480, w: 300, h: 300 } },
     { id: 'hydrophyte', label: 'A hydrophyte',    note: 'built for the water',              colour: '#9FDCFF', box: { x: 860, y: 540, w: 360, h: 300 } },
@@ -45,7 +47,7 @@ window.PLANT = {
     { id: 'stem',      label: 'Stem',          show: ['seed', 'roots', 'stem', 'leaf-1', 'leaf-2'],   lit: ['stem'], flow: 'both' },
     { id: 'leaf',      label: 'Leaf',          show: ['seed', 'roots', 'stem', 'leaf-1', 'leaf-2', 'leaf-3', 'leaf-4'], lit: ['leaves'] },
     { id: 'water',     label: 'Water',         show: ['seed', 'roots', 'stem', 'leaf-1', 'leaf-2', 'leaf-3', 'leaf-4'], lit: ['roots', 'stem', 'leaves'], flow: 'xylem', breathe: true },
-    { id: 'flower',    label: 'Flower',        show: ['seed', 'roots', 'stem', 'leaf-1', 'leaf-2', 'leaf-3', 'leaf-4', 'flower'], lit: ['flower'] },
+    { id: 'flower',    label: 'Flower',        show: ['seed', 'roots', 'stem', 'leaf-1', 'leaf-2', 'leaf-3', 'leaf-4', 'flower-spent', 'flower'], lit: ['flower'] },
     { id: 'fruit',     label: 'Fruit',         show: ['seed', 'roots', 'stem', 'leaf-1', 'leaf-2', 'leaf-3', 'leaf-4', 'flower-spent', 'fruit'], lit: ['fruit'] },
     { id: 'adapted',   label: 'Adapted',       show: ['seed', 'roots', 'stem', 'leaf-1', 'leaf-2', 'leaf-3', 'leaf-4', 'flower-spent', 'fruit', 'xerophyte', 'hydrophyte'], lit: ['xerophyte', 'hydrophyte'] }
   ]
