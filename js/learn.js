@@ -267,6 +267,64 @@
   function poTempF(T) { return Math.pow(2, (T - 20) / 10); }
   function poHumF(H) { return Math.max(.05, (100 - H) / 50); }
 
+  /* ----- the statistics of the results table, shared by the table and by the Learn text -----
+     What each one is, in plain words, and how it is worked out — with the student's own trials when
+     there are repeats, and with a fixed set of five otherwise. The Learn text's bold words and the
+     table's headings and toggle all open the same pop-up. */
+  var PO_T95 = { 2: 12.71, 3: 4.30, 4: 3.18, 5: 2.78 };
+  function poStats(vals) {
+    var n = vals.length, mean = vals.reduce(function (a, b) { return a + b; }, 0) / n;
+    if (n < 2) return { n: n, mean: mean };
+    var sd = Math.sqrt(vals.reduce(function (a, v) { return a + (v - mean) * (v - mean); }, 0) / (n - 1)), se = sd / Math.sqrt(n), t = PO_T95[n] || 2.78;
+    return { n: n, mean: mean, sd: sd, se: se, t: t, ci: t * se };
+  }
+  function poKeyOf(s) { return [s.sp.id, s.leaves, s.light, s.temp, s.hum, s.wind, s.grease, s.joint, s.time].join('|'); }
+  function poCondText(s) {
+    return esc(s.sp.name) + ' · ' + s.leaves + ' leaves · light ' + s.light + ' % · ' + s.temp + ' °C · humidity ' + s.hum + ' % · ' + esc(PO_WIND[s.wind]) +
+      (s.grease === 'none' ? '' : ' · grease on the ' + esc(s.grease === 'both' ? 'two surfaces' : s.grease + ' surface')) + (s.joint === 'open' ? ' · <b>joint leaking</b>' : '') + ' · ' + s.time + ' min';
+  }
+  function poGroups(runs) {
+    var G = {}, order = [];
+    runs.forEach(function (r, i) { var k = poKeyOf(r.s); if (!G[k]) { G[k] = { key: k, s: r.s, trials: [] }; order.push(k); } G[k].trials.push({ r: r, i: i }); });
+    return order.map(function (k) { return G[k]; });
+  }
+  var PO_TERMS = {
+    mean: { name: 'Mean', what: 'Add the trials up and divide by how many there are. It is your best single answer for that set of conditions — the number to plot.',
+            how: function (st, vals) { return vals.map(function (v) { return v.toFixed(2); }).join(' + ') + ' = ' + vals.reduce(function (a, b) { return a + b; }, 0).toFixed(2) + ', ÷ ' + st.n + ' = <b>' + st.mean.toFixed(2) + '</b> mm/min'; } },
+    sd: { name: 'Standard deviation (SD)', what: 'How spread out the trials are around their mean. Take each trial\'s distance from the mean, square it, add the squares up, divide by one less than the number of trials, and take the square root. A small SD means the repeats agree with one another — good precision. It has the same unit as the trials.',
+          how: function (st, vals) { var sq = vals.map(function (v) { return '(' + v.toFixed(2) + ' − ' + st.mean.toFixed(2) + ')²'; }).join(' + '); return sq + ' = ' + vals.reduce(function (a, v) { return a + (v - st.mean) * (v - st.mean); }, 0).toFixed(3) + ', ÷ ' + (st.n - 1) + ', then √ = <b>' + st.sd.toFixed(2) + '</b> mm/min'; } },
+    se: { name: 'Standard error (SE)', what: 'How well you know the mean itself, not how spread the trials are. It is the standard deviation divided by the square root of the number of trials. More trials make it smaller, because a mean of many repeats settles down even when the repeats themselves do not.',
+          how: function (st) { return st.sd.toFixed(2) + ' ÷ √' + st.n + ' = ' + st.sd.toFixed(2) + ' ÷ ' + Math.sqrt(st.n).toFixed(2) + ' = <b>' + st.se.toFixed(2) + '</b> mm/min'; } },
+    ci: { name: '95 % confidence interval', what: 'The range the true mean is likely to be in, given your trials: the mean, plus and minus a number times the standard error. The number comes from a table and depends on how many trials you took — 12.71 for two, 4.30 for three, 3.18 for four, 2.78 for five — so few trials give a wide interval and more trials narrow it. If the intervals for two sets of conditions do not overlap, the difference between them is statistically significant — very unlikely to be chance alone; intervals that overlap do not prove there is no difference. It is the interval for the mean of that row: if the row mixes shoots, it takes in the difference between plants too. On the graph it is drawn as a band round the mean.',
+          how: function (st) { return st.t + ' × ' + st.se.toFixed(3) + ' = <b>± ' + st.ci.toFixed(2) + '</b> mm/min, so the true mean is probably between ' + (st.mean - st.ci).toFixed(2) + ' and ' + (st.mean + st.ci).toFixed(2); } }
+  };
+  var PO_EXAMPLE = [2.1, 2.4, 2.0, 2.3, 2.2];
+  function poPopHTML(term, runs) {
+    var T = PO_TERMS[term]; if (!T) return '';
+    var ex = poGroups(runs || []).filter(function (g) { return g.trials.length >= 2; })[0], worked;
+    if (ex) {
+      var vals = ex.trials.map(function (t) { return t.r.rate; }), st = poStats(vals);
+      worked = '<p class="po__pop__how"><b>Worked out for your first row with repeats</b> (' + poCondText(ex.s) + '): ' + T.how(st, vals) + '</p>';
+      if (term !== 'mean' && st.sd === 0) worked += '<p class="po__pop__how">Your trials are identical to the millimetre, so their spread is 0. The scale reads to 1 mm, and a difference smaller than that is hidden by it — measure for longer, and the trials will show their spread.</p>';   /* resolution, seen */
+    } else {
+      var st2 = poStats(PO_EXAMPLE);
+      worked = '<p class="po__pop__how"><b>Worked example</b> — five trials on one shoot, 20 °C, still air: ' + PO_EXAMPLE.map(function (v) { return v.toFixed(2); }).join(', ') + ' mm/min. ' + T.how(st2, PO_EXAMPLE) + '</p>' +
+               '<p class="po__pop__note">Record two trials of your own under the same conditions and the working is done with your numbers instead.</p>';
+    }
+    return '<div class="po__pop__h">' + esc(T.name) + '<button type="button" class="po__pop__x" aria-label="Close">✕</button></div><p>' + esc(T.what) + '</p>' + worked +
+           (term === 'sd' || term === 'se' || term === 'ci' ? '<p class="po__pop__note">Standard deviation, standard error and confidence intervals are asked for at IB, not IGCSE — but they are what a scientist would put on this graph.</p>' : '');
+  }
+  /* a bold statistic in the Learn text opens its pop-up under the sentence it is in */
+  global.PoStats = { show: function (term, anchor) {
+    var html = poPopHTML(term, PO_STATE.runs); if (!html) return;
+    var old = document.querySelector('.po__pop--inline'); if (old) old.parentNode.removeChild(old);
+    var host = anchor.closest('li, p, .exam-part, .card') || anchor.parentNode;
+    var pop = h('div', 'po__pop po__pop--inline', html);
+    if (host.tagName === 'LI' || host.tagName === 'P') host.parentNode.insertBefore(pop, host.nextSibling); else host.appendChild(pop);
+    pop.querySelector('.po__pop__x').addEventListener('click', function () { if (pop.parentNode) pop.parentNode.removeChild(pop); });
+    if (pop.scrollIntoView) pop.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  } };
+
   function potometer(spec) {
     var box = h('div', 'widget');
     box.appendChild(head(spec.title || 'Run the potometer', spec.ask, 'Set it up and press start'));
@@ -562,7 +620,7 @@
        and how it was worked out. The graph plots the means, with the error you choose: whiskers for
        the SD or the SE, a band for the confidence interval. */
     var runs = PO_STATE.runs;
-    var MAX_TRIALS = 5, T95 = { 2: 12.71, 3: 4.30, 4: 3.18, 5: 2.78 };
+    var MAX_TRIALS = 5, T95 = PO_T95;
     var tableBox = h('div', 'po__data'); tableBox.hidden = true;
     /* the reveal: a word from the teacher shows the table and the graph the page has kept */
     var NEED = (global.LAB_CONFIG && global.LAB_CONFIG.potometerUnlock) || '';
@@ -585,51 +643,22 @@
     var errBar = h('div', 'po__errbar', '<span class="po__errbar__l">Show, with the mean</span>');
     [['none', 'the mean only'], ['sd', 'standard deviation'], ['se', 'standard error'], ['ci', '95 % confidence interval']].forEach(function (o) {
       var b = h('button', 'po__errbar__b', esc(o[1])); b.type = 'button'; b.setAttribute('data-k', o[0]); b.setAttribute('aria-pressed', o[0] === errK ? 'true' : 'false');
-      b.addEventListener('click', function () { errK = o[0]; PO_STATE.err = errK; errBar.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', x.getAttribute('data-k') === errK ? 'true' : 'false'); }); paintData(); });
+      b.addEventListener('click', function () { errK = o[0]; PO_STATE.err = errK; errBar.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', x.getAttribute('data-k') === errK ? 'true' : 'false'); }); paintData(); if (errK === 'none') { pop.hidden = true; popTerm = null; } else showTerm(errK); });   /* choosing a statistic shows what it is, worked with the table's own numbers */
       errBar.appendChild(b);
     });
     var bCopy = h('button', 'wbtn wbtn--quiet', 'Copy the table'), bClear = h('button', 'wbtn wbtn--quiet', 'Clear the table');
     [bCopy, bClear].forEach(function (b) { b.type = 'button'; tools.appendChild(b); });
     tableWrap.appendChild(table); tableBox.appendChild(errBar); tableBox.appendChild(tableWrap); tableBox.appendChild(pop); tableBox.appendChild(chart); tableBox.appendChild(tools);
 
-    function keyOf(s) { return [s.sp.id, s.leaves, s.light, s.temp, s.hum, s.wind, s.grease, s.joint, s.time].join('|'); }
-    function condText(s) {
-      return esc(s.sp.name) + ' · ' + s.leaves + ' leaves · light ' + s.light + ' % · ' + s.temp + ' °C · humidity ' + s.hum + ' % · ' + esc(PO_WIND[s.wind]) +
-        (s.grease === 'none' ? '' : ' · grease on the ' + esc(s.grease === 'both' ? 'two surfaces' : s.grease + ' surface')) + (s.joint === 'open' ? ' · <b>joint leaking</b>' : '') + ' · ' + s.time + ' min';
-    }
-    function groups() {
-      var G = {}, order = [];
-      runs.forEach(function (r, i) { var k = keyOf(r.s); if (!G[k]) { G[k] = { key: k, s: r.s, trials: [] }; order.push(k); } G[k].trials.push({ r: r, i: i }); });
-      return order.map(function (k) { return G[k]; });
-    }
+    var keyOf = poKeyOf, condText = poCondText;
+    function groups() { return poGroups(runs); }
     function trialsFor(s) { var k = keyOf(s); return runs.filter(function (r) { return keyOf(r.s) === k; }).length; }
-    function stats(vals) {
-      var n = vals.length, mean = vals.reduce(function (a, b) { return a + b; }, 0) / n;
-      if (n < 2) return { n: n, mean: mean };
-      var sd = Math.sqrt(vals.reduce(function (a, v) { return a + (v - mean) * (v - mean); }, 0) / (n - 1)), se = sd / Math.sqrt(n), t = T95[n] || 2.78;
-      return { n: n, mean: mean, sd: sd, se: se, t: t, ci: t * se };
-    }
-    var TERMS = {
-      mean: { name: 'Mean', what: 'Add the trials up and divide by how many there are. It is your best single answer for that set of conditions — the number to plot.',
-              how: function (st, vals) { return vals.map(function (v) { return v.toFixed(2); }).join(' + ') + ' = ' + vals.reduce(function (a, b) { return a + b; }, 0).toFixed(2) + ', ÷ ' + st.n + ' = <b>' + st.mean.toFixed(2) + '</b> mm/min'; } },
-      sd: { name: 'Standard deviation (SD)', what: 'How spread out the trials are around their mean. Take each trial\'s distance from the mean, square it, add the squares up, divide by one less than the number of trials, and take the square root. A small SD means the repeats agree with one another — good precision. It has the same unit as the trials.',
-            how: function (st, vals) { var sq = vals.map(function (v) { return '(' + v.toFixed(2) + ' − ' + st.mean.toFixed(2) + ')²'; }).join(' + '); return sq + ' = ' + vals.reduce(function (a, v) { return a + (v - st.mean) * (v - st.mean); }, 0).toFixed(3) + ', ÷ ' + (st.n - 1) + ', then √ = <b>' + st.sd.toFixed(2) + '</b> mm/min'; } },
-      se: { name: 'Standard error (SE)', what: 'How well you know the mean itself, not how spread the trials are. It is the standard deviation divided by the square root of the number of trials. More trials make it smaller, because a mean of many repeats settles down even when the repeats themselves do not.',
-            how: function (st) { return st.sd.toFixed(2) + ' ÷ √' + st.n + ' = ' + st.sd.toFixed(2) + ' ÷ ' + Math.sqrt(st.n).toFixed(2) + ' = <b>' + st.se.toFixed(2) + '</b> mm/min'; } },
-      ci: { name: '95 % confidence interval', what: 'The range the true mean is likely to be in, given your trials: the mean, plus and minus a number times the standard error. The number comes from a table and depends on how many trials you took — 12.71 for two, 4.30 for three, 3.18 for four, 2.78 for five — so few trials give a wide interval and more trials narrow it. If the intervals for two sets of conditions do not overlap, the difference between them is statistically significant — very unlikely to be chance alone; intervals that overlap do not prove there is no difference. It is the interval for the mean of that row: if the row mixes shoots, it takes in the difference between plants too. On the graph it is drawn as a band round the mean.',
-            how: function (st) { return st.t + ' × ' + st.se.toFixed(2) + ' = <b>± ' + st.ci.toFixed(2) + '</b> mm/min, so the true mean is probably between ' + (st.mean - st.ci).toFixed(2) + ' and ' + (st.mean + st.ci).toFixed(2); } }
-    };
+    var stats = poStats;
+    var TERMS = PO_TERMS;
     function showTerm(term) {
-      var T = TERMS[term]; if (!T) return;
+      if (!PO_TERMS[term]) return;
       popTerm = term;
-      var ex = groups().filter(function (g) { return g.trials.length >= 2; })[0];
-      var worked = '';
-      if (ex) {
-        var vals = ex.trials.map(function (t) { return t.r.rate; }), st = stats(vals); worked = '<p class="po__pop__how"><b>Worked out for your first row with repeats</b> (' + condText(ex.s) + '): ' + T.how(st, vals) + '</p>';
-        if (term !== 'mean' && st.sd === 0) worked += '<p class="po__pop__how">Your trials are identical to the millimetre, so their spread is 0. The scale reads to 1 mm, and a difference smaller than that is hidden by it — measure for longer, and the trials will show their spread.</p>';   /* resolution, seen */
-      }
-      else worked = '<p class="po__pop__how">Record a second trial for the same conditions and the working appears here with your numbers.</p>';
-      pop.innerHTML = '<div class="po__pop__h">' + esc(T.name) + '<button type="button" class="po__pop__x" aria-label="Close">✕</button></div><p>' + esc(T.what) + '</p>' + worked + (term === 'sd' || term === 'se' || term === 'ci' ? '<p class="po__pop__note">Standard deviation, standard error and confidence intervals are asked for at IB, not IGCSE — but they are what a scientist would put on this graph.</p>' : '');
+      pop.innerHTML = poPopHTML(term, runs);
       pop.hidden = false;
       pop.querySelector('.po__pop__x').addEventListener('click', function () { pop.hidden = true; popTerm = null; });
     }
