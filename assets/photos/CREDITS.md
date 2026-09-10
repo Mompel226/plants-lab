@@ -111,13 +111,14 @@ The deck is the PowerPoint in `IGCSE Lessons/Y11/Plants/`, the slide is its numb
 
 Eight of the videos shown in class, from the same lesson folders, re-encoded to 960 px wide with
 a poster frame beside each (`.jpg`). They are shown with the browser's own controls, muted until
-played, and never start on their own. Their original sources were not recorded in the lesson
-folders either; three of them carry a publisher's mark, noted below, and are used here on the
-same terms as in the lesson.
+played, and never start on their own. The germination video is *Seeds and Germination Explained*
+by Science Sauce (YouTube, 28 February 2022), and its credit on the page links to it. The original
+sources of the other seven were not recorded in the lesson folders; three of them carry a
+publisher's mark, noted below, and are used here on the same terms as in the lesson.
 
 | File | Lesson folder | Original file | Note |
 |---|---|---|---|
-| `germination.mp4` | 16.3 Plant reproduction · Seed germination practical | Seeds-and-Germination.mp4 | |
+| `germination.mp4` | 16.3 Plant reproduction · Seed germination practical | Seeds-and-Germination.mp4 | Science Sauce, YouTube: [youtube.com/watch?v=taaiH3XdSxw](https://www.youtube.com/watch?v=taaiH3XdSxw) |
 | `water-absorption.mp4` | 8.2–8.3 Water uptake and transpiration | Animation 10.3 Absorption of water in plants.mp4 | Oxford University Press logo in the picture |
 | `dye-flowers.mp4` | 8.2–8.3 Water uptake and transpiration | Color Changing Flowers Experiment (Biology).mp4 | |
 | `transport-animation.mp4` | 8.1 Xylem and phloem | Transport in plant animation.mp4 | |
@@ -131,8 +132,9 @@ Two longer videos in the lesson folders were left out on length alone (ten and e
 ## The drawings
 
 The plant on the left, its parts, the cactus and the water lily, the diagrams in the theory pages
-(the half-flower, the auxin experiment, the potometer, the sources and sinks, the pollen tube) and
-every widget are drawn by the page and are original.
+(the half-flower, the auxin experiment, the potometer, the sources and sinks, the pollen tube, the
+polar water molecule with its hydrogen bonds — cohesion and adhesion — and the seeds sprouting in
+the germination tubes) and every widget are drawn by the page and are original.
 
 ## The numbers in the potometer
 
@@ -177,3 +179,9 @@ bench, not measured here. What it is scaled to:
   is drawn in there instead of water from the tube, the bubble moves less than the shoot takes up,
   and by a different amount each time (SAPS, above: leaks at the joints are one of the two reasons a
   potometer fails, and jelly is what fixes them).
+
+## From Wikimedia Commons
+
+| File | Source | Author | Licence |
+|---|---|---|---|
+| `seedling-*` | [Cucumber Seedling.jpg](https://commons.wikimedia.org/wiki/File:Cucumber_Seedling.jpg) — the picture behind the word *seedling* | Peter Chastain | Public domain |

@@ -280,6 +280,7 @@ h1,h2,h3,h4{margin:0;font-weight:700;line-height:1.25}
   border:1px solid var(--edge);border-radius:var(--r-lg);box-shadow:var(--shadow-lg);
   overflow:hidden;animation:peekIn .14s ease-out
 }
+.peek.peek--fig{width:min(420px,92vw)}
 @keyframes peekIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 .peek img{width:100%;height:auto;max-width:100%;display:block;background:#fff}
 /* Two views of one thing, side by side — a real tooth beside the drawing of
@@ -930,8 +931,7 @@ picture{display:block;line-height:0}
 .tube{border:1.5px solid var(--edge);border-radius:var(--r);background:#fff;padding:10px 8px;font:inherit;cursor:pointer;text-align:center;transition:.15s;display:flex;flex-direction:column;align-items:center;gap:6px}
 .tube:hover{border-color:var(--green)}
 .tube__glass{display:block;width:34px;height:64px;border:2px solid #7F94A2;border-top:none;border-radius:0 0 17px 17px;position:relative;background:linear-gradient(180deg,#fff,#EAF4F8)}
-.tube__seeds{position:absolute;left:5px;right:5px;bottom:5px;height:14px;border-radius:6px;background:radial-gradient(circle at 30% 50%,#B7864B 0 4px,transparent 5px),radial-gradient(circle at 70% 40%,#B7864B 0 4px,transparent 5px),radial-gradient(circle at 50% 70%,#B7864B 0 4px,transparent 5px);transition:.5s}
-.tube.is-yes .tube__seeds{height:44px;background:radial-gradient(circle at 30% 85%,#B7864B 0 4px,transparent 5px),radial-gradient(circle at 70% 80%,#B7864B 0 4px,transparent 5px),linear-gradient(180deg,#5DBF6E 0 40%,transparent 40%);border-radius:6px 6px 6px 6px}
+.tube__svg{position:absolute;left:-2px;right:-2px;bottom:0;width:34px;height:60px;overflow:visible}
 .tube b{font-size:13px;color:var(--ink)}
 .tube__has{display:flex;flex-direction:column;gap:2px;font-size:11.5px;font-style:normal}
 .tube__has i{font-style:normal;color:#3C3C3C}
@@ -1349,3 +1349,8 @@ picture{display:block;line-height:0}
   .po__brow .po__rec,.po__brow .po__resetset,.po__brow .po__resetall,.po__brow .po__newshoot,.po__brow .po__newline{grid-column:1 / -1}   /* only Start and the tap share a line; every button one line tall */
   .po__resetall[data-tip]::after{left:0;right:auto}.po__resetall[data-tip]::before{left:12px;right:auto}
 }
+/* the small reset in a widget's header */
+.widget__h .widget__reset{margin-left:auto;font:inherit;font-size:11px;font-weight:600;letter-spacing:.02em;text-transform:none;color:var(--grey);background:#fff;border:1px solid var(--edge);border-radius:var(--r-pill);padding:2px 9px;cursor:pointer}
+.widget__h .widget__try ~ .widget__reset{margin-left:0}
+.widget__h .widget__reset:hover{color:var(--ink);border-color:var(--green)}
+@media (max-width:540px){ .widget__h{row-gap:3px} .widget__h .widget__try,.widget__h .widget__reset{padding:1px 8px} }

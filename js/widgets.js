@@ -301,6 +301,22 @@
     return f;
   }
 
+  /* A widget a reader clicks through — tubes pressed, pins opened, sliders moved — gets a small reset in its
+     header that builds it afresh in the same place. Pictures, videos, tables and the potometer (which has resets
+     of its own) do not. */
+  var NO_RESET = { video: 1, photo: 1, table: 1, potometer: 1 };
+  function addReset(spec, e, remake) {
+    if (NO_RESET[spec.type] || !e.querySelector) return;
+    var hd = e.querySelector('.widget__h'); if (!hd || !e.querySelector('button, input, select, [role="button"]')) return;
+    var b = h('button', 'widget__reset', '↺ Reset'); b.type = 'button'; b.title = 'Start this one again';
+    b.addEventListener('click', function () {
+      /* the words this one introduced are marked again when it is built again */
+      if (global.Terms && global.Terms.unsee) { var ws = [], js = []; Array.prototype.forEach.call(e.querySelectorAll('.t'), function (t) { ws.push(t.textContent); if (t.getAttribute('data-jump')) js.push(t.getAttribute('data-jump')); }); global.Terms.unsee(ws, js); }
+      if (typeof e.__onReset === 'function') e.__onReset();   /* state kept outside the node — a saved route — goes too */
+      var fresh = remake(); if (e.parentNode) e.parentNode.replaceChild(fresh, e); if (global.Widgets && global.Widgets.reap) global.Widgets.reap();
+    });
+    hd.appendChild(b);
+  }
   var MAKERS = { finder: finder, table: table, photo: photo };
   global.Widgets = {
     register: function (type, maker) { MAKERS[type] = maker; },
@@ -309,12 +325,13 @@
       if (!maker) return h('p', 'widget__note', 'Unknown widget: ' + esc(spec.type));
       var e = maker(spec, ctx || {});
       if (spec.group && !e.getAttribute('data-group')) e.setAttribute('data-group', spec.group);
+      addReset(spec, e, function () { return global.Widgets.widget(spec, ctx); });
       return e;
     },
     /* drop the pinned pictures that have left the page; call after a station is cleared
        and before the next is built */
     reap: function () { for (var i = LIVE.length - 1; i >= 0; i--) if (!LIVE[i].box.isConnected) LIVE.splice(i, 1); },
     has: function (type) { return !!MAKERS[type]; },
-    h: h, esc: esc, mk: mk, head: head, picture: picture, pinned: pinned, bigVariant: bigVariant, hasBig: hasBig
+    h: h, esc: esc, mk: mk, head: head, picture: picture, pinned: pinned, bigVariant: bigVariant, hasBig: hasBig, addReset: addReset
   };
 })(window);

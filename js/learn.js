@@ -36,7 +36,7 @@
     v.setAttribute('aria-label', spec.kind || 'Video');
     f.appendChild(v);
     f.appendChild(h('figcaption', 'media__cap', '<span class="kindtag">' + esc(spec.kind || 'Video') + '</span> ' + mk(spec.cap || '') +
-      (spec.credit ? ' <span class="media__credit">' + esc(spec.credit) + '</span>' : '')));
+      (spec.credit ? (spec.url ? ' <a class="media__credit" href="' + esc(spec.url) + '" target="_blank" rel="noopener">' + esc(spec.credit) + '</a>' : ' <span class="media__credit">' + esc(spec.credit) + '</span>') : '')));
     return f;
   }
 
@@ -48,19 +48,47 @@
     { name: 'Tube D', has: ['water', 'oxygen'], lacks: 'warm', result: 'Nothing', why: 'In a fridge at 4 °C the enzyme-controlled reactions of germination are far too slow.' }
   ];
   var ICON = { water: '💧 water', oxygen: '🫧 oxygen', warm: '🌡 warm' };
+  /* the seeds in a tube: three broad beans on a pad of cotton wool, each with a seedling folded to nothing inside it —
+     a cream radicle to grow down and a green hooked shoot with two seed leaves to grow up */
+  function tubeSvg() {
+    var seed = function (x, y, k) {
+      return '<g transform="translate(' + x + ' ' + y + ')"><g class="sprout" transform="scale(0)">' +
+        '<path d="M0 1.6 C' + (-1.2 * k) + ' 4.5 ' + (-3 * k) + ' 6.5 ' + (-2.2 * k) + ' 10" fill="none" stroke="#EFE3C4" stroke-width="1.3" stroke-linecap="round"/>' +
+        '<path d="M0 -1.6 C0 -7 ' + (-2.4 * k) + ' -11 ' + (1.2 * k) + ' -15.5" fill="none" stroke="#5DBF6E" stroke-width="1.7" stroke-linecap="round"/>' +
+        '<ellipse cx="' + (-1.2 * k) + '" cy="-15.6" rx="2.6" ry="1.4" transform="rotate(' + (-32 * k) + ' ' + (-1.2 * k) + ' -15.6)" fill="#8FD48A" stroke="#3F9A55" stroke-width=".6"/>' +
+        '<ellipse cx="' + (3.2 * k) + '" cy="-16.2" rx="2.6" ry="1.4" transform="rotate(' + (26 * k) + ' ' + (3.2 * k) + ' -16.2)" fill="#8FD48A" stroke="#3F9A55" stroke-width=".6"/></g>' +
+        '<ellipse rx="3.6" ry="2.4" fill="#B7864B" stroke="#7E5227" stroke-width=".6"/><path d="M-1.8 -.6 Q0 .4 1.8 -.6" fill="none" stroke="#8A5A2A" stroke-width=".5" opacity=".8"/></g>';
+    };
+    return '<svg class="tube__svg" viewBox="0 0 30 60" aria-hidden="true"><ellipse cx="15" cy="55" rx="12.5" ry="4.5" fill="#F4F2EC" stroke="#E2DED2" stroke-width=".6"/>' + seed(8, 52, 1) + seed(15.5, 53.5, -1) + seed(22.5, 51.5, 1) + '</svg>';
+  }
+  /* the seedlings grow out over a second and a half, one a little after the other */
+  function sprout(c) {
+    var still = window.matchMedia('(prefers-reduced-motion: reduce)').matches, gs = c.querySelectorAll('.sprout');
+    gs.forEach(function (g, i) {
+      if (still) { g.setAttribute('transform', 'scale(1)'); return; }
+      var t0 = null, delay = i * 260;
+      requestAnimationFrame(function step(now) {
+        if (t0 == null) t0 = now;
+        var k = Math.max(0, Math.min(1, (now - t0 - delay) / 1300)), e = 1 - Math.pow(1 - k, 3);
+        g.setAttribute('transform', 'scale(' + e.toFixed(3) + ')');
+        if (k < 1 && c.isConnected) requestAnimationFrame(step);
+      });
+    });
+  }
   function germinate(spec) {
     var box = h('div', 'widget');
     box.appendChild(head(spec.title || 'Which tubes germinate?', spec.ask, 'Press the tubes'));
     var row = h('div', 'tubes'), n = 0, done = null;
     TUBES.forEach(function (t) {
       var c = h('button', 'tube'); c.type = 'button';
-      c.innerHTML = '<span class="tube__glass"><span class="tube__seeds"></span></span>' +
+      c.innerHTML = '<span class="tube__glass">' + tubeSvg() + '</span>' +
         '<b>' + esc(t.name) + '</b><span class="tube__has">' + ['water', 'oxygen', 'warm'].map(function (k) {
           return '<i class="' + (t.has.indexOf(k) >= 0 ? 'on' : 'off') + '">' + ICON[k] + '</i>';
         }).join('') + '</span><span class="tube__out"></span>';
       c.addEventListener('click', function () {
         if (c.classList.contains('is-open')) return;
         c.classList.add('is-open'); c.classList.add(t.lacks ? 'is-no' : 'is-yes');
+        if (!t.lacks) sprout(c);
         c.querySelector('.tube__out').innerHTML = '<b>' + esc(t.result) + '</b>' + (t.lacks ? ' — no ' + esc(t.lacks === 'warm' ? 'suitable temperature' : t.lacks) : '') + '<small>' + esc(t.why) + '</small>';
         n++;
         if (n === TUBES.length && !done) { done = h('p', 'widget__done', 'Water, oxygen and a suitable temperature — take any one away and nothing happens. Light was never on the list.'); box.appendChild(done); }
@@ -1121,9 +1149,61 @@
     nectary: ['Nectary', 'Makes nectar, the sugary reward that keeps insects visiting. Not one of the ten names 0610 asks for.'],
     receptacle: ['Receptacle', 'The top of the flower stalk, which all the parts are attached to. Not asked for in 0610.']
   };
+
+  /* ---------- water: a polar molecule, hydrogen bonds, cohesion and adhesion (opens from the words in the text) ---------- */
+  function waterSvg() {
+    var R = 21, r = 12.5, L = 29, HALF = 52.25 * Math.PI / 180;
+    /* one molecule: the oxygen at (x, y), its two hydrogens 104.5° apart about the direction phi (degrees) */
+    function mol(x, y, phi, tag) {
+      var p = phi * Math.PI / 180, hs = [p - HALF, p + HALF].map(function (a) { return [x + L * Math.cos(a), y + L * Math.sin(a)]; });
+      var s = '<g class="wm" data-tag="' + tag + '">';
+      hs.forEach(function (h) { s += '<line x1="' + x + '" y1="' + y + '" x2="' + h[0].toFixed(1) + '" y2="' + h[1].toFixed(1) + '" stroke="#B9C2C8" stroke-width="7" stroke-linecap="round"/>'; });
+      s += '<circle cx="' + x + '" cy="' + y + '" r="' + R + '" fill="#D9534F" stroke="#9E2F2B" stroke-width="1.4"/>';
+      s += '<text x="' + x + '" y="' + (y + 5) + '" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">O</text>';
+      hs.forEach(function (h) { s += '<circle cx="' + h[0].toFixed(1) + '" cy="' + h[1].toFixed(1) + '" r="' + r + '" fill="#F5F7F8" stroke="#7F8F9A" stroke-width="1.3"/><text x="' + h[0].toFixed(1) + '" y="' + (h[1] + 4.5).toFixed(1) + '" text-anchor="middle" font-size="12" font-weight="700" fill="#33414A">H</text>'; });
+      return { svg: s + '</g>', h: hs };
+    }
+    function delta(x, y, sign) { return '<text x="' + x + '" y="' + y + '" text-anchor="middle" font-size="14.5" font-weight="700" fill="' + (sign === '−' ? '#9E2F2B' : '#2F5F8F') + '">δ' + sign + '</text>'; }
+    function hb(x1, y1, x2, y2) { return '<line x1="' + x1.toFixed(1) + '" y1="' + y1.toFixed(1) + '" x2="' + x2.toFixed(1) + '" y2="' + y2.toFixed(1) + '" stroke="#2F6FB3" stroke-width="2.2" stroke-dasharray="5 4" stroke-linecap="round"/>'; }
+    function title(y, t) { return '<text x="16" y="' + y + '" font-size="16.5" font-weight="700" fill="#3D7A54">' + t + '</text>'; }
+    function note(x, y, t, anchor) { return '<text x="' + x + '" y="' + y + '" font-size="13.2" fill="#5B6B63"' + (anchor ? ' text-anchor="' + anchor + '"' : '') + '>' + t + '</text>'; }
+    var s = '<svg viewBox="0 0 440 488" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Two drawings: water molecules hydrogen-bonded to one another (cohesion), and a water molecule hydrogen-bonded to the cellulose of the xylem wall (adhesion)">';
+    /* ---- one molecule, charged ends ---- */
+    s += title(24, 'A polar molecule');
+    var A = mol(70, 88, 0, 'polar'); s += A.svg;
+    s += delta(40, 68, '−') + delta(A.h[0][0] + 20, A.h[0][1] - 6, '+') + delta(A.h[1][0] + 20, A.h[1][1] + 16, '+');
+    s += note(132, 76, 'The oxygen pulls the shared electrons') + note(132, 92, 'towards itself: slightly negative (δ−).') + note(132, 112, 'Each hydrogen is left slightly') + note(132, 128, 'positive (δ+).');
+    /* ---- cohesion: a chain ---- */
+    s += title(176, 'Cohesion — water holds on to water');
+    var B = mol(62, 232, 0, 'b'), C = mol(178, 258, -18, 'c'), D = mol(300, 232, -30, 'd');
+    s += hb(B.h[1][0], B.h[1][1], C.h ? 178 - 21 : 0, 258) + hb(C.h[1][0], C.h[1][1], 300 - 21, 232 + 8);
+    s += B.svg + C.svg + D.svg;
+    s += delta(B.h[1][0] - 6, B.h[1][1] + 20, '+') + delta(144, 244, '−') + delta(C.h[1][0] + 4, C.h[1][1] + 21, '+') + delta(274, 262, '−');
+    s += note(112, 302, 'hydrogen bond', 'middle') + '<line x1="114" y1="290" x2="120" y2="262" stroke="#2F6FB3" stroke-width="1"/>';
+    s += note(385, 210, 'and so on,', 'middle') + note(385, 226, 'up the xylem', 'middle');
+    s += note(228, 306, 'δ+ H to δ− O, again and again:') + note(228, 322, 'one continuous column.');
+    /* ---- adhesion: the wall ---- */
+    s += title(354, 'Adhesion — water holds on to the xylem wall');
+    s += '<rect x="16" y="364" width="38" height="104" rx="3" fill="#D8C39A" stroke="#9A7B4F" stroke-width="1.2"/>';
+    for (var i = 0; i < 6; i++) s += '<line x1="20" y1="' + (372 + i * 16) + '" x2="50" y2="' + (376 + i * 16) + '" stroke="#B89A62" stroke-width="1"/>';
+    s += '<text transform="translate(40 416) rotate(-90)" text-anchor="middle" font-size="11.5" font-weight="700" fill="#5B4425">cellulose</text>';
+    /* two –OH groups on the cellulose, the oxygen δ− */
+    [390, 444].forEach(function (y) {
+      s += '<line x1="54" y1="' + y + '" x2="84" y2="' + y + '" stroke="#B9C2C8" stroke-width="6" stroke-linecap="round"/><line x1="84" y1="' + y + '" x2="100" y2="' + (y - 12) + '" stroke="#B9C2C8" stroke-width="6" stroke-linecap="round"/>';
+      s += '<circle cx="84" cy="' + y + '" r="13" fill="#D9534F" stroke="#9E2F2B" stroke-width="1.2"/><text x="84" y="' + (y + 4.5) + '" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">O</text>';
+      s += '<circle cx="100" cy="' + (y - 12) + '" r="9" fill="#F5F7F8" stroke="#7F8F9A" stroke-width="1.2"/><text x="100" y="' + (y - 8.5) + '" text-anchor="middle" font-size="10" font-weight="700" fill="#33414A">H</text>';
+      s += delta(84, y + 28, '−');
+    });
+    var E = mol(170, 417, 180, 'e');
+    s += hb(97, 392, E.h[1][0], E.h[1][1]) + hb(97, 442, E.h[0][0], E.h[0][1]) + E.svg;
+    s += delta(E.h[1][0] + 2, E.h[1][1] - 18, '+') + delta(E.h[0][0] + 2, E.h[0][1] + 25, '+');
+    s += note(226, 392, '–OH groups on the cellulose') + note(226, 408, 'are polar too, so the same') + note(226, 424, 'hydrogen bonds form between') + note(226, 440, 'water and the wall: the column') + note(226, 456, 'clings to the xylem and does') + note(226, 472, 'not slip back.');
+    return s + '</svg>';
+  }
   var DIAGRAMS = {
     'flower': { svg: flowerSvg(true) },
-    'flower-blank': { svg: flowerSvg(false) }
+    'flower-blank': { svg: flowerSvg(false) },
+    'water': { svg: waterSvg() }
   };
   function svgFor(name) { return DIAGRAMS[name] ? DIAGRAMS[name].svg : ''; }
 
