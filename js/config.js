@@ -18,7 +18,7 @@ window.LAB_CONFIG = {
      reading this file learns nothing. To change it:
         node tools/unlock-hash.mjs "your new word"
      and paste the line it prints here. Leave it empty ('') and the table shows without a word. */
-  potometerUnlock: '609c690df8a5c94b8e39c4b23a8a01dbfcd7450732013c16970852811c661c23',
+  potometerUnlock: 'c599a5e17676c3871dbd0ef1900232d5bbfc560197f64992b63d21ef932f1561',
 
   /* Signing in, so a hand-in can be attributed.
 
