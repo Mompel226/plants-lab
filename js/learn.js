@@ -243,7 +243,7 @@
      two thirds or so on bean, sunflower and geranium, almost none on marram, whose stomata line the inside of the rolled leaf), plus a little loss through the cuticle */
   function poGreaseF(sp, g) { var lower = sp.lower == null ? .95 : sp.lower, cut = .05; return g === 'upper' ? cut + (1 - cut) * lower : g === 'lower' ? cut + (1 - cut) * (1 - lower) : g === 'both' ? cut : 1; }
   var PO_MM = 4.2, PO_X0 = 108, PO_STEM = 574, PO_BORE_R = 0.5;   /* the scale's 0 mark, and the shoot's stem, in the drawing's units */
-  var PO_STATE = { runs: [], pos: 0, set: null, shoot: 1, shootF: 1, unlocked: false, line: 0, lineNames: [], hidden: [] };
+  var PO_STATE = { runs: [], pos: 0, set: null, shoot: 1, shootF: 1, unlocked: false, line: 0, lineNames: [], hidden: [], dots: true };
   try { if (sessionStorage.getItem('plants-lab.potometer.unlocked') === '1') PO_STATE.unlocked = true; } catch (e) {}
   /* the bench, the table and the shoot survive a reload (the tab's own storage; closing the tab clears it) */
   function poSpecies(id) { return PO_SPECIES.filter(function (q) { return q.id === id; })[0]; }
@@ -253,11 +253,11 @@
       PO_SAVED.runs = PO_SAVED.runs.filter(function (r) { return r && r.s && poSpecies(r.s.sp && r.s.sp.id); });
       PO_SAVED.runs.forEach(function (r) { r.s.sp = poSpecies(r.s.sp.id); });
       if (PO_SAVED.set) { PO_SAVED.set.sp = poSpecies(PO_SAVED.set.sp && PO_SAVED.set.sp.id); if (!PO_SAVED.set.sp) PO_SAVED.set = null; }
-      PO_STATE.runs = PO_SAVED.runs; PO_STATE.set = PO_SAVED.set; PO_STATE.pos = +PO_SAVED.pos || 0; PO_STATE.shoot = +PO_SAVED.shoot || 1; PO_STATE.shootF = +PO_SAVED.shootF || 1; PO_STATE.err = PO_SAVED.err || 'none'; PO_STATE.line = +PO_SAVED.line || 0; PO_STATE.lineNames = PO_SAVED.lineNames || []; PO_STATE.hidden = PO_SAVED.hidden || [];
+      PO_STATE.runs = PO_SAVED.runs; PO_STATE.set = PO_SAVED.set; PO_STATE.pos = +PO_SAVED.pos || 0; PO_STATE.shoot = +PO_SAVED.shoot || 1; PO_STATE.shootF = +PO_SAVED.shootF || 1; PO_STATE.err = PO_SAVED.err || 'none'; PO_STATE.line = +PO_SAVED.line || 0; PO_STATE.lineNames = PO_SAVED.lineNames || []; PO_STATE.hidden = PO_SAVED.hidden || []; PO_STATE.dots = PO_SAVED.dots !== false;
     }
   } catch (e) {}
   function poPersist() {
-    try { sessionStorage.setItem('plants-lab.potometer', JSON.stringify({ runs: PO_STATE.runs, pos: PO_STATE.pos, set: PO_STATE.set, shoot: PO_STATE.shoot, shootF: PO_STATE.shootF, err: PO_STATE.err, line: PO_STATE.line, lineNames: PO_STATE.lineNames, hidden: PO_STATE.hidden })); } catch (e) {}
+    try { sessionStorage.setItem('plants-lab.potometer', JSON.stringify({ runs: PO_STATE.runs, pos: PO_STATE.pos, set: PO_STATE.set, shoot: PO_STATE.shoot, shootF: PO_STATE.shootF, err: PO_STATE.err, line: PO_STATE.line, lineNames: PO_STATE.lineNames, hidden: PO_STATE.hidden, dots: PO_STATE.dots })); } catch (e) {}
   }
   function sha256hex(text) {
     return crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)).then(function (buf) { return Array.prototype.map.call(new Uint8Array(buf), function (b) { return ('0' + b.toString(16)).slice(-2); }).join(''); });
@@ -676,8 +676,8 @@
       bStart.textContent = '▶ Start the clock';
       species.value = 'bean'; leaves.inp.value = 5; light.inp.value = 60; temp.inp.value = 20; hum.inp.value = 50; wind.inp.value = 0; grease.value = 'none'; joint.value = 'sealed'; time.value = '5';
       PO_STATE.shoot = 1; PO_STATE.shootF = 1;
-      runs.length = 0; errK = 'none'; PO_STATE.err = 'none'; PO_STATE.line = 0; PO_STATE.lineNames = []; PO_STATE.hidden = [];
-      errBar.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', x.getAttribute('data-k') === 'none' ? 'true' : 'false'); });
+      runs.length = 0; errK = 'none'; PO_STATE.err = 'none'; PO_STATE.line = 0; PO_STATE.lineNames = []; PO_STATE.hidden = []; PO_STATE.dots = true; bDots.setAttribute('aria-pressed', 'true');
+      errBar.querySelectorAll('button:not(.po__dots)').forEach(function (x) { x.setAttribute('aria-pressed', x.getAttribute('data-k') === 'none' ? 'true' : 'false'); });
       pop.hidden = true; popTerm = null;
       result.hidden = true; bRecord.disabled = true; clockB.textContent = '0:00';
       setBubble(0); paintConditions(); paintData();
@@ -723,9 +723,13 @@
     var errBar = h('div', 'po__errbar', '<span class="po__errbar__l">Show, with the mean</span>');
     [['none', 'the mean only'], ['sd', 'standard deviation'], ['se', 'standard error'], ['ci', '95 % confidence interval']].forEach(function (o) {
       var b = h('button', 'po__errbar__b', esc(o[1])); b.type = 'button'; b.setAttribute('data-k', o[0]); b.setAttribute('aria-pressed', o[0] === errK ? 'true' : 'false');
-      b.addEventListener('click', function () { errK = o[0]; PO_STATE.err = errK; errBar.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', x.getAttribute('data-k') === errK ? 'true' : 'false'); }); paintData(); if (errK === 'none') { pop.hidden = true; popTerm = null; } else showTerm(errK); });   /* choosing a statistic shows what it is, worked with the table's own numbers */
+      b.addEventListener('click', function () { errK = o[0]; PO_STATE.err = errK; errBar.querySelectorAll('button:not(.po__dots)').forEach(function (x) { x.setAttribute('aria-pressed', x.getAttribute('data-k') === errK ? 'true' : 'false'); }); paintData(); if (errK === 'none') { pop.hidden = true; popTerm = null; } else showTerm(errK); });   /* choosing a statistic shows what it is, worked with the table's own numbers */
       errBar.appendChild(b);
     });
+    /* the trials themselves can be hidden, so the means and their error bars stand clear */
+    var bDots = h('button', 'po__errbar__b po__dots', '· every trial'); bDots.type = 'button'; bDots.setAttribute('data-k', 'dots'); bDots.setAttribute('aria-pressed', PO_STATE.dots ? 'true' : 'false'); bDots.title = 'Show or hide the single trials behind each mean';
+    bDots.addEventListener('click', function () { PO_STATE.dots = !PO_STATE.dots; bDots.setAttribute('aria-pressed', PO_STATE.dots ? 'true' : 'false'); poPersist(); paintData(); });
+    errBar.appendChild(h('span', 'po__errbar__l', 'and')); errBar.appendChild(bDots);
     var bCopy = h('button', 'wbtn wbtn--quiet', 'Copy the table'), bClear = h('button', 'wbtn wbtn--quiet', 'Clear the table');
     [bCopy, bClear].forEach(function (b) { b.type = 'button'; tools.appendChild(b); });
     tableBox.appendChild(errBar); tableBox.appendChild(tabsEl); tableBox.appendChild(tableWrap); tableBox.appendChild(pop); tableBox.appendChild(chart); tableBox.appendChild(tools);
@@ -882,8 +886,8 @@
             if (errK === 'ci' && !numeric) s += '<rect class="po__band" style="fill:' + c + '" x="' + (x - bw * .7).toFixed(1) + '" y="' + Y(p.mean + p.err).toFixed(1) + '" width="' + (bw * 1.4).toFixed(1) + '" height="' + (Y(p.mean - p.err) - Y(p.mean + p.err)).toFixed(1) + '"/>';
             if (errK !== 'ci') s += '<path class="po__whisker" style="stroke:' + c + '" d="M' + x.toFixed(1) + ' ' + Y(p.mean + p.err).toFixed(1) + ' V' + Y(p.mean - p.err).toFixed(1) + ' M' + (x - 6).toFixed(1) + ' ' + Y(p.mean + p.err).toFixed(1) + ' h12 M' + (x - 6).toFixed(1) + ' ' + Y(p.mean - p.err).toFixed(1) + ' h12"/>';
           }
-          p.all.forEach(function (v2) { s += '<circle class="po__dot' + (p.all.length > 1 ? ' po__dot--rep' : '') + '" style="fill:' + c + '" cx="' + x.toFixed(1) + '" cy="' + Y(v2).toFixed(1) + '" r="3"/>'; });
-          if (p.all.length > 1) s += '<circle class="po__dotmean" style="fill:' + c + '" cx="' + x.toFixed(1) + '" cy="' + Y(p.mean).toFixed(1) + '" r="4.5"/>';
+          if (PO_STATE.dots) p.all.forEach(function (v2) { s += '<circle class="po__dot' + (p.all.length > 1 ? ' po__dot--rep' : '') + '" style="fill:' + c + '" cx="' + x.toFixed(1) + '" cy="' + Y(v2).toFixed(1) + '" r="3"/>'; });
+          s += '<circle class="po__dotmean" style="fill:' + c + '" cx="' + x.toFixed(1) + '" cy="' + Y(p.mean).toFixed(1) + '" r="' + (p.all.length > 1 ? 4.5 : 3.5) + '"/>';   /* every row keeps its mean marker; the trials behind it can be hidden */
         });
       });
       var ticks = numeric ? allPts.map(function (p) { return p.x; }).filter(function (v2, i2, a) { return a.indexOf(v2) === i2; }).sort(function (a, b) { return a - b; }) : cats;

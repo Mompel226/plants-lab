@@ -1335,3 +1335,5 @@ picture{display:block;line-height:0}
 /* a hovered button's tooltip sits above its neighbours in the row */
 .wbtn[data-tip]:hover,.wbtn[data-tip]:focus-visible{z-index:41}
 .po__resetall:disabled{background:#F5F7F4}
+/* the trials toggle sits with the statistic toggle; a struck-through pill means the trials are hidden */
+.po__dots[aria-pressed="false"]{text-decoration:line-through;opacity:.7}
