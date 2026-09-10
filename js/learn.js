@@ -223,25 +223,42 @@
      own x-axis from whichever factor you changed. The rates are a model built to be fair to
      the biology (the widget says so), not measured data. */
   var PO_SPECIES = [
-    { id: 'bean',      name: 'French bean',   base: 3.2, note: 'broad, thin leaves',
+    { id: 'bean',      name: 'French bean',   base: 3.2, lower: .7, note: 'broad, thin leaves',
       leaf: { kind: 'heart', scale: 1.05, fill: '#5DBF6E', stroke: '#2A6B3B' } },
-    { id: 'sunflower', name: 'Sunflower',     base: 4.4, note: 'very large leaves',
+    { id: 'sunflower', name: 'Sunflower',     base: 4.4, lower: .6, note: 'very large leaves',
       leaf: { kind: 'heart', scale: 1.3, fill: '#4FAE5E', stroke: '#245B33', rough: true } },
-    { id: 'geranium',  name: 'Geranium',      base: 2.6, note: 'soft, hairy, rounded leaves',
+    { id: 'geranium',  name: 'Geranium',      base: 2.6, lower: .75, note: 'soft, hairy, rounded leaves',
       leaf: { kind: 'round', scale: .9, fill: '#7CC46A', stroke: '#3F7F3A' } },
-    { id: 'privet',    name: 'Privet',        base: 1.7, note: 'small, glossy, waxy leaves',
+    { id: 'privet',    name: 'Privet',        base: 1.7, lower: .97, note: 'small, glossy, waxy leaves',
       leaf: { kind: 'oval', scale: .72, fill: '#3F8F4E', stroke: '#1F5A2C', gloss: true } },
-    { id: 'ivy',       name: 'Ivy',           base: 1.5, note: 'tough, waxy, lobed leaves',
+    { id: 'ivy',       name: 'Ivy',           base: 1.5, lower: .97, note: 'tough, waxy, lobed leaves',
       leaf: { kind: 'lobed', scale: .95, fill: '#3E8A4A', stroke: '#1F5A2C', gloss: true, paleVeins: true } },
-    { id: 'marram',    name: 'Marram grass',  base: 0.5, note: 'narrow leaves, rolled into tubes',
+    { id: 'marram',    name: 'Marram grass',  base: 0.5, lower: .03, note: 'narrow leaves, rolled into tubes',
       leaf: { kind: 'grass', scale: 1.2, fill: '#9DB884', stroke: '#5E7A4B' } }
   ];
   var PO_WIND = ['still air', 'a gentle breeze', 'fan on low', 'fan on high'];
   var PO_WINDF = [1, 1.4, 1.9, 2.5];
-  var PO_GREASE = [['none', 'no grease', 1], ['upper', 'grease on the upper surface', .9], ['lower', 'grease on the lower surface', .2], ['both', 'grease on both surfaces', .05]];
+  var PO_GREASE = [['none', 'no grease'], ['upper', 'grease on the upper surface'], ['lower', 'grease on the lower surface'], ['both', 'grease on both surfaces']];
+  /* a greased surface keeps only the other surface's share of the stomata (`lower` is the share underneath: nearly all on privet and ivy,
+     two thirds or so on bean, sunflower and geranium, almost none on marram, whose stomata line the inside of the rolled leaf), plus a little loss through the cuticle */
+  function poGreaseF(sp, g) { var lower = sp.lower == null ? .95 : sp.lower, cut = .05; return g === 'upper' ? cut + (1 - cut) * lower : g === 'lower' ? cut + (1 - cut) * (1 - lower) : g === 'both' ? cut : 1; }
   var PO_MM = 4.2, PO_X0 = 108, PO_STEM = 574, PO_BORE_R = 0.5;   /* the scale's 0 mark, and the shoot's stem, in the drawing's units */
   var PO_STATE = { runs: [], pos: 0, set: null, shoot: 1, shootF: 1, unlocked: false };
   try { if (sessionStorage.getItem('plants-lab.potometer.unlocked') === '1') PO_STATE.unlocked = true; } catch (e) {}
+  /* the bench, the table and the shoot survive a reload (the tab's own storage; closing the tab clears it) */
+  function poSpecies(id) { return PO_SPECIES.filter(function (q) { return q.id === id; })[0]; }
+  try {
+    var PO_SAVED = JSON.parse(sessionStorage.getItem('plants-lab.potometer') || 'null');
+    if (PO_SAVED && PO_SAVED.runs) {
+      PO_SAVED.runs = PO_SAVED.runs.filter(function (r) { return r && r.s && poSpecies(r.s.sp && r.s.sp.id); });
+      PO_SAVED.runs.forEach(function (r) { r.s.sp = poSpecies(r.s.sp.id); });
+      if (PO_SAVED.set) { PO_SAVED.set.sp = poSpecies(PO_SAVED.set.sp && PO_SAVED.set.sp.id); if (!PO_SAVED.set.sp) PO_SAVED.set = null; }
+      PO_STATE.runs = PO_SAVED.runs; PO_STATE.set = PO_SAVED.set; PO_STATE.pos = +PO_SAVED.pos || 0; PO_STATE.shoot = +PO_SAVED.shoot || 1; PO_STATE.shootF = +PO_SAVED.shootF || 1; PO_STATE.err = PO_SAVED.err || 'none';
+    }
+  } catch (e) {}
+  function poPersist() {
+    try { sessionStorage.setItem('plants-lab.potometer', JSON.stringify({ runs: PO_STATE.runs, pos: PO_STATE.pos, set: PO_STATE.set, shoot: PO_STATE.shoot, shootF: PO_STATE.shootF, err: PO_STATE.err })); } catch (e) {}
+  }
   function sha256hex(text) {
     return crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)).then(function (buf) { return Array.prototype.map.call(new Uint8Array(buf), function (b) { return ('0' + b.toString(16)).slice(-2); }).join(''); });
   }            /* kept while the lab is open: a trip to Practise and back keeps the table */              /* px per mm on the scale; the 0 mm mark; the capillary's radius, mm */
@@ -420,8 +437,8 @@
     var read = h('div', 'po__reading', '<span class="po__at">bubble at <b>0</b> mm</span>'); read.setAttribute('aria-live', 'polite');
     var atB = read.querySelector('b');
     var btns = h('div', 'po__btns');
-    var bStart = h('button', 'wbtn po__start', '▶ Start the clock'), bReset = h('button', 'wbtn wbtn--quiet', 'Open the tap: bubble back to 0'), bRecord = h('button', 'wbtn po__rec', 'Record this run'), bNew = h('button', 'wbtn wbtn--quiet', 'Use a new shoot');
-    bNew.title = 'Another shoot of the same kind, from another plant: its own leaves, its own rate';
+    var bStart = h('button', 'wbtn po__start', '▶ Start the clock'), bReset = h('button', 'wbtn wbtn--quiet', 'Open the tap: bubble back to 0'), bRecord = h('button', 'wbtn po__rec', 'Record this run'), bNew = h('button', 'wbtn wbtn--quiet', 'Use a shoot from another plant');
+    bNew.title = 'A shoot of the same kind, cut from another plant: its own leaves, its own rate — a true replicate';
     [bStart, bReset, bRecord, bNew].forEach(function (b) { b.type = 'button'; btns.appendChild(b); });
     bRecord.disabled = true;
     var result = h('div', 'po__result'); result.hidden = true; result.setAttribute('aria-live', 'polite');
@@ -433,11 +450,11 @@
       return { sp: sp, leaves: +leaves.inp.value, light: +light.inp.value, temp: +temp.inp.value, hum: +hum.inp.value, wind: +wind.inp.value, grease: grease.value, joint: joint.value, time: +time.value, shoot: PO_STATE.shoot };
     }
     function rateOf(s) {
-      var g = PO_GREASE.filter(function (x) { return x[0] === s.grease; })[0][2];
+      var g = poGreaseF(s.sp, s.grease);
       return s.sp.base * (s.leaves / 5) * poLightF(s.light) * poTempF(s.temp) * poHumF(s.hum) * PO_WINDF[s.wind] * g;
     }
     var pos = 0, run = null, raf = null, lastRun = null;
-    function remember() { PO_STATE.set = settings(); PO_STATE.pos = pos; PO_STATE.runs = runs; }   /* the shoot and its factor already live in PO_STATE */
+    function remember() { PO_STATE.set = settings(); PO_STATE.pos = pos; PO_STATE.runs = runs; poPersist(); }   /* the shoot and its factor already live in PO_STATE */
     function paintConditions() {
       var s = settings();
       speciesNote.textContent = s.sp.note; growLeaves(s.sp);
@@ -479,7 +496,7 @@
       result.hidden = true; bRecord.disabled = true; bStart.textContent = 'Skip to the end';
       ctl.classList.add('is-locked'); ctl.querySelectorAll('input,select').forEach(function (e) { e.disabled = true; });
       svg.classList.add('is-running');
-      say.textContent = 'Running. The bubble moves as fast as the shoot takes water in — which is as fast as its leaves lose it.';
+      say.textContent = 'Running. The bubble moves as fast as the shoot takes water in — almost as fast as its leaves lose it.';
       if (still) { finish(); return; }
       raf = requestAnimationFrame(tick);
     }
@@ -501,18 +518,19 @@
       svg.classList.remove('is-running');
       ctl.classList.remove('is-locked'); ctl.querySelectorAll('input,select').forEach(function (e) { e.disabled = false; });
       bStart.textContent = '▶ Start the clock';
-      var distance = r.notReset ? end : end - start, mins = r.s.time, rate = distance / mins, vol = Math.PI * PO_BORE_R * PO_BORE_R * rate;   /* without the tap the scale is read from 0 */
+      var distance = r.notReset ? end : end - start, mins = r.s.time, rate = distance / mins, vol = Math.PI * PO_BORE_R * PO_BORE_R * +rate.toFixed(2);   /* from the rate as printed, so checking the line gives the same number */   /* without the tap the scale is read from 0 */
       lastRun = { s: r.s, distance: distance, rate: rate, leak: r.leak };
       result.hidden = false;
       result.innerHTML = '<div class="po__stat"><span>Distance moved</span><b>' + distance + ' mm</b><small>' + (r.notReset ? 'read from 0 to ' + end + ' on the scale — but the bubble started at ' + start : 'from ' + start + ' to ' + end + ' on the scale, read to the nearest mm (± 0.5)') + '</small></div>' +
         '<div class="po__stat"><span>Rate of uptake</span><b>' + rate.toFixed(2) + ' mm/min</b><small>' + distance + ' mm ÷ ' + mins + ' min</small></div>' +
         '<div class="po__stat"><span>Volume taken up</span><b>' + vol.toFixed(2) + ' mm³/min</b><small>π × 0.5² × ' + rate.toFixed(2) + ', for a 1 mm bore</small></div>' +
-        (r.notReset ? '<p class="po__warn">The tap was not opened before this run. Every reading starts with the bubble at the 0 mark: the scale was read from 0, but the bubble started at ' + start + ' mm, so this distance is ' + start + ' mm too long and the rate is wrong. Open the tap, then run again.</p>' : '') +
+        (r.notReset ? '<p class="po__warn">The scale was read from 0, but the bubble started at ' + start + ' mm, so this distance is ' + start + ' mm too long and the rate is wrong. A reading is where the bubble ended minus where it started: ' + end + ' − ' + start + ' = ' + (end - start) + ' mm. This bench reads from 0, so open the tap before every run — then run again.</p>' : '') +
         (r.capped ? '<p class="po__warn">The bubble reached the end of the scale before the time was up, so this reading is too small. Open the tap, and measure for less time or slow the shoot down.</p>' : '') +
         (r.leak ? '<p class="po__warn">The joint at the bung was not sealed. Air was drawn in there instead of water from the tube, so the bubble moved less than the shoot took up' + (r.stuck ? ' — and stuck for part of the run' : '') + '. Every leaking reading is too small (a systematic error) and by a different amount each time (a random one on top). Seal the joint with petroleum jelly.</p>' : '');
       var full = trialsFor(r.s) >= MAX_TRIALS;
       bRecord.disabled = !!r.capped || !!r.notReset || full;
-      say.textContent = r.notReset ? 'Not a reading — the run did not start from the tap.' : r.capped ? 'Not a fair reading — the bubble ran out of scale.' : full ? 'Five trials for these conditions already: change something for the next row.' : r.leak ? 'You can record it — a leaking reading in the table is worth seeing next to a sealed one.' : 'Read the scale, then record the run as a trial. Repeat it for a mean, or change one factor for a new row.';
+      remember();
+      say.textContent = r.notReset ? 'Not recorded: the run did not start from 0. Open the tap, then run again.' : r.capped ? 'Not a fair reading — the bubble ran out of scale.' : full ? 'Five trials for these conditions already: change something for the next row.' : r.leak ? 'You can record it — a leaking reading in the table is worth seeing next to a sealed one.' : 'Read the scale, then record the run as a trial. Repeat it for a mean, or change one factor for a new row.';
     }
     function resetBubble() {
       if (run) return;
@@ -522,7 +540,7 @@
         if (t0 == null) t0 = now;
         var k = still ? 1 : Math.min(1, (now - t0) / 600);
         setBubble(from * (1 - k)); clockB.textContent = '0:00';
-        if (k < 1 && stage.isConnected) requestAnimationFrame(back); else svg.classList.remove('is-tapping');
+        if (k < 1 && stage.isConnected) requestAnimationFrame(back); else { svg.classList.remove('is-tapping'); remember(); }
       }
       requestAnimationFrame(back);
       result.hidden = true; bRecord.disabled = true;
@@ -533,8 +551,8 @@
     bNew.addEventListener('click', function () {
       if (run) return;
       PO_STATE.shoot = (PO_STATE.shoot || 1) + 1; PO_STATE.shootF = .84 + Math.random() * .32;
-      resetBubble();
-      say.textContent = 'Shoot ' + String.fromCharCode(64 + PO_STATE.shoot) + ': another plant of the same kind, with its own leaves and its own rate. Repeats on one shoot are technical replicates; different shoots are true replicates — only they say something about the species.';
+      resetBubble(); remember();
+      say.textContent = 'Shoot ' + String.fromCharCode(64 + PO_STATE.shoot) + ', cut from another plant of the same kind: its own leaves, its own rate. Trials on one shoot are technical replicates; shoots from different plants are true replicates — only they say something about the species.';
     });
 
     /* ----- the results table: one row per set of conditions, up to five trials, and what the trials say -----
@@ -560,7 +578,7 @@
         else { gateSay.textContent = 'Not that word.'; gateIn.select(); }
       });
     });
-    var tableWrap = h('div', 'po__tablewrap'), table = h('table', 'po__table'), pop = h('div', 'po__pop'), chart = h('div', 'po__chart');
+    var tableWrap = h('div', 'po__tablewrap'), table = h('table', 'po__table'), pop = h('div', 'po__pop'), chart = h('div', 'po__chart'), popTerm = null;
     pop.hidden = true;
     var tools = h('div', 'po__tools');
     var errK = PO_STATE.err || 'none';
@@ -598,18 +616,22 @@
             how: function (st, vals) { var sq = vals.map(function (v) { return '(' + v.toFixed(2) + ' − ' + st.mean.toFixed(2) + ')²'; }).join(' + '); return sq + ' = ' + vals.reduce(function (a, v) { return a + (v - st.mean) * (v - st.mean); }, 0).toFixed(3) + ', ÷ ' + (st.n - 1) + ', then √ = <b>' + st.sd.toFixed(2) + '</b> mm/min'; } },
       se: { name: 'Standard error (SE)', what: 'How well you know the mean itself, not how spread the trials are. It is the standard deviation divided by the square root of the number of trials. More trials make it smaller, because a mean of many repeats settles down even when the repeats themselves do not.',
             how: function (st) { return st.sd.toFixed(2) + ' ÷ √' + st.n + ' = ' + st.sd.toFixed(2) + ' ÷ ' + Math.sqrt(st.n).toFixed(2) + ' = <b>' + st.se.toFixed(2) + '</b> mm/min'; } },
-      ci: { name: '95 % confidence interval', what: 'The range the true mean is likely to be in, given your trials: the mean, plus and minus a number times the standard error. The number comes from a table and depends on how many trials you took — 12.71 for two, 4.30 for three, 3.18 for four, 2.78 for five — so few trials give a wide interval and more trials narrow it. If the intervals for two sets of conditions do not overlap, the difference between them is real, not chance. On the graph it is drawn as a band round the mean.',
+      ci: { name: '95 % confidence interval', what: 'The range the true mean is likely to be in, given your trials: the mean, plus and minus a number times the standard error. The number comes from a table and depends on how many trials you took — 12.71 for two, 4.30 for three, 3.18 for four, 2.78 for five — so few trials give a wide interval and more trials narrow it. If the intervals for two sets of conditions do not overlap, the difference between them is statistically significant — very unlikely to be chance alone; intervals that overlap do not prove there is no difference. It is the interval for the mean of that row: if the row mixes shoots, it takes in the difference between plants too. On the graph it is drawn as a band round the mean.',
             how: function (st) { return st.t + ' × ' + st.se.toFixed(2) + ' = <b>± ' + st.ci.toFixed(2) + '</b> mm/min, so the true mean is probably between ' + (st.mean - st.ci).toFixed(2) + ' and ' + (st.mean + st.ci).toFixed(2); } }
     };
     function showTerm(term) {
       var T = TERMS[term]; if (!T) return;
+      popTerm = term;
       var ex = groups().filter(function (g) { return g.trials.length >= 2; })[0];
       var worked = '';
-      if (ex) { var vals = ex.trials.map(function (t) { return t.r.rate; }), st = stats(vals); worked = '<p class="po__pop__how"><b>Worked out for your first row with repeats</b> (' + condText(ex.s) + '): ' + T.how(st, vals) + '</p>'; }
+      if (ex) {
+        var vals = ex.trials.map(function (t) { return t.r.rate; }), st = stats(vals); worked = '<p class="po__pop__how"><b>Worked out for your first row with repeats</b> (' + condText(ex.s) + '): ' + T.how(st, vals) + '</p>';
+        if (term !== 'mean' && st.sd === 0) worked += '<p class="po__pop__how">Your trials are identical to the millimetre, so their spread is 0. The scale reads to 1 mm, and a difference smaller than that is hidden by it — measure for longer, and the trials will show their spread.</p>';   /* resolution, seen */
+      }
       else worked = '<p class="po__pop__how">Record a second trial for the same conditions and the working appears here with your numbers.</p>';
       pop.innerHTML = '<div class="po__pop__h">' + esc(T.name) + '<button type="button" class="po__pop__x" aria-label="Close">✕</button></div><p>' + esc(T.what) + '</p>' + worked + (term === 'sd' || term === 'se' || term === 'ci' ? '<p class="po__pop__note">Standard deviation, standard error and confidence intervals are asked for at IB, not IGCSE — but they are what a scientist would put on this graph.</p>' : '');
       pop.hidden = false;
-      pop.querySelector('.po__pop__x').addEventListener('click', function () { pop.hidden = true; });
+      pop.querySelector('.po__pop__x').addEventListener('click', function () { pop.hidden = true; popTerm = null; });
     }
     bRecord.addEventListener('click', function () {
       if (!lastRun) return;
@@ -618,7 +640,7 @@
       paintData();
       say.textContent = 'Recorded as trial ' + n + ' of these conditions. Open the tap before the next run.' + (n >= MAX_TRIALS ? ' That is five — enough for a mean; change something for the next row.' : '');
     });
-    bClear.addEventListener('click', function () { runs.length = 0; pop.hidden = true; paintData(); });
+    bClear.addEventListener('click', function () { runs.length = 0; paintData(); });
     bCopy.addEventListener('click', function () {
       var head = ['Conditions'].concat([1, 2, 3, 4, 5].map(function (i) { return 'Trial ' + i + ' / mm min⁻¹'; })).concat(['Mean', 'SD', 'SE', '95 % CI']);
       var lines = [head.join('\t')].concat(groups().map(function (g) {
@@ -637,7 +659,8 @@
       kept.textContent = runs.length ? runs.length + (runs.length === 1 ? ' run recorded' : ' runs recorded') + ' — write each one in your own table as you go.' : 'Nothing recorded yet.';
       gate.hidden = unlocked || !NEED;
       tableBox.hidden = !runs.length || !unlocked;
-      if (!runs.length) { table.innerHTML = ''; chart.innerHTML = ''; return; }
+      poPersist();
+      if (!runs.length) { table.innerHTML = ''; chart.innerHTML = ''; pop.hidden = true; popTerm = null; return; }
       var G = groups();
       table.innerHTML = '<thead><tr><th>Conditions</th>' + [1, 2, 3, 4, 5].map(function (i) { return '<th>Trial ' + i + '<small>mm/min</small></th>'; }).join('') +
         ['mean'].concat(errK === 'none' ? [] : [errK]).map(function (t) { return '<th><button type="button" class="po__term" data-term="' + t + '" title="What this is, and how it was worked out">' + (t === 'mean' ? 'Mean' : t === 'sd' ? 'SD' : t === 'se' ? 'SE' : '95 % CI') + ' <i>?</i></button></th>'; }).join('') + '</tr></thead><tbody>' +
@@ -653,6 +676,7 @@
       table.querySelectorAll('.po__del').forEach(function (b) { b.addEventListener('click', function () { runs.splice(+b.getAttribute('data-i'), 1); paintData(); }); });
       table.querySelectorAll('.po__term').forEach(function (b) { b.addEventListener('click', function () { showTerm(b.getAttribute('data-term')); }); });
       chart.innerHTML = graph(G);
+      if (popTerm && (popTerm === 'mean' || popTerm === errK)) showTerm(popTerm); else { pop.hidden = true; popTerm = null; }   /* the pop-up is re-worked from the table as it now is */
     }
     /* the graph plots one point per row of the table — its mean — and picks its x-axis: the one factor that changed */
     var FACT = [['leaves', 'Leaves on the shoot', true], ['light', 'Light / %', true], ['temp', 'Temperature / °C', true], ['hum', 'Humidity / %', true], ['wind', 'Wind', false], ['time', 'Time / min', true], ['sp', 'Plant', false], ['grease', 'Grease', false], ['joint', 'Joint at the bung', false]];
@@ -708,8 +732,8 @@
         var every = pts.length > 8 ? Math.ceil(pts.length / 8) : 1;
         if (i % every === 0 || i === pts.length - 1) s += '<text class="po__gt" x="' + x.toFixed(1) + '" y="' + (H - B + 14) + '" text-anchor="middle">' + esc(String(p.x)) + '</text>';
       });
-      var errNote = errK === 'none' ? '' : errK === 'ci' ? ' The band is the 95 % confidence interval of each mean; where two bands do not overlap, the difference is real.' : ' The whiskers are one ' + (errK === 'sd' ? 'standard deviation' : 'standard error') + ' either side of each mean.';
-      s += '</svg><small class="po__gnote">' + esc(note + errNote) + '</small>';
+      var errNote = errK === 'none' ? '' : errK === 'ci' ? ' The band is the 95 % confidence interval of each mean; where two bands do not overlap, the difference is statistically significant; where they overlap, nothing is proved either way.' : ' The whiskers are one ' + (errK === 'sd' ? 'standard deviation' : 'standard error') + ' either side of each mean.';
+      s += '</svg><small class="po__gnote">' + esc(note + (withErr.length ? errNote : '')) + '</small>';   /* the error note only when an error is drawn */
       return s;
     }
 
