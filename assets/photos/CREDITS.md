@@ -133,7 +133,8 @@ Two longer videos in the lesson folders were left out on length alone (ten and e
 
 The plant on the left, its parts, the cactus and the water lily, the diagrams in the theory pages
 (the half-flower, the auxin experiment, the potometer, the sources and sinks, the pollen tube, the
-polar water molecule with its hydrogen bonds — cohesion and adhesion — and the seeds sprouting in
+polar water molecule — its dot-and-cross diagram, its charges, its hydrogen bonds, cohesion and
+adhesion — and the seeds sprouting in
 the germination tubes) and every widget are drawn by the page and are original.
 
 ## The numbers in the potometer

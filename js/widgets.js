@@ -291,7 +291,7 @@
 
   /* ---------- photo: a photograph with its credit, full size on a click ---------- */
   function photo(spec) {
-    var f = h('figure', 'photo'); if (spec.group) f.setAttribute('data-group', spec.group);
+    var f = h('figure', 'photo' + (spec.small ? ' photo--small' : '')); if (spec.group) f.setAttribute('data-group', spec.group);   /* small: a low-resolution diagram drawn at its own size, not blown up */
     var pic = picture(spec);
     if (pic) {
       f.appendChild(pic.pic);
