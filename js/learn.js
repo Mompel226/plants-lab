@@ -243,7 +243,7 @@
      two thirds or so on bean, sunflower and geranium, almost none on marram, whose stomata line the inside of the rolled leaf), plus a little loss through the cuticle */
   function poGreaseF(sp, g) { var lower = sp.lower == null ? .95 : sp.lower, cut = .05; return g === 'upper' ? cut + (1 - cut) * lower : g === 'lower' ? cut + (1 - cut) * (1 - lower) : g === 'both' ? cut : 1; }
   var PO_MM = 4.2, PO_X0 = 108, PO_STEM = 574, PO_BORE_R = 0.5;   /* the scale's 0 mark, and the shoot's stem, in the drawing's units */
-  var PO_STATE = { runs: [], pos: 0, set: null, shoot: 1, shootF: 1, unlocked: false };
+  var PO_STATE = { runs: [], pos: 0, set: null, shoot: 1, shootF: 1, unlocked: false, line: 0, lineNames: [], hidden: [] };
   try { if (sessionStorage.getItem('plants-lab.potometer.unlocked') === '1') PO_STATE.unlocked = true; } catch (e) {}
   /* the bench, the table and the shoot survive a reload (the tab's own storage; closing the tab clears it) */
   function poSpecies(id) { return PO_SPECIES.filter(function (q) { return q.id === id; })[0]; }
@@ -253,11 +253,11 @@
       PO_SAVED.runs = PO_SAVED.runs.filter(function (r) { return r && r.s && poSpecies(r.s.sp && r.s.sp.id); });
       PO_SAVED.runs.forEach(function (r) { r.s.sp = poSpecies(r.s.sp.id); });
       if (PO_SAVED.set) { PO_SAVED.set.sp = poSpecies(PO_SAVED.set.sp && PO_SAVED.set.sp.id); if (!PO_SAVED.set.sp) PO_SAVED.set = null; }
-      PO_STATE.runs = PO_SAVED.runs; PO_STATE.set = PO_SAVED.set; PO_STATE.pos = +PO_SAVED.pos || 0; PO_STATE.shoot = +PO_SAVED.shoot || 1; PO_STATE.shootF = +PO_SAVED.shootF || 1; PO_STATE.err = PO_SAVED.err || 'none';
+      PO_STATE.runs = PO_SAVED.runs; PO_STATE.set = PO_SAVED.set; PO_STATE.pos = +PO_SAVED.pos || 0; PO_STATE.shoot = +PO_SAVED.shoot || 1; PO_STATE.shootF = +PO_SAVED.shootF || 1; PO_STATE.err = PO_SAVED.err || 'none'; PO_STATE.line = +PO_SAVED.line || 0; PO_STATE.lineNames = PO_SAVED.lineNames || []; PO_STATE.hidden = PO_SAVED.hidden || [];
     }
   } catch (e) {}
   function poPersist() {
-    try { sessionStorage.setItem('plants-lab.potometer', JSON.stringify({ runs: PO_STATE.runs, pos: PO_STATE.pos, set: PO_STATE.set, shoot: PO_STATE.shoot, shootF: PO_STATE.shootF, err: PO_STATE.err })); } catch (e) {}
+    try { sessionStorage.setItem('plants-lab.potometer', JSON.stringify({ runs: PO_STATE.runs, pos: PO_STATE.pos, set: PO_STATE.set, shoot: PO_STATE.shoot, shootF: PO_STATE.shootF, err: PO_STATE.err, line: PO_STATE.line, lineNames: PO_STATE.lineNames, hidden: PO_STATE.hidden })); } catch (e) {}
   }
   function sha256hex(text) {
     return crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)).then(function (buf) { return Array.prototype.map.call(new Uint8Array(buf), function (b) { return ('0' + b.toString(16)).slice(-2); }).join(''); });
@@ -271,6 +271,10 @@
      What each one is, in plain words, and how it is worked out — with the student's own trials when
      there are repeats, and with a fixed set of five otherwise. The Learn text's bold words and the
      table's headings and toggle all open the same pop-up. */
+  /* the lines of the graph: each is a table of its own, in its own colour, so one factor can be compared across lines */
+  var PO_LINE = ['#1F6FB2', '#D9772B', '#6E43A8', '#C23B3B', '#188F8F', '#7A5A1E'], PO_LINE_WORD = ['blue', 'orange', 'purple', 'red', 'teal', 'brown'];
+  function poLineColour(i) { return PO_LINE[i % PO_LINE.length]; }
+  function poLineName(i) { return (PO_STATE.lineNames[i] || '').trim() || 'Line ' + (i + 1); }
   var PO_T95 = { 2: 12.71, 3: 4.30, 4: 3.18, 5: 2.78 };
   function poStats(vals) {
     var n = vals.length, mean = vals.reduce(function (a, b) { return a + b; }, 0) / n;
@@ -283,11 +287,13 @@
     return esc(s.sp.name) + ' · ' + s.leaves + ' leaves · light ' + s.light + ' % · ' + s.temp + ' °C · humidity ' + s.hum + ' % · ' + esc(PO_WIND[s.wind]) +
       (s.grease === 'none' ? '' : ' · grease on the ' + esc(s.grease === 'both' ? 'two surfaces' : s.grease + ' surface')) + (s.joint === 'open' ? ' · <b>joint leaking</b>' : '') + ' · ' + s.time + ' min';
   }
-  function poGroups(runs) {
+  function poGroups(runs) {   /* one row per set of conditions, within each line; lines in order, rows in the order first recorded */
     var G = {}, order = [];
-    runs.forEach(function (r, i) { var k = poKeyOf(r.s); if (!G[k]) { G[k] = { key: k, s: r.s, trials: [] }; order.push(k); } G[k].trials.push({ r: r, i: i }); });
+    runs.forEach(function (r, i) { var ln = r.line || 0, k = ln + '|' + poKeyOf(r.s); if (!G[k]) { G[k] = { key: k, line: ln, s: r.s, trials: [] }; order.push(k); } G[k].trials.push({ r: r, i: i }); });
+    order.sort(function (a, b) { return G[a].line - G[b].line; });
     return order.map(function (k) { return G[k]; });
   }
+
   var PO_TERMS = {
     mean: { name: 'Mean', ib: false, what: 'Add the trials up and divide by how many there are. It is your best single answer for that set of conditions — the number to plot.' },
     sd:   { name: 'Standard deviation (SD)', ib: true, what: 'How spread out the trials are around their mean. A small SD means the repeats agree with one another — good precision. It has the same unit as the trials.' },
@@ -540,10 +546,16 @@
     var atB = read.querySelector('b');
     var btns = h('div', 'po__btns');
     var bStart = h('button', 'wbtn po__start', '▶ Start the clock'), bReset = h('button', 'wbtn wbtn--quiet', 'Open the tap: bubble back to 0'), bRecord = h('button', 'wbtn po__rec', 'Record this run'), bNew = h('button', 'wbtn wbtn--quiet', 'Use a shoot from another plant');
-    bNew.title = 'A shoot of the same kind, cut from another plant: its own leaves, its own rate — a true replicate';
+    var bLine = h('button', 'wbtn wbtn--quiet po__newline', '＋ New line on the graph');
     var bAll = h('button', 'wbtn po__resetall', '↺ Reset the practical');
-    bAll.title = 'Everything back to the start: the settings, the bubble, the shoot and the table';
-    [bStart, bReset, bRecord, bNew, bAll].forEach(function (b) { b.type = 'button'; btns.appendChild(b); });
+    /* what each button is for, shown at once on hover or keyboard focus */
+    bStart.setAttribute('data-tip', 'Starts the clock. The bubble moves as fast as the shoot takes water in, at 30 times real speed.');
+    bReset.setAttribute('data-tip', 'Opens the reservoir tap: water pushes the bubble back to the 0 mark, ready for the next run.');
+    bRecord.setAttribute('data-tip', 'Keeps this run as a trial of these conditions, in the table — up to five trials a row.');
+    bNew.setAttribute('data-tip', 'A shoot cut from a different plant of the same kind: a true replicate. Repeating on one shoot is a technical replicate — it shows how steady your measuring is, not how plants differ.');
+    bLine.setAttribute('data-tip', 'Keeps what you have and starts a new line on the graph, in its own colour and with its own table, so you can compare: another plant, the fan on, the dark…');
+    bAll.setAttribute('data-tip', 'Everything back to the start: the settings, the bubble, the shoot, the tables and the graph.');
+    [bStart, bReset, bRecord, bNew, bLine, bAll].forEach(function (b) { b.type = 'button'; btns.appendChild(b); });
     bRecord.disabled = true;
     var result = h('div', 'po__result'); result.hidden = true; result.setAttribute('aria-live', 'polite');
     var say = h('p', 'po__say');
@@ -659,7 +671,7 @@
       bStart.textContent = '▶ Start the clock';
       species.value = 'bean'; leaves.inp.value = 5; light.inp.value = 60; temp.inp.value = 20; hum.inp.value = 50; wind.inp.value = 0; grease.value = 'none'; joint.value = 'sealed'; time.value = '5';
       PO_STATE.shoot = 1; PO_STATE.shootF = 1;
-      runs.length = 0; errK = 'none'; PO_STATE.err = 'none';
+      runs.length = 0; errK = 'none'; PO_STATE.err = 'none'; PO_STATE.line = 0; PO_STATE.lineNames = []; PO_STATE.hidden = [];
       errBar.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', x.getAttribute('data-k') === 'none' ? 'true' : 'false'); });
       pop.hidden = true; popTerm = null;
       result.hidden = true; bRecord.disabled = true; clockB.textContent = '0:00';
@@ -699,7 +711,7 @@
         else { gateSay.textContent = 'Not that word.'; gateIn.select(); }
       });
     });
-    var tableWrap = h('div', 'po__tablewrap'), table = h('table', 'po__table'), pop = h('div', 'po__pop'), chart = h('div', 'po__chart'), popTerm = null;
+    var tableWrap = h('div', 'po__tablewrap'), tabsEl = h('div', 'po__linetabs'), pop = h('div', 'po__pop'), chart = h('div', 'po__chart'), popTerm = null;
     pop.hidden = true;
     var tools = h('div', 'po__tools');
     var errK = PO_STATE.err || 'none';
@@ -711,11 +723,11 @@
     });
     var bCopy = h('button', 'wbtn wbtn--quiet', 'Copy the table'), bClear = h('button', 'wbtn wbtn--quiet', 'Clear the table');
     [bCopy, bClear].forEach(function (b) { b.type = 'button'; tools.appendChild(b); });
-    tableWrap.appendChild(table); tableBox.appendChild(errBar); tableBox.appendChild(tableWrap); tableBox.appendChild(pop); tableBox.appendChild(chart); tableBox.appendChild(tools);
+    tableBox.appendChild(errBar); tableBox.appendChild(tabsEl); tableBox.appendChild(tableWrap); tableBox.appendChild(pop); tableBox.appendChild(chart); tableBox.appendChild(tools);
 
     var keyOf = poKeyOf, condText = poCondText;
     function groups() { return poGroups(runs); }
-    function trialsFor(s) { var k = keyOf(s); return runs.filter(function (r) { return keyOf(r.s) === k; }).length; }
+    function trialsFor(s) { var k = keyOf(s); return runs.filter(function (r) { return keyOf(r.s) === k && (r.line || 0) === PO_STATE.line; }).length; }
     var stats = poStats;
     var TERMS = PO_TERMS;
     function showTerm(term) {
@@ -728,15 +740,23 @@
     bRecord.addEventListener('click', function () {
       if (!lastRun) return;
       if (trialsFor(lastRun.s) >= MAX_TRIALS) { say.textContent = 'Five trials for these conditions already. Change something for the next row, or clear the table.'; bRecord.disabled = true; return; }
-      runs.push(lastRun); var n = trialsFor(lastRun.s); lastRun = null; bRecord.disabled = true;
+      lastRun.line = PO_STATE.line; runs.push(lastRun); var n = trialsFor(lastRun.s); lastRun = null; bRecord.disabled = true;
       paintData();
       say.textContent = 'Recorded as trial ' + n + ' of these conditions. Open the tap before the next run.' + (n >= MAX_TRIALS ? ' That is five — enough for a mean; change something for the next row.' : '');
     });
-    bClear.addEventListener('click', function () { runs.length = 0; paintData(); });
+    bClear.addEventListener('click', function () { runs.length = 0; PO_STATE.line = 0; PO_STATE.lineNames = []; PO_STATE.hidden = []; paintData(); });
+    bLine.addEventListener('click', function () {
+      if (run) return;
+      var have = runs.some(function (r) { return (r.line || 0) === PO_STATE.line; });
+      if (!have) { say.textContent = poLineName(PO_STATE.line) + ' has no runs yet: record a run first, then start the next line.'; return; }
+      var next = 0; runs.forEach(function (r) { next = Math.max(next, (r.line || 0) + 1); });
+      PO_STATE.line = next; remember(); paintData();
+      say.textContent = poLineName(next) + ' started, in ' + PO_LINE_WORD[next % PO_LINE_WORD.length] + '. The runs you record now go on it. Change the one thing you want to compare — another plant, the fan on, the dark — keep the rest the same, and run.';
+    });
     bCopy.addEventListener('click', function () {
-      var head = ['Conditions'].concat([1, 2, 3, 4, 5].map(function (i) { return 'Trial ' + i + ' / mm min⁻¹'; })).concat(['Mean', 'SD', 'SE', '95 % CI']);
+      var head = ['Line', 'Conditions'].concat([1, 2, 3, 4, 5].map(function (i) { return 'Trial ' + i + ' / mm min⁻¹'; })).concat(['Mean', 'SD', 'SE', '95 % CI']);
       var lines = [head.join('\t')].concat(groups().map(function (g) {
-        var vals = g.trials.map(function (t) { return t.r.rate; }), st = stats(vals), cells = [condText(g.s).replace(/<[^>]+>/g, '')];
+        var vals = g.trials.map(function (t) { return t.r.rate; }), st = stats(vals), cells = [poLineName(g.line), condText(g.s).replace(/<[^>]+>/g, '')];
         for (var i = 0; i < MAX_TRIALS; i++) cells.push(vals[i] != null ? vals[i].toFixed(2) : '');
         cells.push(st.mean.toFixed(2), st.sd != null ? st.sd.toFixed(2) : '', st.se != null ? st.se.toFixed(2) : '', st.ci != null ? '±' + st.ci.toFixed(2) : '');
         return cells.join('\t');
@@ -747,85 +767,125 @@
       else fallback();
       function fallback() { var ta = document.createElement('textarea'); ta.value = tsv; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); done(); } catch (e) {} document.body.removeChild(ta); }
     });
+    function rowHtml(g) {
+      var vals = g.trials.map(function (t) { return t.r.rate; }), st = stats(vals), cells = '';
+      for (var i = 0; i < MAX_TRIALS; i++) {
+        var t = g.trials[i];
+        cells += t ? '<td class="po__trial' + (t.r.leak ? ' po__trial--leak' : '') + '">' + t.r.rate.toFixed(2) + '<small title="' + t.r.distance + ' mm on shoot ' + String.fromCharCode(64 + (t.r.s.shoot || 1)) + '">' + t.r.distance + ' mm · ' + String.fromCharCode(64 + (t.r.s.shoot || 1)) + '</small><button type="button" class="po__del" data-i="' + t.i + '" aria-label="Delete this trial">✕</button></td>' : '<td class="po__trial po__trial--empty">—</td>';
+      }
+      return '<tr><td class="po__cond">' + condText(g.s) + '</td>' + cells +
+        '<td class="po__statcell"><b>' + st.mean.toFixed(2) + '</b></td>' + (errK === 'none' ? '' : '<td class="po__statcell">' + (st[errK] != null ? (errK === 'ci' ? '± ' : '') + st[errK].toFixed(2) : '—') + '</td>') + '</tr>';
+    }
+    /* the tabs above the table are the lines of the graph, one table each; the tab you are on is where runs are recorded */
     function paintData() {
-      kept.textContent = runs.length ? runs.length + (runs.length === 1 ? ' run recorded' : ' runs recorded') + ' — write each one in your own table as you go.' : 'Nothing recorded yet.';
+      var G = groups(), lines = [];
+      G.forEach(function (g) { if (lines.indexOf(g.line) < 0) lines.push(g.line); });
+      if (lines.indexOf(PO_STATE.line) < 0) lines.push(PO_STATE.line);
+      lines.sort(function (a, b) { return a - b; });
+      kept.textContent = runs.length ? runs.length + (runs.length === 1 ? ' run recorded' : ' runs recorded') + (lines.length > 1 ? ' on ' + lines.length + ' lines' : '') + ' — write each one in your own table as you go.' : 'Nothing recorded yet.';
       gate.hidden = unlocked || !NEED;
       tableBox.hidden = !runs.length || !unlocked;
       poPersist();
-      if (!runs.length) { table.innerHTML = ''; chart.innerHTML = ''; pop.hidden = true; popTerm = null; return; }
-      var G = groups();
-      table.innerHTML = '<thead><tr><th>Conditions</th>' + [1, 2, 3, 4, 5].map(function (i) { return '<th>Trial ' + i + '<small>mm/min</small></th>'; }).join('') +
-        ['mean'].concat(errK === 'none' ? [] : [errK]).map(function (t) { return '<th><button type="button" class="po__term" data-term="' + t + '" title="What this is, and how it was worked out">' + (t === 'mean' ? 'Mean' : t === 'sd' ? 'SD' : t === 'se' ? 'SE' : '95 % CI') + ' <i>?</i></button></th>'; }).join('') + '</tr></thead><tbody>' +
-        G.map(function (g) {
-          var vals = g.trials.map(function (t) { return t.r.rate; }), st = stats(vals), cells = '';
-          for (var i = 0; i < MAX_TRIALS; i++) {
-            var t = g.trials[i];
-            cells += t ? '<td class="po__trial' + (t.r.leak ? ' po__trial--leak' : '') + '">' + t.r.rate.toFixed(2) + '<small title="' + t.r.distance + ' mm on shoot ' + String.fromCharCode(64 + (t.r.s.shoot || 1)) + '">' + t.r.distance + ' mm · ' + String.fromCharCode(64 + (t.r.s.shoot || 1)) + '</small><button type="button" class="po__del" data-i="' + t.i + '" aria-label="Delete this trial">✕</button></td>' : '<td class="po__trial po__trial--empty">—</td>';
-          }
-          return '<tr><td class="po__cond">' + condText(g.s) + '</td>' + cells +
-            '<td class="po__statcell"><b>' + st.mean.toFixed(2) + '</b></td>' + (errK === 'none' ? '' : '<td class="po__statcell">' + (st[errK] != null ? (errK === 'ci' ? '± ' : '') + st[errK].toFixed(2) : '—') + '</td>') + '</tr>';
-        }).join('') + '</tbody>';
-      table.querySelectorAll('.po__del').forEach(function (b) { b.addEventListener('click', function () { runs.splice(+b.getAttribute('data-i'), 1); paintData(); }); });
-      table.querySelectorAll('.po__term').forEach(function (b) { b.addEventListener('click', function () { showTerm(b.getAttribute('data-term')); }); });
+      if (!runs.length) { tabsEl.innerHTML = ''; tableWrap.innerHTML = ''; chart.innerHTML = ''; pop.hidden = true; popTerm = null; return; }
+      tabsEl.innerHTML = lines.map(function (ln) {
+        var rows = G.filter(function (g) { return g.line === ln; }), n = rows.reduce(function (a, g) { return a + g.trials.length; }, 0);
+        return '<button type="button" class="po__linetab" data-line="' + ln + '" data-rows="' + rows.length + '" data-n="' + n + '" aria-pressed="' + (ln === PO_STATE.line ? 'true' : 'false') + '" style="--lc:' + poLineColour(ln) + '" title="' + esc(poLineName(ln)) + ': ' + n + (n === 1 ? ' run' : ' runs') + '"><span class="po__swatch"></span>' + (ln + 1) + '<small>' + esc(poLineName(ln)) + '</small></button>';
+      }).join('');
+      var cur = PO_STATE.line, rows = G.filter(function (g) { return g.line === cur; });
+      var headRow = '<thead><tr><th>Conditions</th>' + [1, 2, 3, 4, 5].map(function (i) { return '<th>Trial ' + i + '<small>mm/min</small></th>'; }).join('') +
+        ['mean'].concat(errK === 'none' ? [] : [errK]).map(function (t) { return '<th><button type="button" class="po__term" data-term="' + t + '" title="What this is, and how it was worked out">' + (t === 'mean' ? 'Mean' : t === 'sd' ? 'SD' : t === 'se' ? 'SE' : '95 % CI') + ' <i>?</i></button></th>'; }).join('') + '</tr></thead>';
+      tableWrap.innerHTML = '<div class="po__linehead" style="--lc:' + poLineColour(cur) + '"><span class="po__swatch"></span><input class="po__linename" value="' + esc(PO_STATE.lineNames[cur] || '') + '" placeholder="' + esc(poLineName(cur)) + ' — name it: privet, fan on, dark…" aria-label="Name of this line"><small>' + (rows.length ? 'the runs you record now go on this line' : 'no runs yet — record one and it appears here') + '</small>' + (rows.length && lines.length > 1 ? '<button type="button" class="wbtn wbtn--quiet po__delline">Delete this line</button>' : '') + '</div>' +
+        (rows.length ? '<table class="po__table">' + headRow + '<tbody>' + rows.map(rowHtml).join('') + '</tbody></table>' : '');
+      tabsEl.querySelectorAll('.po__linetab').forEach(function (b) { b.addEventListener('click', function () { PO_STATE.line = +b.getAttribute('data-line'); remember(); paintData(); say.textContent = 'On ' + poLineName(PO_STATE.line) + ': the runs you record now go on it.'; }); });
+      var nameIn = tableWrap.querySelector('.po__linename');
+      nameIn.addEventListener('change', function () { PO_STATE.lineNames[cur] = nameIn.value.trim(); poPersist(); paintData(); });
+      tableWrap.querySelectorAll('.po__del').forEach(function (b) { b.addEventListener('click', function () { runs.splice(+b.getAttribute('data-i'), 1); paintData(); }); });
+      tableWrap.querySelectorAll('.po__term').forEach(function (b) { b.addEventListener('click', function () { showTerm(b.getAttribute('data-term')); }); });
+      var del = tableWrap.querySelector('.po__delline');
+      if (del) del.addEventListener('click', function () {
+        for (var k = runs.length - 1; k >= 0; k--) if ((runs[k].line || 0) === cur) runs.splice(k, 1);
+        PO_STATE.hidden = PO_STATE.hidden.filter(function (x) { return x !== cur; });
+        var left = []; runs.forEach(function (r) { if (left.indexOf(r.line || 0) < 0) left.push(r.line || 0); });
+        PO_STATE.line = left.length ? Math.max.apply(null, left) : 0;
+        paintData();
+      });
       chart.innerHTML = graph(G);
+      wireLegend();
+      function wireLegend() { chart.querySelectorAll('.po__legend__b').forEach(function (b) { b.addEventListener('click', function () { var ln = +b.getAttribute('data-line'), at = PO_STATE.hidden.indexOf(ln); if (at < 0) PO_STATE.hidden.push(ln); else PO_STATE.hidden.splice(at, 1); poPersist(); chart.innerHTML = graph(G); wireLegend(); }); }); }
       if (popTerm && (popTerm === 'mean' || popTerm === errK)) showTerm(popTerm); else { pop.hidden = true; popTerm = null; }   /* the pop-up is re-worked from the table as it now is */
     }
     /* the graph plots one point per row of the table — its mean — and picks its x-axis: the one factor that changed */
     var FACT = [['leaves', 'Leaves on the shoot', true], ['light', 'Light / %', true], ['temp', 'Temperature / °C', true], ['hum', 'Humidity / %', true], ['wind', 'Wind', false], ['time', 'Time / min', true], ['sp', 'Plant', false], ['grease', 'Grease', false], ['joint', 'Joint at the bung', false]];
     function fval(s, f) { return f === 'sp' ? s.sp.name : f === 'wind' ? PO_WIND[s.wind] : f === 'joint' ? (s.joint === 'open' ? 'not sealed' : 'sealed') : s[f]; }
     function graph(G) {
-      if (G.length < 2 && !(G.length === 1 && G[0].trials.length >= 2)) return '<small class="po__gnote">Record a second trial, or a second set of conditions, and the graph draws itself.</small>';
-      var varying = FACT.filter(function (F) { var vals = {}; G.forEach(function (g) { vals[fval(g.s, F[0])] = 1; }); return Object.keys(vals).length > 1; });
+      var all = []; G.forEach(function (g) { if (all.indexOf(g.line) < 0) all.push(g.line); }); all.sort(function (a, b) { return a - b; });
+      var shown = all.filter(function (ln) { return PO_STATE.hidden.indexOf(ln) < 0; });
+      var legend = all.length > 1 ? '<div class="po__legend">' + all.map(function (ln) { var vis = shown.indexOf(ln) >= 0; return '<button type="button" class="po__legend__b" data-line="' + ln + '" aria-pressed="' + (vis ? 'true' : 'false') + '" style="--lc:' + poLineColour(ln) + '" title="' + (vis ? 'Hide' : 'Show') + ' this line on the graph"><span class="po__swatch"></span>' + esc(poLineName(ln)) + '</button>'; }).join('') + '<small>click a line to hide or show it</small></div>' : '';
+      var GS = G.filter(function (g) { return shown.indexOf(g.line) >= 0; }), multi = shown.filter(function (ln) { return GS.some(function (g) { return g.line === ln; }); }).length > 1;
+      if (!GS.length) return legend + '<small class="po__gnote">Every line is hidden. Click one in the list to show it.</small>';
+      if (!multi && GS.length < 2 && !(GS.length === 1 && GS[0].trials.length >= 2)) return legend + '<small class="po__gnote">Record a second trial, or a second set of conditions, and the graph draws itself.</small>';
+      var varyOf = function (rows) { return FACT.filter(function (F) { var vals = {}; rows.forEach(function (g) { vals[fval(g.s, F[0])] = 1; }); return Object.keys(vals).length > 1; }); };
+      var byLine = shown.map(function (ln) { return { ln: ln, rows: GS.filter(function (g) { return g.line === ln; }) }; }).filter(function (l) { return l.rows.length; });
+      /* the x-axis: the one factor that changes along a line — the same one on every line, or the graph falls back to rows */
+      var counts = {}; byLine.forEach(function (l) { var v = varyOf(l.rows); if (v.length === 1) counts[v[0][0]] = (counts[v[0][0]] || 0) + 1; });
+      var bestKey = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a]; })[0];
+      var F = bestKey ? FACT.filter(function (x) { return x[0] === bestKey; })[0] : null;
+      var mode = F && byLine.every(function (l) { var v = varyOf(l.rows); return v.length === 0 || (v.length === 1 && v[0][0] === F[0]); }) ? 'factor' : (!multi && varyOf(GS).length === 0 ? 'trials' : 'row');
       var W = 560, H = 240, L = 54, R = 16, T = 18, B = 54;
-      var pts, xlab, numeric = false, note = '';
       var mk = function (g, x) { var vals = g.trials.map(function (t) { return t.r.rate; }), st = stats(vals); var e = errK === 'sd' ? st.sd : errK === 'se' ? st.se : errK === 'ci' ? st.ci : null; return { x: x, mean: st.mean, all: vals, err: e == null || isNaN(e) ? null : e }; };
-      if (varying.length === 1) {
-        var F = varying[0]; xlab = F[1]; numeric = F[2];
-        pts = G.map(function (g) { return mk(g, numeric ? +fval(g.s, F[0]) : fval(g.s, F[0])); });
-        var ORDER = { wind: PO_WIND, sp: PO_SPECIES.map(function (q) { return q.name; }), grease: PO_GREASE.map(function (q) { return q[0]; }), joint: ['sealed', 'not sealed'] }[F[0]];
-        pts.sort(function (a, b) { return numeric ? a.x - b.x : ORDER.indexOf(a.x) - ORDER.indexOf(b.x); });
-        note = 'Mean rate of uptake against ' + F[1].toLowerCase().replace(/ \/ .*/, '') + ' — the one factor you changed; each point is the mean of its trials.';
-      } else if (varying.length === 0) {
-        xlab = 'Trial'; pts = G[0].trials.map(function (t, i) { return { x: i + 1, mean: t.r.rate, all: [t.r.rate], err: null }; }); numeric = false;
-        note = 'One set of conditions so far: its trials, one by one. Change a factor and run again for a graph of means.';
-      } else {
-        xlab = 'Row'; pts = G.map(function (g, i) { return mk(g, i + 1); }); numeric = false;
-        note = 'More than one factor changed between rows (' + varying.map(function (F) { return F[1].toLowerCase().replace(/ \/ .*/, ''); }).join(', ') + '), so this is the mean by row. Change one thing at a time to see what it does.';
-      }
-      var top = Math.max.apply(null, pts.map(function (p) { return Math.max(Math.max.apply(null, p.all), p.err != null ? p.mean + p.err : 0); }));
+      var numeric = mode === 'factor' ? !!F[2] : false;
+      var ORDER = mode === 'factor' ? ({ wind: PO_WIND, sp: PO_SPECIES.map(function (q) { return q.name; }), grease: PO_GREASE.map(function (q) { return q[0]; }), joint: ['sealed', 'not sealed'] })[F[0]] : null;
+      var series = byLine.map(function (l) {
+        var pts;
+        if (mode === 'factor') { pts = l.rows.map(function (g) { return mk(g, numeric ? +fval(g.s, F[0]) : fval(g.s, F[0])); }); pts.sort(function (a, b) { return numeric ? a.x - b.x : ORDER.indexOf(a.x) - ORDER.indexOf(b.x); }); }
+        else if (mode === 'trials') pts = l.rows[0].trials.map(function (t, i) { return { x: i + 1, mean: t.r.rate, all: [t.r.rate], err: null }; });
+        else pts = l.rows.map(function (g, i) { return mk(g, i + 1); });
+        return { ln: l.ln, colour: poLineColour(l.ln), name: poLineName(l.ln), pts: pts };
+      });
+      var xlab = mode === 'factor' ? F[1] : mode === 'trials' ? 'Trial' : 'Row';
+      var note = mode === 'factor' ? 'Mean rate of uptake against ' + F[1].toLowerCase().replace(/ \/ .*/, '') + (multi ? ', one line a table, each in its own colour; each point is the mean of its trials.' : ' — the one factor you changed; each point is the mean of its trials.')
+        : mode === 'trials' ? 'One set of conditions so far: its trials, one by one. Change a factor and run again for a graph of means.'
+        : multi ? 'The lines do not change the same one factor, so this is the mean by row of each table. Change one thing at a time — the same thing on every line — to compare them.'
+        : 'More than one factor changed between rows (' + varyOf(GS).map(function (Fx) { return Fx[1].toLowerCase().replace(/ \/ .*/, ''); }).join(', ') + '), so this is the mean by row. Change one thing at a time to see what it does.';
+      var allPts = []; series.forEach(function (sr) { allPts = allPts.concat(sr.pts); });
+      var top = Math.max.apply(null, allPts.map(function (p) { return Math.max(Math.max.apply(null, p.all), p.err != null ? p.mean + p.err : 0); }));
       var ymax = top * 1.15 || 1;
       var ystep = ymax > 10 ? 5 : ymax > 4 ? 2 : ymax > 2 ? 1 : ymax > 1 ? .5 : .25;
       function Y(v) { return T + (H - T - B) * (1 - Math.max(0, v) / ymax); }
-      var xs = pts.map(function (p) { return p.x; });
-      function X(i, v) {
-        if (numeric) { var lo = Math.min.apply(null, xs), hi = Math.max.apply(null, xs); return lo === hi ? (L + W - R) / 2 : L + (W - L - R) * (v - lo) / (hi - lo); }
-        return L + (W - L - R) * (i + .5) / pts.length;
-      }
+      var cats = [], lo = 0, hi = 0, slot = 0;
+      if (numeric) { var xs = allPts.map(function (p) { return p.x; }); lo = Math.min.apply(null, xs); hi = Math.max.apply(null, xs); }
+      else { allPts.forEach(function (p) { if (cats.indexOf(p.x) < 0) cats.push(p.x); }); cats.sort(function (a, b) { return mode === 'factor' ? ORDER.indexOf(a) - ORDER.indexOf(b) : a - b; }); slot = (W - L - R) / cats.length; }
+      function XN(v) { return lo === hi ? (L + W - R) / 2 : L + (W - L - R) * (v - lo) / (hi - lo); }
       var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" class="po__gsvg" role="img" aria-label="' + esc(note) + '">';
       for (var v = 0; v <= ymax; v += ystep) s += '<line class="po__grid" x1="' + L + '" y1="' + Y(v).toFixed(1) + '" x2="' + (W - R) + '" y2="' + Y(v).toFixed(1) + '"/><text class="po__gt" x="' + (L - 6) + '" y="' + (Y(v) + 3.5).toFixed(1) + '" text-anchor="end">' + (ystep < 1 ? v.toFixed(2) : v) + '</text>';
       s += '<line class="po__axis" x1="' + L + '" y1="' + T + '" x2="' + L + '" y2="' + (H - B) + '"/><line class="po__axis" x1="' + L + '" y1="' + (H - B) + '" x2="' + (W - R) + '" y2="' + (H - B) + '"/>';
       s += '<text class="po__gl" transform="rotate(-90)" x="' + (-(T + H - B) / 2) + '" y="14" text-anchor="middle">Rate / mm min⁻¹</text><text class="po__gl" x="' + ((L + W - R) / 2) + '" y="' + (H - 8) + '" text-anchor="middle">' + esc(xlab) + '</text>';
-      /* the confidence interval as a band: along the line for a numeric axis, a box on each bar otherwise */
-      var withErr = pts.filter(function (p) { return p.err != null; });
-      if (errK === 'ci' && numeric && withErr.length >= 2) {
-        var up = withErr.map(function (p) { return X(pts.indexOf(p), p.x).toFixed(1) + ',' + Y(p.mean + p.err).toFixed(1); }), dn = withErr.slice().reverse().map(function (p) { return X(pts.indexOf(p), p.x).toFixed(1) + ',' + Y(p.mean - p.err).toFixed(1); });
-        s += '<polygon class="po__band" points="' + up.concat(dn).join(' ') + '"/>';
-      }
-      if (numeric && pts.length > 1) s += '<polyline class="po__line" points="' + pts.map(function (p, i) { return X(i, p.x).toFixed(1) + ',' + Y(p.mean).toFixed(1); }).join(' ') + '"/>';
-      pts.forEach(function (p, i) {
-        var x = X(i, p.x);
-        if (!numeric) s += '<rect class="po__gbar" x="' + (x - 14).toFixed(1) + '" y="' + Y(p.mean).toFixed(1) + '" width="28" height="' + (H - B - Y(p.mean)).toFixed(1) + '"/>';
-        if (p.err != null) {
-          if (errK === 'ci' && !numeric) s += '<rect class="po__band" x="' + (x - 20).toFixed(1) + '" y="' + Y(p.mean + p.err).toFixed(1) + '" width="40" height="' + (Y(p.mean - p.err) - Y(p.mean + p.err)).toFixed(1) + '"/>';
-          if (errK !== 'ci') s += '<path class="po__whisker" d="M' + x.toFixed(1) + ' ' + Y(p.mean + p.err).toFixed(1) + ' V' + Y(p.mean - p.err).toFixed(1) + ' M' + (x - 6).toFixed(1) + ' ' + Y(p.mean + p.err).toFixed(1) + ' h12 M' + (x - 6).toFixed(1) + ' ' + Y(p.mean - p.err).toFixed(1) + ' h12"/>';
+      var nS = series.length, withErrAny = false;
+      series.forEach(function (sr, k) {
+        var c = sr.colour, bw = numeric ? 0 : Math.min(28, slot * .8 / nS);
+        var xOf = function (p) { return numeric ? XN(p.x) : L + slot * (cats.indexOf(p.x) + .5) + (k - (nS - 1) / 2) * bw; };
+        var withErr = sr.pts.filter(function (p) { return p.err != null; }); if (withErr.length) withErrAny = true;
+        if (errK === 'ci' && numeric && withErr.length >= 2) {
+          var up = withErr.map(function (p) { return xOf(p).toFixed(1) + ',' + Y(p.mean + p.err).toFixed(1); }), dn = withErr.slice().reverse().map(function (p) { return xOf(p).toFixed(1) + ',' + Y(p.mean - p.err).toFixed(1); });
+          s += '<polygon class="po__band" style="fill:' + c + '" points="' + up.concat(dn).join(' ') + '"/>';
         }
-        p.all.forEach(function (v) { s += '<circle class="po__dot' + (p.all.length > 1 ? ' po__dot--rep' : '') + '" cx="' + x.toFixed(1) + '" cy="' + Y(v).toFixed(1) + '" r="3"/>'; });
-        if (p.all.length > 1) s += '<circle class="po__dotmean" cx="' + x.toFixed(1) + '" cy="' + Y(p.mean).toFixed(1) + '" r="4.5"/>';
-        var every = pts.length > 8 ? Math.ceil(pts.length / 8) : 1;
-        if (i % every === 0 || i === pts.length - 1) s += '<text class="po__gt" x="' + x.toFixed(1) + '" y="' + (H - B + 14) + '" text-anchor="middle">' + esc(String(p.x)) + '</text>';
+        if (numeric && sr.pts.length > 1) s += '<polyline class="po__line" style="stroke:' + c + '" points="' + sr.pts.map(function (p) { return xOf(p).toFixed(1) + ',' + Y(p.mean).toFixed(1); }).join(' ') + '"/>';
+        sr.pts.forEach(function (p) {
+          var x = xOf(p);
+          if (!numeric) s += '<rect class="po__gbar" style="fill:' + c + '" x="' + (x - bw / 2).toFixed(1) + '" y="' + Y(p.mean).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + (H - B - Y(p.mean)).toFixed(1) + '"/>';
+          if (p.err != null) {
+            if (errK === 'ci' && !numeric) s += '<rect class="po__band" style="fill:' + c + '" x="' + (x - bw * .7).toFixed(1) + '" y="' + Y(p.mean + p.err).toFixed(1) + '" width="' + (bw * 1.4).toFixed(1) + '" height="' + (Y(p.mean - p.err) - Y(p.mean + p.err)).toFixed(1) + '"/>';
+            if (errK !== 'ci') s += '<path class="po__whisker" style="stroke:' + c + '" d="M' + x.toFixed(1) + ' ' + Y(p.mean + p.err).toFixed(1) + ' V' + Y(p.mean - p.err).toFixed(1) + ' M' + (x - 6).toFixed(1) + ' ' + Y(p.mean + p.err).toFixed(1) + ' h12 M' + (x - 6).toFixed(1) + ' ' + Y(p.mean - p.err).toFixed(1) + ' h12"/>';
+          }
+          p.all.forEach(function (v2) { s += '<circle class="po__dot' + (p.all.length > 1 ? ' po__dot--rep' : '') + '" style="fill:' + c + '" cx="' + x.toFixed(1) + '" cy="' + Y(v2).toFixed(1) + '" r="3"/>'; });
+          if (p.all.length > 1) s += '<circle class="po__dotmean" style="fill:' + c + '" cx="' + x.toFixed(1) + '" cy="' + Y(p.mean).toFixed(1) + '" r="4.5"/>';
+        });
       });
+      var ticks = numeric ? allPts.map(function (p) { return p.x; }).filter(function (v2, i2, a) { return a.indexOf(v2) === i2; }).sort(function (a, b) { return a - b; }) : cats;
+      var every = ticks.length > 8 ? Math.ceil(ticks.length / 8) : 1;
+      ticks.forEach(function (tv, i2) { if (i2 % every === 0 || i2 === ticks.length - 1) s += '<text class="po__gt" x="' + (numeric ? XN(tv) : L + slot * (i2 + .5)).toFixed(1) + '" y="' + (H - B + 14) + '" text-anchor="middle">' + esc(String(tv)) + '</text>'; });
       var errNote = errK === 'none' ? '' : errK === 'ci' ? ' The band is the 95 % confidence interval of each mean; where two bands do not overlap, the difference is statistically significant; where they overlap, nothing is proved either way.' : ' The whiskers are one ' + (errK === 'sd' ? 'standard deviation' : 'standard error') + ' either side of each mean.';
-      s += '</svg><small class="po__gnote">' + esc(note + (withErr.length ? errNote : '')) + '</small>';   /* the error note only when an error is drawn */
+      s += '</svg>' + legend + '<small class="po__gnote">' + esc(note + (withErrAny ? errNote : '')) + '</small>';
       return s;
     }
 
