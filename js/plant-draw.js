@@ -83,9 +83,9 @@
     /* what each lit-able name means in the drawing */
     var MEMBERS = {
       seed: ['seed'], roots: ['roots'], stem: ['stem'], leaf: ['leaf-1'],
-      leaves: ['leaf-1', 'leaf-2', 'leaf-3', 'leaf-4'], flower: ['flower', 'flower-spent'], fruit: ['fruit'],
+      leaves: ['leaf-1', 'leaf-2', 'leaf-3', 'leaf-4'], flower: ['flower', 'flower-2'], fruit: ['fruit', 'flower-spent'],
       sun: ['sun'], xerophyte: ['xerophyte'], hydrophyte: ['hydrophyte'], seedling: ['seedling'],
-      plant: ['seed', 'roots', 'stem', 'leaf-1', 'leaf-2', 'leaf-3', 'leaf-4', 'flower', 'flower-spent', 'fruit']
+      plant: ['seed', 'roots', 'stem', 'leaf-1', 'leaf-2', 'leaf-3', 'leaf-4', 'flower', 'flower-2', 'flower-spent', 'fruit']
     };
 
     /* ---------- defs and style ---------- */
@@ -194,7 +194,7 @@
     /* the stem */
     var stem = part('stem', 'pl-stem', 'up', [X, 805]);
     shoot.appendChild(stem);
-    el('path', { d: 'M' + (X - 9) + ' 805 C' + (X - 13) + ' 690 ' + (X - 5) + ' 560 ' + (X - 9) + ' 430 C' + (X - 11) + ' 340 ' + (X - 5) + ' 290 ' + (X - 5) + ' 250 L' + (X + 5) + ' 250 C' + (X + 5) + ' 290 ' + (X + 11) + ' 340 ' + (X + 9) + ' 430 C' + (X + 5) + ' 560 ' + (X + 13) + ' 690 ' + (X + 9) + ' 805 Z',
+    el('path', { d: 'M' + (X - 9) + ' 805 C' + (X - 13) + ' 690 ' + (X - 5) + ' 560 ' + (X - 9) + ' 430 C' + (X - 11) + ' 340 ' + (X - 4) + ' 290 ' + (X - 2) + ' 248 L' + (X + 2) + ' 248 C' + (X + 4) + ' 290 ' + (X + 11) + ' 340 ' + (X + 9) + ' 430 C' + (X + 5) + ' 560 ' + (X + 13) + ' 690 ' + (X + 9) + ' 805 Z',
                fill: '#3E9A57', stroke: '#2F7D46', 'stroke-width': 1.5, 'stroke-linejoin': 'round' }, stem);
     el('path', { d: 'M' + (X - 3) + ' 790 C' + (X - 6) + ' 690 ' + (X + 1) + ' 560 ' + (X - 3) + ' 430 C' + (X - 5) + ' 340 ' + (X - 1) + ' 300 ' + (X - 1) + ' 262', fill: 'none', stroke: '#6FC482', 'stroke-width': 2, opacity: .7 }, stem);
 
@@ -208,19 +208,17 @@
       var s = (-K + Math.sqrt(K * K + (1 - 2 * K) * a)) / (1 - 2 * K);
       return 2 * (1 - s) * s * W * wid;
     }
-    function leaf(id, bx, by, dx, dy, len, wid, petiole, sink) {
+    /* a blade into any group: the outline, the midrib, and unless it is a young leaf the net of veins */
+    function blade(g, bx, by, dx, dy, len, wid, young) {
       var m = Math.sqrt(dx * dx + dy * dy), ux = dx / m, uy = dy / m, nx = -uy, ny = ux;
-      LEAVES[id] = { bx: bx, by: by, ux: ux, uy: uy, nx: nx, ny: ny, len: len, wid: wid, petiole: petiole, sink: !!sink };
-      var g = part(id, 'pl-leaf', true, [bx, by]);
-      shoot.appendChild(g);
-      if (petiole) el('path', { d: 'M' + f(petiole[0]) + ' ' + f(petiole[1]) + ' Q' + f((petiole[0] + bx) / 2 + nx * 6) + ' ' + f((petiole[1] + by) / 2 + ny * 6) + ' ' + f(bx) + ' ' + f(by), fill: 'none', stroke: '#2F7D46', 'stroke-width': 4, 'stroke-linecap': 'round' }, g);
       var tx = bx + ux * len, ty = by + uy * len;
       var c1x = bx + ux * len * K + nx * wid * W, c1y = by + uy * len * K + ny * wid * W;
       var c2x = bx + ux * len * K - nx * wid * W, c2y = by + uy * len * K - ny * wid * W;
       el('path', { d: 'M' + f(bx) + ' ' + f(by) + ' Q' + f(c1x) + ' ' + f(c1y) + ' ' + f(tx) + ' ' + f(ty) + ' Q' + f(c2x) + ' ' + f(c2y) + ' ' + f(bx) + ' ' + f(by) + ' Z',
-                 fill: '#5DBF6E', stroke: '#2A6B3B', 'stroke-width': 1.8, 'stroke-linejoin': 'round' }, g);
-      var veins = el('g', { fill: 'none', stroke: '#2A6B3B', 'stroke-width': 1.1, opacity: .75, 'stroke-linecap': 'round' }, g);
-      el('path', { d: 'M' + f(bx) + ' ' + f(by) + ' L' + f(tx - ux * 8) + ' ' + f(ty - uy * 8), 'stroke-width': 1.8 }, veins);
+                 fill: young ? '#8FD48A' : '#5DBF6E', stroke: young ? '#3F9A55' : '#2A6B3B', 'stroke-width': young ? 1.4 : 1.8, 'stroke-linejoin': 'round' }, g);
+      var veins = el('g', { fill: 'none', stroke: young ? '#3F9A55' : '#2A6B3B', 'stroke-width': 1.1, opacity: .75, 'stroke-linecap': 'round' }, g);
+      el('path', { d: 'M' + f(bx) + ' ' + f(by) + ' L' + f(tx - ux * 8) + ' ' + f(ty - uy * 8), 'stroke-width': young ? 1.2 : 1.8 }, veins);
+      if (young) return { ux: ux, uy: uy, nx: nx, ny: ny };
       /* side veins: each leaves the midrib, sweeps forward and ends at 84% of the blade's
          half-width where it lands, so the tips sit just inside the edge on every leaf */
       [.1, .22, .34, .46, .58, .7, .81].forEach(function (t) {
@@ -231,18 +229,33 @@
                           ' ' + f(sx2 + ux * ahead + nx * reach * side) + ' ' + f(sy2 + uy * ahead + ny * reach * side) }, veins);
         });
       });
+      return { ux: ux, uy: uy, nx: nx, ny: ny };
+    }
+    function leaf(id, bx, by, dx, dy, len, wid, petiole, sink) {
+      var m = Math.sqrt(dx * dx + dy * dy), ux = dx / m, uy = dy / m, nx = -uy, ny = ux;
+      LEAVES[id] = { bx: bx, by: by, ux: ux, uy: uy, nx: nx, ny: ny, len: len, wid: wid, petiole: petiole, sink: !!sink };
+      var g = part(id, 'pl-leaf', true, [bx, by]);
+      shoot.appendChild(g);
+      if (petiole) el('path', { d: 'M' + f(petiole[0]) + ' ' + f(petiole[1]) + ' Q' + f((petiole[0] + bx) / 2 + nx * 6) + ' ' + f((petiole[1] + by) / 2 + ny * 6) + ' ' + f(bx) + ' ' + f(by), fill: 'none', stroke: '#2F7D46', 'stroke-width': 4, 'stroke-linecap': 'round' }, g);
+      blade(g, bx, by, dx, dy, len, wid, false);
       return g;
     }
+    /* the growing tip: a bud with two young leaves folded up round it, part of the stem */
+    blade(stem, X - 2, 254, -.42, -1, 46, 24, true);
+    blade(stem, X + 2, 254, .42, -1, 42, 22, true);
+    el('ellipse', { cx: X, cy: 241, rx: 4.5, ry: 8.5, fill: '#8FD48A', stroke: '#3F9A55', 'stroke-width': 1.4 }, stem);
+
     leaf('leaf-1', X - 14, 604, -1, .42, 232, 118, [X - 4, 596]);      /* the big leaf, low on the left */
     leaf('leaf-2', X + 14, 522, 1, -.34, 196, 100, [X + 4, 514]);      /* right, reaching up a little */
     leaf('leaf-3', X - 12, 436, -1, -.28, 152, 78, [X - 4, 430]);      /* upper left */
-    leaf('leaf-4', X - 10, 262, -1, -.3, 92, 46, [X - 3, 258], true);  /* the young leaf at the tip, still a sink */
+    leaf('leaf-4', X + 12, 356, 1, -.2, 128, 66, [X + 4, 350]);        /* upper right */
 
-    /* the flower stands in the axil of a leaf on the right, on its own stalk, face on: petals on
-       a cup of sepals. The cup (the stalk, the sepals and the receptacle) is its own part,
-       'flower-spent', because it is what stays when the petals fall — and the pod grows out of
-       it, in the same place, so the page can show the flower turning into the fruit. */
-    var FC = [X + 56, 300], FN = [X + 5, 346];              /* the flower's centre; the node its stalk leaves */
+    /* Two flowering nodes, so the plant can carry a flower and a pod at the same time without
+       confusion. The lower one, in the axil of the second leaf on a stalk that droops under
+       the leaf, is the older: it is the one whose petals fall and whose ovary grows into the
+       pod, in the same place. The upper one, in the axil of the third leaf, is the next flower
+       and stays open. Each flower is petals on a cup of sepals; the lower cup — stalk, sepals,
+       receptacle — is its own part, 'flower-spent', because it stays when the petals fall. */
     function petals(g, cx, cy, n, rIn, rx, ry, fill, stroke, cls) {
       for (var i = 0; i < n; i++) {
         var a = -90 + i * 360 / n, rad = a * Math.PI / 180, px = cx + Math.cos(rad) * rIn, py = cy + Math.sin(rad) * rIn;
@@ -250,30 +263,41 @@
         el('ellipse', { cx: f(px), cy: f(py), rx: rx, ry: ry, transform: 'rotate(' + (a + 90) + ' ' + f(px) + ' ' + f(py) + ')', fill: fill, stroke: stroke, 'stroke-width': 1.6 }, w);
       }
     }
-    var spent = part('flower-spent', 'pl-flower-spent', true, FN);
-    shoot.appendChild(spent);
-    el('path', { d: 'M' + f(FN[0]) + ' ' + f(FN[1]) + ' Q' + f(X + 34) + ' 334 ' + f(FC[0] - 4) + ' ' + f(FC[1] + 6), fill: 'none', stroke: '#2F7D46', 'stroke-width': 4, 'stroke-linecap': 'round' }, spent);
-    petals(spent, FC[0], FC[1], 5, 26, 11, 5, '#6DB56A', '#3F9A55');            /* the sepals */
-    el('circle', { cx: FC[0], cy: FC[1], r: 8, fill: '#9BC76A', stroke: '#4E8A3A', 'stroke-width': 1.4 }, spent);   /* the receptacle */
-
-    var flower = part('flower', 'pl-flower', true, FC);
-    shoot.appendChild(flower);
-    petals(flower, FC[0], FC[1], 5, 22, 17, 27, '#F5A3C3', '#D97CA6', 'pl-petal');   /* five petals, each its own piece so it can fall */
-    var stam = el('g', { stroke: '#8A5A0E', 'stroke-width': 1.5, 'stroke-linecap': 'round' }, flower);
-    for (var s2 = 0; s2 < 8; s2++) {
-      var a3 = s2 * 45 * Math.PI / 180;
-      el('line', { x1: f(FC[0] + Math.cos(a3) * 6), y1: f(FC[1] + Math.sin(a3) * 6), x2: f(FC[0] + Math.cos(a3) * 14), y2: f(FC[1] + Math.sin(a3) * 14) }, stam);
-      el('circle', { cx: f(FC[0] + Math.cos(a3) * 16), cy: f(FC[1] + Math.sin(a3) * 16), r: 2.7, fill: '#F3C844', stroke: 'none' }, stam);
+    function cup(g, from, ctrl, cx, cy) {                 /* the stalk, the sepals, the receptacle */
+      el('path', { d: 'M' + f(from[0]) + ' ' + f(from[1]) + ' Q' + f(ctrl[0]) + ' ' + f(ctrl[1]) + ' ' + f(cx) + ' ' + f(cy), fill: 'none', stroke: '#2F7D46', 'stroke-width': 4, 'stroke-linecap': 'round' }, g);
+      petals(g, cx, cy, 5, 26, 11, 5, '#6DB56A', '#3F9A55');
+      el('circle', { cx: cx, cy: cy, r: 8, fill: '#9BC76A', stroke: '#4E8A3A', 'stroke-width': 1.4 }, g);
     }
-    el('circle', { cx: FC[0], cy: FC[1], r: 5, fill: '#7AA35A', stroke: '#4E7A3A', 'stroke-width': 1.2 }, flower);   /* the stigma, in the middle */
+    function bloom(g, cx, cy) {                            /* five petals, each its own piece so it can fall; stamens; stigma */
+      petals(g, cx, cy, 5, 22, 17, 27, '#F5A3C3', '#D97CA6', 'pl-petal');
+      var stam = el('g', { stroke: '#8A5A0E', 'stroke-width': 1.5, 'stroke-linecap': 'round' }, g);
+      for (var s2 = 0; s2 < 8; s2++) {
+        var a3 = s2 * 45 * Math.PI / 180;
+        el('line', { x1: f(cx + Math.cos(a3) * 6), y1: f(cy + Math.sin(a3) * 6), x2: f(cx + Math.cos(a3) * 14), y2: f(cy + Math.sin(a3) * 14) }, stam);
+        el('circle', { cx: f(cx + Math.cos(a3) * 16), cy: f(cy + Math.sin(a3) * 16), r: 2.7, fill: '#F3C844', stroke: 'none' }, stam);
+      }
+      el('circle', { cx: cx, cy: cy, r: 5, fill: '#7AA35A', stroke: '#4E7A3A', 'stroke-width': 1.2 }, g);
+    }
+    var FB = [X + 64, 588], NB = [X + 5, 508];             /* the lower flower's centre, and the node its stalk leaves */
+    var spent = part('flower-spent', 'pl-flower-spent', true, NB);
+    shoot.appendChild(spent);
+    cup(spent, NB, [X + 36, 528], FB[0], FB[1]);
+    var flower = part('flower', 'pl-flower', true, FB);
+    shoot.appendChild(flower);
+    bloom(flower, FB[0], FB[1]);
+    var FA = [X - 56, 330], NA = [X - 5, 424];             /* the upper flower, the next one, which stays open */
+    var flower2 = part('flower-2', 'pl-flower pl-flower-2', true, NA);
+    shoot.appendChild(flower2);
+    cup(flower2, NA, [X - 40, 386], FA[0], FA[1]);
+    bloom(flower2, FA[0], FA[1]);
 
     /* the fruit: the ovary grown into a bean pod, hanging from the cup where the flower was,
        down the free side of the stem. Its width follows a profile along a bent centre line — a
        narrow neck, a full middle, a pointed tip that still carries the dried style — and the
        four seeds inside show as bumps. */
-    var POD = [[FC[0], FC[1] + 6], [FC[0] + 4, 352], [FC[0] + 14, 398], [FC[0] + 26, 438]];
+    var POD = [[FB[0], FB[1] + 6], [FB[0] + 3, 636], [FB[0] + 11, 676], [FB[0] + 24, 712]];
     function podAt(t) { return bez(POD[0], POD[1], POD[2], POD[3], t); }
-    function podWidth(t) { return 15 * Math.pow(Math.sin(Math.PI * Math.min(1, t * .92 + .04)), .75) * (t < .12 ? .55 + t * 3.75 : 1); }
+    function podWidth(t) { return 14 * Math.pow(Math.sin(Math.PI * Math.min(1, t * .92 + .04)), .75) * (t < .12 ? .55 + t * 3.75 : 1); }
     function podNormal(t) {
       var p = podAt(Math.max(0, t - .01)), q = podAt(Math.min(1, t + .01)), dx = q[0] - p[0], dy = q[1] - p[1], m = Math.sqrt(dx * dx + dy * dy) || 1;
       return [-dy / m, dx / m, dx / m, dy / m];
@@ -338,7 +362,7 @@
        pod. */
     var flows = el('g', { 'class': 'pl-flows' }, root);
     el('path', { 'class': 'pl-flow pl-flow--xylem', d: 'M' + (X - 4) + ' 1060 C' + (X - 10) + ' 980 ' + (X - 2) + ' 900 ' + (X - 4) + ' 805 C' + (X - 8) + ' 690 ' + X + ' 560 ' + (X - 4) + ' 430 C' + (X - 6) + ' 340 ' + (X - 3) + ' 290 ' + (X - 3) + ' 262' }, flows);
-    el('path', { 'class': 'pl-flow pl-flow--phloem', d: 'M' + (X + 4) + ' 430 C' + (X + 8) + ' 500 ' + (X + 6) + ' 560 ' + (X + 6) + ' 640 C' + (X + 6) + ' 720 ' + (X + 6) + ' 805 ' + (X + 6) + ' 805 C' + (X + 8) + ' 900 ' + (X + 12) + ' 980 ' + (X + 8) + ' 1060' }, flows);
+    el('path', { 'class': 'pl-flow pl-flow--phloem', d: 'M' + (X + 4) + ' 350 C' + (X + 8) + ' 440 ' + (X + 6) + ' 520 ' + (X + 6) + ' 640 C' + (X + 6) + ' 720 ' + (X + 6) + ' 805 ' + (X + 6) + ' 805 C' + (X + 8) + ' 900 ' + (X + 12) + ' 980 ' + (X + 8) + ' 1060' }, flows);
     Object.keys(LEAVES).forEach(function (id) {
       var L = LEAVES[id], o = 3, y0 = L.petiole ? L.petiole[1] : L.by;
       var b1 = [L.bx + L.nx * o, L.by + L.ny * o], e1 = [L.bx + L.ux * L.len * .84 + L.nx * o, L.by + L.uy * L.len * .84 + L.ny * o];
@@ -346,12 +370,12 @@
       el('path', { 'class': 'pl-flow pl-flow--xylem pl-flow--branch', 'data-for': id, d: 'M' + (X - 4) + ' ' + f(y0) + ' L' + f(b1[0]) + ' ' + f(b1[1]) + ' L' + f(e1[0]) + ' ' + f(e1[1]) }, flows);
       if (!L.sink) el('path', { 'class': 'pl-flow pl-flow--phloem pl-flow--branch', 'data-for': id, d: 'M' + f(e2[0]) + ' ' + f(e2[1]) + ' L' + f(b2[0]) + ' ' + f(b2[1]) + ' L' + (X + 4) + ' ' + f(y0) }, flows);
     });
-    /* sugar up into the pod: from the top leaf's node, up the stem, out along the stalk and down the pod's centre line */
-    el('path', { 'class': 'pl-flow pl-flow--phloem pl-flow--branch', 'data-for': 'fruit', d: 'M' + (X + 4) + ' 430 L' + (X + 4) + ' ' + f(FN[1]) + ' Q' + f(X + 34) + ' 334 ' + f(FC[0] - 4) + ' ' + f(FC[1] + 6) + ' C' + f(POD[1][0]) + ' ' + f(POD[1][1]) + ' ' + f(POD[2][0]) + ' ' + f(POD[2][1]) + ' ' + f(podAt(.72)[0]) + ' ' + f(podAt(.72)[1]) }, flows);
+    /* sugar into the pod: down the trunk to its node, out along the drooping stalk, and down the pod's centre line */
+    el('path', { 'class': 'pl-flow pl-flow--phloem pl-flow--branch', 'data-for': 'fruit', d: 'M' + (X + 4) + ' ' + f(NB[1]) + ' Q' + f(X + 36) + ' 528 ' + f(FB[0]) + ' ' + f(FB[1]) + ' C' + f(POD[1][0]) + ' ' + f(POD[1][1]) + ' ' + f(POD[2][0]) + ' ' + f(POD[2][1]) + ' ' + f(podAt(.72)[0]) + ' ' + f(podAt(.72)[1]) }, flows);
 
     /* ---------- water vapour off the leaves ---------- */
     var vap = el('g', { 'class': 'pl-vapour' }, root);
-    [[X - 110, 560], [X + 130, 470], [X - 90, 386]].forEach(function (p2) {
+    [[X - 110, 560], [X + 140, 470], [X + 70, 320]].forEach(function (p2) {
       var c = el('circle', { 'class': 'pl-vap', cx: p2[0], cy: p2[1], r: 9 }, vap);
       c.style.transformOrigin = p2[0] + 'px ' + p2[1] + 'px';
     });
@@ -365,9 +389,10 @@
       ['leaf-1', 'ellipse', { cx: X - 128, cy: 656, rx: 130, ry: 70 }],
       ['leaf-2', 'ellipse', { cx: X + 112, cy: 488, rx: 110, ry: 58 }],
       ['leaf-3', 'ellipse', { cx: X - 88, cy: 412, rx: 88, ry: 46 }],
-      ['leaf-4', 'ellipse', { cx: X - 52, cy: 250, rx: 54, ry: 28 }],
-      ['fruit', 'ellipse', { cx: X + 70, cy: 372, rx: 30, ry: 82, transform: 'rotate(-11 ' + (X + 70) + ' 372)' }],
-      ['flower', 'circle', { cx: X + 56, cy: 300, r: 58 }],
+      ['leaf-4', 'ellipse', { cx: X + 76, cy: 342, rx: 74, ry: 40 }],
+      ['flower', 'circle', { cx: X - 56, cy: 330, r: 54 }],
+      ['flower', 'circle', { cx: X + 64, cy: 588, r: 54 }],
+      ['fruit', 'ellipse', { cx: X + 76, cy: 655, rx: 28, ry: 70, transform: 'rotate(-10 ' + (X + 76) + ' 655)' }],
       ['seed', 'ellipse', { cx: X, cy: 800, rx: 52, ry: 40 }],
       ['sun', 'circle', { cx: 760, cy: 150, r: 70 }],
       ['xerophyte', 'rect', { x: 180, y: 590, width: 140, height: 190 }],
@@ -425,18 +450,14 @@
     }
 
     /* ---------- growing, the sap, the vapour, the lean ---------- */
-    var ALL_SHOW = ['seed', 'roots', 'stem', 'leaf-1', 'leaf-2', 'leaf-3', 'leaf-4', 'flower-spent', 'flower', 'fruit', 'xerophyte', 'hydrophyte'];
+    /* at rest the plant carries the next flower and the first pod — never a flower and a pod in one place */
+    var ALL_SHOW = ['seed', 'roots', 'stem', 'leaf-1', 'leaf-2', 'leaf-3', 'leaf-4', 'flower-2', 'flower-spent', 'fruit', 'xerophyte', 'hydrophyte'];
     function show(list) {
       root.querySelectorAll('.pl-grows').forEach(function (e) {
         e.classList.toggle('is-shown', list.indexOf(e.getAttribute('data-part')) >= 0);
       });
       root.querySelectorAll('.pl-flow[data-for]').forEach(function (e) {
         e.classList.toggle('is-shown', list.indexOf(e.getAttribute('data-for')) >= 0);
-      });
-      /* nothing can be pointed at until it has grown */
-      root.querySelectorAll('.pl-hit').forEach(function (h) {
-        var id = h.getAttribute('data-hit'), on = (MEMBERS[id] || [id]).some(function (m) { return list.indexOf(m) >= 0; });
-        h.style.display = on ? '' : 'none';
       });
     }
     function flow(kind) {
@@ -494,7 +515,8 @@
       root.querySelectorAll('.pl-part.is-on').forEach(function (e) {
         var id = e.getAttribute('data-part'), pid = id;
         if (/^leaf-/.test(id)) pid = id === 'leaf-1' ? 'leaf' : 'leaves';
-        if (id === 'flower-spent') pid = 'flower';
+        if (id === 'flower-2') pid = 'flower';
+        if (id === 'flower-spent') pid = 'fruit';
         var g = G[pid]; if (!g || !g.box) return;
         var bx = g.box;
         b = b ? { x: Math.min(b.x, bx.x), y: Math.min(b.y, bx.y), X: Math.max(b.X, bx.x + bx.w), Y: Math.max(b.Y, bx.y + bx.h) }
