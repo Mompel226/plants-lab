@@ -38,7 +38,7 @@
         plant.pin(plant.elFor(id), g.label, g.colour);
       },
       onLeave: function () { if (tag) tag.classList.remove('on'); },
-      onClick: function (kind, id) { onPick(id); }
+      onClick: function (kind, id) { if (id === 'sun' && current && spec(current).bend) { flipSun(); return; } onPick(id); }   /* on the tropisms station the sun is a lamp: click it to move the light */
     });
     if (whole) whole.addEventListener('click', function () { flyHome(); });
     if (hint) hint.textContent = 'Click a part of the plant to open its station';
@@ -46,6 +46,14 @@
   }
 
   function spec(st) { return (st && st.plate) || {}; }
+
+  /* the light can be on either side of the plant; the plant grows towards it */
+  var bendDir = 1;
+  function flipSun() {
+    bendDir = -bendDir;
+    plant.sunSide(bendDir); plant.bend(true, bendDir);
+    if (current) say(current.name, 'the light is now on the ' + (bendDir < 0 ? 'left' : 'right') + ' — the shoot grows towards it', null);
+  }
 
   /* what a station does to the plant: light its parts, run its sap, fly to it */
   function showStation(st) {
@@ -56,8 +64,10 @@
     var onBench = !!s.bench;
     if (col) col.classList.toggle('is-bench', onBench);
     if (bench) { bench.hidden = !onBench; bench.innerHTML = ''; }
+    if (!s.bend && bendDir < 0) { bendDir = 1; plant.sunSide(1); }   /* the sun goes back where it is drawn */
+    if (hint) hint.textContent = s.bend ? 'Click the sun to move the light' : 'Click a part of the plant to open its station';
     if (onBench) { plant.clear(); plant.flow(null); plant.breathe(false); plant.bend(false); if (tag) tag.classList.remove('on'); return; }
-    plant.flow(s.flow || null); plant.breathe(!!s.breathe); plant.bend(!!s.bend);
+    plant.flow(s.flow || null); plant.breathe(!!s.breathe); plant.bend(!!s.bend, bendDir);
     /* the lower flower is the one that becomes the pod, in the same place, so the plate shows that node in
        flower or in fruit, never both: a station about the fruit (or the sinks the sugar goes to) sees the
        petals fallen and the pod hanging; every other station sees both flowers open */

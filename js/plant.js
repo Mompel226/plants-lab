@@ -34,6 +34,7 @@ window.PLANT = {
     { id: 'fruit',      label: 'Fruit and seeds', note: 'the ovary, after fertilisation',   colour: '#FFD27A', box: { x: 540, y: 470, w: 220, h: 220 } },
     { id: 'sun',        label: 'Light',           note: 'what the shoot grows towards',     colour: '#FFE08A', box: { x: 560, y: -20, w: 420, h: 300 } },
     { id: 'seedling',   label: 'Seedling',        note: 'the shoot finds the light',        colour: '#B8F08E', box: { x: 400, y: 540, w: 480, h: 320 } },
+    { id: 'tropism',    label: 'The shoot and the light', note: 'it grows towards the light', colour: '#FFE08A', box: { x: 280, y: 40, w: 600, h: 800 } },
     { id: 'xerophyte',  label: 'A xerophyte',     note: 'built for dry ground',             colour: '#FFD27A', box: { x: 120, y: 480, w: 300, h: 300 } },
     { id: 'hydrophyte', label: 'A hydrophyte',    note: 'built for the water',              colour: '#9FDCFF', box: { x: 860, y: 540, w: 360, h: 300 } },
     { id: 'plant',      label: 'The whole plant', note: 'root to fruit',                    colour: '#B8F08E', box: { x: 240, y: 0, w: 640, h: 1100 } }
