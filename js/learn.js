@@ -240,7 +240,11 @@
   var PO_WINDF = [1, 1.4, 1.9, 2.5];
   var PO_GREASE = [['none', 'no grease', 1], ['upper', 'grease on the upper surface', .9], ['lower', 'grease on the lower surface', .2], ['both', 'grease on both surfaces', .05]];
   var PO_MM = 4.2, PO_X0 = 108, PO_STEM = 574, PO_BORE_R = 0.5;   /* the scale's 0 mark, and the shoot's stem, in the drawing's units */
-  var PO_STATE = { runs: [], pos: 0, set: null, shoot: 1, shootF: 1 };            /* kept while the lab is open: a trip to Practise and back keeps the table */              /* px per mm on the scale; the 0 mm mark; the capillary's radius, mm */
+  var PO_STATE = { runs: [], pos: 0, set: null, shoot: 1, shootF: 1, unlocked: false };
+  try { if (sessionStorage.getItem('plants-lab.potometer.unlocked') === '1') PO_STATE.unlocked = true; } catch (e) {}
+  function sha256hex(text) {
+    return crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)).then(function (buf) { return Array.prototype.map.call(new Uint8Array(buf), function (b) { return ('0' + b.toString(16)).slice(-2); }).join(''); });
+  }            /* kept while the lab is open: a trip to Practise and back keeps the table */              /* px per mm on the scale; the 0 mm mark; the capillary's radius, mm */
 
   function poLightF(L) { return .15 + .85 * (1 - Math.exp(-L / 35)) / (1 - Math.exp(-100 / 35)); }
   function poTempF(T) { return Math.pow(2, (T - 20) / 10); }
@@ -534,6 +538,20 @@
     /* ----- the table, the means, the graph ----- */
     var runs = PO_STATE.runs;
     var tableBox = h('div', 'po__data'); tableBox.hidden = true;
+    /* the reveal: a word from the teacher shows the table and the graph the page has kept */
+    var NEED = (global.LAB_CONFIG && global.LAB_CONFIG.potometerUnlock) || '';
+    var unlocked = !NEED || PO_STATE.unlocked;
+    var gate = h('div', 'po__gate');
+    gate.innerHTML = '<span class="po__kept"></span><form class="po__unlock"><label>The page has kept every run you recorded. Your teacher has the word that shows its table and graph: <input type="password" autocomplete="off" aria-label="The word" placeholder="the word"></label><button type="submit" class="wbtn">Show them</button><span class="po__gatesay" role="status"></span></form>';
+    var kept = gate.querySelector('.po__kept'), gateForm = gate.querySelector('form'), gateIn = gate.querySelector('input'), gateSay = gate.querySelector('.po__gatesay');
+    gateForm.addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var word = gateIn.value.trim().toLowerCase(); if (!word) return;
+      sha256hex(word).then(function (hex) {
+        if (hex === NEED) { unlocked = true; PO_STATE.unlocked = true; try { sessionStorage.setItem('plants-lab.potometer.unlocked', '1'); } catch (e) {} gateIn.value = ''; paintData(); }
+        else { gateSay.textContent = 'Not that word.'; gateIn.select(); }
+      });
+    });
     var tableWrap = h('div', 'po__tablewrap'), table = h('table', 'po__table'), means = h('div', 'po__means'), chart = h('div', 'po__chart');
     var tools = h('div', 'po__tools');
     var bCopy = h('button', 'wbtn wbtn--quiet', 'Copy the table'), bClear = h('button', 'wbtn wbtn--quiet', 'Clear the table');
@@ -559,7 +577,9 @@
       function fallback() { var ta = document.createElement('textarea'); ta.value = tsv; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); done(); } catch (e) {} document.body.removeChild(ta); }
     });
     function paintData() {
-      tableBox.hidden = !runs.length;
+      kept.textContent = runs.length ? runs.length + (runs.length === 1 ? ' run recorded' : ' runs recorded') + ' — write each one in your own table as you go.' : 'Nothing recorded yet.';
+      gate.hidden = unlocked || !NEED;
+      tableBox.hidden = !runs.length || !unlocked;
       if (!runs.length) { table.innerHTML = ''; means.innerHTML = ''; chart.innerHTML = ''; return; }
       table.innerHTML = '<thead><tr>' + COLS.map(function (c) { return '<th>' + c[1] + '</th>'; }).join('') + '<th></th></tr></thead><tbody>' +
         runs.map(function (r, i) { var o = rowOf(r, i); return '<tr>' + COLS.map(function (c) { return '<td>' + esc(String(o[c[0]])) + '</td>'; }).join('') + '<td><button type="button" class="po__del" aria-label="Delete run ' + (i + 1) + '" data-i="' + i + '">✕</button></td></tr>'; }).join('') + '</tbody>';
@@ -629,7 +649,7 @@
     var wrap2 = h('div', 'po');
     var right = h('div', 'po__right'); right.appendChild(ctl); right.appendChild(btns); right.appendChild(say);
     wrap2.appendChild(slot); wrap2.appendChild(right);
-    box.appendChild(wrap2); box.appendChild(tableBox);
+    box.appendChild(wrap2); box.appendChild(gate); box.appendChild(tableBox);
     box.appendChild(h('p', 'widget__note', 'A model, scaled to published class results rather than measured here (the sources are in the lab\'s credits file). Every run starts where the last one left the bubble unless you open the tap.'));
     var wideQ = window.matchMedia('(min-width: 1001px)');
     function mount() {
