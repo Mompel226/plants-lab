@@ -223,17 +223,17 @@
      own x-axis from whichever factor you changed. The rates are a model built to be fair to
      the biology (the widget says so), not measured data. */
   var PO_SPECIES = [
-    { id: 'bean',      name: 'French bean',   base: 3.2, note: 'broad, thin leaves with plenty of stomata: a fast transpirer',
+    { id: 'bean',      name: 'French bean',   base: 3.2, note: 'broad, thin leaves',
       leaf: { kind: 'heart', scale: 1.05, fill: '#5DBF6E', stroke: '#2A6B3B' } },
-    { id: 'sunflower', name: 'Sunflower',     base: 4.4, note: 'very large leaves — a huge surface — and the fastest here',
+    { id: 'sunflower', name: 'Sunflower',     base: 4.4, note: 'very large leaves',
       leaf: { kind: 'heart', scale: 1.3, fill: '#4FAE5E', stroke: '#245B33', rough: true } },
-    { id: 'geranium',  name: 'Geranium',      base: 2.6, note: 'hairy leaves that hold a layer of still, humid air',
+    { id: 'geranium',  name: 'Geranium',      base: 2.6, note: 'soft, hairy, rounded leaves',
       leaf: { kind: 'round', scale: .9, fill: '#7CC46A', stroke: '#3F7F3A' } },
-    { id: 'privet',    name: 'Privet',        base: 1.7, note: 'small waxy leaves with a thick cuticle',
+    { id: 'privet',    name: 'Privet',        base: 1.7, note: 'small, glossy, waxy leaves',
       leaf: { kind: 'oval', scale: .72, fill: '#3F8F4E', stroke: '#1F5A2C', gloss: true } },
-    { id: 'ivy',       name: 'Ivy',           base: 1.5, note: 'tough leaves, a waxy cuticle and fewer stomata',
+    { id: 'ivy',       name: 'Ivy',           base: 1.5, note: 'tough, waxy, lobed leaves',
       leaf: { kind: 'lobed', scale: .95, fill: '#3E8A4A', stroke: '#1F5A2C', gloss: true, paleVeins: true } },
-    { id: 'marram',    name: 'Marram grass',  base: 0.5, note: 'a xerophyte: rolled leaves with the stomata inside — see the last station',
+    { id: 'marram',    name: 'Marram grass',  base: 0.5, note: 'narrow leaves, rolled into tubes',
       leaf: { kind: 'grass', scale: 1.2, fill: '#9DB884', stroke: '#5E7A4B' } }
   ];
   var PO_WIND = ['still air', 'a gentle breeze', 'fan on low', 'fan on high'];
@@ -628,7 +628,7 @@
     var right = h('div', 'po__right'); right.appendChild(ctl); right.appendChild(btns); right.appendChild(say);
     wrap2.appendChild(slot); wrap2.appendChild(right);
     box.appendChild(wrap2); box.appendChild(tableBox);
-    box.appendChild(h('p', 'widget__note', 'A model, scaled to published class results rather than measured here: a leafy shoot in still room air moves the bubble about 2–4 mm a minute in a 1 mm bore tube, a fan or a warm dry room multiplies that, the dark almost stops it; the plants are ranked by the leaf rates in the literature — a sunflower leaf transpires several times faster than an ivy or privet leaf, and marram grass with its rolled leaves far less. Every run starts where the last one left the bubble unless you open the tap. Sources: assets/photos/CREDITS.md.'));
+    box.appendChild(h('p', 'widget__note', 'A model, scaled to published class results rather than measured here (the sources are in the lab\'s credits file). Every run starts where the last one left the bubble unless you open the tap.'));
     var wideQ = window.matchMedia('(min-width: 1001px)');
     function mount() {
       var host = document.getElementById('benchHost');
