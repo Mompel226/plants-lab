@@ -33,14 +33,15 @@
     water: ['xylem', 'xylem vessel', 'xylem vessels', 'phloem', 'vascular bundle', 'vascular bundles', 'root hair cell', 'root hair cells', 'root hair', 'root hairs',
             'root cortex', 'cortex', 'transpiration', 'transpiration pull', 'transpiration stream', 'wilting', 'wilt', 'wilts', 'wilted', 'turgid', 'flaccid', 'humidity', 'potometer',
             'lignin', 'osmosis', 'active transport', 'mineral ion', 'mineral ions', 'nitrate ion', 'nitrate ions', 'nitrate', 'magnesium ion', 'magnesium ions', 'magnesium',
-            'water vapour', 'stoma', 'stomata', 'guard cell', 'guard cells', 'air space', 'air spaces', 'cuticle', 'epidermis', 'upper epidermis', 'lower epidermis'],
+            'water vapour', 'stoma', 'stomata', 'guard cell', 'guard cells', 'air space', 'air spaces', 'cuticle', 'epidermis', 'upper epidermis', 'lower epidermis',
+            'cohesion', 'adhesion', 'polar', 'hydrogen bond', 'hydrogen bonds'],
     food:  ['photosynthesis', 'photosynthesise', 'photosynthesises', 'chlorophyll', 'chloroplast', 'chloroplasts', 'glucose', 'starch', 'cellulose', 'sucrose', 'nectar',
             'carbohydrate', 'carbohydrates', 'limiting factor', 'limiting factors', 'palisade mesophyll', 'spongy mesophyll', 'mesophyll', 'mesophyll cell', 'mesophyll cells', 'palisade cell', 'palisade cells', 'palisade layer',
             'translocation', 'source', 'sources', 'sink', 'sinks', 'amino acid', 'amino acids', 'iodine solution', 'variegated leaf', 'variegated', 'de-starching', 'de-starched', 'hydrogencarbonate indicator',
             'respiration', 'respire', 'respires', 'enzyme', 'enzymes'],
     repro: ['flower', 'flowers', 'sepal', 'sepals', 'petal', 'petals', 'stamen', 'stamens', 'filament', 'filaments', 'anther', 'anthers', 'carpel', 'carpels', 'stigma', 'stigmas', 'style', 'ovary', 'ovaries',
             'ovule', 'ovules', 'pollen', 'pollen grain', 'pollen grains', 'pollination', 'pollinated', 'self-pollination', 'cross-pollination', 'fertilisation', 'fertilised', 'pollen tube',
-            'seed', 'seeds', 'fruit', 'fruits', 'germination', 'germinate', 'germinates', 'germinating', 'radicle', 'plumule', 'testa', 'seed coat', 'cotyledon', 'cotyledons', 'embryo',
+            'seed', 'seeds', 'seedling', 'seedlings', 'fruit', 'fruits', 'germination', 'germinate', 'germinates', 'germinating', 'radicle', 'plumule', 'testa', 'seed coat', 'cotyledon', 'cotyledons', 'embryo',
             'gamete', 'gametes', 'male gamete', 'female gamete', 'insect-pollinated', 'wind-pollinated'],
     grow:  ['tropism', 'tropisms', 'gravitropism', 'phototropism', 'auxin', 'auxins', 'shoot tip', 'shoot tips', 'cell elongation', 'elongation', 'stimulus', 'stimuli', 'adaptive feature', 'adaptive features',
             'xerophyte', 'xerophytes', 'hydrophyte', 'hydrophytes', 'adaptation', 'adaptations', 'sensitivity'],
@@ -69,6 +70,13 @@
     ['anthers', 'lily-anthers-900.jpg', '<b>Anthers</b>: the dark, pollen-covered tips of these lily stamens, each on its long filament.', 'From the 16.3 lesson slides'],
     ['ovules', 'ovary-ovules-900.jpg', '<b>Ovules</b>: the pale beads inside this ovary, cut open. Each holds a female gamete, and each becomes a seed after fertilisation.', 'From the 16.3 lesson slides'],
     ['ovule', 'ovary-ovules-900.jpg', 'An <b>ovule</b>, one of the pale beads inside this cut-open ovary: it holds the female gamete and becomes a seed after fertilisation.', 'From the 16.3 lesson slides'],
+    ['polar', 'fig:water', 'A water molecule is <b>polar</b>: the oxygen pulls the shared electrons towards itself, so it is slightly negative (δ−) and the two hydrogens are slightly positive (δ+). Opposite charges attract, so water molecules hold on to one another, and to the cellulose of the xylem wall.'],
+    ['hydrogen bond', 'fig:water', 'A <b>hydrogen bond</b>: the attraction between the δ+ hydrogen of one water molecule and the δ− oxygen of another — or of an –OH group on the cellulose of the xylem wall. Weak one by one, strong by the million: cohesion between water molecules, adhesion to the wall.'],
+    ['hydrogen bonds', 'fig:water', '<b>Hydrogen bonds</b>: the attraction between the δ+ hydrogen of one water molecule and the δ− oxygen of another — or of an –OH group on the cellulose of the xylem wall. Weak one by one, strong by the million: cohesion between water molecules, adhesion to the wall.'],
+    ['cohesion', 'fig:water', '<b>Cohesion</b>: water holding on to water. The δ+ hydrogen of one molecule is attracted to the δ− oxygen of the next — a hydrogen bond — so the molecules chain into one continuous column, and a pull at the top moves the whole column. The syllabus’s words for it: forces of attraction between water molecules.'],
+    ['adhesion', 'fig:water', '<b>Adhesion</b>: water holding on to the wall. The same hydrogen bonds form between water molecules and the polar cellulose of the xylem wall — its –OH groups are δ− — so the column clings to the wall and does not slip back.'],
+    ['seedling', 'seedling-900.jpg', 'A <b>seedling</b>: the young plant a seed grows into. Its radicle has become the first root and its plumule the first shoot; here the two seed leaves have opened, and until its true leaves can feed it the plant still lives partly on the food they hold.', 'Cucumber seedling · Peter Chastain · public domain · Wikimedia Commons'],
+    ['seedlings', 'seedling-900.jpg', '<b>Seedlings</b>: young plants grown from seeds — a root from the radicle, a shoot from the plumule, and the seed\'s store feeding them until their leaves open.', 'Cucumber seedling · Peter Chastain · public domain · Wikimedia Commons'],
     ['radicle', 'seed-radicle-900.jpg', 'The <b>radicle</b>, the embryo root, is the thicker of the two and the first out of the seed; the thinner plumule beside it becomes the shoot.', 'From the 16.3 germination slides'],
     ['plumule', 'seed-radicle-900.jpg', 'The <b>plumule</b>, the embryo shoot: the thinner of the two, coming out after the radicle.', 'From the 16.3 germination slides'],
     ['wilted', 'wilted-plant-900.jpg', '<b>Wilted</b>: the cells have lost water and gone flaccid, so nothing is holding the leaves up.', 'From the 8.3 lesson slides'],
@@ -88,7 +96,7 @@
 
   var JUMP = {};
   function jump(list, st) { list.forEach(function (w) { JUMP[w] = st; }); }
-  jump(['germination', 'germinate', 'germinates', 'germinating', 'radicle', 'plumule', 'testa', 'seed coat', 'cotyledon', 'cotyledons', 'dry mass'], 'seed');
+  jump(['germination', 'germinate', 'germinates', 'germinating', 'seedling', 'seedlings', 'radicle', 'plumule', 'testa', 'seed coat', 'cotyledon', 'cotyledons', 'dry mass'], 'seed');
   jump(['root hair cell', 'root hair cells', 'root hair', 'root hairs', 'root cortex', 'cortex', 'mineral ion', 'mineral ions', 'nitrate ion', 'nitrate ions', 'nitrate', 'magnesium ion', 'magnesium ions', 'magnesium', 'osmosis', 'active transport'], 'root');
   jump(['xylem', 'xylem vessel', 'xylem vessels', 'phloem', 'vascular bundle', 'vascular bundles', 'lignin'], 'stem');
   jump(['stoma', 'stomata', 'guard cell', 'guard cells', 'air space', 'air spaces', 'cuticle', 'epidermis', 'upper epidermis', 'lower epidermis', 'palisade mesophyll', 'spongy mesophyll', 'mesophyll', 'mesophyll cell', 'mesophyll cells', 'palisade cell', 'palisade cells', 'palisade layer', 'surface area'], 'leaf');
@@ -150,6 +158,8 @@
 
   var here = null, seen = null, quiet = false, wentTo = null;
   function setStation(id) { here = id; seen = Object.create(null); quiet = false; wentTo = Object.create(null); }
+  /* a widget built afresh (its reset) marks its words as it did the first time: forget what it introduced */
+  function unsee(words, jumps) { if (seen) (words || []).forEach(function (w) { delete seen[String(w).toLowerCase()]; }); if (wentTo) (jumps || []).forEach(function (j) { delete wentTo[j]; }); }
   function setQuiet(v) { quiet = !!v; }
 
   var U0 = '', U1 = '';
@@ -207,6 +217,37 @@
     return out;
   }
 
-  global.Terms = { setKnown: setKnown, isKnown: isKnown, forgetAll: forgetAll, knownCount: knownCount, mark: mark, legend: legend,
+  global.Terms = { setKnown: setKnown, isKnown: isKnown, forgetAll: forgetAll, knownCount: knownCount, mark: mark, legend: legend, unsee: unsee,
                    CATS: CATS, setStation: setStation, setQuiet: setQuiet, PEEK: PEEK, JUMP: JUMP };
 })(window);
+
+/* A number never parts from its unit at a line break — 20 °C, 5 min, 48 mm, 60 %, 4 marks, pH 2 — wherever the page
+   writes one: the theory, a question, the bench, a pop-up, the syllabus. The join is made in the text itself as the
+   page changes, so nothing that renders text has to remember to do it. */
+(function () {
+  var UNIT = /(\d)[ \t]+(%|°C|°|mm³\/min|mm\/min|mm³|mm|cm³|cm|dm³|m\b|km\b|µm\b|μm\b|nm\b|min\b|minutes?\b|seconds?\b|s\b|hours?\b|h\b|days?\b|weeks?\b|years?\b|kg\b|mg\b|g\b|ml\b|l\b|kPa\b|kJ\b|J\b|runs?\b|trials?\b|marks?\b|leaves\b|grams?\b|degrees?\b|metres?\b|litres?\b|per cent\b|chews?\b|drops?\b)/g;
+  var LEAD = /\b(pH|[Dd]ay|[Tt]ube|Paper|Topic|Question|Stage|Step|Figure|Fig\.)[ \t]+(\d)/g;
+  function fix(t) {
+    var p = t.parentNode; if (!p || p.nodeType !== 1) return;
+    var tag = p.tagName; if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'TEXTAREA' || tag === 'OPTION') return;
+    var v = t.nodeValue; if (!/\d/.test(v)) return;
+    var n = v.replace(UNIT, '$1\u00A0$2').replace(LEAD, '$1\u00A0$2');
+    if (n !== v) t.nodeValue = n;
+  }
+  function join(node) {
+    if (!node) return;
+    if (node.nodeType === 3) { fix(node); return; }
+    if (node.nodeType !== 1 && node.nodeType !== 11) return;
+    var w = document.createTreeWalker(node, NodeFilter.SHOW_TEXT), t, list = [];
+    while ((t = w.nextNode())) list.push(t);
+    list.forEach(fix);
+  }
+  function watch() {
+    join(document.body);
+    new MutationObserver(function (recs) {
+      recs.forEach(function (r) { if (r.type === 'characterData') fix(r.target); else for (var i = 0; i < r.addedNodes.length; i++) join(r.addedNodes[i]); });
+    }).observe(document.body, { subtree: true, childList: true, characterData: true });
+  }
+  if (document.body) watch(); else document.addEventListener('DOMContentLoaded', watch);
+  window.KeepUnits = { join: join };
+})();

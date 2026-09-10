@@ -833,6 +833,7 @@
     var art = '';
     if (String(src).slice(0, 4) === 'fig:') {
       art = '<div class="peek__fig">' + (window.Learn ? window.Learn.svgFor(String(src).slice(4)) : '') + '</div>';
+      pk.className += ' peek--fig';   /* a drawing with lettering in it needs the room */
     } else if (src) {
       art = '<img src="assets/photos/' + src + '" alt="" decoding="async"' +
             (pkw ? ' width="' + pkw[0] + '" height="' + pkw[1] + '"' : '') + '>';
