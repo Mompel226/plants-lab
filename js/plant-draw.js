@@ -427,6 +427,7 @@
       ['plant', 'rect', { x: X - 300, y: 100, width: 600, height: 1000 }],
       ['roots', 'rect', { x: X - 160, y: 820, width: 320, height: 300 }],
       ['stem', 'rect', { x: X - 26, y: 250, width: 52, height: 560 }],
+      ['tip', 'circle', { cx: X, cy: 252, r: 34 }],   /* the growing tip, where auxin is made: the way into the bending station */
       ['leaf-1', 'ellipse', { cx: X - 128, cy: 656, rx: 130, ry: 70 }],
       ['leaf-2', 'ellipse', { cx: X + 112, cy: 488, rx: 110, ry: 58 }],
       ['leaf-3', 'ellipse', { cx: X - 88, cy: 412, rx: 88, ry: 46 }],
@@ -446,7 +447,7 @@
       var g = el('g', { 'class': 'pl-hit', 'data-hit': id, tabindex: 0, role: 'button', 'aria-label': (G[id] || {}).label || id }, hits);
       var a = {}; for (var k3 in h[2]) a[k3] = h[2][k3]; a['class'] = 'pl-hot';
       var hot = el(h[1], a, g);
-      var HN = { 'leaf-2': 514, 'leaf-3': 430, 'leaf-4': 350 }[h[0]] || (h[0] === 'flower' && h[2].cy === 330 ? 424 : null);
+      var HN = { 'leaf-2': 514, 'leaf-3': 430, 'leaf-4': 350, tip: 254 }[h[0]] || (h[0] === 'flower' && h[2].cy === 330 ? 424 : null);
       if (HN) HITWARP.push([g, HN]);
       if (h[0] === 'stem') stemHit = hot;
       ['mouseenter', 'focus'].forEach(function (ev) { g.addEventListener(ev, function () { hooks.enter('part', id); }); });
