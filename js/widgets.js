@@ -119,33 +119,63 @@
       var py = spots.map(function (sp) { return sb.top + sp.y / 100 * sb.height - lb.top; });
       var px = spots.map(function (sp) { return sb.left + sp.x / 100 * sb.width - lb.left; });
       order = spots.map(function (sp, i) { return i; }).sort(function (a, b) { return py[a] - py[b]; });
-      function place() {
-        var top = order.map(function (i) { return py[i] - H[i] / 2; });
+      function place(ord) {
+        ord = ord || order;
+        var top = ord.map(function (i) { return py[i] - H[i] / 2; });
         for (var pass = 0; pass < 80; pass++) {
           var moved = false;
-          for (var k = 0; k + 1 < order.length; k++) {
-            var over = (top[k] + H[order[k]] + gap) - top[k + 1];
+          for (var k = 0; k + 1 < ord.length; k++) {
+            var over = (top[k] + H[ord[k]] + gap) - top[k + 1];
             if (over > 0.5) { top[k] -= over / 2; top[k + 1] += over / 2; moved = true; }
           }
           if (top[0] < 0) { var d = -top[0]; for (var m = 0; m < top.length; m++) top[m] += d; moved = true; }
           if (!moved) break;
         }
         var out = [];
-        order.forEach(function (i, k) { out[i] = top[k]; });
+        ord.forEach(function (i, k) { out[i] = top[k]; });
         return out;
       }
-      Y = place();
-      for (var pass2 = 0; pass2 < 20; pass2++) {
-        var swapped = false;
-        for (var k2 = 0; k2 + 1 < order.length && !swapped; k2++) {
-          var i2 = order[k2], j2 = order[k2 + 1];
-          if (crosses({ x: px[i2], y: py[i2] }, { x: 0, y: Y[i2] + H[i2] / 2 }, { x: px[j2], y: py[j2] }, { x: 0, y: Y[j2] + H[j2] / 2 })) {
-            order[k2] = j2; order[k2 + 1] = i2; swapped = true;
+      /* The lines are drawn from each pin to an elbow just left of its item, then across;
+         two lines cross only if those slanted legs do. The column order that gives no
+         crossings is found by trying every order (there are never more than a handful of
+         pins), keeping the one whose items sit nearest their pins; beyond eight pins the
+         search would be slow, so adjacent pairs are swapped until none cross. */
+      function endOf(i, Yi) { var elbow = Math.min(38, Math.max(14, -px[i] * 0.34)); return { x: -elbow, y: Yi + H[i] / 2 }; }
+      function score(ord) {
+        var Yt = place(ord), cross = 0, drift = 0;
+        for (var i = 0; i < ord.length; i++) {
+          drift += Math.abs(Yt[ord[i]] + H[ord[i]] / 2 - py[ord[i]]);
+          for (var j = i + 1; j < ord.length; j++) {
+            var p = ord[i], q = ord[j];
+            if (crosses({ x: px[p], y: py[p] }, endOf(p, Yt[p]), { x: px[q], y: py[q] }, endOf(q, Yt[q]))) cross++;
           }
         }
-        Y = place();
-        if (!swapped) break;
+        return { cross: cross, drift: drift, Y: Yt };
       }
+      var best = score(order);
+      if (best.cross > 0 && order.length <= 8) {
+        var perm = order.slice(), c = perm.map(function () { return 0; }), k = 0, bestOrder = order.slice();
+        while (k < perm.length) {
+          if (c[k] < k) {
+            if (k % 2 === 0) { var t0 = perm[0]; perm[0] = perm[k]; perm[k] = t0; } else { var t1 = perm[c[k]]; perm[c[k]] = perm[k]; perm[k] = t1; }
+            var sc = score(perm);
+            if (sc.cross < best.cross || (sc.cross === best.cross && sc.drift < best.drift)) { best = sc; bestOrder = perm.slice(); if (best.cross === 0 && best.drift < 1) break; }
+            c[k]++; k = 0;
+          } else { c[k] = 0; k++; }
+        }
+        order = bestOrder;
+      } else if (best.cross > 0) {
+        for (var pass2 = 0; pass2 < 40; pass2++) {
+          var swapped = false;
+          for (var k2 = 0; k2 + 1 < order.length && !swapped; k2++) {
+            var i2 = order[k2], j2 = order[k2 + 1], Yn = place(order);
+            if (crosses({ x: px[i2], y: py[i2] }, endOf(i2, Yn[i2]), { x: px[j2], y: py[j2] }, endOf(j2, Yn[j2]))) { order[k2] = j2; order[k2 + 1] = i2; swapped = true; }
+          }
+          if (!swapped) break;
+        }
+        best = score(order);
+      }
+      Y = best.Y;
       items.forEach(function (li, i) { li.style.position = 'absolute'; li.style.top = Y[i] + 'px'; });
       var bottom = Math.max.apply(null, items.map(function (li, i) { return Y[i] + H[i]; }));
       list.style.minHeight = Math.max(sb.height, bottom) + 'px';
