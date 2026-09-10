@@ -12,6 +12,14 @@ window.LAB_CONFIG = {
   /* Shown on the submission form so you can tell classes apart. */
   classes: ['9A', '9B', '9C', '9D', '9E', 'Other'],
 
+  /* The potometer keeps every run a student records, but shows its table and graph only when
+     this word is typed in — so a class draws its own table and graph first, and you decide when
+     to reveal the page's. What is stored is a fingerprint of the word, not the word, so a student
+     reading this file learns nothing. To change it:
+        node tools/unlock-hash.mjs "your new word"
+     and paste the line it prints here. Leave it empty ('') and the table shows without a word. */
+  potometerUnlock: '609c690df8a5c94b8e39c4b23a8a01dbfcd7450732013c16970852811c661c23',
+
   /* Signing in, so a hand-in can be attributed.
 
      These labs are public: anyone in the world can use one, and should. But only your own
