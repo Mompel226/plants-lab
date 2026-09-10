@@ -191,7 +191,7 @@
     pane.className = 'tabpane';
     host.appendChild(pane);
 
-    if (tab === 'learn' && window.Terms) {
+    if (tab === 'learn' && window.Terms && !(st.plate && st.plate.bench)) {   /* the bench station has no plant to colour: no legend there */
       var key = document.createElement('div');
       key.className = 'keybar';
       key.innerHTML = window.Terms.legend();
