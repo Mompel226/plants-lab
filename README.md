@@ -7,7 +7,7 @@
 [![Open the lab](https://img.shields.io/badge/▶_Open_the_lab-0969DA?style=for-the-badge&logoColor=white)](https://mompel226.github.io/plants-lab/)
 
 ![12 stations](https://img.shields.io/badge/12-stations-3D7A54)
-![86 questions](https://img.shields.io/badge/86-questions-8F5D09)
+![91 questions](https://img.shields.io/badge/91-questions-8F5D09)
 ![Marks itself](https://img.shields.io/badge/questions-mark_themselves-0B6A8C)
 ![No sign-up](https://img.shields.io/badge/students-no_sign--up_needed-6FA287)
 
@@ -27,10 +27,11 @@ the pictures from the lessons, the videos, and questions that say right or wrong
 |  |  |
 |---|---|
 | 🌱 **12 stations** | a seed wakes · roots and water uptake · xylem and phloem · the leaf · photosynthesis · water up, water out · the potometer · sugar on the move · bending to the light · the flower · from flower to seed · built for its place |
-| ✍️ **86 questions** | fill the gaps · drag & drop · multiple choice · put in order · match up · sort into groups · **tick a grid** · **click the picture** |
+| ✍️ **91 questions** | fill the gaps · drag & drop · multiple choice · put in order · match up · sort into groups · **tick a grid** · **click the picture** |
 | 🔬 **The exam's pictures** | a real leaf, root and stem cut across and stained, with the layers to find; a half-flower to label; wheat anthers to point at; a leaf tested for starch |
 | 🧪 **The investigations** | germination, the starch test, limiting factors, a seedling on its side — each one worked through as the exam sets it |
-| 🔬 **A potometer you run** | choose the plant, set light, temperature, humidity, wind, the leaves and the time, start the clock and watch the bubble; record runs into a table, get a mean when you repeat one, and a graph that picks its own axis from what you changed |
+| 🔬 **A potometer you run** | choose the plant, set light, temperature, humidity, wind, the leaves, the joint at the bung and the time, start the clock and watch the bubble; record runs into a table, get a mean when you repeat one, use a new shoot for a true replicate, and a graph that picks its own axis from what you changed |
+| 🎯 **Evaluating it** | systematic and random error, accuracy, precision, reliability and validity, in the potometer — taught from the students' own guide and tested in the questions |
 | 🎞 **Eight lesson videos** | germination, the coloured-flower experiment, water uptake, water transport, the potometer, transport in the stem, photosynthesis, a tropism time-lapse — the ones shown in class, built in |
 | 📖 **A shared glossary** | one wording per term, the same in every lab |
 
@@ -78,7 +79,7 @@ The real answers live in one file on my own computer, which is never published.
 **What is shared with the other labs.** Drawing a question, handling the dragging, the marking,
 the sync between devices, the widgets that the theory pages are built from, the glossary and the
 plant are all kept in one place and copied in whenever a lab is rebuilt, so a fix reaches every
-lab at once. What belongs to this lab alone is its content: the 12 stations, the 86 questions,
+lab at once. What belongs to this lab alone is its content: the 12 stations, the 91 questions,
 the pictures, the videos, and the twelve small interactive pieces of theory — a seed that
 germinates, an equation that assembles, a graph of limiting factors, a starch test, a potometer,
 a seedling that bends, a flower to label, a pollen tube that grows.

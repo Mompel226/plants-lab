@@ -217,8 +217,17 @@
     var list = document.createElement('ul');
     list.className = 'exam-list';
     card.appendChild(list);
+    var partName = null;
 
     (st.learn.exam || []).forEach(function (b, i) {
+      /* sentences that belong to a named part — "Setting it up" — sit together in their own block */
+      var part = (typeof b === 'object' && b.part) || null;
+      if (part !== partName) {
+        partName = part;
+        list = document.createElement('ul'); list.className = 'exam-list';
+        if (part) { var wrap = document.createElement('div'); wrap.className = 'exam-part'; wrap.innerHTML = '<div class="exam-part__h">' + esc(part) + '</div>'; wrap.appendChild(list); card.appendChild(wrap); }
+        else card.appendChild(list);
+      }
       var li = document.createElement('li');
       var txt = typeof b === 'string' ? b : b.text;
       var badge = '';
