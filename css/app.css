@@ -1339,3 +1339,7 @@ picture{display:block;line-height:0}
 .po__dots[aria-pressed="false"]{text-decoration:line-through;opacity:.7}
 /* a button asking to be pressed again before it loses work */
 .po .wbtn.is-armed,.po__data .wbtn.is-armed{background:#B4532A!important;border-color:#B4532A!important;color:#fff!important}
+/* the two resets, one above the other at the end of the button row */
+.po__resets{display:flex;flex-direction:column;gap:6px;margin-left:auto;align-items:stretch}
+.po__resets .wbtn{margin-left:0;text-align:center}
+.po__errbar__l2{margin-left:10px}

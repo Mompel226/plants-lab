@@ -147,10 +147,16 @@ bench, not measured here. What it is scaled to:
   Southern Biological's Year 11–12 sheet, which records how far the bubble moves in ten minutes under
   each condition and names geranium, laurel and privet as the shoots to use,
   https://www.southernbiological.com/content/BIO_P_CEL_Y11&12_17.pdf).
-- The direction and rough size of each factor: a fan roughly doubles to trebles uptake by thinning
-  the still air round the leaf; evaporation and diffusion roughly double for a 10 °C rise; uptake
-  falls in step with the water vapour already in the air, to almost nothing under a bag; the dark
-  closes the stomata and leaves only what escapes through the cuticle.
+- The shape of each factor's curve is the one the IGCSE course draws and class results bear out.
+  Temperature: uptake rises in a straight line as evaporation and diffusion speed up — next to
+  nothing at 0 °C, twice the 20 °C rate at 40 °C — and then falls, because above about 40 °C the
+  stomata close and the leaf begins to wilt. Light: a steep rise as the stomata open, levelling off
+  once they are fully open (most of the way up by 60 %). Wind: a rise that levels off — a fan takes
+  uptake to about twice the still-air rate by thinning the still air round the leaf, and a stronger
+  fan has little left to thin. Humidity: a straight fall as the air fills with water vapour, to
+  almost nothing under a bag. The dark closes the stomata and leaves only what escapes through the
+  cuticle. (Cambridge IGCSE Biology coursebook, the figures on the factors affecting transpiration;
+  the SAPS and Southern Biological class sheets above.)
 - The ranking of the plants, from leaf-level rates in the literature: ivy leaves transpire 0.1–2.5
   mmol m⁻² s⁻¹ and a whole ivy plant about 0.23, a conservative, waxy-leaved plant
   (https://pubmed.ncbi.nlm.nih.gov/21293876/ ; https://academic.oup.com/jxb/article/55/401/1411/478991);

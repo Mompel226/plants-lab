@@ -237,7 +237,7 @@
       leaf: { kind: 'grass', scale: 1.2, fill: '#9DB884', stroke: '#5E7A4B' } }
   ];
   var PO_WIND = ['still air', 'a gentle breeze', 'fan on low', 'fan on high'];
-  var PO_WINDF = [1, 1.4, 1.9, 2.5];
+  var PO_WINDF = [1, 1.5, 1.85, 2.05];   /* a rise that levels off: a fan thins the still air round the leaf; a stronger fan has little left to thin */
   var PO_GREASE = [['none', 'no grease'], ['upper', 'grease on the upper surface'], ['lower', 'grease on the lower surface'], ['both', 'grease on both surfaces']];
   /* a greased surface keeps only the other surface's share of the stomata (`lower` is the share underneath: nearly all on privet and ivy,
      two thirds or so on bean, sunflower and geranium, almost none on marram, whose stomata line the inside of the rolled leaf), plus a little loss through the cuticle */
@@ -264,7 +264,9 @@
   }            /* kept while the lab is open: a trip to Practise and back keeps the table */              /* px per mm on the scale; the 0 mm mark; the capillary's radius, mm */
 
   function poLightF(L) { return .15 + .85 * (1 - Math.exp(-L / 35)) / (1 - Math.exp(-100 / 35)); }
-  function poTempF(T) { return Math.pow(2, (T - 20) / 10); }
+  /* temperature: a straight rise as evaporation and diffusion speed up — next to nothing at 0 °C, twice the 20 °C rate at
+     40 °C — and then a fall, because above about 40 °C the stomata close and the leaf begins to wilt */
+  function poTempF(T) { return T <= 40 ? Math.max(.03, T / 20) : Math.max(.2, 2 * (1 - (T - 40) / 25)); }
   function poHumF(H) { return Math.max(.05, (100 - H) / 50); }
 
   /* ----- the statistics of the results table, shared by the table and by the Learn text -----
@@ -396,7 +398,7 @@
     var speciesNote = h('small', 'po__snote'); ctl.appendChild(speciesNote);
     var leaves = range('Leaves on the shoot', 'leaves', 1, 6, 5, '');
     var light = range('Light', 'light', 0, 100, 60, ' %', 5);
-    var temp = range('Temperature', 'temp', 5, 35, 20, ' °C');
+    var temp = range('Temperature', 'temp', 0, 50, 20, ' °C');
     var hum = range('Humidity', 'hum', 20, 100, 50, ' %', 5);
     var wind = range('Wind', 'wind', 0, 3, 0, '');
     var grease = sel('Petroleum jelly on the leaves', 'grease', PO_GREASE.map(function (g) { return [g[0], g[1]]; }), 'none');
@@ -551,7 +553,8 @@
     var btns = h('div', 'po__btns');
     var bStart = h('button', 'wbtn po__start', '▶ Start the clock'), bReset = h('button', 'wbtn wbtn--quiet', 'Open the tap: bubble back to 0'), bRecord = h('button', 'wbtn po__rec', 'Record this run'), bNew = h('button', 'wbtn wbtn--quiet', 'Use a shoot from another plant');
     var bLine = h('button', 'wbtn wbtn--quiet po__newline', '＋ New line on the graph');
-    var bAll = h('button', 'wbtn po__resetall', '↺ Reset the practical');
+    var bSet = h('button', 'wbtn wbtn--quiet po__resetset', '↺ Reset the settings'), bAll = h('button', 'wbtn po__resetall', '↺ Reset the practical');
+    bSet.setAttribute('data-tip', 'The settings back to the start — the plant, the leaves, the light, the temperature, the humidity, the wind, the grease, the joint and the time. Your recorded runs are kept.');
     /* what each button is for, shown at once on hover or keyboard focus */
     bStart.setAttribute('data-tip', 'Starts the clock. The bubble moves as fast as the shoot takes water in, at 30 times real speed.');
     bReset.setAttribute('data-tip', 'Opens the reservoir tap: water pushes the bubble back to the 0 mark, ready for the next run.');
@@ -559,7 +562,8 @@
     bNew.setAttribute('data-tip', 'A shoot cut from a different plant of the same kind: a true replicate. Repeating on one shoot is a technical replicate — it shows how steady your measuring is, not how plants differ.');
     bLine.setAttribute('data-tip', 'Keeps what you have and starts a new line on the graph, in its own colour and with its own table, so you can compare: another plant, the fan on, the dark…');
     bAll.setAttribute('data-tip', 'Everything back to the start: the settings, the bubble, the shoot, the tables and the graph. When there is a table to lose it asks first: press it twice.');
-    [bStart, bReset, bRecord, bNew, bLine, bAll].forEach(function (b) { b.type = 'button'; btns.appendChild(b); });
+    [bStart, bReset, bRecord, bNew, bLine].forEach(function (b) { b.type = 'button'; btns.appendChild(b); });
+    var resets = h('div', 'po__resets'); [bSet, bAll].forEach(function (b) { b.type = 'button'; resets.appendChild(b); }); btns.appendChild(resets);
     bRecord.disabled = true;
     var result = h('div', 'po__result'); result.hidden = true; result.setAttribute('aria-live', 'polite');
     var say = h('p', 'po__say');
@@ -573,6 +577,7 @@
       var g = poGreaseF(s.sp, s.grease);
       return s.sp.base * (s.leaves / 5) * poLightF(s.light) * poTempF(s.temp) * poHumF(s.hum) * PO_WINDF[s.wind] * g;
     }
+    global.PoModel = { rateOf: rateOf, species: PO_SPECIES, wind: PO_WIND };   /* for the audits: the curve each factor gives */
     var pos = 0, run = null, raf = null, lastRun = null;
     function remember() { PO_STATE.set = settings(); PO_STATE.pos = pos; PO_STATE.runs = runs; poPersist(); }   /* the shoot and its factor already live in PO_STATE */
     function paintConditions() {
@@ -583,7 +588,7 @@
       leafEls.forEach(function (l, i) { l.classList.toggle('is-off', i >= s.leaves); });
       glow.style.opacity = (s.light / 100 * .55).toFixed(2);
       svg.querySelector('.po__bulb').style.opacity = (.25 + s.light / 100 * .75).toFixed(2);
-      merc.setAttribute('y', (172 - (s.temp - 5) / 30 * 104).toFixed(1)); merc.setAttribute('x', 738); merc.setAttribute('height', ((s.temp - 5) / 30 * 104 + 4).toFixed(1));
+      merc.setAttribute('y', (172 - s.temp / 50 * 104).toFixed(1)); merc.setAttribute('x', 738); merc.setAttribute('height', (s.temp / 50 * 104 + 4).toFixed(1));
       svg.querySelector('.po__beam').style.opacity = (s.light / 100 * .22).toFixed(2);
       tread.textContent = s.temp + ' °C'; hread.textContent = s.hum + ' % humidity';
       svg.classList.toggle('is-bagged', s.hum >= 85);
@@ -669,6 +674,13 @@
     }
     /* the whole practical back to its first state — a run in progress dropped, the settings as they were, the bubble at 0,
        shoot A, the table empty. The teacher's word, once given, holds for the session. */
+    /* the settings alone, back to the start: the runs, the lines and the shoot stay */
+    function resetSettings() {
+      if (run) return;
+      species.value = 'bean'; leaves.inp.value = 5; light.inp.value = 60; temp.inp.value = 20; hum.inp.value = 50; wind.inp.value = 0; grease.value = 'none'; joint.value = 'sealed'; time.value = '5';
+      paintConditions();
+      say.textContent = 'Settings back to the start: French bean, 5 leaves, 60 % light, 20 °C, 50 % humidity, still air, no grease, joint sealed, 5 minutes. Your runs and lines are kept.';
+    }
     function resetAll() {
       if (raf) cancelAnimationFrame(raf); raf = null; run = null; lastRun = null;
       svg.classList.remove('is-running'); svg.classList.remove('is-tapping');
@@ -698,6 +710,7 @@
     }
     bStart.addEventListener('click', start);
     bReset.addEventListener('click', resetBubble);
+    bSet.addEventListener('click', resetSettings);
     armed(bAll, 'Sure? Press again to reset', function () { return runs.length > 0; }, resetAll);
     bNew.addEventListener('click', function () {
       if (run) return;
@@ -733,16 +746,16 @@
     pop.hidden = true;
     var tools = h('div', 'po__tools');
     var errK = PO_STATE.err || 'none';
-    var errBar = h('div', 'po__errbar', '<span class="po__errbar__l">Show, with the mean</span>');
-    [['none', 'the mean only'], ['sd', 'standard deviation'], ['se', 'standard error'], ['ci', '95 % confidence interval']].forEach(function (o) {
+    var errBar = h('div', 'po__errbar', '<span class="po__errbar__l">Error bars</span>');
+    [['none', 'none'], ['sd', 'standard deviation'], ['se', 'standard error'], ['ci', '95 % confidence interval']].forEach(function (o) {
       var b = h('button', 'po__errbar__b', esc(o[1])); b.type = 'button'; b.setAttribute('data-k', o[0]); b.setAttribute('aria-pressed', o[0] === errK ? 'true' : 'false');
-      b.addEventListener('click', function () { errK = o[0]; PO_STATE.err = errK; errBar.querySelectorAll('button:not(.po__dots)').forEach(function (x) { x.setAttribute('aria-pressed', x.getAttribute('data-k') === errK ? 'true' : 'false'); }); paintData(); if (errK === 'none') { pop.hidden = true; popTerm = null; } else showTerm(errK); });   /* choosing a statistic shows what it is, worked with the table's own numbers */
+      b.addEventListener('click', function () { errK = o[0]; PO_STATE.err = errK; errBar.querySelectorAll('button:not(.po__dots)').forEach(function (x) { x.setAttribute('aria-pressed', x.getAttribute('data-k') === errK ? 'true' : 'false'); }); paintData(); });   /* the ? on the column heading explains the statistic; choosing one only draws it */
       errBar.appendChild(b);
     });
     /* the trials themselves can be hidden, so the means and their error bars stand clear */
     var bDots = h('button', 'po__errbar__b po__dots', '· every trial'); bDots.type = 'button'; bDots.setAttribute('data-k', 'dots'); bDots.setAttribute('aria-pressed', PO_STATE.dots ? 'true' : 'false'); bDots.title = 'Show or hide the single trials behind each mean';
     bDots.addEventListener('click', function () { PO_STATE.dots = !PO_STATE.dots; bDots.setAttribute('aria-pressed', PO_STATE.dots ? 'true' : 'false'); poPersist(); paintData(); });
-    errBar.appendChild(h('span', 'po__errbar__l', 'and')); errBar.appendChild(bDots);
+    errBar.appendChild(h('span', 'po__errbar__l po__errbar__l2', 'Points')); errBar.appendChild(bDots);
     var bCopy = h('button', 'wbtn wbtn--quiet', 'Copy the table'), bClear = h('button', 'wbtn wbtn--quiet', 'Clear the table');
     [bCopy, bClear].forEach(function (b) { b.type = 'button'; tools.appendChild(b); });
     tableBox.appendChild(errBar); tableBox.appendChild(tabsEl); tableBox.appendChild(tableWrap); tableBox.appendChild(pop); tableBox.appendChild(chart); tableBox.appendChild(tools);
