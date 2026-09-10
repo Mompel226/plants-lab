@@ -10,6 +10,7 @@ window.LAB_CONFIG = {
   submitUrl: 'https://script.google.com/macros/s/AKfycbzwjMHaa88OL_GzR8wZ2mV6a8rs1CKYahbW5iOTQPyzWzCGIrAZPApGsP2oujK34tRc/exec',
 
   /* Shown on the submission form so you can tell classes apart. */
+  syllabusTopics: ['6', '8', '14.5', '16.3', '18.2'],   /* the topics this lab teaches: they come first when the syllabus is opened from the badge */
   classes: ['9A', '9B', '9C', '9D', '9E', 'Other'],
 
   /* The potometer keeps every run a student records, but shows its table and graph only when
