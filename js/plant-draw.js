@@ -66,8 +66,6 @@
     'svg.is-breathing .pl-vap:nth-child(2){animation-delay:.8s}svg.is-breathing .pl-vap:nth-child(3){animation-delay:1.6s}' +
     '@keyframes pl-vap{0%{opacity:0;transform:translateY(0) scale(.6)}20%{opacity:.95}100%{opacity:0;transform:translateY(-70px) scale(1.7)}}' +
     /* the shoot leaning to the light */
-    '.pl-bends{transition:transform 1.4s cubic-bezier(.3,.6,.2,1)}' +
-    'svg.is-bent .pl-bends{transform:rotate(9deg)}' +
     '.pl-hot{fill:transparent;cursor:pointer;outline:none}' +
     '.pl-hit:focus-visible .pl-hot{stroke:var(--c,#B8F08E);stroke-width:2;stroke-dasharray:4 4}' +
     '@media (prefers-reduced-motion:reduce){.pl-part,.pl-grows,.pl-bends,.pl-petal{transition:none}.pl-flower.is-shown{animation:none}.pl-flow,.pl-vap{animation:none!important}svg.flow-xylem .pl-flow--xylem,svg.flow-both .pl-flow--xylem,svg.flow-phloem .pl-flow--phloem,svg.flow-both .pl-flow--phloem{opacity:1}svg.is-breathing .pl-vap{opacity:.6}}';
@@ -188,9 +186,10 @@
     /* the seedling: what the seed sends up first — a hooked shoot and two seed leaves */
     var seedling = part('seedling', 'pl-seedling', true, [X, 800]);
     shoot.appendChild(seedling);
-    el('path', { d: 'M' + (X - 2) + ' 782 C' + (X - 6) + ' 740 ' + (X + 8) + ' 710 ' + (X + 26) + ' 690', fill: 'none', stroke: '#7CC97A', 'stroke-width': 9, 'stroke-linecap': 'round' }, seedling);
-    el('ellipse', { cx: X + 4, cy: 672, rx: 26, ry: 15, transform: 'rotate(-28 ' + (X + 4) + ' 672)', fill: '#8FD48A', stroke: '#3F9A55', 'stroke-width': 1.5 }, seedling);
-    el('ellipse', { cx: X + 46, cy: 668, rx: 26, ry: 15, transform: 'rotate(22 ' + (X + 46) + ' 668)', fill: '#8FD48A', stroke: '#3F9A55', 'stroke-width': 1.5 }, seedling);
+    var seedStem = el('path', { d: 'M' + (X - 2) + ' 782 C' + (X - 6) + ' 740 ' + (X + 8) + ' 710 ' + (X + 26) + ' 690', fill: 'none', stroke: '#7CC97A', 'stroke-width': 9, 'stroke-linecap': 'round' }, seedling);
+    var cotyls = el('g', { 'class': 'pl-cotyls' }, seedling);
+    el('ellipse', { cx: X + 4, cy: 672, rx: 26, ry: 15, transform: 'rotate(-28 ' + (X + 4) + ' 672)', fill: '#8FD48A', stroke: '#3F9A55', 'stroke-width': 1.5 }, cotyls);
+    el('ellipse', { cx: X + 46, cy: 668, rx: 26, ry: 15, transform: 'rotate(22 ' + (X + 46) + ' 668)', fill: '#8FD48A', stroke: '#3F9A55', 'stroke-width': 1.5 }, cotyls);
 
     /* the stem */
     var stem = part('stem', 'pl-stem', 'up', [X, 805]);
@@ -467,7 +466,29 @@
       if (kind) svg.classList.add('flow-' + kind);
     }
     function breathe(on) { svg.classList.toggle('is-breathing', !!on); }
-    function bend(on) { svg.classList.toggle('is-bent', !!on); }
+    /* The seedling bends to the light the way a real one does — not by tilting from the ground, but by growing:
+       the cells on the shaded side elongate more, so the upper stem curves towards the sun (top right) and the
+       seed leaves are carried round with the tip. The base stays where it is. The bent shape is longer than the
+       straight one, because bending IS growth. */
+    var SEED_STRAIGHT = [[X - 2, 782], [X - 6, 740], [X + 8, 710], [X + 26, 690]], SEED_BENT = [[X - 2, 782], [X - 4, 748], [X + 16, 712], [X + 52, 694]];
+    var bendT = 0, bendRaf = null;
+    function paintBend(t) {
+      var p = SEED_STRAIGHT.map(function (q, i) { return [q[0] + (SEED_BENT[i][0] - q[0]) * t, q[1] + (SEED_BENT[i][1] - q[1]) * t]; });
+      seedStem.setAttribute('d', 'M' + f(p[0][0]) + ' ' + f(p[0][1]) + ' C' + f(p[1][0]) + ' ' + f(p[1][1]) + ' ' + f(p[2][0]) + ' ' + f(p[2][1]) + ' ' + f(p[3][0]) + ' ' + f(p[3][1]));
+      cotyls.setAttribute('transform', 'translate(' + f((SEED_BENT[3][0] - SEED_STRAIGHT[3][0]) * t) + ' ' + f((SEED_BENT[3][1] - SEED_STRAIGHT[3][1]) * t) + ') rotate(' + f(16 * t) + ' ' + f(SEED_STRAIGHT[3][0]) + ' ' + f(SEED_STRAIGHT[3][1]) + ')');
+    }
+    function bend(on) {
+      var target = on ? 1 : 0; svg.classList.toggle('is-bent', !!on);
+      if (bendRaf) cancelAnimationFrame(bendRaf); bendRaf = null;
+      if (still || bendT === target) { bendT = target; paintBend(bendT); return; }
+      var from = bendT, t0 = null;
+      bendRaf = requestAnimationFrame(function step(now) {
+        if (t0 == null) t0 = now;
+        var k = Math.min(1, (now - t0) / 1400), e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+        bendT = from + (target - from) * e; paintBend(bendT);
+        bendRaf = k < 1 ? requestAnimationFrame(step) : null;
+      });
+    }
     function grow(stageId) {
       var st = null;
       (P.stages || []).forEach(function (s) { if (s.id === stageId) st = s; });
