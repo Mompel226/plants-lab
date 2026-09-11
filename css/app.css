@@ -985,6 +985,30 @@ picture{display:block;line-height:0}
 .eq__bal small{flex:1 1 100%;font-size:12.5px;color:var(--grey)}
 
 /* limiting factors */
+/* ---------- pondweed: the bubble-counting practical ---------- */
+.pw__ctl{display:grid;gap:7px;margin:2px 0 10px}
+.pw__row{display:grid;grid-template-columns:minmax(160px,1fr) minmax(120px,1.2fr);align-items:center;gap:11px;font-size:13px}
+.pw__lab{color:#3C3C3C}
+.pw__lab b{color:var(--k-food);font-weight:700;margin-left:5px}
+.pw__stage{background:#fff;border:1px solid var(--edge);border-radius:var(--r);padding:4px 6px;overflow-x:auto}
+.pw__stage svg{width:100%;height:auto;display:block;min-width:380px}
+.pw__live{display:flex;flex-wrap:wrap;align-items:baseline;gap:9px 16px;margin-top:9px;
+          background:#fff;border:1px solid var(--edge);border-radius:var(--r);padding:9px 13px}
+.pw__clock{font-family:var(--mono);font-size:12px;color:var(--grey)}
+.pw__live b{font-size:15px;color:var(--k-food)}
+.pw__int{font-size:12.5px;color:#5B5B5B}
+.pw__int b{font-size:13px;color:var(--ink)}
+.pw__int small{color:var(--grey)}
+.pw__btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.pw__note{margin-top:10px;font-size:13.5px;line-height:1.55;color:#3C3C3C;background:var(--amber-tint);
+          border:1px solid #E6D6AE;border-radius:var(--r);padding:10px 13px}
+.pw__note b{color:var(--k-food)}
+.pw__why{font:inherit;font-size:12.5px;font-weight:600;color:#fff;background:var(--k-food);border:0;
+         border-radius:var(--r-pill);padding:3px 12px;margin-left:6px;cursor:pointer}
+.pw__why:hover{filter:brightness(1.08)}
+.pw__table{margin-top:11px}
+.pw__hint{margin:7px 0 0;font-size:12.5px;color:var(--grey);line-height:1.5}
+
 /* ---------- limitgraph: the curves a reader plots and compares ---------- */
 .lg__ctl{display:grid;gap:10px;margin:2px 0 10px}
 .lg__axis{display:flex;flex-wrap:wrap;align-items:center;gap:7px}

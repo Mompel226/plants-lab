@@ -393,6 +393,196 @@
     return box;
   }
 
+
+  /* ---------- pondweed: the rate-of-photosynthesis practical, run rather than described ----------
+     0610 sets this one as "count the bubbles of oxygen from pondweed while you change one factor".
+     The thing candidates lose marks on is not the counting — it is the light. Intensity falls with
+     the SQUARE of the distance, so moving the lamp from 10 cm to 20 cm does not halve the light, it
+     quarters it. The model here is exactly that: I = (10/d)^2 with the lamp at 10 cm as 1 unit.
+
+     Everything else is the same rule the graph above uses — the rate is set by whichever factor is
+     in shortest supply — so the practical and the theory cannot disagree. Each run carries a small
+     random error, because a real count does, which is why the table keeps repeats and takes a mean.
+
+     Nothing is explained unasked. When a run shows something worth noticing, a note appears with
+     its reason hidden behind a press. */
+  function pondweed(spec) {
+    var box = h('div', 'widget');
+    box.appendChild(head(spec.title || 'Count the bubbles',
+      spec.ask || 'Move the lamp, start the clock, and count the oxygen for one minute. Record each run, repeat it for a mean, and watch what happens to the light when you double the distance.',
+      'Run the experiment'));
+
+    var S = { d: 20, hco3: 2, temp: 20, running: false, t: 0, n: 0, rows: [], seen: {} };
+    function I(d) { return Math.pow(10 / d, 2); }                 /* inverse square — the whole point */
+    function fI(i) { return i / (i + 0.55); }                     /* saturating response to light */
+    function fC(c) { return c / (c + 1.1); }                      /* hydrogencarbonate: the CO2 supply */
+    function fT(t) { return t <= 32 ? Math.max(0.04, t / 32) : Math.max(0, 1 - (t - 32) / 12); }
+    var MAXB = 62;                                                /* bubbles a minute, flat out */
+    function trueRate() { return Math.min(fI(I(S.d)), fC(S.hco3), fT(S.temp)) * MAXB; }
+    function whoLimits() {
+      var a = [fI(I(S.d)), fC(S.hco3), fT(S.temp)], m = Math.min.apply(null, a);
+      return ['the light', 'the carbon dioxide', 'the temperature'][a.indexOf(m)];
+    }
+
+    /* ---- controls ---- */
+    var ctl = h('div', 'pw__ctl');
+    var C = [
+      { k: 'd', label: 'Distance of the lamp', min: 10, max: 60, step: 5, unit: ' cm' },
+      { k: 'hco3', label: 'Sodium hydrogencarbonate', min: 0, max: 5, step: 0.5, unit: ' %' },
+      { k: 'temp', label: 'Water bath', min: 5, max: 40, step: 1, unit: ' °C' }
+    ];
+    var rows = {};
+    C.forEach(function (c) {
+      var r = h('label', 'pw__row');
+      r.innerHTML = '<span class="pw__lab">' + esc(c.label) + '<b></b></span>';
+      var inp = document.createElement('input');
+      inp.type = 'range'; inp.min = c.min; inp.max = c.max; inp.step = c.step; inp.value = S[c.k];
+      inp.setAttribute('aria-label', c.label);
+      inp.addEventListener('input', function () { if (S.running) return; S[c.k] = +inp.value; paint(); });
+      r.appendChild(inp);
+      ctl.appendChild(r);
+      rows[c.k] = { inp: inp, val: r.querySelector('b') };
+    });
+    box.appendChild(ctl);
+
+    var stage = h('div', 'pw__stage');
+    box.appendChild(stage);
+
+    var live = h('div', 'pw__live');
+    box.appendChild(live);
+
+    var note = h('div', 'pw__note'); note.hidden = true;
+    box.appendChild(note);
+
+    var btns = h('div', 'pw__btns');
+    var bRun = h('button', 'wbtn', 'Start the clock'); bRun.type = 'button';
+    var bKeep = h('button', 'wbtn wbtn--quiet', 'Record this run'); bKeep.type = 'button'; bKeep.disabled = true;
+    var bClear = h('button', 'wbtn wbtn--quiet', 'Clear the table'); bClear.type = 'button';
+    btns.appendChild(bRun); btns.appendChild(bKeep); btns.appendChild(bClear);
+    box.appendChild(btns);
+
+    var table = h('div', 'pw__table');
+    box.appendChild(table);
+
+    /* ---- the apparatus ---- */
+    function paintStage() {
+      var W = 520, H = 232;
+      var lampX = 70 + (S.d - 10) / 50 * 150;                    /* the lamp slides away from the beaker */
+      var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="A beaker of pondweed under a funnel and a test tube, with a lamp at ' + S.d + ' centimetres">';
+      s += '<rect x="0" y="' + (H - 16) + '" width="' + W + '" height="16" fill="#EDEBE3"/>';
+      /* beaker */
+      s += '<path d="M300 60 L300 200 Q300 210 312 210 L432 210 Q444 210 444 200 L444 60" fill="#EAF4FA" stroke="#9AB4C2" stroke-width="2.4"/>';
+      s += '<rect x="300" y="74" width="144" height="136" fill="#CFE8F5" opacity=".75"/>';
+      /* funnel and test tube */
+      s += '<path d="M336 190 L408 190 L382 132 L362 132 Z" fill="none" stroke="#8FA9B6" stroke-width="2"/>';
+      s += '<rect x="358" y="70" width="28" height="64" rx="4" fill="#DCEEF8" stroke="#8FA9B6" stroke-width="2"/>';
+      /* pondweed */
+      s += '<path d="M372 190 Q356 168 366 146 Q376 124 368 106" fill="none" stroke="#2F7D46" stroke-width="4" stroke-linecap="round"/>';
+      for (var i = 0; i < 7; i++) {
+        var ly = 182 - i * 12, lx = 372 + (i % 2 ? 12 : -12);
+        s += '<ellipse cx="' + lx + '" cy="' + ly + '" rx="10" ry="4.5" fill="#57A860" transform="rotate(' + (i % 2 ? 22 : -22) + ' ' + lx + ' ' + ly + ')"/>';
+      }
+      /* the bubbles that have been counted this run */
+      var shown = Math.min(S.n, 14);
+      for (var b = 0; b < shown; b++) {
+        var by = 184 - (b % 7) * 15 - (b > 6 ? 6 : 0), bx = 370 + ((b * 37) % 13) - 6;
+        s += '<circle cx="' + bx + '" cy="' + by + '" r="' + (2.6 + (b % 3) * 0.5).toFixed(1) + '" fill="#fff" stroke="#7FB6CE" stroke-width="1"/>';
+      }
+      /* lamp */
+      var glow = Math.min(1, fI(I(S.d)) + 0.15);
+      s += '<line x1="' + lampX + '" y1="150" x2="' + lampX + '" y2="208" stroke="#6B6B63" stroke-width="3"/>';
+      s += '<path d="M' + (lampX - 26) + ' 150 L' + (lampX + 26) + ' 150 L' + (lampX + 14) + ' 116 L' + (lampX - 14) + ' 116 Z" fill="#C9C6BB" stroke="#6B6B63" stroke-width="2"/>';
+      s += '<circle cx="' + lampX + '" cy="148" r="9" fill="#FFE9A8" opacity="' + glow.toFixed(2) + '"/>';
+      s += '<circle cx="' + lampX + '" cy="148" r="22" fill="#FFE08A" opacity="' + (glow * 0.3).toFixed(2) + '"/>';
+      /* the measured distance */
+      s += '<line x1="' + lampX + '" y1="222" x2="300" y2="222" stroke="#5B6B63" stroke-width="1" stroke-dasharray="3 3"/>';
+      s += '<text x="' + ((lampX + 300) / 2) + '" y="218" font-size="11.5" fill="#3C3C3C" text-anchor="middle">' + S.d + ' cm</text>';
+      s += '</svg>';
+      stage.innerHTML = s;
+    }
+
+    function paint() {
+      C.forEach(function (c) { rows[c.k].val.textContent = S[c.k] + c.unit; rows[c.k].inp.disabled = S.running; });
+      paintStage();
+      var i = I(S.d);
+      live.innerHTML = '<span class="pw__clock">' + (S.running ? S.t + ' s' : (S.t ? 'finished — ' + S.t + ' s' : 'not started')) + '</span>' +
+        '<b>' + S.n + ' bubbles</b>' +
+        '<span class="pw__int">Light reaching the pondweed: <b>' + i.toFixed(2) + '</b> units <small>(1 unit = the lamp at 10 cm)</small></span>';
+      bKeep.disabled = S.running || !S.t;
+      bRun.disabled = S.running;
+    }
+
+    /* ---- the run ---- */
+    /* The clock is driven by elapsed REAL time, not by counting ticks. A browser throttles timers
+       in a background tab, and a tick-counted run then stops short — the minute never finishes and
+       the count lands wherever the throttling left it. Reading the wall clock each frame means a
+       slow frame costs smoothness and nothing else: the run still ends on sixty seconds with the
+       right number of bubbles. Found 11 Sep 2026, when three test runs returned 3, 6 and 10. */
+    var timer = null, RUN_MS = 2600;                              /* a minute, played in about 2.6 s */
+    bRun.addEventListener('click', function () {
+      if (S.running) return;
+      S.running = true; S.t = 0; S.n = 0; note.hidden = true; paint();
+      var per = trueRate();                                      /* bubbles per minute, before error */
+      var err = 1 + (Math.random() - 0.5) * 0.16;                /* a real count is never exact */
+      var target = Math.max(0, Math.round(per * err));
+      var t0 = Date.now();
+      /* setInterval, not requestAnimationFrame: rAF is suspended altogether in a hidden tab, so a
+         run started and then left would never finish. An interval is throttled there but still
+         fires, and because the count is read off the wall clock rather than off the number of
+         ticks, a throttled run is merely less smooth — it still ends on sixty seconds. */
+      timer = setInterval(function () {
+        var frac = Math.min(1, (Date.now() - t0) / RUN_MS);
+        S.t = Math.round(frac * 60);
+        S.n = Math.round(target * frac);
+        if (frac >= 1) { clearInterval(timer); timer = null; S.t = 60; S.n = target; S.running = false; paint(); finish(target); return; }
+        paint();
+      }, 40);
+    });
+    bKeep.addEventListener('click', function () {
+      S.rows.push({ d: S.d, i: I(S.d), hco3: S.hco3, temp: S.temp, n: S.n });
+      paintTable(); note.hidden = true;
+    });
+    bClear.addEventListener('click', function () { S.rows = []; paintTable(); });
+
+    function finish(target) {
+      var msgs = [];
+      if (S.temp > 32) msgs.push(['The count has dropped although nothing was taken away.',
+        'Above about 32 °C the enzymes of photosynthesis are being <b>denatured</b>, so the rate falls however bright the lamp is. This is why the beaker stands in a water bath: without one, a lamp close to the beaker warms the water and you would be changing two variables at once.']);
+      else if (whoLimits() === 'the carbon dioxide' && S.hco3 < 1.5) msgs.push(['Moving the lamp closer is barely changing the count.',
+        'The light is no longer the limiting factor: <b>carbon dioxide</b> is. Sodium hydrogencarbonate is there to supply it, and at this concentration there is not enough for the light you are giving. Raise it and the lamp will start to matter again.']);
+      else if (S.d >= 40) msgs.push(['The count is low at this distance.',
+        'Light intensity falls with the <b>square</b> of the distance. At 40 cm the pondweed gets a sixteenth of the light it had at 10 cm, not a quarter. This is why the distance, not a dial on the lamp, is what you change — and why it must be measured to the plant, every time.']);
+      if (!msgs.length) return;
+      var m = msgs[0];
+      note.hidden = false;
+      note.innerHTML = '<b>' + m[0] + '</b> <button type="button" class="pw__why">Why?</button>';
+      note.querySelector('.pw__why').addEventListener('click', function () {
+        note.innerHTML = '<b>' + m[0] + '</b> ' + m[1];
+      });
+    }
+
+    function paintTable() {
+      if (!S.rows.length) { table.innerHTML = ''; return; }
+      var by = {};
+      S.rows.forEach(function (r) { var k = r.d + '|' + r.hco3 + '|' + r.temp; (by[k] = by[k] || []).push(r); });
+      var body = Object.keys(by).map(function (k) {
+        var g = by[k], r0 = g[0];
+        var mean = g.reduce(function (a, x) { return a + x.n; }, 0) / g.length;
+        return '<tr><td>' + r0.d + '</td><td>' + r0.i.toFixed(2) + '</td><td>' + r0.hco3 + '</td><td>' + r0.temp + '</td>' +
+               '<td>' + g.map(function (x) { return x.n; }).join(', ') + '</td>' +
+               '<td><b>' + mean.toFixed(1) + '</b></td></tr>';
+      }).join('');
+      table.innerHTML = '<table class="ctable"><thead><tr>' +
+        '<th>Distance / cm</th><th>Light / units</th><th>NaHCO₃ / %</th><th>Temp / °C</th><th>Bubbles per minute</th><th>Mean</th>' +
+        '</tr></thead><tbody>' + body + '</tbody></table>' +
+        '<p class="pw__hint">Repeat a run at the same settings and its counts join the same row, and the mean is taken for you. Two rows with only the distance different are what the question asks you to compare.</p>';
+    }
+
+    paint(); paintTable();
+    box.__onReset = function () { if (timer) clearInterval(timer); S = { d: 20, hco3: 2, temp: 20, running: false, t: 0, n: 0, rows: [], seen: {} }; };
+    return box;
+  }
+
   /* ---------- starchtest ---------- */
   function starchtest(spec) {
     var box = h('div', 'widget');
@@ -1591,7 +1781,7 @@
     return box;
   }
 
-  [['video', video], ['germinate', germinate], ['equation', equation], ['limitgraph', limitgraph], ['starchtest', starchtest], ['indicator', indicator],
+  [['video', video], ['germinate', germinate], ['equation', equation], ['limitgraph', limitgraph], ['pondweed', pondweed], ['starchtest', starchtest], ['indicator', indicator],
    ['potometer', potometer], ['sourcesink', sourcesink], ['auxin', auxin], ['diagram', diagram], ['pollentube', pollentube], ['adapt', adapt]]
     .forEach(function (m) { W.register(m[0], m[1]); });
 
