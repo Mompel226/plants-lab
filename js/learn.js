@@ -837,6 +837,27 @@
     return box;
   }
 
+
+  /* ---------- watch: a film that is not ours, sitting where it belongs ----------
+     The lab's own videos are local files and play in the page. These are somebody else's, so
+     they are linked rather than copied or framed — but a link buried in "Going further" at the
+     foot of the station is a link nobody finds. This puts the card in the flow, under the very
+     sentence it illustrates, looking like the thing it is: a film, one tap away, on YouTube. */
+  function watch(spec) {
+    var f = h('figure', 'watch');
+    var a = document.createElement('a');
+    a.className = 'watch__a'; a.href = spec.url; a.target = '_blank'; a.rel = 'noopener';
+    a.innerHTML =
+      '<span class="watch__play" aria-hidden="true">▶</span>' +
+      '<span class="watch__body">' +
+        '<span class="watch__t">' + esc(spec.title || 'Watch this') + '</span>' +
+        (spec.text ? '<span class="watch__s">' + mk(spec.text) + '</span>' : '') +
+        '<span class="watch__by">' + esc(spec.by || '') + ' · opens on YouTube ↗</span>' +
+      '</span>';
+    f.appendChild(a);
+    return f;
+  }
+
   /* ---------- starchtest ---------- */
   function starchtest(spec) {
     var box = h('div', 'widget');
@@ -2151,7 +2172,7 @@
     return box;
   }
 
-  [['video', video], ['germinate', germinate], ['equation', equation], ['limitgraph', limitgraph], ['pondweed', pondweed], ['starchtest', starchtest], ['indicator', indicator],
+  [['video', video], ['germinate', germinate], ['equation', equation], ['limitgraph', limitgraph], ['watch', watch], ['pondweed', pondweed], ['starchtest', starchtest], ['indicator', indicator],
    ['potometer', potometer], ['sourcesink', sourcesink], ['auxin', auxin], ['diagram', diagram], ['pollentube', pollentube], ['adapt', adapt]]
     .forEach(function (m) { W.register(m[0], m[1]); });
 

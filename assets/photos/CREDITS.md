@@ -140,7 +140,8 @@ lesson folder is a source — four of the eight still say that, and each is a ga
 
 Two longer videos in the lesson folders were left out on length alone (ten and eighteen minutes).
 
-Four videos are **linked rather than embedded**, under *Going further* on the station each belongs to:
+Three videos are **linked rather than embedded**, as a card in the flow of the station, under the
+sentence each one illustrates:
 
 | Video | By | Station |
 |---|---|---|
