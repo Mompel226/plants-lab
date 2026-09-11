@@ -417,7 +417,7 @@
       spec.ask || 'Set the apparatus up, let it settle, then count the oxygen for a minute. The number is the easy part — the question is whether it means anything.',
       'Run it properly'));
 
-    var S = { d: 20, hco3: 2, bath: 20, shield: false, measureTo: 'beaker', settleMs: 5200, changedAt: Date.now() - 99999,
+    var S = { d: 30, hco3: 2, bath: 20, shield: false, measureTo: 'beaker', settleMs: 5200, changedAt: Date.now() - 99999,
               prev: null, running: false, t: 0, n: 0, rows: [], found: {}, bubbles: [], gas: 0 };
 
     /* A 1 dm³ beaker is about 10.5 cm across, so its near face is about 5 cm short of the sprig
@@ -425,8 +425,15 @@
        light that actually reaches the plant is always less than the reading says, and always by
        a predictable amount. That is a SYSTEMATIC error: unlike the random scatter in each count,
        repeating the run and taking a mean does not touch it. */
-    var BEAKER_OFFSET_CM = 5;
-    function trueD() { return S.d + (S.measureTo === 'beaker' ? BEAKER_OFFSET_CM : 0); }
+    /* ONE SCALE for the ruler: 8 px to the centimetre. The beaker is drawn 136 px across, so
+       its near face is 68 px — 8.5 cm — in front of the sprig at the centre.
+
+       S.d is where the LAMP IS, measured from the plant, and moving a ruler does not move a lamp.
+       What changes is the READING: held against the glass it is 8.5 cm short, every time. The
+       rate is worked out from S.d; the table records the reading. */
+    var PX_PER_CM = 8, BEAKER_OFFSET_CM = 8.5;
+    function trueD() { return S.d; }
+    function reading() { return S.measureTo === 'beaker' ? S.d - BEAKER_OFFSET_CM : S.d; }
     function I(d) { return Math.pow(10 / d, 2); }
     function fI(i) { return i / (i + 0.55); }
     function fC(c) { return c / (c + 1.1); }
@@ -438,7 +445,7 @@
     function realRate(st) {                       /* oxygen actually made, bubbles a minute */
       st = st || S;
       /* the light that reaches the PLANT, not the light the reading implies */
-      var dd = st.d + (st.measureTo === 'beaker' ? BEAKER_OFFSET_CM : 0);
+      var dd = st.d;                              /* the light travels to the plant, always */
       var temp = st.shield ? st.bath : st.bath + Math.min(13, 13 * I(dd) / 1.05);
       return Math.min(fI(I(dd)), fC(st.hco3), fT(temp)) * MAXB;
     }
@@ -456,7 +463,7 @@
     /* ---- controls ---- */
     var ctl = h('div', 'pw__ctl');
     var C = [
-      { k: 'd', label: 'Lamp distance', min: 10, max: 60, step: 5, unit: ' cm' },
+      { k: 'd', label: 'Lamp distance', min: 18, max: 50, step: 2, unit: ' cm' },
       { k: 'hco3', label: 'Sodium hydrogencarbonate', min: 0, max: 5, step: 0.5, unit: ' %' },
       { k: 'bath', label: 'Water bath set to', min: 5, max: 40, step: 1, unit: ' °C' }
     ];
@@ -520,7 +527,7 @@
       size: ['Two runs at the same settings, two different numbers.',
         'Bubbles are not all the same size, so counting them measures volume only roughly. Repeats and a mean are the least you can do; collecting the gas and measuring its VOLUME in a syringe or a capillary is the better method, and worth saying so in an evaluation question.'],
       ruler: ['Your light values do not fit the counts you are getting.',
-        'You measured to the front of the beaker. The light has to reach the <b>pondweed</b>, which is about 5 cm further back, so every reading is short by the same 5 cm and every light value you calculate is too high. Being wrong by the same amount every time is a <b>systematic error</b>: unlike the scatter between repeats, taking a mean does not remove it, and no number of repeats will. Measure to the plant.'],
+        'You measured to the front of the beaker. The light has to reach the <b>pondweed</b>, 8.5 cm further back, so every reading is short by the same 8.5 cm and every light value you calculate is too high. Notice what did NOT change when you moved the ruler: the lamp, and the number of bubbles. The plant does not care where you hold your ruler — only your data does. Being wrong by the same amount every time is a <b>systematic error</b>: unlike the scatter between repeats, taking a mean does not remove it, and no number of repeats will. Measure to the plant.'],
       dark: ['Almost nothing, even with the lamp right there.',
         'Check the other two before blaming the plant. Carbon dioxide is the raw material — without hydrogencarbonate there is little of it in the water — and below about 10 °C the enzymes are too slow. A control variable set wrong looks exactly like a dead plant.']
     };
@@ -545,15 +552,18 @@
        the funnel's mouth rests on the floor of the beaker with no gap and no platform under it;
        and the funnel covers the whole sprig, so every bubble it releases is caught. */
     function paintStage() {
-      var W = 660, H = 366;
+      var W = 840, H = 366;
       var BENCH = 330;
       /* the beaker is the unit everything else is measured against */
-      var BW = 136, BH = 176, BX = 286, BBOT = 322, BTOP = BBOT - BH, WTOP = BTOP + 20;
+      var BW = 136, BH = 176, BX = 466, BBOT = 322, BTOP = BBOT - BH, WTOP = BTOP + 20;
       var FX = BX + BW / 2;
       var BATH_W = 190, BATH_H = 36, BATH_X = FX - BATH_W / 2, BATH_BOT = BENCH, BATH_TOP = BENCH - BATH_H;
-      var lampX = 186 - (S.d - 10) / 50 * 88;
+      /* the ruler runs from the lamp to whichever point is measured to, at 8 px to the cm, so
+         its drawn length always IS the reading — and the lamp does not move when the ruler does */
+      var rulerEnd = S.measureTo === 'beaker' ? BX : FX;
+      var lampX = FX - S.d * PX_PER_CM;
       var temp = waterTemp(), hot = temp > S.bath + 1.5;
-      var LBL = 470;
+      var LBL = 650;
       var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Labelled apparatus: a sprig of pondweed under an inverted funnel in a large beaker of water standing in a water bath, an inverted boiling tube over the funnel stem collecting oxygen, a thermometer in the beaker, and a bench lamp ' + S.d + ' centimetres away' + (S.shield ? ' with a tank of water between them as a heat shield' : '') + '">';
 
       s += '<defs>' +
@@ -578,7 +588,7 @@
       s += '<line x1="0" y1="' + BENCH + '" x2="' + W + '" y2="' + BENCH + '" stroke="#C7C2B4" stroke-width="1.4"/>';
 
       var glow = Math.min(1, fI(I(S.d)) + 0.12);
-      var beamEnd = S.shield ? 236 : BX;
+      var beamEnd = S.shield ? lampX + 116 : BX;
       s += '<path d="M' + (lampX + 12) + ' 128 L' + beamEnd + ' ' + (BTOP + 6) + ' L' + beamEnd + ' ' + (BBOT - 8) + ' L' + (lampX + 12) + ' 188 Z" fill="url(#pwBeam)" opacity="' + (glow * 0.5).toFixed(2) + '"/>';
 
       /* the water bath, standing ON the bench */
@@ -663,12 +673,15 @@
 
       /* ---- the heat shield ---- */
       if (S.shield) {
-        s += '<ellipse cx="234" cy="' + (BENCH - 1) + '" rx="28" ry="5" fill="#000" opacity=".09" filter="url(#pwSoft)"/>';
-        s += '<path d="M216 176 L216 ' + (BENCH - 4) + ' Q216 ' + BENCH + ' 221 ' + BENCH + ' L247 ' + BENCH + ' Q252 ' + BENCH + ' 252 ' + (BENCH - 4) + ' L252 176" fill="url(#pwBath)" fill-opacity=".92" stroke="#7BA0B3" stroke-width="2"/>';
-        s += '<path d="M218 192 Q226 188 234 192 Q242 196 250 192 L250 ' + (BENCH - 6) + ' L218 ' + (BENCH - 6) + ' Z" fill="#CFE6F3" opacity=".8"/>';
-        s += '<path d="M213 176 L255 176" stroke="#7BA0B3" stroke-width="2.6" stroke-linecap="round"/>';
-        s += '<path d="M245 188 L245 ' + (BENCH - 14) + '" stroke="#fff" stroke-width="2.6" opacity=".6" stroke-linecap="round"/>';
-        s += '<text x="234" y="168" font-size="10" font-weight="600" fill="#2A2A26" text-anchor="middle">heat shield</text>';
+        /* a tank of water standing between the lamp and the beaker, so it travels with the lamp */
+        var SHX = Math.min(lampX + 104, BX - 40);
+        s += '<ellipse cx="' + SHX + '" cy="' + (BENCH - 1) + '" rx="28" ry="5" fill="#000" opacity=".09" filter="url(#pwSoft)"/>';
+        s += '<path d="M' + (SHX - 18) + ' 176 L' + (SHX - 18) + ' ' + (BENCH - 4) + ' Q' + (SHX - 18) + ' ' + BENCH + ' ' + (SHX - 13) + ' ' + BENCH +
+             ' L' + (SHX + 13) + ' ' + BENCH + ' Q' + (SHX + 18) + ' ' + BENCH + ' ' + (SHX + 18) + ' ' + (BENCH - 4) + ' L' + (SHX + 18) + ' 176" fill="url(#pwBath)" fill-opacity=".92" stroke="#7BA0B3" stroke-width="2"/>';
+        s += '<path d="M' + (SHX - 16) + ' 192 Q' + (SHX - 8) + ' 188 ' + SHX + ' 192 Q' + (SHX + 8) + ' 196 ' + (SHX + 16) + ' 192 L' + (SHX + 16) + ' ' + (BENCH - 6) + ' L' + (SHX - 16) + ' ' + (BENCH - 6) + ' Z" fill="#CFE6F3" opacity=".8"/>';
+        s += '<path d="M' + (SHX - 21) + ' 176 L' + (SHX + 21) + ' 176" stroke="#7BA0B3" stroke-width="2.6" stroke-linecap="round"/>';
+        s += '<path d="M' + (SHX + 11) + ' 188 L' + (SHX + 11) + ' ' + (BENCH - 14) + '" stroke="#fff" stroke-width="2.6" opacity=".6" stroke-linecap="round"/>';
+        s += '<text x="' + SHX + '" y="168" font-size="10" font-weight="600" fill="#2A2A26" text-anchor="middle">heat shield</text>';
       }
 
       /* ---- the bench lamp: about two and a half beakers tall, as it is on a bench ---- */
@@ -685,11 +698,10 @@
       s += '<text x="' + lampX + '" y="' + (SHADE_TOP - 10) + '" font-size="11.5" font-weight="600" fill="#2A2A26" text-anchor="middle">lamp</text>';
 
       /* ---- the ruler ---- */
-      var rulerEnd = S.measureTo === 'beaker' ? BX : FX;
       var RY = BENCH + 8, rw = rulerEnd - lampX;
       s += '<rect x="' + lampX + '" y="' + RY + '" width="' + rw + '" height="13" rx="2" fill="#F7E9C0" stroke="#C7A64B" stroke-width="1.2"/>';
       for (var t2 = 0; t2 <= rw; t2 += 10) s += '<line x1="' + (lampX + t2) + '" y1="' + RY + '" x2="' + (lampX + t2) + '" y2="' + (RY + (t2 % 50 === 0 ? 9 : 5)) + '" stroke="#AC8D3A" stroke-width="1"/>';
-      s += '<text x="' + ((lampX + rulerEnd) / 2) + '" y="' + (RY - 4) + '" font-size="11.5" font-weight="700" fill="#3C3C3C" text-anchor="middle">' + S.d + ' cm</text>';
+      s += '<text x="' + ((lampX + rulerEnd) / 2) + '" y="' + (RY - 4) + '" font-size="11.5" font-weight="700" fill="#3C3C3C" text-anchor="middle">' + reading().toFixed(1) + ' cm</text>';
       s += '<line x1="' + rulerEnd + '" y1="' + (RY - 2) + '" x2="' + rulerEnd + '" y2="' + (BENCH - 6) + '" stroke="#AC8D3A" stroke-width="1" stroke-dasharray="2 3"/>';
 
       /* ---- the labels ---- */
@@ -711,7 +723,7 @@
     }
 
     function paint() {
-      C.forEach(function (c) { rows[c.k].val.textContent = S[c.k] + c.unit; rows[c.k].inp.disabled = S.running; });
+      C.forEach(function (c) { rows[c.k].val.textContent = (c.k === 'd' ? reading().toFixed(1) : S[c.k]) + c.unit; rows[c.k].inp.disabled = S.running; });
       chk.disabled = S.running; chk.checked = S.shield;
       ['beaker', 'weed'].forEach(function (k) { measBtns[k].classList.toggle('is-on', S.measureTo === k); measBtns[k].disabled = S.running; });
       paintStage();
@@ -722,7 +734,7 @@
           '<i style="width:' + (sf * 100).toFixed(0) + '%"></i></span>' +
         '<span class="pw__clock">' + (S.running ? S.t + ' s' : (S.t ? 'finished' : 'not started')) + '</span>' +
         '<b>' + S.n + ' bubbles</b>' +
-        '<span class="pw__int">light from your reading <b>' + I(S.d).toFixed(2) + '</b> units · water <b class="' + (temp > S.bath + 1.5 ? 'is-hot' : '') + '">' + temp.toFixed(0) + ' °C</b></span>';
+        '<span class="pw__int">light from your reading <b>' + I(reading()).toFixed(2) + '</b> units · water <b class="' + (temp > S.bath + 1.5 ? 'is-hot' : '') + '">' + temp.toFixed(0) + ' °C</b></span>';
       bKeep.disabled = S.running || !S.t;
       bRun.disabled = S.running;
     }
@@ -780,7 +792,7 @@
     }
 
     bKeep.addEventListener('click', function () {
-      S.rows.push({ d: S.d, i: I(S.d), hco3: S.hco3, bath: S.bath, shield: S.shield, temp: waterTemp(), n: S.n, meas: S.measureTo });
+      S.rows.push({ d: +reading().toFixed(1), i: I(reading()), hco3: S.hco3, bath: S.bath, shield: S.shield, temp: waterTemp(), n: S.n, meas: S.measureTo });
       paintTable();
     });
     bClear.addEventListener('click', function () { S.rows = []; paintTable(); });
