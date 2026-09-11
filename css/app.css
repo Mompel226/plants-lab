@@ -962,15 +962,22 @@ picture{display:block;line-height:0}
 @media (max-width:620px){ .tubes{grid-template-columns:repeat(2,1fr)} }
 
 /* the equation */
+/* The browser's own rule for the hidden attribute is [hidden]{display:none}, which ANY class
+   setting display beats — so el.hidden = true did nothing on .eq__bal, .po__result and .st__why,
+   and the balanced equation, the potometer's results and the starch-test explanation were on
+   screen from the start with a button that appeared to do nothing. One rule, and every toggle in
+   the lab works: found 11 Sep 2026 by Daniel pressing "Show the balanced equation". */
+[hidden]{display:none!important}
+
 .eq{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:16px;margin:4px 0 8px}
 .eq__w{font:inherit;font-size:15.5px;font-weight:700;color:var(--k-food);background:#fff;border:1.5px solid var(--edge);border-radius:var(--r-pill);padding:6px 13px;cursor:pointer;transition:.14s}
 .eq__w:hover,.eq__w.is-on{border-color:var(--k-food);background:var(--amber-tint)}
 .eq__w--cond{font-size:12.5px;padding:2px 9px;color:var(--k-grow)}
 .eq__w--cond:hover,.eq__w--cond.is-on{border-color:var(--k-grow);background:var(--purple-tint)}
 .eq__op{font-weight:700;color:var(--grey)}
-.eq__arrow{display:inline-flex;flex-direction:column;align-items:center;gap:2px;padding:0 6px}
-.eq__arrow > span:last-child{font-size:26px;line-height:1;color:var(--green)}
-.eq__over{display:flex;gap:4px}
+.eq__arrow{display:inline-flex;flex-direction:column;align-items:center;gap:3px;padding:0 10px}
+.eq__line{font-size:30px;line-height:.9;color:var(--green);letter-spacing:-.06em}
+.eq__over,.eq__under{display:flex;gap:4px}
 .eq__note{margin:0 0 10px;font-size:14px;line-height:1.5;color:#3C3C3C;background:#fff;border:1px solid var(--edge);border-radius:var(--r);padding:9px 12px}
 .eq__note b{color:var(--k-food)}
 .eq__bal{margin-top:10px;background:#fff;border:1.5px solid var(--edge);border-radius:var(--r);padding:10px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
