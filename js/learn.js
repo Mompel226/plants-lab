@@ -1823,77 +1823,154 @@
      The shoot is drawn as a stack of cells. Light from one side sends the auxin to the shaded side, the cells there
      elongate more than the lit side's, and the geometry does the rest: a band whose outer edge is longer than its
      inner edge can only curve — towards the light. The base stays put; the bend is growth, in the zone below the tip. */
+  /* ---------- auxin: the shoot, its cells, and where the auxin goes ----------
+     Drawn the way the textbook draws it, because that is the picture a candidate has to be able
+     to read: a green shoot with a border of individual CELLS round its outside, and auxin as
+     grains inside it. The bend is not drawn on — it FALLS OUT of the biology. Auxin gathers on
+     the shaded side; the cells on that side are drawn longer in proportion to how much of it has
+     arrived; and a column whose left cells are longer than its right cells can only be a curve.
+     So a reader watching the cells stretch is watching the cause, not an illustration of it. */
   function auxin(spec) {
     var box = h('div', 'widget');
-    box.appendChild(head(spec.title || 'Move the light', spec.ask, 'Click a lamp'));
+    box.appendChild(head(spec.title || 'Move the light', spec.ask, 'Move the sun'));
+
+    var W = 420, H = 300, GROUND = 262, CX = 210, WID = 54, LEN = 150, NCELL = 7;
+    var state = { side: 'top', m: 0, theta: 0, t: null };
+
     var wrap = h('div', 'ax');
-    wrap.innerHTML = '<div class="ax__lamps"><button type="button" class="ax__lamp" data-side="left" aria-label="Light from the left">☀ left</button><button type="button" class="ax__lamp is-on" data-side="top" aria-label="Light from above">☀ above</button><button type="button" class="ax__lamp" data-side="right" aria-label="Light from the right">☀ right</button></div>' +
-      '<svg viewBox="0 0 300 220" class="ax__svg" aria-label="A shoot, its cells, and the auxin inside it">' +
-      '<rect x="0" y="0" width="300" height="220" fill="#F7F4EC"/><path d="M0 200 H300" stroke="#8A5A2A" stroke-width="3"/>' +
-      '<g class="ax__shoot"><path class="ax__stem"/><path class="ax__shade"/><path class="ax__cells"/><g class="ax__dots"></g><text class="ax__l" text-anchor="middle">shoot tip</text></g>' +
-      '<text class="ax__say" x="150" y="214" text-anchor="middle"></text></svg>';
-    var svg = wrap.querySelector('svg'), stem = svg.querySelector('.ax__stem'), shade = svg.querySelector('.ax__shade'), cells = svg.querySelector('.ax__cells'), dots = svg.querySelector('.ax__dots'), lab = svg.querySelector('.ax__l'), say = svg.querySelector('.ax__say');
-    var explain = h('p', 'ax__why');
-    var still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var CX = 150, Y0 = 200, Y1 = 128, LEN = 88, WID = 36, N = 6, MAX = 35 * Math.PI / 180;
-    /* theta: how far the upper stem has curved; mirror: bending to the left. m: how far the auxin has moved (0 even, 1 all on the shaded side) */
-    function paint(theta, mirror, m) {
-      var th = Math.max(theta, .002), Rin = LEN / th, R = Rin + WID / 2, Rout = Rin + WID, C0 = CX + R;
-      var f2 = function (v) { return (mirror ? 300 - v : v).toFixed(1); }, fy = function (v) { return v.toFixed(1); };
-      var P = function (r, a) { return [C0 - r * Math.cos(a), Y1 - r * Math.sin(a)]; };
-      var pt = function (p) { return f2(p[0]) + ' ' + fy(p[1]); };
-      var K = 14, outer = [], inner = [], mid = [];
-      for (var i = 0; i <= K; i++) { var a = th * i / K; outer.push(P(Rout, a)); inner.push(P(Rin, a)); mid.push(P(R, a)); }
-      var tan = [Math.sin(th), -Math.cos(th)], tipC = P(R, th), cap = [tipC[0] + tan[0] * WID * .62, tipC[1] + tan[1] * WID * .62];
-      var d = 'M' + f2(CX - WID / 2) + ' ' + fy(Y0) + ' L' + pt(outer[0]);
-      outer.forEach(function (p) { d += ' L' + pt(p); });
-      d += ' Q' + pt(cap) + ' ' + pt(inner[K]);
-      for (var k = K; k >= 0; k--) d += ' L' + pt(inner[k]);
-      d += ' L' + f2(CX + WID / 2) + ' ' + fy(Y0) + ' Z';
-      stem.setAttribute('d', d);
-      /* the shaded half of the elongation zone, tinted as the auxin arrives */
-      var sd = 'M' + pt(outer[0]); outer.forEach(function (p) { sd += ' L' + pt(p); }); for (var k2 = K; k2 >= 0; k2--) sd += ' L' + pt(mid[k2]); sd += ' Z';
-      shade.setAttribute('d', sd); shade.style.opacity = (m * .9).toFixed(2);
-      /* the cell walls: four equal rows below, six rows in the zone that bends, and the line down the middle */
-      var w = '';
-      for (var r = 1; r <= 4; r++) { var yy = Y0 - r * (Y0 - Y1) / 4; w += 'M' + f2(CX - WID / 2) + ' ' + fy(yy) + ' L' + f2(CX + WID / 2) + ' ' + fy(yy) + ' '; }
-      for (var n = 1; n <= N; n++) { var an = th * n / N; w += 'M' + pt(P(Rout, an)) + ' L' + pt(P(Rin, an)) + ' '; }
-      w += 'M' + f2(CX) + ' ' + fy(Y0) + ' L' + pt(mid[0]); mid.forEach(function (p) { w += ' L' + pt(p); });
-      cells.setAttribute('d', w);
-      /* the auxin: twelve dots, six a side when the light is above; all on the shaded side when it comes from one side */
-      var s = '';
-      for (var q = 0; q < 12; q++) {
-        var row = q % 6, lit = q < 6, o0 = lit ? -WID / 4 : WID / 4, o1 = lit ? WID / 8 : WID * 3 / 8, o = o0 + (o1 - o0) * m;
-        var pd = P(R + o, th * (row + .5) / N);
-        s += '<circle cx="' + f2(pd[0]) + '" cy="' + fy(pd[1]) + '" r="2.6" data-o="' + o.toFixed(1) + '"/>';   /* data-o: which side of the centreline, for the tests */
+    var bar = h('div', 'ax__lamps');
+    ['left', 'top', 'right'].forEach(function (k) {
+      var b = h('button', 'ax__lamp' + (k === 'top' ? ' is-on' : ''), k === 'top' ? '☀ from above' : '☀ from the ' + k);
+      b.type = 'button'; b.setAttribute('data-side', k);
+      b.addEventListener('click', function () { go(k); });
+      bar.appendChild(b);
+    });
+    wrap.appendChild(bar);
+    var stage = h('div', 'ax__stage');
+    wrap.appendChild(stage);
+    var why = h('p', 'ax__why');
+    wrap.appendChild(why);
+    box.appendChild(wrap);
+
+    /* The shoot is a beam of length LEN standing on the ground, bent by a constant curvature
+       k = theta/LEN. A point is given by its distance s up the beam and its offset u across it:
+
+         heading  phi = k*s          (0 is straight up)
+         centre   x = CX + (1-cos phi)/k,  y = GROUND - sin phi / k
+         across   + u * (cos phi, sin phi)
+
+       Written this way the base always sits on the ground and nothing blows up as the shoot
+       straightens — k → 0 is handled as the straight case rather than dividing by nearly zero,
+       which is what collapsed the first attempt into a smudge in the middle of the sky. */
+    function draw(theta, mirror, m) {
+      var th = theta, k = th / LEN;
+      function pt(s2, u) {
+        var phi = k * s2, cx0, cy0;
+        if (Math.abs(k) < 1e-6) { cx0 = CX; cy0 = GROUND - s2; }
+        else { cx0 = CX + (1 - Math.cos(phi)) / k; cy0 = GROUND - Math.sin(phi) / k; }
+        var x = cx0 + u * Math.cos(phi), y = cy0 + u * Math.sin(phi);
+        return [mirror ? 2 * CX - x : x, y];
       }
-      dots.innerHTML = s;
-      var lp = [cap[0] + tan[0] * 12, cap[1] + tan[1] * 12];
-      lab.setAttribute('x', f2(lp[0])); lab.setAttribute('y', fy(lp[1]));
+      var K = NCELL, HW = WID / 2, CW = 12;
+      function edge(u) { var a = []; for (var i = 0; i <= K; i++) a.push(pt(LEN * i / K, u)); return a; }
+      var R = edge(HW), L = edge(-HW);
+      function f(p) { return p[0].toFixed(1) + ' ' + p[1].toFixed(1); }
+
+      var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="A shoot with a border of cells and grains of auxin inside it, with the light ' + (state.side === 'top' ? 'from above' : 'from the ' + state.side) + '">';
+      s += '<defs><linearGradient id="axBody" x1="0" y1="0" x2="1" y2="0">' +
+           '<stop offset="0" stop-color="#3E8F46"/><stop offset=".45" stop-color="#54AC5C"/><stop offset="1" stop-color="#3E8F46"/></linearGradient>' +
+           '<radialGradient id="axSun" cx=".42" cy=".38" r=".62"><stop offset="0" stop-color="#FFE07A"/><stop offset="1" stop-color="#F3AC16"/></radialGradient></defs>';
+      s += '<rect width="' + W + '" height="' + H + '" fill="#FBFAF6"/>';
+
+      /* the sun, and the light it throws at the shoot */
+      var sx = state.side === 'left' ? 52 : state.side === 'right' ? W - 52 : CX, sy = state.side === 'top' ? 40 : 74;
+      var tipC = pt(LEN, 0);
+      var vx = tipC[0] - sx, vy = tipC[1] - sy, VL = Math.hypot(vx, vy) || 1;
+      var ax1 = sx + vx / VL * (VL - 30), ay1 = sy + vy / VL * (VL - 30), ang = Math.atan2(vy, vx);
+      s += '<line x1="' + (sx + vx / VL * 36).toFixed(1) + '" y1="' + (sy + vy / VL * 36).toFixed(1) + '" x2="' + ax1.toFixed(1) + '" y2="' + ay1.toFixed(1) + '" stroke="#F2A72E" stroke-width="6" stroke-linecap="round" opacity=".8"/>';
+      s += '<path d="M' + ax1.toFixed(1) + ' ' + ay1.toFixed(1) +
+           ' L' + (ax1 - Math.cos(ang - 0.44) * 14).toFixed(1) + ' ' + (ay1 - Math.sin(ang - 0.44) * 14).toFixed(1) +
+           ' L' + (ax1 - Math.cos(ang + 0.44) * 14).toFixed(1) + ' ' + (ay1 - Math.sin(ang + 0.44) * 14).toFixed(1) +
+           ' Z" fill="#F2A72E" opacity=".9"/>';
+      for (var ry = 0; ry < 12; ry++) {
+        var an = ry * 30 * Math.PI / 180;
+        s += '<line x1="' + (sx + Math.cos(an) * 24).toFixed(1) + '" y1="' + (sy + Math.sin(an) * 24).toFixed(1) +
+             '" x2="' + (sx + Math.cos(an) * 32).toFixed(1) + '" y2="' + (sy + Math.sin(an) * 32).toFixed(1) +
+             '" stroke="#F3AC16" stroke-width="3" stroke-linecap="round"/>';
+      }
+      s += '<circle cx="' + sx + '" cy="' + sy + '" r="20" fill="url(#axSun)"/>';
+
+      /* the body */
+      var tanA = k * LEN, tip = pt(LEN, 0);
+      var capOut = [tip[0] + Math.sin(mirror ? -tanA : tanA) * HW * 0.9, tip[1] - Math.cos(tanA) * HW * 0.9];
+      var d = 'M' + f(R[0]);
+      R.forEach(function (p2) { d += ' L' + f(p2); });
+      d += ' Q' + f(capOut) + ' ' + f(L[K]);
+      for (var i2 = K; i2 >= 0; i2--) d += ' L' + f(L[i2]);
+      d += ' Z';
+      s += '<path d="' + d + '" fill="url(#axBody)" stroke="#2C6E36" stroke-width="2" stroke-linejoin="round"/>';
+
+      /* the cells: a chain of boxes down each edge. On a bend the outer chain is genuinely
+         longer than the inner one, which is the mechanism, not a decoration. */
+      function chain(sign) {
+        var g2 = '';
+        for (var i3 = 0; i3 < K; i3++) {
+          var s0 = LEN * i3 / K, s1 = LEN * (i3 + 1) / K;
+          var p1 = pt(s0, sign * HW), p2 = pt(s1, sign * HW), p3 = pt(s1, sign * (HW - CW)), p4 = pt(s0, sign * (HW - CW));
+          g2 += '<path d="M' + f(p1) + ' L' + f(p2) + ' L' + f(p3) + ' L' + f(p4) + ' Z" fill="#C6E2AC" stroke="#2C6E36" stroke-width="1.4"/>';
+        }
+        return g2;
+      }
+      s += chain(1) + chain(-1);
+
+      /* the auxin: grains inside the body, driven across to the shaded side as m rises */
+      for (var q = 0; q < 24; q++) {
+        var row = q % 12, shaded = q < 12;
+        var base = shaded ? -0.26 : 0.26, to = -0.30;
+        var u = (shaded ? base + (to - base) * 0 : base + (to - base) * m) + (shaded ? -0.04 * m : 0);
+        var jit = (((q * 31) % 9) - 4) / 70;
+        var p5 = pt(LEN * (row + 0.5) / 12, (u + jit) * WID);
+        s += '<circle cx="' + p5[0].toFixed(1) + '" cy="' + p5[1].toFixed(1) + '" r="3.2" fill="#F5A623" stroke="#B9761A" stroke-width=".9"/>';
+        s += '<circle cx="' + (p5[0] - 1).toFixed(1) + '" cy="' + (p5[1] - 1).toFixed(1) + '" r="1.05" fill="#FFE7B5"/>';
+      }
+
+      /* the ground, drawn last so the shoot sits in it */
+      s += '<rect x="0" y="' + GROUND + '" width="' + W + '" height="' + (H - GROUND) + '" fill="#E4D9C3"/>';
+      s += '<line x1="0" y1="' + GROUND + '" x2="' + W + '" y2="' + GROUND + '" stroke="#B79E74" stroke-width="2"/>';
+      s += '</svg>';
+      stage.innerHTML = s;
     }
-    var cur = { theta: 0, mirror: false, m: 0 }, raf = null;
+
     function go(side) {
-      wrap.querySelectorAll('.ax__lamp').forEach(function (b) { b.classList.toggle('is-on', b.dataset.side === side); });
-      var target = side === 'top' ? 0 : MAX, mirror = side === 'left';
-      if (side !== 'top') cur.mirror = mirror;   /* straightening keeps its direction */
-      if (raf) cancelAnimationFrame(raf); raf = null;
-      var from = cur.theta, fromM = cur.m, toM = side === 'top' ? 0 : 1, t0 = null;
-      if (still) { cur.theta = target; cur.m = toM; paint(cur.theta, cur.mirror, cur.m); }
-      else raf = requestAnimationFrame(function step(now) {
-        if (t0 == null) t0 = now;
-        var k = Math.min(1, (now - t0) / 1300), e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
-        cur.m = fromM + (toM - fromM) * Math.min(1, k * 1.6);   /* the auxin moves first; the growth follows */
-        cur.theta = from + (target - from) * e;
-        paint(cur.theta, cur.mirror, cur.m);
-        raf = k < 1 && wrap.isConnected ? requestAnimationFrame(step) : null;
-      });
-      say.textContent = side === 'top' ? 'auxin spread evenly: both sides grow the same, straight up' : 'auxin on the shaded side: those cells grow longer, and the tip turns to the light';
-      explain.innerHTML = side === 'top'
-        ? 'Light from above: the auxin made in the tip diffuses down both sides equally, both sides elongate at the same rate, and the shoot grows straight.'
-        : 'Light from the ' + side + ': the auxin moves to the <b>shaded</b> side. More auxin there stimulates more cell elongation on that side, so it grows faster than the lit side and the shoot bends <b>towards the light</b>. Look at the cells in the zone below the tip: the shaded side\'s are longer, and a stem whose one side is longer than the other can only curve. Nothing tilts at the base — the bend is growth. That is positive phototropism, and 14.5.5 in four steps.';
+      state.side = side;
+      bar.querySelectorAll('.ax__lamp').forEach(function (b) { b.classList.toggle('is-on', b.getAttribute('data-side') === side); });
+      /* Unmirrored, a positive curvature carries the tip to the RIGHT, and the long — shaded —
+         side is then the left, which is where the auxin gathers. So light from the right is the
+         unmirrored case and light from the LEFT is the mirrored one. Having this the wrong way
+         round bent the shoot away from the sun and put the auxin on the lit side: both wrong,
+         and both obvious the moment it was drawn. */
+      var target = side === 'top' ? 0 : 34 * Math.PI / 180, mirror = side === 'left', mTarget = side === 'top' ? 0 : 1;
+      why.innerHTML = side === 'top'
+        ? '<b>Light from straight above.</b> The auxin is spread evenly, so the cells on both sides grow by the same amount and the shoot grows straight up.'
+        : '<b>Light from the ' + side + '.</b> The auxin moves to the shaded side — the ' + (side === 'left' ? 'right' : 'left') +
+          '. There is more auxin there, so those cells take in more water and grow longer. One side longer than the other is a bend, and the bend is towards the light.';
+      if (state.t) clearInterval(state.t);
+      var still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (still) { state.theta = target; state.m = mTarget; draw(target, mirror, mTarget); return; }
+      var t0 = Date.now(), th0 = state.theta, m0 = state.m, MS = 1500;
+      state.t = setInterval(function () {
+        var f = Math.min(1, (Date.now() - t0) / MS), e = f < .5 ? 2 * f * f : 1 - Math.pow(-2 * f + 2, 2) / 2;
+        /* the auxin moves first, the bend follows it — cause before effect */
+        state.m = m0 + (mTarget - m0) * Math.min(1, e * 1.9);
+        state.theta = th0 + (target - th0) * e;
+        draw(state.theta, mirror, state.m);
+        if (f >= 1) { clearInterval(state.t); state.t = null; }
+      }, 40);
     }
-    wrap.querySelectorAll('.ax__lamp').forEach(function (b) { b.addEventListener('click', function () { go(b.dataset.side); }); });
-    box.appendChild(wrap); box.appendChild(explain); paint(0, false, 0); go('top');
+
+    go('top');
+    box.appendChild(h('p', 'widget__note', 'The bend is not drawn on: the cells on the shaded side are made longer in proportion to the auxin that has reached them, and a column with one side longer than the other can only be a curve.'));
+    box.__onReset = function () { if (state.t) clearInterval(state.t); };
     return box;
   }
 

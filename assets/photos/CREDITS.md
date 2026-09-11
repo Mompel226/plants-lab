@@ -81,7 +81,6 @@ The deck is the PowerPoint in `IGCSE Lessons/Y11/Plants/`, the slide is its numb
 | `cohesion-*` | 8.2–8.3 Water uptake and transpiration | 4 |
 | `leaf-water-path-*` | 8.4 Translocation | 1 |
 | `tropism-cartoon-*` | 14.5 Tropic responses | 1 |
-| `auxin-elongation-*` | 14.5 Tropic responses | 7 |
 | `plant-on-side-*` | 14.5 Tropic responses | 10 |
 | `plant-on-side-grown-*` | 14.5 Tropic responses | 11 |
 | `lily-anthers-*` | 16.3 Plant reproduction | 11 |
