@@ -238,7 +238,14 @@
       li.innerHTML = badge + M(txt);
       list.appendChild(li);
       /* the thing to press, drag or count sits under the sentence it belongs to */
-      widgets.filter(function (w) { return w.after === i; }).forEach(function (w) { li.appendChild(window.Learn.widget(w, WIDGET_CTX)); });
+      widgets.filter(function (w) { return w.after === i; }).forEach(function (w) {
+        var el = window.Learn.widget(w, WIDGET_CTX);
+        /* A tall, narrow diagram set under the sentence leaves a column of empty paper beside it.
+           Put it FIRST instead and let the sentence close round it — css floats it into the
+           margin. Everything else still sits under the sentence it belongs to. */
+        if (el && el.classList && el.classList.contains('photo--portrait')) li.insertBefore(el, li.firstChild);
+        else li.appendChild(el);
+      });
     });
     widgets.filter(function (w) { return w.after == null; }).forEach(function (w) { card.appendChild(window.Learn.widget(w, WIDGET_CTX)); });
 

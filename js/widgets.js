@@ -291,7 +291,13 @@
 
   /* ---------- photo: a photograph with its credit, full size on a click ---------- */
   function photo(spec) {
-    var f = h('figure', 'photo' + (spec.small ? ' photo--small' : '')); if (spec.group) f.setAttribute('data-group', spec.group);   /* small: a low-resolution diagram drawn at its own size, not blown up */
+    /* A portrait picture set full width leaves a column of empty paper beside it — worst on a
+       tall, narrow diagram like a xylem vessel or a sieve tube. Those are marked so the page can
+       stand them beside the prose instead. The shape is known before the file loads, from the
+       sizes the build wrote, so nothing moves once it arrives. */
+    var wh0 = sizeOf(spec.img + '-900.jpg') || sizeOf(spec.img);
+    var tall = wh0 && wh0[0] && wh0[1] / wh0[0] > 1.15;
+    var f = h('figure', 'photo' + (spec.small ? ' photo--small' : '') + (tall ? ' photo--portrait' : '')); if (spec.group) f.setAttribute('data-group', spec.group);   /* small: a low-resolution diagram drawn at its own size, not blown up */
     var pic = picture(spec);
     if (pic) {
       f.appendChild(pic.pic);

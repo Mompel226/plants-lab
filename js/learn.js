@@ -1233,7 +1233,7 @@
 
   /* ---------- trunk: a tree cut across — cork, phloem, cambium, and the rings of xylem it makes (opens from the words) ---------- */
   function trunkSvg() {
-    var cx = 132, cy = 196, s = '<svg viewBox="0 0 440 372" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A tree trunk cut across: bark on the outside, then a thin layer of phloem, the cambium, and ring after ring of xylem, the oldest at the centre">';
+    var cx = 132, cy = 196, s = '<svg viewBox="0 0 484 372" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A tree trunk cut across: bark on the outside, then a thin layer of phloem, the cambium, and ring after ring of xylem, the oldest at the centre">';
     function ring(r, fill, stroke) { return '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="' + fill + '"' + (stroke ? ' stroke="' + stroke + '" stroke-width="1"' : '') + '/>'; }
     function txt(x, y, t, size, weight, fill, anchor) { return '<text x="' + x + '" y="' + y + '" font-size="' + size + '"' + (weight ? ' font-weight="' + weight + '"' : '') + ' fill="' + fill + '"' + (anchor ? ' text-anchor="' + anchor + '"' : '') + '>' + t + '</text>'; }
     function lead(ang, r, x, y) { var a = ang * Math.PI / 180, px = cx + r * Math.cos(a), py = cy + r * Math.sin(a); return '<line x1="' + px.toFixed(1) + '" y1="' + py.toFixed(1) + '" x2="' + x + '" y2="' + y + '" stroke="#1F2A24" stroke-width="1"/><circle cx="' + px.toFixed(1) + '" cy="' + py.toFixed(1) + '" r="2.6" fill="#1F2A24"/>'; }
@@ -1244,12 +1244,17 @@
     var r = 100, k = 0;                                         /* the rings: pale, wide spring wood, then darker, narrow summer wood — one pair a year */
     while (r > 34) { var w = 9 - k * 0.35, sw = 3; s += ring(r, '#E8D6B0') + ring(r - w + sw, '#B9895A'); r -= w; k++; }
     s += ring(r, '#9A6A45') + ring(4, '#5B3E27');               /* heartwood: old xylem, then the pith */
+    /* The label column must start clear of the bark. The trunk is centred at x=132 with an
+       outer radius of 124, so it reaches x=256; the labels used to begin at 250 and every one
+       of them sat on the bark. LABEL_X is the one number that governs it, and the viewBox is
+       wide enough for the longest line ("Xylem = wood, a ring a year:", bold) beside it. */
+    var LABEL_X = 268;
     var L = [
-      [-38, 121, 250, 60, ['Bark: cork on the outside —', 'dead, waterproof cells']],
-      [-20, 108, 250, 114, ['Phloem: a thin living layer', 'just under the bark']],
-      [-4, 103, 250, 168, ['Cambium: one layer of', 'dividing cells — new xylem', 'inwards, new phloem outwards']],
-      [22, 78, 250, 236, ['Xylem = wood, a ring a year:', 'pale wide spring wood, then', 'darker narrow summer wood']],
-      [48, 22, 250, 300, ['Heartwood: old xylem, no', 'longer carrying water']]
+      [-38, 121, LABEL_X, 60, ['Bark: cork on the outside —', 'dead, waterproof cells']],
+      [-20, 108, LABEL_X, 114, ['Phloem: a thin living layer', 'just under the bark']],
+      [-4, 103, LABEL_X, 168, ['Cambium: one layer of', 'dividing cells — new xylem', 'inwards, new phloem outwards']],
+      [22, 78, LABEL_X, 236, ['Xylem = wood, a ring a year:', 'pale wide spring wood, then', 'darker narrow summer wood']],
+      [48, 22, LABEL_X, 300, ['Heartwood: old xylem, no', 'longer carrying water']]
     ];
     L.forEach(function (e) { s += lead(e[0], e[1], e[2] - 6, e[3] - 4); e[4].forEach(function (t, i) { s += txt(e[2], e[3] + i * 16, t, 13.2, i === 0 ? 700 : 0, i === 0 ? '#1F2A24' : '#5B6B63'); }); });
     s += txt(16, 344, 'Each year the cambium adds one ring of xylem: that is how a trunk', 13.2, 0, '#5B6B63') + txt(16, 360, 'thickens, and why the rings count its years.', 13.2, 0, '#5B6B63');
