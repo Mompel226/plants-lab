@@ -988,8 +988,7 @@ picture{display:block;line-height:0}
 /* ---------- indicator: the rack of tubes ---------- */
 .ind__stage{background:#fff;border:1px solid var(--edge);border-radius:var(--r);padding:6px 8px;overflow-x:auto}
 .ind__stage svg{width:100%;height:auto;display:block;min-width:420px}
-.ind__grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
-@media (max-width:640px){.ind__grid{grid-template-columns:repeat(2,1fr)}}
+.ind__grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px}
 .ind__card{background:#fff;border:1px solid var(--edge);border-radius:var(--r);padding:9px 11px;display:grid;gap:5px}
 .ind__n{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--grey)}
 .ind__card label{font-size:12px;color:#5B5B5B;display:grid;gap:3px}
@@ -997,6 +996,12 @@ picture{display:block;line-height:0}
 .ind__say{margin:2px 0 0;font-size:12.5px;line-height:1.45;color:#3C3C3C;border-left:3px solid var(--c);padding-left:8px}
 .ind__why{font:inherit;font-size:11.5px;font-weight:600;color:#fff;background:var(--k-food);border:0;border-radius:var(--r-pill);padding:2px 10px;margin-left:3px;cursor:pointer}
 .ind__why:hover{filter:brightness(1.08)}
+.ind__verdict{margin-top:11px;font-size:13.5px;line-height:1.55;color:#3C3C3C;border-radius:var(--r);padding:10px 13px;border:1px solid}
+.ind__verdict.is-ok{background:#F2F9F4;border-color:#BEDCC7}
+.ind__verdict.is-ok b{color:#2F7040}
+.ind__verdict.is-no{background:var(--amber-tint);border-color:#E6D6AE}
+.ind__verdict.is-no b{color:var(--k-food)}
+.ind__vbody b{color:var(--ink)}
 .ind__note{margin-top:10px;font-size:13.5px;line-height:1.55;color:#3C3C3C;background:var(--amber-tint);
            border:1px solid #E6D6AE;border-radius:var(--r);padding:10px 13px}
 .ind__note b{color:var(--k-food)}

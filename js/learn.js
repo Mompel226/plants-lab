@@ -868,129 +868,137 @@
   }
   function toast(m) { var t = document.getElementById('toast'); if (!t) return; t.textContent = m; t.classList.add('show'); setTimeout(function () { t.classList.remove('show'); }, 2200); }
 
-  /* ---------- indicator: three tubes ---------- */
-  /* ---------- indicator: hydrogencarbonate indicator, with immobilised algae ----------
-     Algal balls rather than pondweed, which is how the practical is set up now: algae trapped in
-     alginate beads are standard, countable, and add nothing but themselves to the tube — with a
-     sprig of weed you can never say how much plant is in each tube.
+  /* ---------- indicator: two tubes, and whether the pair is a fair test ----------
+     Four tubes that each had their own settings was incoherent — nothing stopped a reader making
+     all four identical, and then there was nothing to compare. Two tubes, set freely, is the real
+     shape of the experiment: you choose ONE comparison and you have to be able to say what it
+     shows.
 
-     Four tubes, because three is not enough to make the point. The fourth sits in dim light and
-     lands back on orange-red, which students read as "nothing happened". Something did: at that
-     light intensity photosynthesis and respiration are running at the same rate, so there is no
-     NET change. That tube is the compensation point, and it is the one worth arguing about.
-
-     The reading is given; the reasoning waits behind a press. */
+     So the verdict is on the PAIR, not on the tubes. Change one thing between them and it names
+     what that pair proves. Change two and it says so, because a pair differing in two ways proves
+     nothing whichever way the colours come out — which is the whole idea of a controlled
+     comparison, and much harder to teach from a sentence than from a reader doing it. */
   function indicator(spec) {
     var box = h('div', 'widget');
     box.appendChild(head(spec.title || 'Hydrogencarbonate indicator',
-      spec.ask || 'Four tubes of indicator. Decide what goes in each and where it stands, then read the colours — and say what each one proves.',
-      'Set the tubes'));
+      spec.ask || 'Two tubes. Set each one, then read what the pair does — and does not — prove.',
+      'Compare two tubes'));
 
     var COL = { purple: '#8E63B8', orange: '#E2733A', yellow: '#E3C63C' };
-    var TUBES = [
-      { what: 'algae', where: 'light' },
-      { what: 'algae', where: 'dim' },
-      { what: 'algae', where: 'dark' },
-      { what: 'none',  where: 'light' }
-    ];
+    var WHERE = { light: 'bright light', dim: 'dim light', dark: 'the dark' };
+    var T = [{ what: 'algae', where: 'light' }, { what: 'none', where: 'light' }];
+
     function readOf(t) {
-      if (t.what === 'none') return { c: 'orange', name: 'orange-red', short: 'No change — this is the control.',
-        why: 'Nothing living is in the tube, so nothing could add or remove carbon dioxide. It shows that the colour changes in the other tubes were caused by the algae and not by the light, the warmth or the glass. Every one of these experiments needs one.' };
-      if (t.where === 'light') return { c: 'purple', name: 'purple', short: 'Carbon dioxide has gone DOWN.',
-        why: 'In bright light photosynthesis is faster than respiration. The algae are using carbon dioxide faster than they make it, so the concentration in the solution falls and the indicator turns purple. Note what it does NOT mean: the algae are still respiring the whole time.' };
-      if (t.where === 'dark') return { c: 'yellow', name: 'yellow', short: 'Carbon dioxide has gone UP.',
-        why: 'In the dark there is no photosynthesis at all, but respiration never stops — so carbon dioxide is added to the solution and nothing takes it away. The indicator turns yellow. This is the tube that proves plants respire, which is the part students forget.' };
-      return { c: 'orange', name: 'orange-red', short: 'No NET change — and that is not the same as nothing happening.',
-        why: 'At this light intensity photosynthesis and respiration are going at exactly the same rate, so carbon dioxide is being used as fast as it is made and the concentration does not change. Both processes are running hard. This is the <b>compensation point</b>, and reading it as "nothing happened" is the commonest mistake on this experiment.' };
+      if (t.what === 'none') return { c: 'orange', name: 'orange-red', say: 'no change' };
+      if (t.where === 'light') return { c: 'purple', name: 'purple', say: 'carbon dioxide down' };
+      if (t.where === 'dark') return { c: 'yellow', name: 'yellow', say: 'carbon dioxide up' };
+      return { c: 'orange', name: 'orange-red', say: 'no NET change' };
+    }
+
+    /* what the pair, taken together, is evidence for */
+    function verdict() {
+      var a = T[0], b = T[1];
+      var sameWhat = a.what === b.what, sameWhere = a.where === b.where;
+      if (sameWhat && sameWhere) return { ok: false, head: 'The two tubes are identical.',
+        body: 'There is nothing to compare. A comparison needs exactly one thing to differ between them.' };
+      if (!sameWhat && !sameWhere) return { ok: false, head: 'Two things differ at once.',
+        body: 'The tubes have different contents AND stand in different light. If the colours come out different you cannot say which of the two caused it. Change one thing only — that is what makes it a <b>fair test</b>.' };
+      if (a.what === 'none' && b.what === 'none') return { ok: false, head: 'Neither tube has anything living in it.',
+        body: 'Nothing can add or remove carbon dioxide, so neither tube can change. You need algae in at least one of them.' };
+      if (sameWhere) {                                   /* plant against no plant */
+        var w = WHERE[a.where];
+        return { ok: true, head: 'A fair test: algae against no algae, both in ' + w + '.',
+          body: 'This is the pair that shows the colour change was caused by the <b>algae</b> and not by the light, the warmth or the glass. The tube with nothing in it is the <b>control</b>, and every version of this experiment needs one.' };
+      }
+      /* same contents, different light */
+      if (a.what === 'none') return { ok: false, head: 'Two empty tubes in different light.',
+        body: 'Neither can change, so the pair shows only that light alone does not affect the indicator. True, but not what the experiment is for — put algae in them.' };
+      var pair = [a.where, b.where].sort().join('+');
+      if (pair === 'dark+light') return { ok: true, head: 'A fair test: the same algae, bright light against darkness.',
+        body: 'Purple against yellow. In the light photosynthesis outruns respiration and carbon dioxide falls; in the dark there is no photosynthesis at all, only <b>respiration</b>, so carbon dioxide rises. The dark tube is the one that proves plants respire — the part students forget.' };
+      if (pair === 'dim+light') return { ok: true, head: 'A fair test: the same algae, bright light against dim.',
+        body: 'Purple against orange-red. Both tubes are photosynthesising and respiring; only the rate of photosynthesis differs. The dim tube has reached its <b>compensation point</b> — the two processes are equal, so there is no NET change. "No colour change" is not "nothing happening".' };
+      return { ok: true, head: 'A fair test: the same algae, dim light against darkness.',
+        body: 'Orange-red against yellow. In the dark only respiration runs, so carbon dioxide rises. In dim light photosynthesis has caught up with respiration exactly — the <b>compensation point</b> — so the concentration holds steady. The difference between the two tubes is photosynthesis.' };
     }
 
     var stage = h('div', 'ind__stage');
     box.appendChild(stage);
     var grid = h('div', 'ind__grid');
     box.appendChild(grid);
-    var note = h('div', 'ind__note'); note.hidden = true;
-    box.appendChild(note);
+    var sayEl = h('div', 'ind__verdict');
+    box.appendChild(sayEl);
 
     function paintStage() {
-      var W = 560, H = 246, x0 = 76, gap = 136;
-      var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Four boiling tubes of hydrogencarbonate indicator in a rack, three with algal balls in bright light, dim light and darkness, and one with no algae as a control">';
+      var W = 460, H = 248, xs = [150, 310];
+      var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Two boiling tubes of hydrogencarbonate indicator, one holding algal balls">';
       s += '<defs><linearGradient id="indGlass" x1="0" y1="0" x2="1" y2="0">' +
         '<stop offset="0" stop-color="#fff" stop-opacity=".4"/><stop offset=".2" stop-color="#fff" stop-opacity=".04"/>' +
         '<stop offset=".82" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity=".26"/></linearGradient>' +
         '<filter id="indSoft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.6"/></filter></defs>';
-
-      TUBES.forEach(function (t, i) {
-        var cx = x0 + i * gap, r = readOf(t);
-        var TW = 40, TX = cx - TW / 2, TTOP = 34, TBOT = 200, LIQ = 62;
-        s += '<ellipse cx="' + cx + '" cy="' + (TBOT + 6) + '" rx="20" ry="4" fill="#000" opacity=".08" filter="url(#indSoft)"/>';
-        /* the tube */
-        s += '<path d="M' + TX + ' ' + TTOP + ' L' + TX + ' ' + (TBOT - 16) + ' Q' + TX + ' ' + TBOT + ' ' + cx + ' ' + TBOT +
-             ' Q' + (TX + TW) + ' ' + TBOT + ' ' + (TX + TW) + ' ' + (TBOT - 16) + ' L' + (TX + TW) + ' ' + TTOP + '" fill="#F4FAFD" stroke="#7BA0B3" stroke-width="2.2"/>';
-        /* the indicator solution */
-        s += '<path d="M' + (TX + 2) + ' ' + LIQ + ' Q' + cx + ' ' + (LIQ - 4) + ' ' + (TX + TW - 2) + ' ' + LIQ +
-             ' L' + (TX + TW - 2) + ' ' + (TBOT - 17) + ' Q' + (TX + TW - 2) + ' ' + (TBOT - 2) + ' ' + cx + ' ' + (TBOT - 2) +
-             ' Q' + (TX + 2) + ' ' + (TBOT - 2) + ' ' + (TX + 2) + ' ' + (TBOT - 17) + ' Z" fill="' + COL[r.c] + '" fill-opacity=".82"/>';
-        /* algal balls, settled at the bottom */
+      T.forEach(function (t, i) {
+        var cx = xs[i], r = readOf(t);
+        var TW = 52, TX = cx - TW / 2, TTOP = 42, TBOT = 202, LIQ = 74;
+        s += '<ellipse cx="' + cx + '" cy="' + (TBOT + 7) + '" rx="25" ry="4.5" fill="#000" opacity=".08" filter="url(#indSoft)"/>';
+        s += '<path d="M' + TX + ' ' + TTOP + ' L' + TX + ' ' + (TBOT - 20) + ' Q' + TX + ' ' + TBOT + ' ' + cx + ' ' + TBOT +
+             ' Q' + (TX + TW) + ' ' + TBOT + ' ' + (TX + TW) + ' ' + (TBOT - 20) + ' L' + (TX + TW) + ' ' + TTOP + '" fill="#F4FAFD" stroke="#7BA0B3" stroke-width="2.4"/>';
+        s += '<path d="M' + (TX + 2) + ' ' + LIQ + ' Q' + cx + ' ' + (LIQ - 5) + ' ' + (TX + TW - 2) + ' ' + LIQ +
+             ' L' + (TX + TW - 2) + ' ' + (TBOT - 21) + ' Q' + (TX + TW - 2) + ' ' + (TBOT - 2) + ' ' + cx + ' ' + (TBOT - 2) +
+             ' Q' + (TX + 2) + ' ' + (TBOT - 2) + ' ' + (TX + 2) + ' ' + (TBOT - 21) + ' Z" fill="' + COL[r.c] + '" fill-opacity=".82"/>';
         if (t.what === 'algae') {
-          [[cx - 9, 178], [cx + 2, 181], [cx + 11, 177], [cx - 3, 170], [cx + 8, 168], [cx - 11, 167]].forEach(function (b, k) {
-            s += '<circle cx="' + b[0] + '" cy="' + b[1] + '" r="5.4" fill="' + (k % 2 ? '#4F9E56' : '#5CB165') + '" stroke="#2F7040" stroke-width=".9"/>';
-            s += '<circle cx="' + (b[0] - 1.7) + '" cy="' + (b[1] - 1.9) + '" r="1.5" fill="#BFE8C2" opacity=".8"/>';
+          [[cx - 13, 182], [cx + 1, 186], [cx + 15, 181], [cx - 5, 172], [cx + 10, 169], [cx - 16, 169], [cx + 2, 174]].forEach(function (b, k) {
+            s += '<circle cx="' + b[0] + '" cy="' + b[1] + '" r="6.6" fill="' + (k % 2 ? '#4F9E56' : '#5CB165') + '" stroke="#2F7040" stroke-width="1"/>';
+            s += '<circle cx="' + (b[0] - 2.1) + '" cy="' + (b[1] - 2.3) + '" r="1.9" fill="#BFE8C2" opacity=".8"/>';
           });
         }
-        /* the bung */
-        s += '<path d="M' + (TX - 3) + ' ' + TTOP + ' L' + (TX + TW + 3) + ' ' + TTOP + ' L' + (TX + TW) + ' ' + (TTOP - 15) + ' L' + TX + ' ' + (TTOP - 15) + ' Z" fill="#D8C3A0" stroke="#A88C5F" stroke-width="1.5" stroke-linejoin="round"/>';
-        /* glass over the liquid */
-        s += '<path d="M' + TX + ' ' + TTOP + ' L' + TX + ' ' + (TBOT - 16) + ' Q' + TX + ' ' + TBOT + ' ' + cx + ' ' + TBOT +
-             ' Q' + (TX + TW) + ' ' + TBOT + ' ' + (TX + TW) + ' ' + (TBOT - 16) + ' L' + (TX + TW) + ' ' + TTOP + '" fill="url(#indGlass)"/>';
-        s += '<path d="M' + (TX + 7) + ' ' + (LIQ + 12) + ' L' + (TX + 7) + ' ' + (TBOT - 34) + '" stroke="#fff" stroke-width="2.6" opacity=".5" stroke-linecap="round"/>';
-        /* wrapped in foil, for the dark tube */
-        if (t.where === 'dark' ) {
-          s += '<rect x="' + (TX - 3) + '" y="86" width="' + (TW + 6) + '" height="74" rx="2" fill="#C9CCD1" stroke="#93989F" stroke-width="1.4"/>';
-          for (var f = 0; f < 5; f++) s += '<line x1="' + (TX + 1 + f * 9) + '" y1="88" x2="' + (TX - 1 + f * 9) + '" y2="158" stroke="#AEB2B8" stroke-width="1"/>';
-          s += '<text x="' + cx + '" y="' + 79 + '" font-size="9" fill="#6B6F75" text-anchor="middle" font-family="ui-monospace,monospace">FOIL</text>';
-        }
-        /* how much light it stands in */
-        if (t.where !== 'dark') {
+        s += '<path d="M' + (TX - 4) + ' ' + TTOP + ' L' + (TX + TW + 4) + ' ' + TTOP + ' L' + (TX + TW) + ' ' + (TTOP - 18) + ' L' + TX + ' ' + (TTOP - 18) + ' Z" fill="#D8C3A0" stroke="#A88C5F" stroke-width="1.6" stroke-linejoin="round"/>';
+        s += '<path d="M' + TX + ' ' + TTOP + ' L' + TX + ' ' + (TBOT - 20) + ' Q' + TX + ' ' + TBOT + ' ' + cx + ' ' + TBOT +
+             ' Q' + (TX + TW) + ' ' + TBOT + ' ' + (TX + TW) + ' ' + (TBOT - 20) + ' L' + (TX + TW) + ' ' + TTOP + '" fill="url(#indGlass)"/>';
+        s += '<path d="M' + (TX + 9) + ' ' + (LIQ + 14) + ' L' + (TX + 9) + ' ' + (TBOT - 42) + '" stroke="#fff" stroke-width="3" opacity=".5" stroke-linecap="round"/>';
+        if (t.where === 'dark') {
+          s += '<rect x="' + (TX - 4) + '" y="88" width="' + (TW + 8) + '" height="82" rx="2" fill="#C9CCD1" stroke="#93989F" stroke-width="1.5"/>';
+          for (var f = 0; f < 6; f++) s += '<line x1="' + (TX + f * 10) + '" y1="90" x2="' + (TX - 2 + f * 10) + '" y2="168" stroke="#AEB2B8" stroke-width="1"/>';
+          s += '<text x="' + cx + '" y="81" font-size="9.5" fill="#6B6F75" text-anchor="middle" font-family="ui-monospace,monospace">FOIL</text>';
+        } else {
           var lum = t.where === 'light' ? 1 : 0.34;
-          s += '<circle cx="' + cx + '" cy="18" r="11" fill="#FFE9A8" opacity="' + lum.toFixed(2) + '"/>';
+          s += '<circle cx="' + cx + '" cy="16" r="12" fill="#FFE9A8" opacity="' + lum.toFixed(2) + '"/>';
           for (var a2 = 0; a2 < 8; a2++) {
             var an = a2 * 45 * Math.PI / 180;
-            s += '<line x1="' + (cx + Math.cos(an) * 13).toFixed(1) + '" y1="' + (18 + Math.sin(an) * 13).toFixed(1) + '" x2="' + (cx + Math.cos(an) * (t.where === 'light' ? 19 : 16)).toFixed(1) + '" y2="' + (18 + Math.sin(an) * (t.where === 'light' ? 19 : 16)).toFixed(1) + '" stroke="#E8B94A" stroke-width="1.6" opacity="' + lum.toFixed(2) + '" stroke-linecap="round"/>';
+            s += '<line x1="' + (cx + Math.cos(an) * 14).toFixed(1) + '" y1="' + (16 + Math.sin(an) * 14).toFixed(1) + '" x2="' + (cx + Math.cos(an) * (t.where === 'light' ? 21 : 17)).toFixed(1) + '" y2="' + (16 + Math.sin(an) * (t.where === 'light' ? 21 : 17)).toFixed(1) + '" stroke="#E8B94A" stroke-width="1.8" opacity="' + lum.toFixed(2) + '" stroke-linecap="round"/>';
           }
         }
-        /* the colour read off, under the tube */
-        s += '<text x="' + cx + '" y="236" font-size="11.5" font-weight="700" fill="' + COL[r.c] + '" text-anchor="middle">' + esc(r.name) + '</text>';
+        s += '<text x="' + cx + '" y="' + (H - 16) + '" font-size="12.5" font-weight="700" fill="' + COL[r.c] + '" text-anchor="middle">' + esc(r.name) + '</text>';
+        s += '<text x="' + cx + '" y="' + (H - 3) + '" font-size="10" fill="#6B6B63" text-anchor="middle">' + esc(r.say) + '</text>';
       });
-      /* no rack: the tubes are the subject, and a rack only hides their contents */
-      s += '</svg>';
       stage.innerHTML = s;
     }
 
     function paintGrid() {
       grid.innerHTML = '';
-      TUBES.forEach(function (t, i) {
-        var card = h('div', 'ind__card'), r = readOf(t);
-        card.innerHTML =
-          '<span class="ind__n">Tube ' + (i + 1) + '</span>' +
-          '<label>In it <select data-k="what"><option value="algae">algal balls</option><option value="none">nothing (control)</option></select></label>' +
-          '<label>Kept in <select data-k="where"><option value="light">bright light</option><option value="dim">dim light</option><option value="dark">the dark</option></select></label>' +
-          '<p class="ind__say" style="--c:' + COL[r.c] + '">' + esc(r.short) + ' <button type="button" class="ind__why">Why?</button></p>';
+      T.forEach(function (t, i) {
+        var card = h('div', 'ind__card');
+        card.innerHTML = '<span class="ind__n">Tube ' + (i + 1) + '</span>' +
+          '<label>In it <select data-k="what"><option value="algae">algal balls</option><option value="none">nothing</option></select></label>' +
+          '<label>Kept in <select data-k="where"><option value="light">bright light</option><option value="dim">dim light</option><option value="dark">the dark</option></select></label>';
         card.querySelector('[data-k="what"]').value = t.what;
         card.querySelector('[data-k="where"]').value = t.where;
         card.querySelectorAll('select').forEach(function (sel) {
-          sel.addEventListener('change', function () { t[sel.getAttribute('data-k')] = sel.value; note.hidden = true; paintStage(); paintGrid(); });
-        });
-        card.querySelector('.ind__why').addEventListener('click', function () {
-          note.hidden = false;
-          note.innerHTML = '<b>Tube ' + (i + 1) + ' — ' + esc(r.name) + '.</b> ' + r.why;
+          sel.addEventListener('change', function () { t[sel.getAttribute('data-k')] = sel.value; paintAll(); });
         });
         grid.appendChild(card);
       });
     }
 
-    paintStage(); paintGrid();
-    box.appendChild(h('p', 'widget__note', 'The indicator starts orange-red, the colour it takes with the carbon dioxide in ordinary air. It answers one question only: has the carbon dioxide gone up, gone down, or not changed?'));
-    box.__onReset = function () { TUBES[0] = { what: 'algae', where: 'light' }; };
+    function paintVerdict() {
+      var v = verdict();
+      sayEl.className = 'ind__verdict' + (v.ok ? ' is-ok' : ' is-no');
+      sayEl.innerHTML = '<b>' + esc(v.head) + '</b> <span class="ind__vbody">' + v.body + '</span>';
+    }
+
+    function paintAll() { paintStage(); paintVerdict(); }
+    paintGrid(); paintAll();
+    box.appendChild(h('p', 'widget__note', 'The indicator starts orange-red, the colour it takes with the carbon dioxide in ordinary air, and answers one question only: has the carbon dioxide gone up, down, or not changed? Try to build a pair that shows the algae photosynthesise; then one that shows they respire; then one that proves the algae caused it.'));
+    box.__onReset = function () { T[0] = { what: 'algae', where: 'light' }; T[1] = { what: 'none', where: 'light' }; };
     return box;
   }
 
@@ -2018,7 +2026,21 @@
     'water': { svg: waterSvg() },
     'trunk': { svg: trunkSvg() }
   };
-  function svgFor(name) { return DIAGRAMS[name] ? DIAGRAMS[name].svg : ''; }
+  /* A drawing may be several panels tall. "water#cohesion" crops the viewBox to that panel, so
+     a reader who clicked "cohesion" is shown cohesion rather than the top of the sheet and a
+     scrollbar they may not notice. The panels are declared beside the drawing. */
+  var PANELS = {
+    water: { charges: [0, 0, 440, 198], polar: [0, 196, 440, 154],
+             cohesion: [0, 348, 440, 182], adhesion: [0, 530, 440, 154] }
+  };
+  function svgFor(name) {
+    var part = null, i = String(name).indexOf('#');
+    if (i > 0) { part = name.slice(i + 1); name = name.slice(0, i); }
+    var d = DIAGRAMS[name]; if (!d) return '';
+    var box = part && PANELS[name] && PANELS[name][part];
+    if (!box) return d.svg;
+    return d.svg.replace(/viewBox="[^"]*"/, 'viewBox="' + box.join(' ') + '"');
+  }
 
   function diagram(spec) {
     var box = h('div', 'widget');
