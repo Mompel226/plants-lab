@@ -4,7 +4,7 @@
 
 **Cambridge IGCSE Biology 0610 · the plant topics — 6, 8, 14.5, 16.3 and 18.2**
 
-[![Open the lab](https://img.shields.io/badge/▶_Open_the_lab-0969DA?style=for-the-badge&logoColor=white)](https://mompel226.github.io/plants-lab/)
+[![Open the lab](https://img.shields.io/badge/▶_Open_the_lab-0969DA?style=for-the-badge&logoColor=white)](https://nlcsbiology.com/plants-lab/)
 
 ![12 stations](https://img.shields.io/badge/12-stations-3D7A54)
 ![107 questions](https://img.shields.io/badge/107-questions-8F5D09)
@@ -42,8 +42,8 @@ the pictures from the lessons, the videos, and questions that say right or wrong
 
 ## Where it sits
 
-Behind the [Plants Hub](https://mompel226.github.io/plants-hub/), one shelf of the
-[Biology Hub](https://mompel226.github.io/biology-hub/) — the front door to every Biology app
+Behind the [Plants Hub](https://nlcsbiology.com/plants-hub/), one shelf of the
+[Biology Hub](https://nlcsbiology.com/biology-hub/) — the front door to every Biology app
 here. The **← Plants** button goes back up, and a stage of the plant on that hub opens the
 matching station here.
 
@@ -59,7 +59,7 @@ matching station here.
 
 **One plant, two places.** The plant on the left is not a picture — it is drawn by the page from a
 single written description of its parts and the stages it grows through. That same description
-draws the plant on the [Plants Hub](https://mompel226.github.io/plants-hub/), so both show exactly
+draws the plant on the [Plants Hub](https://nlcsbiology.com/plants-hub/), so both show exactly
 the same plant and correcting it once corrects it in both. Each station lights the part it is
 about, flies to it, and where it helps, sets the sap running or the leaves breathing.
 
