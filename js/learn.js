@@ -2331,14 +2331,19 @@
          of grains never changes, only where they end up, which is the point Briggs settled. */
       if (M.made > 0) {
         var N = 26, nL = Math.round(N * M.fL), sTop = flat ? bodyTop - 6 : g.LEN - 14;
+        var level = Math.abs(M.fR - M.fL) < 0.04;          /* nothing has pushed it to one side */
         var blockL = S.mica === 'left', blockR = S.mica === 'right';
         for (var q = 0; q < N; q++) {
           var side = q < nL ? -1 : 1;
           /* Two low-discrepancy sequences instead of modular arithmetic. `(q*53)%100` kept
              landing grains on the same few heights, which is what made it look clumped. */
           var a1 = frac((q + 0.5) * 0.6180339887), b1 = frac((q + 0.5) * 0.7548776662);
-          var uEven = (a1 * 2 - 1) * HW * 0.58;              /* where it starts: even across the tip */
-          var uSide = side * HW * (0.06 + 0.46 * b1);        /* where it ends: spread right through that flank, not threaded along its edge */
+          var uEven = (a1 * 2 - 1) * HW * 0.54;              /* where it starts: even across the tip */
+          /* Evenly spread means one cloud across the whole width. Unequally distributed means two
+             groups, each held out against its own flank, so the fuller one is plainly the fuller
+             one. Sharing one central band made a 2:1 split look like no split at all. */
+          var uSide = level ? (b1 * 2 - 1) * HW * 0.54
+                            : side * HW * (0.20 + 0.34 * b1);
           var u2 = uEven + (uSide - uEven) * lat;
           var stopped = (side < 0 && blockL) || (side > 0 && blockR);
           var sEnd = stopped ? g.ZONE1 + 10 + b1 * 24        /* held up above the plate, in a queue */
@@ -2566,7 +2571,7 @@
     /* Start and Reset sit directly under the controls, where the settings are made — not in
        the header. You set the apparatus up and then start it, which is the order the experiment
        happens in, and it is the difference between watching the run and scrolling past it. */
-    var goBtn = h('button', 'ax__go', '▶ Start');
+    var goBtn = h('button', 'ax__go', '↻ Run it again');
     goBtn.type = 'button';
     goBtn.addEventListener('click', run);
     var resetBtn = h('button', 'ax__rst', '↺ Reset');
@@ -2602,6 +2607,15 @@
         target.appendChild(pack);
       }
       box.classList.toggle('ax--split', !!wide);
+      /* On a phone the drawing is pinned above the controls instead, so it is in view while they
+         are changed. Either way the effect is seen as it happens and the button is not needed;
+         only the Practise column, where the questions push the drawing below the fold, keeps it. */
+      box.classList.toggle('ax--pinned', !wide && !owned() && !wideQ.matches);
+      if (pack.parentNode === slot) {
+        var first = !wide && !owned() && !wideQ.matches;
+        if (first && wrap.firstChild !== slot) wrap.insertBefore(slot, wrap.firstChild);
+        if (!first && wrap.firstChild === slot) wrap.appendChild(slot);
+      }
       if (!wide && staged !== null) { staged = null; if (global.Plate && global.Plate.stageSim) global.Plate.stageSim(false); }
       if (wide) { staged = null; look(); }
     }

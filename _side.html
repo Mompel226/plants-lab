@@ -1,0 +1,22 @@
+<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="css/app.css">
+<style>body{margin:0;background:#fff}.c{padding:8px 14px;border-bottom:2px solid #ddd}.c h2{font:700 12px system-ui;color:#B00;margin:0 0 4px}</style>
+<div id="o"></div>
+<script src="js/data/glossary.js"></script><script src="js/data/photos.js"></script>
+<script src="js/plant.js"></script><script src="js/plant-draw.js"></script>
+<script src="js/terms.js"></script><script src="js/widgets.js"></script><script src="js/learn.js"></script>
+<script>
+var CASES=JSON.parse(decodeURIComponent(location.hash.slice(1)||'%5B%5D'));
+var out=document.getElementById('o');
+CASES.forEach(function(c){
+  var d=document.createElement('div'); d.className='c';
+  var hh=document.createElement('h2'); hh.textContent=c.label; d.appendChild(hh);
+  var w=window.Learn.widget({type:'auxin',title:'t',ask:'a'},{});
+  d.appendChild(w); out.appendChild(d);
+  (c.clicks||[]).forEach(function(l){
+    var ps=w.querySelectorAll('.ax__lamp'), hit=false;
+    for(var i=0;i<ps.length;i++){ if(ps[i].textContent===l){ps[i].click();hit=true;break;} }
+    if(!hit) hh.textContent+='  [NO PILL: '+l+']';
+  });
+});
+setTimeout(function(){document.title='ready';},5400);
+</script>
