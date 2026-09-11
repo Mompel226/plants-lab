@@ -44,6 +44,7 @@
             'seed', 'seeds', 'seedling', 'seedlings', 'fruit', 'fruits', 'germination', 'germinate', 'germinates', 'germinating', 'radicle', 'plumule', 'testa', 'seed coat', 'cotyledon', 'cotyledons', 'embryo',
             'gamete', 'gametes', 'male gamete', 'female gamete', 'insect-pollinated', 'wind-pollinated'],
     grow:  ['tropism', 'tropisms', 'gravitropism', 'phototropism', 'auxin', 'auxins', 'shoot tip', 'shoot tips', 'cell elongation', 'elongation', 'stimulus', 'stimuli', 'adaptive feature', 'adaptive features',
+            'apical meristem', 'apical meristems', 'meristem', 'meristems',
             'xerophyte', 'xerophytes', 'hydrophyte', 'hydrophytes', 'adaptation', 'adaptations', 'sensitivity'],
     plain: ['diffusion', 'diffuse', 'diffuses', 'concentration gradient', 'partially permeable', 'cell membrane', 'cell wall', 'cell walls', 'vacuole', 'vacuoles', 'nucleus', 'nuclei', 'mitochondrion', 'mitochondria', 'surface area',
             'dry mass', 'organ', 'organs', 'tissue', 'tissues', 'dicotyledon', 'dicotyledons', 'monocotyledon', 'monocotyledons', 'species', 'population', 'populations', 'variation', 'variations', 'natural selection',
