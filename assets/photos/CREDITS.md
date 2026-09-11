@@ -8,7 +8,7 @@ so that a student meets the same picture here as on the board. Their original so
 recorded in the slides; they are used here for teaching, under the same terms as in the lesson.
 Each is credited on the page as "from the … lesson slides". One is Dr Mompel's own photograph.
 
-**The micrographs.** Five stained sections are from Wikimedia Commons, all by the Berkshire
+**The micrographs.** Six stained sections are from Wikimedia Commons, all by the Berkshire
 Community College Bioscience Image Library and all CC0, chosen because they are the kind of
 picture the exam gives a student to label. They are centre-cropped to 16 : 9, shown at 900 and
 1400 px wide, JPEG and WebP; the credit is under each one on the page.
@@ -21,6 +21,7 @@ Every base name below stands for four files: `-900.jpg`, `-900.webp`, `-1400.jpg
 |---|---|---|---|
 | `root-section-*` | [Herbaceous Dicot Root Mature Ranunculus (35613584240).jpg](https://commons.wikimedia.org/wiki/File:Herbaceous_Dicot_Root_Mature_Ranunculus_(35613584240).jpg) — a buttercup root cut across | Berkshire Community College Bioscience Image Library | CC0 |
 | `root-stele-*` | [Stele in Herbaceous Dicot root Ranunculus (34758989431).jpg](https://commons.wikimedia.org/wiki/File:Stele_in_Herbaceous_Dicot_root_Ranunculus_(34758989431).jpg) — the middle of a buttercup root: the star of xylem | Berkshire Community College Bioscience Image Library | CC0 |
+| `monocot-bundle-*` | [Monocot Stem Zea (35716063792).jpg](https://commons.wikimedia.org/wiki/File:Monocot_Stem_Zea_(35716063792).jpg) — one vascular bundle of a maize stem, cropped from the wider section | Berkshire Community College Bioscience Image Library | CC0 |
 | `stem-section-*` | [Herbaceous Dicot Stem Collateral Vascular Bundle in Young Helianthus (36834309183).jpg](https://commons.wikimedia.org/wiki/File:Herbaceous_Dicot_Stem_Collateral_Vascular_Bundle_in_Young_Helianthus_(36834309183).jpg) — one vascular bundle of a sunflower stem | Berkshire Community College Bioscience Image Library | CC0 |
 | `leaf-section-*` | [Angiosperm Morphology Mesophyll Arrangement in Ligustrum (36198182664).jpg](https://commons.wikimedia.org/wiki/File:Angiosperm_Morphology_Mesophyll_Arrangement_in_Ligustrum_(36198182664).jpg) — a privet leaf cut across | Berkshire Community College Bioscience Image Library | CC0 |
 | `leaf-stoma-*` | [Angiosperm Morphology Abaxial Epidermis and Guard Cells in Ligustrum Leaf (37033388255).jpg](https://commons.wikimedia.org/wiki/File:Angiosperm_Morphology_Abaxial_Epidermis_and_Guard_Cells_in_Ligustrum_Leaf_(37033388255).jpg) — a stoma in the lower epidermis of a privet leaf | Berkshire Community College Bioscience Image Library | CC0 |
