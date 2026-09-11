@@ -394,42 +394,62 @@
   }
 
 
-  /* ---------- pondweed: the rate-of-photosynthesis practical, run rather than described ----------
-     0610 sets this one as "count the bubbles of oxygen from pondweed while you change one factor".
-     The thing candidates lose marks on is not the counting — it is the light. Intensity falls with
-     the SQUARE of the distance, so moving the lamp from 10 cm to 20 cm does not halve the light, it
-     quarters it. The model here is exactly that: I = (10/d)^2 with the lamp at 10 cm as 1 unit.
+  /* ---------- pondweed: the rate practical, judged on whether the data is any good ----------
+     "More light, more bubbles" is the one thing every student already knows, so it is not what
+     this teaches. What costs marks is everything around it, and each of those is here as
+     something the reader can DO wrong and then be shown:
 
-     Everything else is the same rule the graph above uses — the rate is set by whichever factor is
-     in shortest supply — so the practical and the theory cannot disagree. Each run carries a small
-     random error, because a real count does, which is why the table keeps repeats and takes a mean.
+       · acclimation — change a condition and the plant takes minutes to settle. Count at once
+         and the reading is partly of the old conditions.
+       · the heat shield — a bare lamp warms the beaker. Move it closer and the temperature rises
+         with the light, so two variables change together and neither result means anything.
+       · false bubbles — warm water holds less dissolved gas, and bubbles come out of solution and
+         off the leaf surface. They look identical to oxygen and inflate the count.
+       · bubble size — bubbles are not all the same size, so a count is a rough measure of volume.
+         Two identical runs differ; that is the apparatus, not the plant.
 
-     Nothing is explained unasked. When a run shows something worth noticing, a note appears with
-     its reason hidden behind a press. */
+     Nothing is lectured. A finding appears only when the reader's own run has just demonstrated
+     it, states WHAT happened in one line, and keeps the reason behind a press. Each is shown
+     once — after that the reader is expected to know. */
   function pondweed(spec) {
     var box = h('div', 'widget');
     box.appendChild(head(spec.title || 'Count the bubbles',
-      spec.ask || 'Move the lamp, start the clock, and count the oxygen for one minute. Record each run, repeat it for a mean, and watch what happens to the light when you double the distance.',
-      'Run the experiment'));
+      spec.ask || 'Set the apparatus up, let it settle, then count the oxygen for a minute. The number is the easy part — the question is whether it means anything.',
+      'Run it properly'));
 
-    var S = { d: 20, hco3: 2, temp: 20, running: false, t: 0, n: 0, rows: [], seen: {} };
-    function I(d) { return Math.pow(10 / d, 2); }                 /* inverse square — the whole point */
-    function fI(i) { return i / (i + 0.55); }                     /* saturating response to light */
-    function fC(c) { return c / (c + 1.1); }                      /* hydrogencarbonate: the CO2 supply */
+    var S = { d: 20, hco3: 2, bath: 20, shield: false, settleMs: 5200, changedAt: Date.now() - 99999,
+              prev: null, running: false, t: 0, n: 0, rows: [], found: {}, bubbles: [], gas: 0 };
+
+    function I(d) { return Math.pow(10 / d, 2); }
+    function fI(i) { return i / (i + 0.55); }
+    function fC(c) { return c / (c + 1.1); }
     function fT(t) { return t <= 32 ? Math.max(0.04, t / 32) : Math.max(0, 1 - (t - 32) / 12); }
-    var MAXB = 62;                                                /* bubbles a minute, flat out */
-    function trueRate() { return Math.min(fI(I(S.d)), fC(S.hco3), fT(S.temp)) * MAXB; }
-    function whoLimits() {
-      var a = [fI(I(S.d)), fC(S.hco3), fT(S.temp)], m = Math.min.apply(null, a);
-      return ['the light', 'the carbon dioxide', 'the temperature'][a.indexOf(m)];
+    /* the lamp's heat reaches the beaker only when nothing is in the way */
+    function heatGain() { return S.shield ? 0 : Math.min(13, 13 * I(S.d) / 1.05); }
+    function waterTemp() { return S.bath + heatGain(); }
+    var MAXB = 58;
+    function realRate(st) {                       /* oxygen actually made, bubbles a minute */
+      st = st || S;
+      var temp = st.shield ? st.bath : st.bath + Math.min(13, 13 * I(st.d) / 1.05);
+      return Math.min(fI(I(st.d)), fC(st.hco3), fT(temp)) * MAXB;
+    }
+    /* bubbles that are NOT oxygen: dissolved gas leaving warm water, and gas off the leaf */
+    function falseRate() {
+      var t = waterTemp();
+      return t <= 28 ? 0 : Math.min(16, (t - 28) * 1.7);
+    }
+    function settleFrac() { return Math.min(1, (Date.now() - S.changedAt) / S.settleMs); }
+
+    function touched() {                          /* any change unsettles the plant */
+      if (!S.running) { S.prev = S.prev || { d: S.d, hco3: S.hco3, bath: S.bath, shield: S.shield }; S.changedAt = Date.now(); }
     }
 
     /* ---- controls ---- */
     var ctl = h('div', 'pw__ctl');
     var C = [
-      { k: 'd', label: 'Distance of the lamp', min: 10, max: 60, step: 5, unit: ' cm' },
+      { k: 'd', label: 'Lamp distance', min: 10, max: 60, step: 5, unit: ' cm' },
       { k: 'hco3', label: 'Sodium hydrogencarbonate', min: 0, max: 5, step: 0.5, unit: ' %' },
-      { k: 'temp', label: 'Water bath', min: 5, max: 40, step: 1, unit: ' °C' }
+      { k: 'bath', label: 'Water bath set to', min: 5, max: 40, step: 1, unit: ' °C' }
     ];
     var rows = {};
     C.forEach(function (c) {
@@ -438,11 +458,17 @@
       var inp = document.createElement('input');
       inp.type = 'range'; inp.min = c.min; inp.max = c.max; inp.step = c.step; inp.value = S[c.k];
       inp.setAttribute('aria-label', c.label);
-      inp.addEventListener('input', function () { if (S.running) return; S[c.k] = +inp.value; paint(); });
+      inp.addEventListener('input', function () { if (S.running) return; var was = realRate(); S[c.k] = +inp.value; S.prev = { r: was }; S.changedAt = Date.now(); paint(); });
       r.appendChild(inp);
       ctl.appendChild(r);
       rows[c.k] = { inp: inp, val: r.querySelector('b') };
     });
+    var shieldRow = h('label', 'pw__row pw__row--check');
+    var chk = document.createElement('input'); chk.type = 'checkbox';
+    chk.addEventListener('change', function () { if (S.running) { chk.checked = S.shield; return; } var was = realRate(); S.shield = chk.checked; S.prev = { r: was }; S.changedAt = Date.now(); paint(); });
+    shieldRow.appendChild(chk);
+    shieldRow.appendChild(h('span', 'pw__lab', 'Heat shield — a tank of water between the lamp and the beaker'));
+    ctl.appendChild(shieldRow);
     box.appendChild(ctl);
 
     var stage = h('div', 'pw__stage');
@@ -451,135 +477,186 @@
     var live = h('div', 'pw__live');
     box.appendChild(live);
 
-    var note = h('div', 'pw__note'); note.hidden = true;
-    box.appendChild(note);
+    var finds = h('div', 'pw__finds');
+    box.appendChild(finds);
 
     var btns = h('div', 'pw__btns');
-    var bRun = h('button', 'wbtn', 'Start the clock'); bRun.type = 'button';
+    var bRun = h('button', 'wbtn', 'Count for one minute'); bRun.type = 'button';
     var bKeep = h('button', 'wbtn wbtn--quiet', 'Record this run'); bKeep.type = 'button'; bKeep.disabled = true;
-    var bClear = h('button', 'wbtn wbtn--quiet', 'Clear the table'); bClear.type = 'button';
+    var bClear = h('button', 'wbtn wbtn--quiet', 'Clear'); bClear.type = 'button';
     btns.appendChild(bRun); btns.appendChild(bKeep); btns.appendChild(bClear);
     box.appendChild(btns);
 
     var table = h('div', 'pw__table');
     box.appendChild(table);
 
+    /* ---- a finding: one line, and the reason behind a press. Shown once each. ---- */
+    var FIND = {
+      settle: ['You started counting before the plant had settled.',
+        'After any change the rate takes several minutes to reach its new steady value. Count straight away and part of what you measure still belongs to the old conditions. In the lab you wait — and you wait the SAME time after every change, or the wait becomes a variable of its own.'],
+      heat: ['The water is warmer than you set it.',
+        'The lamp is heating the beaker. Move it closer and you raise the light AND the temperature together, so neither result tells you what the light did. Put a tank of water between the lamp and the beaker: it lets the light through and absorbs the heat.'],
+      fake: ['Some of what you counted was not oxygen.',
+        'Warm water holds less dissolved gas, so bubbles come out of solution and off the leaf surface. They look exactly like the oxygen ones and they inflate the count. With the heat shield in place the water stays at the bath temperature and they stop.'],
+      size: ['Two runs at the same settings, two different numbers.',
+        'Bubbles are not all the same size, so counting them measures volume only roughly. Repeats and a mean are the least you can do; collecting the gas and measuring its VOLUME in a syringe or a capillary is the better method, and worth saying so in an evaluation question.'],
+      dark: ['Almost nothing, even with the lamp right there.',
+        'Check the other two before blaming the plant. Carbon dioxide is the raw material — without hydrogencarbonate there is little of it in the water — and below about 10 °C the enzymes are too slow. A control variable set wrong looks exactly like a dead plant.']
+    };
+    function found(k) {
+      if (S.found[k]) return;
+      S.found[k] = 1;
+      var f = FIND[k], el0 = h('div', 'pw__find');
+      el0.innerHTML = '<span class="pw__findq">!</span><b>' + esc(f[0]) + '</b> <button type="button" class="pw__why">Why?</button>';
+      el0.querySelector('.pw__why').addEventListener('click', function () {
+        el0.innerHTML = '<span class="pw__findq">!</span><b>' + esc(f[0]) + '</b> <span class="pw__findw">' + f[1] + '</span>';
+      });
+      finds.appendChild(el0);
+    }
+
     /* ---- the apparatus ---- */
     function paintStage() {
-      var W = 520, H = 232;
-      var lampX = 70 + (S.d - 10) / 50 * 150;                    /* the lamp slides away from the beaker */
-      var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="A beaker of pondweed under a funnel and a test tube, with a lamp at ' + S.d + ' centimetres">';
-      s += '<rect x="0" y="' + (H - 16) + '" width="' + W + '" height="16" fill="#EDEBE3"/>';
+      var W = 540, H = 250, lampX = 92 + (S.d - 10) / 50 * 116;
+      var temp = waterTemp(), hot = temp > S.bath + 1.5;
+      var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Pondweed in a beaker under a funnel and a test tube, with a lamp ' + S.d + ' centimetres away' + (S.shield ? ' and a heat shield between them' : '') + '">';
+      s += '<rect x="0" y="' + (H - 14) + '" width="' + W + '" height="14" fill="#EDEBE3"/>';
+      /* water bath */
+      s += '<rect x="292" y="196" width="188" height="40" rx="4" fill="#DCEAF2" stroke="#9AB4C2" stroke-width="1.6"/>';
+      s += '<text x="386" y="' + (H - 22) + '" font-size="10" fill="#5B6B63" text-anchor="middle">water bath ' + S.bath + ' °C</text>';
       /* beaker */
-      s += '<path d="M300 60 L300 200 Q300 210 312 210 L432 210 Q444 210 444 200 L444 60" fill="#EAF4FA" stroke="#9AB4C2" stroke-width="2.4"/>';
-      s += '<rect x="300" y="74" width="144" height="136" fill="#CFE8F5" opacity=".75"/>';
-      /* funnel and test tube */
-      s += '<path d="M336 190 L408 190 L382 132 L362 132 Z" fill="none" stroke="#8FA9B6" stroke-width="2"/>';
-      s += '<rect x="358" y="70" width="28" height="64" rx="4" fill="#DCEEF8" stroke="#8FA9B6" stroke-width="2"/>';
-      /* pondweed */
-      s += '<path d="M372 190 Q356 168 366 146 Q376 124 368 106" fill="none" stroke="#2F7D46" stroke-width="4" stroke-linecap="round"/>';
+      s += '<path d="M312 62 L312 196 Q312 204 322 204 L450 204 Q460 204 460 196 L460 62" fill="#EAF4FA" stroke="#9AB4C2" stroke-width="2.4"/>';
+      s += '<rect x="312" y="76" width="148" height="128" fill="' + (hot ? '#F6DFD2' : '#CFE8F5') + '" opacity=".8"/>';
+      /* funnel, tube, and the gas collected */
+      s += '<path d="M348 188 L424 188 L398 128 L374 128 Z" fill="none" stroke="#8FA9B6" stroke-width="2"/>';
+      var gasH = Math.min(52, S.gas * 0.9);
+      s += '<rect x="372" y="62" width="28" height="66" rx="4" fill="#DCEEF8" stroke="#8FA9B6" stroke-width="2"/>';
+      if (gasH > 0) s += '<rect x="374" y="64" width="24" height="' + gasH.toFixed(1) + '" fill="#F4FAFF" stroke="none"/>';
+      /* pondweed, cut end up */
+      s += '<path d="M386 188 Q370 166 380 146 Q390 126 384 112" fill="none" stroke="#2F7D46" stroke-width="4" stroke-linecap="round"/>';
       for (var i = 0; i < 7; i++) {
-        var ly = 182 - i * 12, lx = 372 + (i % 2 ? 12 : -12);
-        s += '<ellipse cx="' + lx + '" cy="' + ly + '" rx="10" ry="4.5" fill="#57A860" transform="rotate(' + (i % 2 ? 22 : -22) + ' ' + lx + ' ' + ly + ')"/>';
+        var ly = 180 - i * 11, lx = 386 + (i % 2 ? 11 : -11);
+        s += '<ellipse cx="' + lx + '" cy="' + ly + '" rx="9" ry="4" fill="#57A860" transform="rotate(' + (i % 2 ? 22 : -22) + ' ' + lx + ' ' + ly + ')"/>';
       }
-      /* the bubbles that have been counted this run */
-      var shown = Math.min(S.n, 14);
-      for (var b = 0; b < shown; b++) {
-        var by = 184 - (b % 7) * 15 - (b > 6 ? 6 : 0), bx = 370 + ((b * 37) % 13) - 6;
-        s += '<circle cx="' + bx + '" cy="' + by + '" r="' + (2.6 + (b % 3) * 0.5).toFixed(1) + '" fill="#fff" stroke="#7FB6CE" stroke-width="1"/>';
+      /* the bubbles in flight */
+      S.bubbles.forEach(function (b) {
+        s += '<circle cx="' + b.x.toFixed(1) + '" cy="' + b.y.toFixed(1) + '" r="' + b.r.toFixed(1) + '" fill="' + (b.fake ? '#FDF0E4' : '#fff') + '" stroke="' + (b.fake ? '#E0B48A' : '#7FB6CE') + '" stroke-width="1"/>';
+      });
+      /* thermometer */
+      s += '<rect x="468" y="96" width="9" height="86" rx="4.5" fill="#fff" stroke="#9AB4C2" stroke-width="1.4"/>';
+      var mercury = Math.max(4, Math.min(76, (temp - 4) / 46 * 76));
+      s += '<rect x="470.5" y="' + (180 - mercury).toFixed(1) + '" width="4" height="' + mercury.toFixed(1) + '" rx="2" fill="' + (hot ? '#C4552F' : '#3C7FB1') + '"/>';
+      s += '<text x="472" y="' + 92 + '" font-size="10.5" font-weight="700" fill="' + (hot ? '#C4552F' : '#3C3C3C') + '" text-anchor="middle">' + temp.toFixed(0) + '°</text>';
+      /* the lamp */
+      var glow = Math.min(1, fI(I(S.d)) + 0.18);
+      s += '<line x1="' + lampX + '" y1="150" x2="' + lampX + '" y2="202" stroke="#6B6B63" stroke-width="3"/>';
+      s += '<path d="M' + (lampX - 24) + ' 150 L' + (lampX + 24) + ' 150 L' + (lampX + 13) + ' 118 L' + (lampX - 13) + ' 118 Z" fill="#C9C6BB" stroke="#6B6B63" stroke-width="2"/>';
+      s += '<circle cx="' + lampX + '" cy="148" r="8" fill="#FFE9A8" opacity="' + glow.toFixed(2) + '"/>';
+      s += '<circle cx="' + lampX + '" cy="148" r="20" fill="#FFE08A" opacity="' + (glow * 0.28).toFixed(2) + '"/>';
+      /* the heat shield */
+      if (S.shield) {
+        s += '<rect x="276" y="112" width="22" height="92" rx="3" fill="#D8ECF6" stroke="#7FA8BC" stroke-width="2"/>';
+        s += '<text x="287" y="108" font-size="9.5" fill="#5B6B63" text-anchor="middle">shield</text>';
       }
-      /* lamp */
-      var glow = Math.min(1, fI(I(S.d)) + 0.15);
-      s += '<line x1="' + lampX + '" y1="150" x2="' + lampX + '" y2="208" stroke="#6B6B63" stroke-width="3"/>';
-      s += '<path d="M' + (lampX - 26) + ' 150 L' + (lampX + 26) + ' 150 L' + (lampX + 14) + ' 116 L' + (lampX - 14) + ' 116 Z" fill="#C9C6BB" stroke="#6B6B63" stroke-width="2"/>';
-      s += '<circle cx="' + lampX + '" cy="148" r="9" fill="#FFE9A8" opacity="' + glow.toFixed(2) + '"/>';
-      s += '<circle cx="' + lampX + '" cy="148" r="22" fill="#FFE08A" opacity="' + (glow * 0.3).toFixed(2) + '"/>';
       /* the measured distance */
-      s += '<line x1="' + lampX + '" y1="222" x2="300" y2="222" stroke="#5B6B63" stroke-width="1" stroke-dasharray="3 3"/>';
-      s += '<text x="' + ((lampX + 300) / 2) + '" y="218" font-size="11.5" fill="#3C3C3C" text-anchor="middle">' + S.d + ' cm</text>';
+      s += '<line x1="' + lampX + '" y1="216" x2="312" y2="216" stroke="#5B6B63" stroke-width="1" stroke-dasharray="3 3"/>';
+      s += '<text x="' + ((lampX + 312) / 2) + '" y="213" font-size="10.5" fill="#3C3C3C" text-anchor="middle">' + S.d + ' cm</text>';
       s += '</svg>';
       stage.innerHTML = s;
     }
 
     function paint() {
       C.forEach(function (c) { rows[c.k].val.textContent = S[c.k] + c.unit; rows[c.k].inp.disabled = S.running; });
+      chk.disabled = S.running; chk.checked = S.shield;
       paintStage();
-      var i = I(S.d);
-      live.innerHTML = '<span class="pw__clock">' + (S.running ? S.t + ' s' : (S.t ? 'finished — ' + S.t + ' s' : 'not started')) + '</span>' +
+      var sf = settleFrac(), temp = waterTemp();
+      live.innerHTML =
+        '<span class="pw__settle' + (sf < 1 ? ' is-wait' : '') + '">' +
+          (sf < 1 ? 'Settling — ' + Math.round(sf * 100) + '%' : 'Settled, ready to count') +
+          '<i style="width:' + (sf * 100).toFixed(0) + '%"></i></span>' +
+        '<span class="pw__clock">' + (S.running ? S.t + ' s' : (S.t ? 'finished' : 'not started')) + '</span>' +
         '<b>' + S.n + ' bubbles</b>' +
-        '<span class="pw__int">Light reaching the pondweed: <b>' + i.toFixed(2) + '</b> units <small>(1 unit = the lamp at 10 cm)</small></span>';
+        '<span class="pw__int">light <b>' + I(S.d).toFixed(2) + '</b> units · water <b class="' + (temp > S.bath + 1.5 ? 'is-hot' : '') + '">' + temp.toFixed(0) + ' °C</b></span>';
       bKeep.disabled = S.running || !S.t;
       bRun.disabled = S.running;
     }
 
     /* ---- the run ---- */
-    /* The clock is driven by elapsed REAL time, not by counting ticks. A browser throttles timers
-       in a background tab, and a tick-counted run then stops short — the minute never finishes and
-       the count lands wherever the throttling left it. Reading the wall clock each frame means a
-       slow frame costs smoothness and nothing else: the run still ends on sixty seconds with the
-       right number of bubbles. Found 11 Sep 2026, when three test runs returned 3, 6 and 10. */
-    var timer = null, RUN_MS = 2600;                              /* a minute, played in about 2.6 s */
+    var timer = null, RUN_MS = 3000;
     bRun.addEventListener('click', function () {
       if (S.running) return;
-      S.running = true; S.t = 0; S.n = 0; note.hidden = true; paint();
-      var per = trueRate();                                      /* bubbles per minute, before error */
-      var err = 1 + (Math.random() - 0.5) * 0.16;                /* a real count is never exact */
-      var target = Math.max(0, Math.round(per * err));
-      var t0 = Date.now();
-      /* setInterval, not requestAnimationFrame: rAF is suspended altogether in a hidden tab, so a
-         run started and then left would never finish. An interval is throttled there but still
-         fires, and because the count is read off the wall clock rather than off the number of
-         ticks, a throttled run is merely less smooth — it still ends on sixty seconds. */
+      var sfAtStart = settleFrac();
+      S.running = true; S.t = 0; S.n = 0; S.gas = 0; S.bubbles = []; paint();
+      /* counting before it has settled measures partly the conditions you have just left */
+      var blend = sfAtStart < 1 && S.prev && typeof S.prev.r === 'number'
+        ? S.prev.r + (realRate() - S.prev.r) * sfAtStart : realRate();
+      var err = 1 + (Math.random() - 0.5) * 0.18;
+      var oxy = Math.max(0, blend * err);
+      var fake = falseRate() * (0.8 + Math.random() * 0.4);
+      var target = Math.round(oxy + fake);
+      var fakeShare = target > 0 ? fake / (oxy + fake) : 0;
+      var t0 = Date.now(), spawned = 0;
       timer = setInterval(function () {
         var frac = Math.min(1, (Date.now() - t0) / RUN_MS);
         S.t = Math.round(frac * 60);
         S.n = Math.round(target * frac);
-        if (frac >= 1) { clearInterval(timer); timer = null; S.t = 60; S.n = target; S.running = false; paint(); finish(target); return; }
+        /* A STEADY STREAM, not a clump. Spawning one bubble per counted bubble each tick put
+           eight or ten at the stem in the same frame, which looked like a blob rather than a
+           plant. One bubble every RUN_MS/target milliseconds gives the even procession a real
+           piece of pondweed produces, and each is born at its own moment so they stay spaced. */
+        var gap = target > 0 ? RUN_MS / target : 1e9;
+        while (spawned < S.n && now - t0 >= (spawned + 1) * gap && S.bubbles.length < 30) {
+          spawned++;
+          S.bubbles.push({ x: 386 + (Math.random() * 8 - 4), y: 186, r: 2.1 + Math.random() * 1.7,
+                           v: 46 + Math.random() * 14, fake: Math.random() < fakeShare,
+                           born: t0 + spawned * gap });
+        }
+        S.bubbles = S.bubbles.filter(function (b) {
+          b.y = 186 - (now - b.born) / 1000 * b.v;
+          if (b.y < 130) { b.x += (386 - b.x) * 0.14; }           /* funnelled into the neck */
+          if (b.y < 66) { S.gas += 1; return false; }             /* collected in the tube */
+          return true;
+        });
+        if (frac >= 1) { clearInterval(timer); timer = null; S.t = 60; S.n = target; S.running = false; paint(); finish(sfAtStart, fake, target); return; }
         paint();
       }, 40);
     });
+
+    function finish(sfAtStart, fake, target) {
+      if (sfAtStart < 0.92) found('settle');
+      if (heatGain() > 1.5) found('heat');
+      if (fake >= 2.5) found('fake');
+      if (target <= 3 && I(S.d) > 0.5) found('dark');
+      var same = S.rows.filter(function (r) { return r.d === S.d && r.hco3 === S.hco3 && r.bath === S.bath && r.shield === S.shield; });
+      if (same.length && Math.abs(same[same.length - 1].n - target) >= 3) found('size');
+    }
+
     bKeep.addEventListener('click', function () {
-      S.rows.push({ d: S.d, i: I(S.d), hco3: S.hco3, temp: S.temp, n: S.n });
-      paintTable(); note.hidden = true;
+      S.rows.push({ d: S.d, i: I(S.d), hco3: S.hco3, bath: S.bath, shield: S.shield, temp: waterTemp(), n: S.n });
+      paintTable();
     });
     bClear.addEventListener('click', function () { S.rows = []; paintTable(); });
-
-    function finish(target) {
-      var msgs = [];
-      if (S.temp > 32) msgs.push(['The count has dropped although nothing was taken away.',
-        'Above about 32 °C the enzymes of photosynthesis are being <b>denatured</b>, so the rate falls however bright the lamp is. This is why the beaker stands in a water bath: without one, a lamp close to the beaker warms the water and you would be changing two variables at once.']);
-      else if (whoLimits() === 'the carbon dioxide' && S.hco3 < 1.5) msgs.push(['Moving the lamp closer is barely changing the count.',
-        'The light is no longer the limiting factor: <b>carbon dioxide</b> is. Sodium hydrogencarbonate is there to supply it, and at this concentration there is not enough for the light you are giving. Raise it and the lamp will start to matter again.']);
-      else if (S.d >= 40) msgs.push(['The count is low at this distance.',
-        'Light intensity falls with the <b>square</b> of the distance. At 40 cm the pondweed gets a sixteenth of the light it had at 10 cm, not a quarter. This is why the distance, not a dial on the lamp, is what you change — and why it must be measured to the plant, every time.']);
-      if (!msgs.length) return;
-      var m = msgs[0];
-      note.hidden = false;
-      note.innerHTML = '<b>' + m[0] + '</b> <button type="button" class="pw__why">Why?</button>';
-      note.querySelector('.pw__why').addEventListener('click', function () {
-        note.innerHTML = '<b>' + m[0] + '</b> ' + m[1];
-      });
-    }
 
     function paintTable() {
       if (!S.rows.length) { table.innerHTML = ''; return; }
       var by = {};
-      S.rows.forEach(function (r) { var k = r.d + '|' + r.hco3 + '|' + r.temp; (by[k] = by[k] || []).push(r); });
+      S.rows.forEach(function (r) { var k = [r.d, r.hco3, r.bath, r.shield].join('|'); (by[k] = by[k] || []).push(r); });
       var body = Object.keys(by).map(function (k) {
         var g = by[k], r0 = g[0];
         var mean = g.reduce(function (a, x) { return a + x.n; }, 0) / g.length;
-        return '<tr><td>' + r0.d + '</td><td>' + r0.i.toFixed(2) + '</td><td>' + r0.hco3 + '</td><td>' + r0.temp + '</td>' +
-               '<td>' + g.map(function (x) { return x.n; }).join(', ') + '</td>' +
-               '<td><b>' + mean.toFixed(1) + '</b></td></tr>';
+        var drift = r0.temp - r0.bath;
+        return '<tr><td>' + r0.d + '</td><td>' + r0.i.toFixed(2) + '</td><td>' + r0.hco3 + '</td>' +
+               '<td>' + r0.bath + (drift > 1.5 ? ' <span class="pw__warn" title="the lamp warmed the water: two variables changed at once">→ ' + r0.temp.toFixed(0) + '</span>' : '') + '</td>' +
+               '<td>' + (r0.shield ? 'yes' : '<span class="pw__warn">no</span>') + '</td>' +
+               '<td>' + g.map(function (x) { return x.n; }).join(', ') + '</td><td><b>' + mean.toFixed(1) + '</b></td></tr>';
       }).join('');
-      table.innerHTML = '<table class="ctable"><thead><tr>' +
-        '<th>Distance / cm</th><th>Light / units</th><th>NaHCO₃ / %</th><th>Temp / °C</th><th>Bubbles per minute</th><th>Mean</th>' +
-        '</tr></thead><tbody>' + body + '</tbody></table>' +
-        '<p class="pw__hint">Repeat a run at the same settings and its counts join the same row, and the mean is taken for you. Two rows with only the distance different are what the question asks you to compare.</p>';
+      table.innerHTML = '<table class="ctable"><thead><tr><th>Lamp / cm</th><th>Light / units</th><th>NaHCO₃ / %</th>' +
+        '<th>Water / °C</th><th>Shield</th><th>Counts</th><th>Mean</th></tr></thead><tbody>' + body + '</tbody></table>' +
+        '<p class="pw__hint">A row is only comparable with another if everything except the one variable is the same — including the column you were not watching.</p>';
     }
 
     paint(); paintTable();
-    box.__onReset = function () { if (timer) clearInterval(timer); S = { d: 20, hco3: 2, temp: 20, running: false, t: 0, n: 0, rows: [], seen: {} }; };
+    var tick = setInterval(function () { if (!S.running && settleFrac() < 1) paint(); }, 220);
+    box.__onReset = function () { if (timer) clearInterval(timer); clearInterval(tick); };
     return box;
   }
 
