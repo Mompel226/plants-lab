@@ -40,6 +40,30 @@ if (!existsSync(MASTER)) {
 }
 const { STATIONS } = await import(pathToFileURL(MASTER).href);
 
+/* ---------- every widget must land on a sentence that exists ----------
+   learn.interact places a widget under learn.exam[after]. app.js renders a widget whose `after`
+   matches no sentence NOWHERE AT ALL — it is not appended, it simply disappears, with nothing on
+   screen or in the console to say so. Delete or add one sentence and every widget below it is
+   silently one out, and the last one falls off the end. That happened on 11 Sep 2026: removing a
+   duplicated equation sentence moved four widgets under the wrong sentence and made the
+   hydrogencarbonate indicator vanish. Caught here from now on. */
+{
+  const bad = [];
+  for (const st of STATIONS) {
+    const n = ((st.learn && st.learn.exam) || []).length;
+    for (const w of ((st.learn && st.learn.interact) || [])) {
+      if (w.after == null) continue;                 /* null is legal: it goes at the end */
+      if (!Number.isInteger(w.after) || w.after < 0 || w.after >= n)
+        bad.push(`    ${st.id}: a ${w.type} widget wants sentence ${w.after}, but that station has ${n} (0-${n - 1})`);
+    }
+  }
+  if (bad.length) {
+    console.error('\n  WIDGET PLACEMENT FAILED — these widgets would not appear at all:\n' + bad.join('\n') +
+                  '\n  Did you add or remove a learn.exam sentence? Every `after` below it shifts.\n');
+    process.exit(1);
+  }
+}
+
 /* ---------- the shared folder ----------
    labs-shared/ is an ancestor of this repo. It holds the glossary every lab prints from,
    the engine, marking, sync and Learn widgets every lab runs, and the plant this lab shares

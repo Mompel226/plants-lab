@@ -140,50 +140,6 @@
     return box;
   }
 
-  /* ---------- limiting: three sliders, one rate ---------- */
-  function limiting(spec) {
-    var box = h('div', 'widget');
-    box.appendChild(head(spec.title || 'Which factor is limiting?', spec.ask, 'Move the sliders'));
-    var F = [
-      { id: 'light', label: 'Light intensity', min: 0, max: 100, v: 30, unit: '%', f: function (x) { return 1 - Math.exp(-3.2 * x / 100); } },
-      { id: 'co2', label: 'Carbon dioxide concentration', min: 0, max: 100, v: 80, unit: '%', f: function (x) { return 1 - Math.exp(-3.2 * x / 100); } },
-      { id: 'temp', label: 'Temperature', min: 0, max: 50, v: 25, unit: ' °C', f: function (t) { return t <= 35 ? Math.max(0, t / 35) : Math.max(0, 1 - (t - 35) / 10); } }
-    ];
-    var wrap = h('div', 'lim'), out = h('div', 'lim__out');
-    var rows = F.map(function (fc) {
-      var r = h('label', 'lim__row');
-      r.innerHTML = '<span class="lim__lab">' + esc(fc.label) + '<b></b></span>';
-      var inp = document.createElement('input'); inp.type = 'range'; inp.min = fc.min; inp.max = fc.max; inp.value = fc.v; inp.step = 1;
-      inp.setAttribute('aria-label', fc.label);
-      r.appendChild(inp);
-      var bar = h('span', 'lim__bar'); bar.innerHTML = '<i></i>'; r.appendChild(bar);
-      inp.addEventListener('input', paint);
-      wrap.appendChild(r);
-      return { fc: fc, inp: inp, r: r, bar: bar.firstChild, val: r.querySelector('b') };
-    });
-    function paint() {
-      var caps = rows.map(function (x) { return x.fc.f(+x.inp.value); });
-      var rate = Math.min.apply(null, caps), who = caps.indexOf(rate);
-      rows.forEach(function (x, i) {
-        x.val.textContent = x.inp.value + x.fc.unit;
-        x.bar.style.width = (caps[i] * 100).toFixed(0) + '%';
-        x.r.classList.toggle('is-limiting', i === who && rate < .98);
-      });
-      var t = +rows[2].inp.value;
-      var why = rate >= .98 ? 'Nothing is holding it back much now: every factor is near its best. Real leaves stop here because their enzymes can work no faster.'
-        : who === 2 && t > 35 ? 'Too hot: the enzymes of photosynthesis are being denatured, so the rate falls however much light and carbon dioxide there is.'
-        : who === 2 ? 'Temperature is limiting: the enzyme-controlled reactions are slow in the cold. Warm it up and the rate rises — until something else runs short.'
-        : who === 0 ? 'Light intensity is limiting: chlorophyll is capturing energy as fast as the light arrives. Raise it and the rate rises, until carbon dioxide or temperature takes over.'
-        : 'Carbon dioxide concentration is limiting: the raw material is in short supply. Raise it and the rate rises, until light or temperature takes over.';
-      out.innerHTML = '<span class="lim__rate"><i style="width:' + (rate * 100).toFixed(0) + '%"></i></span>' +
-        '<b>Rate of photosynthesis: ' + (rate * 100).toFixed(0) + ' %</b>' +
-        '<span class="lim__who">' + (rate >= .98 ? 'No single limiting factor' : 'Limiting factor now: <b>' + esc(F[who].label.toLowerCase()) + '</b>') + '</span>' +
-        '<small>' + esc(why) + '</small>';
-    }
-    box.appendChild(wrap); box.appendChild(out); paint();
-    box.appendChild(h('p', 'widget__note', 'A model, not a measurement: the shapes are the exam’s — light and carbon dioxide level off, temperature peaks and falls.'));
-    return box;
-  }
 
 
   /* ---------- limitgraph: the student plots the curves, then works out what happened ----------
@@ -272,8 +228,15 @@
 
     /* ---- the plot ---- */
     var W = 560, H = 330, P = { l: 56, r: 16, t: 14, b: 46 };
+    /* the plot and, standing on its top right corner, the button that plots the curve — beside
+       the graph it acts on, not below the sliders where it was easy to miss */
+    var stage = h('div', 'lg__stage');
     var plot = h('div', 'lg__plot');
-    box.appendChild(plot);
+    stage.appendChild(plot);
+    box.appendChild(stage);
+
+    var read = h('div', 'lg__read');
+    box.appendChild(read);
 
     var note = h('div', 'lg__note'); note.hidden = true;
     box.appendChild(note);
@@ -288,7 +251,7 @@
     });
     bClear.addEventListener('click', function () { state.curves = []; note.hidden = true; paint(); });
     btns.appendChild(bPlot); btns.appendChild(bClear);
-    box.appendChild(btns);
+    stage.appendChild(btns);
 
     var legend = h('div', 'lg__legend');
     box.appendChild(legend);
@@ -327,10 +290,7 @@
       ['light', 'co2', 'temp'].forEach(function (k) {
         axBtns[k].classList.toggle('is-on', k === state.axis);
         srow[k].row.classList.toggle('is-x', k === state.axis);
-        srow[k].inp.disabled = (k === state.axis);
-        srow[k].val.textContent = k === state.axis
-          ? ' — along the bottom'
-          : state[k] + AX[k].unit;
+        srow[k].val.textContent = state[k] + AX[k].unit + (k === state.axis ? ' — along the bottom' : '');
       });
 
       var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Rate of photosynthesis against ' + esc(a.name.toLowerCase()) + '">';
@@ -373,6 +333,10 @@
         dl += (dl ? 'L' : 'M') + px2.toFixed(1) + ',' + py2.toFixed(1);
       }
       s += '<path d="' + dl + '" fill="none" stroke="#9AA39C" stroke-width="1.8" stroke-dasharray="5 4"/>';
+      /* where the three sliders are standing now, on that dashed curve */
+      var hx = x2px(state[state.axis], a), hy = y2px(rateAt(state[state.axis]));
+      s += '<line x1="' + hx.toFixed(1) + '" y1="' + hy.toFixed(1) + '" x2="' + hx.toFixed(1) + '" y2="' + (H - P.b) + '" stroke="#9AA39C" stroke-width="1" stroke-dasharray="2 3"/>';
+      s += '<circle cx="' + hx.toFixed(1) + '" cy="' + hy.toFixed(1) + '" r="5.5" fill="#fff" stroke="#3C3C3C" stroke-width="2"/>';
       /* the marks, last so they sit on top */
       marks.forEach(function (m, i) {
         s += '<circle class="lg__mk" data-m="' + i + '" cx="' + m.x.toFixed(1) + '" cy="' + m.y.toFixed(1) + '" r="10" fill="#fff" stroke="' + COL[m.cv.i % 4] + '" stroke-width="2"/>' +
@@ -384,6 +348,19 @@
         el.style.cursor = 'pointer';
         el.addEventListener('click', function () { explain(marks[+el.getAttribute('data-m')]); });
       });
+
+      /* the reading at the dot: the rate, and which factor is holding it back there */
+      var caps = [fL(state.light), fC(state.co2), fT(state.temp)];
+      var rate = Math.min.apply(null, caps), who = caps.indexOf(rate);
+      var why = rate >= 0.98 ? 'Nothing is holding it back much here: all three are near their best. Real leaves stop about here, because their enzymes can work no faster.'
+        : who === 2 && state.temp > 35 ? 'Too hot. The enzymes of photosynthesis are being denatured, so the rate falls however much light and carbon dioxide there is.'
+        : who === 2 ? 'Temperature is limiting: the enzyme-controlled reactions are slow in the cold. Warm it and the rate rises — until something else runs short.'
+        : who === 0 ? 'Light intensity is limiting: chlorophyll is capturing energy as fast as the light arrives. Raise it and the rate rises, until carbon dioxide or temperature takes over.'
+        : 'Carbon dioxide concentration is limiting: the raw material is in short supply. Raise it and the rate rises, until light or temperature takes over.';
+      read.innerHTML = '<span class="lg__rate"><i style="width:' + (rate * 100).toFixed(0) + '%"></i></span>' +
+        '<b>Rate of photosynthesis: ' + (rate * 100).toFixed(0) + ' %</b>' +
+        '<span class="lg__who">' + (rate >= 0.98 ? 'No single limiting factor' : 'Limiting factor here: <b>' + esc(NAME[['light', 'co2', 'temp'][who]]) + '</b>') + '</span>' +
+        '<small>' + esc(why) + '</small>';
 
       legend.innerHTML = state.curves.map(function (cv) {
         var other = AX[cv.axis].others.map(function (k) { return NAME[k] + ' ' + cv[k] + AX[k].unit; }).join(', ');
@@ -1614,7 +1591,7 @@
     return box;
   }
 
-  [['video', video], ['germinate', germinate], ['equation', equation], ['limiting', limiting], ['limitgraph', limitgraph], ['starchtest', starchtest], ['indicator', indicator],
+  [['video', video], ['germinate', germinate], ['equation', equation], ['limitgraph', limitgraph], ['starchtest', starchtest], ['indicator', indicator],
    ['potometer', potometer], ['sourcesink', sourcesink], ['auxin', auxin], ['diagram', diagram], ['pollentube', pollentube], ['adapt', adapt]]
     .forEach(function (m) { W.register(m[0], m[1]); });
 
