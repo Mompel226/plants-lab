@@ -1860,15 +1860,17 @@
       { key: 'light', label: 'Light', opts: [['top', '☀ from above'], ['dark', '🌙 darkness']],
         when: function () { return S.organ === 'shoot' && S.lay === 'side'; } },
       { key: 'top', label: 'The shoot tip', opts: [['intact', 'left on'], ['cut', 'cut off'], ['replaced', 'cut off, put back'], ['shiftL', 'put back, shifted left'], ['shiftR', 'put back, shifted right']],
-        when: function () { return S.organ === 'shoot'; } },
+        when: function () { return S.organ === 'shoot' && S.lay === 'up'; } },
+      { key: 'top', label: 'The shoot tip', opts: [['intact', 'left on'], ['cut', 'cut off']],
+        when: function () { return S.organ === 'shoot' && S.lay === 'side'; } },
       { key: 'layer', label: 'Between tip and stump', opts: [['gel', 'gelatin (lets auxin through)'], ['mica', 'mica (lets nothing through)']],
         when: function () { return S.organ === 'shoot' && S.top.indexOf('replaced') === 0 || S.organ === 'shoot' && S.top.indexOf('shift') === 0; } },
       { key: 'cover', label: 'Cover', opts: [['none', 'nothing'], ['opaque', 'opaque cap on the tip'], ['clear', 'clear cap on the tip'], ['collar', 'opaque collar lower down']],
         when: function () { return S.organ === 'shoot' && S.top !== 'cut'; } },
       { key: 'mica', label: 'Mica plate under half the tip', opts: [['none', 'none'], ['left', 'under the left half'], ['right', 'under the right half']],
-        when: function () { return S.organ === 'shoot' && S.top !== 'cut'; } },
+        when: function () { return S.organ === 'shoot' && S.lay === 'up' && S.top !== 'cut' && (S.light === 'left' || S.light === 'right'); } },
       { key: 'block', label: 'Agar block on the stump', opts: [['none', 'none'], ['plainL', 'plain, left'], ['plainR', 'plain, right'], ['auxinL', 'soaked in auxin, left'], ['auxinR', 'soaked in auxin, right']],
-        when: function () { return S.organ === 'shoot' && S.top === 'cut'; } },
+        when: function () { return S.organ === 'shoot' && S.lay === 'up' && S.top === 'cut'; } },
       { key: 'cap', label: 'The root cap', opts: [['intact', 'left on'], ['cut', 'cut off']],
         when: function () { return S.organ === 'root'; } }
     ];
@@ -1889,7 +1891,12 @@
             if (g.key === 'top' && o[0] !== 'cut') S.block = 'none';
             if (g.key === 'top' && o[0] === 'cut') { S.cover = 'none'; S.mica = 'none'; }
             /* a sideways shoot has no left or right flank to light */
-            if (g.key === 'lay' && o[0] === 'side' && (S.light === 'left' || S.light === 'right')) S.light = 'dark';
+            if (g.key === 'lay' && o[0] === 'side') {
+              if (S.light === 'left' || S.light === 'right') S.light = 'dark';
+              if (S.top !== 'intact' && S.top !== 'cut') S.top = 'intact';   /* the off-centre replacements are upright experiments */
+              S.block = 'none'; S.mica = 'none';
+            }
+            if (g.key === 'light' && o[0] !== 'left' && o[0] !== 'right') S.mica = 'none';
             buildPanel(); run();
           });
           pills.appendChild(b);
@@ -1924,10 +1931,12 @@
       if (S.organ === 'root') {
         grav = S.cap === 'intact';                 /* the CAP is the gravity detector, not the tip */
         if (grav) bias += 1;
-      } else if (made > 0 && S.top !== 'cut') {
+      } else {
+        grav = S.lay === 'side';                   /* gravity acts on it with or without a tip */
         var canSee = S.cover !== 'opaque';         /* an opaque cap blinds the tip; a collar below it does not */
-        if (S.lay === 'side') {
-          grav = true; bias += 1;                  /* gravity needs no window to get in */
+        if (made <= 0 || S.top === 'cut') { /* no auxin to move */ }
+        else if (S.lay === 'side') {
+          bias += 1;                               /* gravity needs no window to get in */
           /* light from overhead falls on the UPPER flank of a shoot that is lying down, so it
              shades the lower one — pushing the auxin the same way gravity already is */
           if (S.light === 'top' && canSee) { lit = true; bias += 1; }
@@ -1959,15 +1968,22 @@
 
       var bend = (gL - gR) * 54 * Math.PI / 180;   /* + bends right, − bends left */
 
-      /* whose experiment is on the bench */
-      if (S.organ === 'shoot') {
-        if (S.top === 'intact' && S.cover === 'opaque' && sees === false && (S.light === 'left' || S.light === 'right')) who = 'Darwin, 1880';
-        else if (S.top === 'intact' && S.cover === 'collar') who = 'Darwin, 1880';
+      /* Whose experiment is on the bench. Each clause has to name the WHOLE arrangement,
+         stimulus included: a cap with the lamp off is nobody's experiment, and crediting it to
+         Darwin taught a student that the cap alone was the point. */
+      var lateral = S.light === 'left' || S.light === 'right';
+      if (S.organ === 'shoot' && S.lay === 'up') {
+        var replaced = S.top === 'replaced' || S.top.indexOf('shift') === 0;
+        if (S.top === 'intact' && lateral && S.cover === 'opaque') who = 'Darwin, 1880';
+        else if (S.top === 'intact' && lateral && S.cover === 'collar') who = 'Darwin, 1880';
+        else if (S.top === 'intact' && lateral && S.cover === 'clear') who = 'Darwin, 1880';
+        else if (S.top === 'cut' && lateral && S.block === 'none') who = 'Darwin, 1880';
         else if (S.top === 'cut' && S.block.indexOf('auxin') === 0) who = 'Went, 1928';
-        else if (S.top.indexOf('shift') === 0 && S.light === 'dark') who = 'Paál, 1919';
-        else if (S.layer === 'mica' && S.top !== 'intact' && S.top !== 'cut') who = 'Boysen-Jensen, 1913';
-        else if (S.mica !== 'none') who = 'Boysen-Jensen, 1913';
-        else if (S.top === 'cut' && (S.light === 'left' || S.light === 'right')) who = 'Darwin, 1880';
+        else if (S.top === 'cut' && S.block.indexOf('plain') === 0) who = 'Went, 1928 — the control';
+        else if (S.top.indexOf('shift') === 0 && S.light === 'dark' && S.layer !== 'mica') who = 'Paál, 1919';
+        else if (replaced && S.layer === 'mica') who = 'Boysen-Jensen, 1913';
+        else if (replaced && S.layer === 'gel' && lateral) who = 'Boysen-Jensen, 1913';
+        else if (S.mica !== 'none' && lateral) who = 'Boysen-Jensen, 1913';
       }
 
       return { made: made, sees: sees, lit: lit, grav: grav, fL: fL, fR: fR, dL: dL, dR: dR,
@@ -2073,6 +2089,21 @@
                 LEN: base.LEN + ext, TIP: base.TIP + ext, ELO: [base.ELO[0], base.ELO[1] + ext],
                 ZONE0: base.ELO[0], ZONE1: base.ELO[1] + ext };
       var bend = M.bend * grow, at = beam(g, bend);
+
+      /* A frame riding the organ. Its origin sits on the centre line at distance s, its x axis
+         runs ACROSS the organ (the u direction) and its y axis runs back down it. Anything drawn
+         inside is therefore drawn in the organ's own coordinates and stays seated on it however
+         the organ is turned or bent. Everything except the mica plate used to be composed from
+         g.BX / g.BY, which silently assumed the organ stood upright and unbent: laid on its side
+         the whole apparatus was left behind, 200 px away, and some of it off the canvas. */
+      function rider(s0) {
+        var q = at(s0, 0);
+        return '<g transform="translate(' + q[0].toFixed(2) + ',' + q[1].toFixed(2) +
+               ') rotate(' + (q[2] * 180 / Math.PI).toFixed(2) + ')">';
+      }
+      /* One column, and every anchor that has a choice of flank takes the one on its side, so a
+         leader never crosses the drawing to reach its words. */
+      var labRight = root ? true : S.light !== 'right', labU = labRight ? HW : -HW;
       var HW = g.HW, K = 9, CW = 11;
 
       var s = '<svg viewBox="0 0 ' + g.W + ' ' + g.H + '" role="img" aria-label="' + verdictPlain(M) + '">';
@@ -2185,7 +2216,11 @@
                  '" stroke="' + (root ? '#9A8459' : '#2C6E36') + '" stroke-width="1.3"/>';
           /* the divider between cells fades as the cell stretches: a stretched cell is longer,
              so its neighbours are further apart */
-          if (inZone && stretched > 0.42) out += '<path d="M' + f1(p1) + ' L' + f1(p4) + '" stroke="#2C6E36" stroke-width="1" opacity=".3"/>';
+          /* the arrow says "this cell is elongating"; its length says by how much */
+          if (inZone && stretched > 0.42) {
+            var am = Math.min(5.5, (s1 - s0) * 0.16);
+            out += dblArrow(at(s0 + am, sign * (HW - CW / 2)), at(s1 - am, sign * (HW - CW / 2)), root ? '#6B5A33' : '#1F5A31');
+          }
         }
         return out;
       }
@@ -2207,35 +2242,42 @@
       /* a detached tip, sitting back on the stump with something between it and the stump */
       if (!root && S.top !== 'intact' && S.top !== 'cut') {
         var off = S.top === 'shiftL' ? -13 : S.top === 'shiftR' ? 13 : 0;
-        var ly = g.BY - bodyTop - 9, lx = g.BX;
-        s += '<rect x="' + (lx - HW) + '" y="' + (ly + 1) + '" width="' + (HW * 2) + '" height="8" rx="2" fill="' +
+        s += rider(bodyTop);
+        s += '<rect x="' + (-HW) + '" y="-9" width="' + (HW * 2) + '" height="8" rx="2" fill="' +
              (S.layer === 'mica' ? '#B9BFC7' : '#F2E7C8') + '" stroke="' + (S.layer === 'mica' ? '#6C7681' : '#C9B77E') + '" stroke-width="1.5"/>';
-        s += '<path d="M' + (lx + off - HW) + ' ' + ly + ' v-26 q0 -16 ' + HW + ' -16 q' + HW + ' 0 ' + HW + ' 16 v26 Z" fill="#2F7D46" opacity=".72" stroke="#1F5A31" stroke-width="1.6"/>';
-        s += ruled(lx + off, ly - 26, 396, ly - 30, 'the cut tip, put back', true);
-        s += ruled(lx + HW, ly + 5, 396, ly + 8, S.layer === 'mica' ? 'mica: nothing crosses' : 'gelatin: auxin crosses', true);
+        s += '<path d="M' + (off - HW) + ' -9 v-26 q0 -16 ' + HW + ' -16 q' + HW + ' 0 ' + HW + ' 16 v26 Z" fill="#2F7D46" opacity=".72" stroke="#1F5A31" stroke-width="1.6"/>';
+        s += '</g>';
+        var tA = at(bodyTop + 30, off), tB = at(bodyTop + 5, labU);
+        s += ruled(tA[0], tA[1], 0, 0, 'the cut tip, put back');
+        s += ruled(tB[0], tB[1], 0, 0, S.layer === 'mica' ? 'mica: nothing crosses' : 'gelatin: auxin crosses');
       }
 
       /* an agar block on a decapitated stump */
       if (!root && S.top === 'cut' && S.block !== 'none') {
         var bl = S.block.slice(-1) === 'L', hasA = S.block.indexOf('auxin') === 0;
-        var bx = g.BX + (bl ? -HW : 0), by = g.BY - bodyTop - 16;
-        s += '<rect x="' + bx + '" y="' + by + '" width="' + HW + '" height="16" rx="2" fill="' + (hasA ? '#F6DFAE' : '#EFEFE6') + '" stroke="' + (hasA ? '#C2921F' : '#B8B8AC') + '" stroke-width="1.6"/>';
+        var bx0 = bl ? -HW : 0;
+        s += rider(bodyTop);
+        s += '<rect x="' + bx0 + '" y="-16" width="' + HW + '" height="16" rx="2" fill="' + (hasA ? '#F6DFAE' : '#EFEFE6') + '" stroke="' + (hasA ? '#C2921F' : '#B8B8AC') + '" stroke-width="1.6"/>';
         if (hasA) for (var q2 = 0; q2 < 4; q2++)
-          s += '<circle cx="' + (bx + 6 + (q2 % 2) * 12) + '" cy="' + (by + 5 + Math.floor(q2 / 2) * 7) + '" r="2.6" fill="#F5A623" stroke="#B9761A" stroke-width=".8"/>';
-        s += ruled(bx + HW / 2, by, 396, by - 12, hasA ? 'agar block soaked in auxin' : 'plain agar block (the control)', true);
+          s += '<circle cx="' + (bx0 + 6 + (q2 % 2) * 12) + '" cy="' + (-11 + Math.floor(q2 / 2) * 7) + '" r="2.6" fill="#F5A623" stroke="#B9761A" stroke-width=".8"/>';
+        s += '</g>';
+        var aA = at(bodyTop + 16, bx0 + HW / 2);
+        s += ruled(aA[0], aA[1], 0, 0, hasA ? 'agar block soaked in auxin' : 'plain agar block (the control)');
       }
 
       /* caps and collars */
       if (!root && S.top !== 'cut' && S.cover !== 'none') {
         if (S.cover === 'collar') {
-          var cy2 = g.BY - g.ELO[1] - 6;
-          s += '<rect x="' + (g.BX - HW - 4) + '" y="' + cy2 + '" width="' + (HW * 2 + 8) + '" height="34" rx="3" fill="#4A4A4A" opacity=".85"/>';
-          s += ruled(g.BX - HW - 4, cy2 + 17, 132, cy2 + 17, 'opaque collar; the tip is still bare', false);
+          /* below the tip, not across it: the point of Darwin's control is that the TIP is bare */
+          var sC = Math.max(24, g.TIP - 24);
+          s += rider(sC) + '<rect x="' + (-HW - 4) + '" y="-17" width="' + (HW * 2 + 8) + '" height="34" rx="3" fill="#4A4A4A" opacity=".85"/></g>';
+          var cA = at(sC, labU < 0 ? -(HW + 4) : HW + 4);
+          s += ruled(cA[0], cA[1], 0, 0, 'opaque collar; the tip is still bare');
         } else {
-          var ty2 = g.BY - g.LEN - 12;
-          s += '<path d="M' + (g.BX - HW - 3) + ' ' + (ty2 + 42) + ' v-26 q0 -16 ' + (HW + 3) + ' -16 q' + (HW + 3) + ' 0 ' + (HW + 3) + ' 16 v26 Z" fill="' +
-               (S.cover === 'opaque' ? '#3A3A3A' : '#BFD8E8') + '" opacity="' + (S.cover === 'opaque' ? '.9' : '.55') + '" stroke="' + (S.cover === 'opaque' ? '#222' : '#7FA8C4') + '" stroke-width="1.6"/>';
-          s += ruled(g.BX - HW - 3, ty2 + 20, 132, ty2 + 16, S.cover === 'opaque' ? 'opaque cap: the tip is blind' : 'clear cap: the tip still sees', false);
+          s += rider(g.LEN) + '<path d="M' + (-HW - 3) + ' 30 v-26 q0 -16 ' + (HW + 3) + ' -16 q' + (HW + 3) + ' 0 ' + (HW + 3) + ' 16 v26 Z" fill="' +
+               (S.cover === 'opaque' ? '#3A3A3A' : '#BFD8E8') + '" opacity="' + (S.cover === 'opaque' ? '.9' : '.55') + '" stroke="' + (S.cover === 'opaque' ? '#222' : '#7FA8C4') + '" stroke-width="1.6"/></g>';
+          var kA = at(g.LEN - 18, labU < 0 ? -(HW + 3) : HW + 3);
+          s += ruled(kA[0], kA[1], 0, 0, S.cover === 'opaque' ? 'opaque cap: the tip is blind' : 'clear cap: the tip still sees');
         }
       }
 
@@ -2255,12 +2297,16 @@
       if (root) {
         if (S.cap === 'intact') {
           var pc = at(g.LEN, 0), phc = pc[2];
-          s += '<path d="M' + f1(at(g.TIP, HW)) + ' Q' + (pc[0] + Math.sin(phc) * HW * 1.5).toFixed(1) + ' ' + (pc[1] - Math.cos(phc) * HW * 1.5).toFixed(1) +
+          /* A quadratic from s = TIP through a control c beyond the apex peaks halfway between
+             them, so the multiplier has to be solved from the body's own cap (0.95) rather than
+             guessed — guessed at 1.5 it stopped 11 px short and left a nub of root sticking out. */
+          var capM = (g.LEN - g.TIP) / HW + 0.95;
+          s += '<path d="M' + f1(at(g.TIP, HW)) + ' Q' + (pc[0] + Math.sin(phc) * HW * capM).toFixed(1) + ' ' + (pc[1] - Math.cos(phc) * HW * capM).toFixed(1) +
                ' ' + f1(at(g.TIP, -HW)) + ' Z" fill="#B59B6A" stroke="#8A7346" stroke-width="1.8"/>';
           for (var q3 = 0; q3 < 7; q3++) {
             var uu = -HW * 0.55 + (q3 % 4) * HW * 0.36, sss = g.TIP + 8 + Math.floor(q3 / 4) * 9;
             var sink = detect * HW * 0.5;
-            var ps = at(sss, uu + sink);
+            var ps = at(sss, Math.min(uu + sink, HW * 0.68));   /* the deepest grain stays inside the cap */
             s += '<circle cx="' + ps[0].toFixed(1) + '" cy="' + ps[1].toFixed(1) + '" r="3" fill="#6B5A33" opacity=".9"/>';
           }
           s += ruled(at(g.LEN - 12, 0)[0], at(g.LEN - 12, 0)[1], 396, 300, 'root cap: starch grains sink to the lower side', true);
@@ -2300,10 +2346,10 @@
 
       /* the ruled labels for the parts that are always there */
       if (!root) {
-        if (S.top === 'intact') s += ruled(at(g.LEN - 16, HW)[0], at(g.LEN - 16, HW)[1], 396, 132, 'shoot tip: makes the auxin, detects the light', true);
-        else s += ruled(at(bodyTop, HW)[0], at(bodyTop, HW)[1], 396, 132, 'the stump: no tip, so no auxin of its own', true);
-        var pe = at((g.ELO[0] + g.ELO[1]) / 2, -HW);
-        s += ruled(pe[0], pe[1], 132, 250, 'zone of elongation: the cells that stretch', false);
+        if (S.top === 'intact') { var tp = at(g.LEN - 16, labU); s += ruled(tp[0], tp[1], 0, 0, 'shoot tip: makes the auxin, detects the light'); }
+        else { var sp = at(bodyTop - 12, labU); s += ruled(sp[0], sp[1], 0, 0, 'the stump: no tip, so no auxin of its own'); }
+        var pe = at((g.ZONE0 + g.ZONE1) / 2, labU);
+        s += ruled(pe[0], pe[1], 0, 0, 'zone of elongation');
         if (S.lay === 'side') {
           s += '<rect x="0" y="0" width="' + g.BX + '" height="' + g.H + '" fill="#E4D9C3"/>';
           s += '<line x1="' + g.BX + '" y1="0" x2="' + g.BX + '" y2="' + g.H + '" stroke="#B79E74" stroke-width="2"/>';
@@ -2315,8 +2361,8 @@
           s += '<line x1="0" y1="' + g.BY + '" x2="' + g.W + '" y2="' + g.BY + '" stroke="#B79E74" stroke-width="2"/>';
         }
       } else {
-        var pr = at((g.ELO[0] + g.ELO[1]) / 2, -HW);
-        s += ruled(pr[0], pr[1], 132, 92, 'zone of elongation', false);
+        var pr = at((g.ZONE0 + g.ZONE1) / 2, labU);
+        s += ruled(pr[0], pr[1], 0, 0, 'zone of elongation');
         /* Correcting towards the vertical overshoots, and the tip is knocked aside by stones.
            Both are real, and together they are why a root in soil follows a wavy path. */
         if (grow > 0.85 && M.sees) {
@@ -2327,13 +2373,35 @@
         }
       }
 
-      s += placeLabels(g, S.light !== 'right');
+      s += placeLabels(g, labRight);
       s += '</svg>';
       stage.innerHTML = s;
     }
 
     function clamp(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
     function frac(v) { return v - Math.floor(v); }
+
+    /* A double-headed arrow lying along a cell, drawn only inside cells that are actually
+       elongating. It is the elongation itself made visible: each arrow is as long as the cell
+       it sits in, so the flank that stretched more carries visibly longer arrows than the one
+       that did not. A label can only assert that; this shows it. */
+    function dblArrow(pA, pB, col) {
+      var dx = pB[0] - pA[0], dy = pB[1] - pA[1], L = Math.hypot(dx, dy) || 1;
+      if (L < 11) return '';
+      var ux = dx / L, uy = dy / L, hd = Math.min(4.4, L * 0.26);
+      var o = '<line x1="' + pA[0].toFixed(1) + '" y1="' + pA[1].toFixed(1) +
+              '" x2="' + pB[0].toFixed(1) + '" y2="' + pB[1].toFixed(1) +
+              '" stroke="' + col + '" stroke-width="1.5" stroke-linecap="round"/>';
+      [[pA, 1], [pB, -1]].forEach(function (e) {
+        var q = e[0], sg = e[1];
+        var bx = q[0] + ux * hd * sg, by = q[1] + uy * hd * sg;
+        var nx = -uy * hd * 0.62, ny = ux * hd * 0.62;
+        o += '<path d="M' + q[0].toFixed(1) + ' ' + q[1].toFixed(1) + ' L' + (bx + nx).toFixed(1) + ' ' + (by + ny).toFixed(1) +
+             ' M' + q[0].toFixed(1) + ' ' + q[1].toFixed(1) + ' L' + (bx - nx).toFixed(1) + ' ' + (by - ny).toFixed(1) +
+             '" stroke="' + col + '" stroke-width="1.5" fill="none" stroke-linecap="round"/>';
+      });
+      return o;
+    }
 
     /* ----- what the student is told, built from the model and not from a table ----- */
     var STEPS = [
@@ -2344,9 +2412,10 @@
         ? (M.sees ? 'Inside the root cap, heavy starch grains sink to the lower side. That is how the root detects gravity.'
                   : 'With the cap gone there is nothing to detect gravity.')
         : S.lay === 'side'
-          ? (M.grav && M.lit ? 'It is lying down, so gravity acts across it — and the lamp overhead lights the upper flank. Both stimuli push the same way, so this run cannot tell you which did it.'
-             : M.grav ? 'It is lying down and in the dark, so gravity is the only stimulus acting across it.'
-             : 'With the tip gone there is nothing to detect gravity.')
+          ? (M.made === 0 ? 'It is lying down, so gravity still acts across it — but with no tip there is no auxin for gravity to move.'
+             : M.lit ? 'It is lying down, so gravity acts across it — and the lamp overhead lights the upper flank. Both stimuli push the same way, so this run cannot tell you which did it.'
+             : S.light === 'dark' ? 'It is lying down and in the dark, so gravity is the only stimulus acting across it.'
+             : 'It is lying down. The cap keeps the light off the tip, so gravity is the only stimulus it can read.')
         : (M.sees ? 'The tip detects light coming from one side.'
                   : (S.cover === 'opaque' ? 'The cap blocks the light, so the tip detects nothing.'
                      : S.light === 'dark' ? 'It is dark. There is nothing to detect.'
@@ -2368,7 +2437,9 @@
           : 'Both sides get the same, so both elongate the same and the shoot grows straight.';
         var more = M.gL > M.gR ? 'left' : 'right';
         if (S.organ === 'root') return 'The lower side has MORE auxin, and in a root that HOLDS CELLS BACK. The upper cells elongate more, so the root bends down.';
-        if (S.lay === 'side') return 'The LOWER flank has more auxin, and in a shoot that makes cells elongate MORE. The lower cells stretch, so the shoot turns UPWARDS — away from gravity.';
+        if (S.lay === 'side') return M.bend < 0
+          ? 'The LOWER flank has more auxin, and in a shoot that makes cells elongate MORE. The lower cells stretch, so the shoot turns UPWARDS — away from gravity.'
+          : 'Both flanks get the same, so neither outgrows the other and it goes on lying where it is.';
         return 'The ' + (M.dL > M.dR ? 'left' : 'right') + ' side has more auxin, so those cells elongate more. That flank is now longer, so the shoot bends ' +
             (M.sees && M.offset === 0 ? 'towards the light.' : 'the other way, to the ' + (M.gL > M.gR ? 'right.' : 'left.')); }]
     ];
@@ -2386,6 +2457,9 @@
       function sw(inner) { return '<svg class="ax__sw" viewBox="0 0 16 16" aria-hidden="true">' + inner + '</svg>'; }
       it.push([sw('<circle cx="8" cy="8" r="5" fill="#F5A623" stroke="#B9761A" stroke-width="1.4"/><circle cx="6.4" cy="6.4" r="1.7" fill="#FFE7B5"/>'), 'auxin']);
       it.push([sw('<rect x="2" y="3" width="12" height="10" rx="1.5" fill="' + (S.organ === 'root' ? '#E9DCC0' : '#C6E2AC') + '" stroke="' + (S.organ === 'root' ? '#9A8459' : '#2C6E36') + '" stroke-width="1.6"/>'), 'one cell']);
+      it.push([sw('<g stroke="' + (S.organ === 'root' ? '#6B5A33' : '#1F5A31') + '" stroke-width="1.6" fill="none" stroke-linecap="round">' +
+                  '<line x1="3" y1="8" x2="13" y2="8"/><path d="M3 8 L6 5 M3 8 L6 11 M13 8 L10 5 M13 8 L10 11"/></g>'),
+               'this cell is elongating — the longer the arrow, the more it has stretched']);
       if (S.organ === 'root' && S.cap === 'intact')
         it.push([sw('<circle cx="8" cy="8" r="4.4" fill="#6B5A33"/>'), 'starch grain (statolith)']);
       if (S.organ === 'shoot' && S.mica !== 'none')
@@ -2403,7 +2477,9 @@
         ? (diff ? 'The root bends <b>downwards</b>.' : 'The root grows <b>straight</b>.')
         : M.made === 0 ? 'The shoot <b>does not grow and does not bend</b>.'
         : S.lay === 'side'
-          ? (diff ? 'The shoot turns <b>upwards</b> — <b>negative gravitropism</b>.' : 'The shoot grows straight on, <b>still lying down</b>.')
+          ? (diff && M.bend < 0 ? 'The shoot turns <b>upwards</b> — <b>negative gravitropism</b>.'
+             : diff ? 'The shoot curves <b>downwards</b>.'
+             : 'The shoot grows straight on, <b>still lying down</b>.')
         : diff ? 'The shoot bends <b>' + (M.gL > M.gR ? 'to the right' : 'to the left') + '</b>' +
                  (M.sees && M.offset === 0 ? ' — <b>towards the light</b>.' : '.')
                : 'The shoot grows <b>straight</b>.';
@@ -2421,10 +2497,15 @@
         }
       } else {
         if (S.lay === 'side' && M.made > 0) {
-          pts.push(M.grav ? 'Lying down, the tip reads gravity and sends auxin to the LOWER flank.' : 'Nothing is left to read the stimulus.');
+          pts.push('Lying down, the tip reads gravity and sends auxin to the LOWER flank.');
           if (M.lit) pts.push('The lamp overhead also shades the lower flank, so light and gravity are pushing the auxin the same way. Run it again in the dark and only gravity is left — that is the control that makes the result mean something.');
-          else pts.push('In the dark there is no light to confuse it, so the turn upwards can only be a response to gravity.');
+          else if (S.light === 'dark') pts.push('In the dark there is no light to confuse it, so the turn upwards can only be a response to gravity.');
+          else pts.push('The cap keeps the light off the tip, so although the lamp is on, gravity is the only stimulus the shoot can read.');
           pts.push('More auxin on the lower flank makes those cells <b>elongate</b> more, so the lower side becomes longer and the shoot curves up. A shoot is <b>negatively gravitropic</b>.');
+        }
+        else if (S.lay === 'side') {
+          pts.push('Gravity is still acting on it, and with its tip it would answer. Auxin is made in the tip, so with the tip gone there is none to send to the lower flank.');
+          pts.push('Nothing elongates, so it stays where it was laid. The tip is needed for gravitropism just as it is for phototropism.');
         }
         else if (M.made === 0) pts.push(S.top === 'cut' && S.block.indexOf('plain') === 0
           ? 'Plain agar carries no auxin, so there is still no source. This is the control that shows it is the auxin in the block that matters, not the block.'
@@ -2437,7 +2518,8 @@
             : S.cover === 'opaque' ? 'The cap stops light reaching the tip, so no side is favoured and the auxin stays even.'
             : S.cover === 'collar' ? 'The collar covers the stem but not the tip. The tip is the detector, so the response happens anyway.'
             : 'Nothing one-sided reaches the tip, so the auxin stays evenly spread.');
-          if (M.note) pts.push('The mica sheet stops auxin travelling down that flank, so the difference never reaches the elongating cells and there is no curvature.');
+          if (M.note && Math.abs(M.gL - M.gR) < 0.04) pts.push('The plate stops the extra auxin travelling down that flank, so the difference never reaches the elongating cells and there is no curvature. That is the result Boysen-Jensen got with the plate on the shaded side.');
+          else if (M.note) pts.push('The plate is on the lit flank, which was carrying less auxin anyway, so it holds nothing back that mattered and the shoot bends as it would have done. That is the control for the other arrangement.');
           else if (Math.abs(M.gL - M.gR) > 0.04) pts.push('More auxin on one side makes those cells take in more water and <b>elongate</b> more. One flank longer than the other can only be a curve.');
           else pts.push('Both flanks elongate equally, so there is nothing to bend it.');
         }
