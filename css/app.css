@@ -780,7 +780,13 @@ picture{display:block;line-height:0}
 .sim{flex:1;min-height:0;overflow:auto;padding:0 14px 16px;display:flex;flex-direction:column}
 /* a lone drawing sits in the middle of the column; auto margins centre it without the
    clipping that justify-content:center causes once the content is taller than the box */
-.sim > .ax__stage{margin-top:auto;margin-bottom:auto;width:100%}
+.sim > .ax__pack{margin-top:auto;margin-bottom:auto;width:100%}
+.sim > .ax__pack .ax__stage{border:0;background:transparent;padding:0}
+.sim > .ax__pack .ax__key{margin-top:10px}
+.sim > .ax__pack .ax__cap{font-size:13px;padding:7px 10px}
+.sim > .ax__pack .ax__why{margin-top:8px;padding:10px 12px}
+.sim > .ax__pack .ax__res{font-size:14px}
+.sim > .ax__pack .ax__pts{font-size:12.5px;line-height:1.55}
 .sim[hidden]{display:none}
 .sim .widget{margin-top:0;border:none;box-shadow:none;background:transparent;padding:0}
 .tool--sim{margin-right:auto}

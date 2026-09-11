@@ -1847,13 +1847,14 @@
     var panel = h('div', 'ax__panel');
     var acts  = h('div', 'ax__acts');
     var slot  = h('div', 'ax__slot');
+    var pack  = h('div', 'ax__pack');
     var stage = h('div', 'ax__stage');
     var key   = h('div', 'ax__key');
     var capt  = h('p', 'ax__cap');
     var why   = h('div', 'ax__why');
-    slot.appendChild(stage);
+    pack.appendChild(stage); pack.appendChild(key); pack.appendChild(capt); pack.appendChild(why);
+    slot.appendChild(pack);
     wrap.appendChild(panel); wrap.appendChild(acts); wrap.appendChild(slot);
-    wrap.appendChild(key); wrap.appendChild(capt); wrap.appendChild(why);
     box.appendChild(wrap);
 
     /* ----- the controls ----- */
@@ -2581,26 +2582,68 @@
     /* On the station page the drawing stands in the plant's column, so a change to the controls
        is seen at once instead of being scrolled past. In the Practise column the whole widget is
        already there, so it stays where it is. */
+    /* The drawing takes the plant's column while the student is looking at this widget, and
+       gives it back when they have scrolled past. Moving it OUT of the text for good would be
+       simpler, but then the page would be a different height while it was away and the scroll
+       position would jump under the reader's hand. So on a wide screen the block lives in the
+       column from the start and only its VISIBILITY follows the scroll: the page geometry never
+       changes, so nothing can flap. */
     var wideQ = window.matchMedia('(min-width: 1001px)');
+    var staged = null, tick = 0;
+
+    function host() { return document.getElementById('simHost'); }
+    function owned() { var hs = host(); return !!(hs && hs.contains(box)); }   /* the Practise column has the lot */
+
     function mount() {
-      var host = document.getElementById('simHost');
-      var inSim = !!(host && host.contains(box));
-      var wide = !!spec.onStage && wideQ.matches && !!host && !inSim;
-      var target = wide ? host : slot;
-      if (stage.parentNode !== target) {
-        if (wide) host.innerHTML = '';
-        target.appendChild(stage);
+      var hs = host(), wide = !!spec.onStage && wideQ.matches && !!hs && !owned();
+      var target = wide ? hs : slot;
+      if (pack.parentNode !== target) {
+        if (wide) hs.innerHTML = '';
+        target.appendChild(pack);
       }
       box.classList.toggle('ax--split', !!wide);
-      if (spec.onStage && !inSim && global.Plate && global.Plate.showSim) global.Plate.showSim(wide);
+      if (!wide && staged !== null) { staged = null; if (global.Plate && global.Plate.stageSim) global.Plate.stageSim(false); }
+      if (wide) { staged = null; look(); }
     }
     box.__onMove = mount;
-    var onWide = function () { if (box.isConnected) mount(); else wideQ.removeEventListener('change', onWide); };
+
+    function reading() {
+      var r = box.getBoundingClientRect(), p = box.closest && box.closest('.panel');
+      var t = p ? p.getBoundingClientRect().top : 0;
+      var b = p ? p.getBoundingClientRect().bottom : (window.innerHeight || 800);
+      return r.bottom > t + 60 && r.top < b - 60;
+    }
+    function look() {
+      if (!box.isConnected) { detach(); return; }
+      if (!spec.onStage || !wideQ.matches || owned()) return;
+      var v = reading();
+      if (v === staged) return;
+      staged = v;
+      if (global.Plate && global.Plate.stageSim) global.Plate.stageSim(v);
+    }
+    function onScroll() {
+      if (tick) return;
+      tick = requestAnimationFrame(function () { tick = 0; look(); });
+    }
+    var scroller = null;
+    function attach() {
+      scroller = box.closest ? box.closest('.panel') : null;
+      (scroller || window).addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll, { passive: true });
+    }
+    function detach() {
+      if (tick) { cancelAnimationFrame(tick); tick = 0; }
+      (scroller || window).removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      wideQ.removeEventListener('change', onWide);
+    }
+    var onWide = function () { if (box.isConnected) mount(); else detach(); };
     wideQ.addEventListener('change', onWide);
 
-    buildPanel(); mount(); run();
+    buildPanel(); run();
+    requestAnimationFrame(function () { attach(); mount(); });
     box.appendChild(h('p', 'widget__note', 'The bend is not drawn on. Each flank of the elongation zone is drawn to the length its own auxin has earned it, and a column whose one side is longer than the other can only be a curve. Change the apparatus and the biology, not a stored answer, decides what happens.'));
-    box.__onReset = function () { if (S.t) clearInterval(S.t); wideQ.removeEventListener('change', onWide); };
+    box.__onReset = function () { if (S.t) clearInterval(S.t); detach(); };
     return box;
   }
 
