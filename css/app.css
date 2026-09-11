@@ -824,6 +824,25 @@ picture{display:block;line-height:0}
 .widget__note{font-size:13px;color:var(--grey);margin:10px 0 0;line-height:1.45}
 .widget__done{margin:10px 0 0;font-size:13.5px;font-weight:600;color:var(--green-2)}
 .exam-list li .widget,.exam-list li .media,.exam-list li .photo,.exam-list li .ctable{margin-left:-26px}
+
+/* A tall, narrow diagram — a xylem vessel, a sieve tube, a root tip — set under its sentence
+   left a column of empty paper 490px wide beside it. app.js puts a portrait figure first in its
+   sentence and this stands it in the margin, so the sentence closes round it. Marked by
+   widgets.js from the size the build recorded, so nothing jumps when the file arrives.
+   Below 780px there is no room for two columns and it goes back to sitting on its own. */
+@media (min-width:780px){
+  .exam-list li .photo--portrait{
+    float:left;width:clamp(170px,26%,228px);max-width:none;
+    margin:4px 20px 8px -26px;shape-margin:14px
+  }
+  .exam-list li .photo--portrait img{width:100%;height:auto}
+  .exam-list li .photo--portrait figcaption{font-size:11.5px;line-height:1.4}
+  /* the sentence must be at least as tall as its picture, and nothing structural may ride up
+     beside it: a widget, an activity or the next block starts below */
+  .exam-list li:has(> .photo--portrait){min-height:1px}
+  .exam-list li:has(> .photo--portrait)::after{content:"";display:block;clear:left}
+  .exam-list li .widget,.exam-part,.golden,.examfocus,.card__h{clear:left}
+}
 .wbtn{font:inherit;font-size:13px;font-weight:600;color:var(--green);background:#fff;border:1.5px solid var(--green);border-radius:var(--r-pill);padding:5px 12px;cursor:pointer;transition:.14s}
 .wbtn:hover{background:var(--green-tint)}
 .wbtn[aria-pressed="true"],.wbtn.is-on{background:var(--green);color:#fff}
@@ -895,8 +914,6 @@ picture{display:block;line-height:0}
 .photo figcaption{font-size:12.5px;color:var(--grey);margin-top:6px;line-height:1.45}
 .photo figcaption a{color:inherit}
 
-/* ---------- the two activity types borrowed from the Classification Lab ---------- */
-.act__kind[data-k="grid"]{background:var(--k-water)} .act__kind[data-k="hotspot"]{background:#2F6F5E}
 .gridq{overflow-x:auto;margin-bottom:4px}
 .gridq table{border-collapse:collapse;font-size:14px;width:100%}
 .gridq th,.gridq td{border:1px solid var(--edge);padding:5px 6px;text-align:center;vertical-align:middle}
