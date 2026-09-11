@@ -104,10 +104,10 @@
     var box = h('div', 'widget');
     box.appendChild(head('The equation', 'Click each word to see where it comes from or where it goes. Then turn over the balanced equation.', 'Click the words'));
     var NOTES = {
-      'carbon dioxide': 'From the air, in through the stomata, along the air spaces, into the mesophyll cells. About 0.04 % of the air — which is why it is so often the limiting factor.',
-      'water': 'From the soil, in through the root hairs by osmosis, up the xylem, into the mesophyll cells.',
-      'glucose': 'Made in the chloroplasts. Used in respiration, stored as starch, built into cellulose, converted to sucrose for the phloem, made into nectar.',
-      'oxygen': 'The waste product: out through the stomata by diffusion. In the light a leaf gives out far more than it uses.',
+      'carbon dioxide': 'From the air. It <b>diffuses</b> in through the stomata, down a concentration gradient, along the air spaces and into the mesophyll cells. About 0.04 % of the air — which is why it is so often the limiting factor.',
+      'water': 'From the soil. It enters the root hair cells by <b>osmosis</b>, then travels up the xylem in the <b>transpiration stream</b>, into the mesophyll cells.',
+      'glucose': 'Made in the chloroplasts. Used in <b>respiration</b>, stored as <b>starch</b>, built into <b>cellulose</b>, converted to <b>sucrose</b> for <b>translocation</b> in the phloem, made into nectar.',
+      'oxygen': 'The waste product. It <b>diffuses</b> out through the stomata, down a concentration gradient. In the light a leaf produces far more than it uses in respiration.',
       'light': 'The energy source. Absorbed by chlorophyll in the chloroplasts and transferred into energy in chemicals — the glucose.',
       'chlorophyll': 'The green pigment in the chloroplasts. Not used up: it captures the light, over and over.'
     };
@@ -116,18 +116,24 @@
     var note = h('p', 'eq__note'); note.hidden = true;
     function show(t, b) {
       eq.querySelectorAll('.eq__w').forEach(function (x) { x.classList.toggle('is-on', x === b); });
-      note.hidden = false; note.innerHTML = '<b>' + esc(t) + '</b> — ' + esc(NOTES[t] || '');
+      /* the notes carry <b> round the words a student must actually write, so they are not escaped */
+      note.hidden = false; note.innerHTML = '<b>' + esc(t) + '</b> — ' + (NOTES[t] || '');
     }
     eq.appendChild(chip('carbon dioxide')); eq.appendChild(h('span', 'eq__op', '+')); eq.appendChild(chip('water'));
-    var arrow = h('span', 'eq__arrow'); arrow.innerHTML = '<span>→</span>';
-    var over = h('span', 'eq__over'); over.appendChild(chip('light', 'eq__w--cond')); over.appendChild(chip('chlorophyll', 'eq__w--cond'));
-    arrow.insertBefore(over, arrow.firstChild);
+    /* light above the arrow, chlorophyll below it — the way every textbook and every mark scheme
+       draws it. Both were stacked above it, which crowded one side and left the other empty. */
+    var arrow = h('span', 'eq__arrow');
+    var over = h('span', 'eq__over'); over.appendChild(chip('light', 'eq__w--cond'));
+    var under = h('span', 'eq__under'); under.appendChild(chip('chlorophyll', 'eq__w--cond'));
+    arrow.appendChild(over);
+    arrow.appendChild(h('span', 'eq__line', '→'));
+    arrow.appendChild(under);
     eq.appendChild(arrow);
     eq.appendChild(chip('glucose')); eq.appendChild(h('span', 'eq__op', '+')); eq.appendChild(chip('oxygen'));
     box.appendChild(eq); box.appendChild(note);
     var bal = h('div', 'eq__bal'); bal.hidden = true;
     bal.innerHTML = '<span class="sup tip" tabindex="0" data-tip="Supplement — Paper 4 (Extended) only">S</span> <span class="eq__f">6CO<sub>2</sub> + 6H<sub>2</sub>O → C<sub>6</sub>H<sub>12</sub>O<sub>6</sub> + 6O<sub>2</sub></span>' +
-      '<small>Check it balances: 6 carbons, 12 hydrogens and 18 oxygens on each side.</small>';
+      '<small>Six of each on the left; one glucose and six oxygen on the right. Check it balances: 6 carbons, 12 hydrogens and 18 oxygens on each side.</small>';
     var bt = h('button', 'wbtn wbtn--quiet', 'Show the balanced equation'); bt.type = 'button';
     bt.addEventListener('click', function () { bal.hidden = !bal.hidden; bt.textContent = bal.hidden ? 'Show the balanced equation' : 'Hide the balanced equation'; });
     box.appendChild(bt); box.appendChild(bal);
