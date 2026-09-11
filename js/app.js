@@ -282,8 +282,11 @@
     if (tab === 'do' && onBench && sims.length) { simOpen[st.id] = true; if (btn) btn.hidden = true; }
     else if (tab !== 'do' || !sims.length) {
       dropSim();
-      if (window.Plate && window.Plate.showSim) window.Plate.showSim(false);
       if (btn) btn.hidden = true;
+      /* A widget marked onStage puts its own drawing in the column on the Learn tab and asks
+         Plate to show it. Leave that alone, or this would hide it a moment after it appeared. */
+      var staged = sims.some(function (w) { return w.onStage; });
+      if (!(tab === 'learn' && staged && simWide.matches) && window.Plate && window.Plate.showSim) window.Plate.showSim(false);
       return;
     }
     if (simPick[st.id] == null) simPick[st.id] = 0;
@@ -313,6 +316,10 @@
        single node mounts at the top of the questions instead. The query is the one the
        potometer already uses. */
     var wide = simWide.matches, target = wide ? host : simSlot(pane);
+    /* a drawing left behind in the column by a Learn-tab widget that has since been destroyed */
+    if (wide) Array.prototype.slice.call(host.children).forEach(function (c) {
+      if (c !== simView.node && !c.classList.contains('sim__pick')) host.removeChild(c);
+    });
     simChooser(target, st, sims, idx);
     if (simView.node.parentNode !== target) target.appendChild(simView.node);
     if (typeof simView.node.__onMove === 'function') simView.node.__onMove();

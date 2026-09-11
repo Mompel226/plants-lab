@@ -777,7 +777,10 @@ picture{display:block;line-height:0}
    bench this KEEPS the tools row, because that row now carries the way back to the plant. */
 .platecol.is-sim .field,.platecol.is-sim .platewrap,.platecol.is-sim .said{display:none}
 .platecol.is-sim .tool--whole,.platecol.is-sim .platecol__hint{display:none}
-.sim{flex:1;min-height:0;overflow:auto;padding:0 14px 16px}
+.sim{flex:1;min-height:0;overflow:auto;padding:0 14px 16px;display:flex;flex-direction:column}
+/* a lone drawing sits in the middle of the column; auto margins centre it without the
+   clipping that justify-content:center causes once the content is taller than the box */
+.sim > .ax__stage{margin-top:auto;margin-bottom:auto;width:100%}
 .sim[hidden]{display:none}
 .sim .widget{margin-top:0;border:none;box-shadow:none;background:transparent;padding:0}
 .tool--sim{margin-right:auto}
@@ -1589,3 +1592,12 @@ picture{display:block;line-height:0}
   border:1px solid var(--edge);border-radius:var(--r)}
 .xp__t{font-size:11px;font-weight:700;fill:#2A6B3B;font-family:var(--font)}
 .xp__s{font-size:9.5px;fill:#6B6B63;font-family:var(--font)}
+.ax__acts{display:flex;gap:8px;align-items:center;margin:2px 0 10px}
+.ax__go{font:inherit;font-size:13px;font-weight:700;padding:6px 16px;cursor:pointer;
+  border:1.5px solid var(--k-grow);border-radius:var(--r-pill);background:var(--k-grow);color:#fff}
+.ax__go:hover{filter:brightness(1.07)}
+.ax__rst{font:inherit;font-size:12.5px;font-weight:600;padding:5px 12px;cursor:pointer;
+  border:1.5px solid var(--edge);border-radius:var(--r-pill);background:#fff;color:#5A5A5A}
+.ax__rst:hover{border-color:var(--k-grow);color:var(--k-grow)}
+.ax--split .ax__slot{display:none}
+.platecol.is-sim .ax__stage{border:0;background:transparent;padding:0}
