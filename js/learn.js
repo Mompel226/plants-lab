@@ -432,6 +432,24 @@
        What changes is the READING: held against the glass it is 8.5 cm short, every time. The
        rate is worked out from S.d; the table records the reading. */
     var PX_PER_CM = 8, BEAKER_OFFSET_CM = 8.5;
+
+    /* THE GEOMETRY, IN ONE PLACE. The bubbles used to carry their own copies of these numbers,
+       so when the apparatus moved right the drawing followed and the animation did not: they
+       went on rising from x=354 — where the beaker used to be — and were funnelled to a point
+       180 px from the plant. Both the drawing and the run read these now, so they cannot drift
+       apart again. */
+    var G = (function () {
+      var BX = 466, BW = 136, BH = 176, BBOT = 322, BTOP = BBOT - BH, WTOP = BTOP + 20;
+      var FX = BX + BW / 2;
+      var FMOUTH = BBOT - 5, FRIM = 46, FNECK = 7, FSHOULDER = FMOUTH - 62, FSTEM_TOP = FSHOULDER - 46;
+      var TW = 23, TTOP = WTOP + 8, TBOT = FSTEM_TOP + 26;
+      return { W: 840, H: 366, BENCH: 330,
+               BX: BX, BW: BW, BH: BH, BBOT: BBOT, BTOP: BTOP, WTOP: WTOP, FX: FX,
+               FMOUTH: FMOUTH, FRIM: FRIM, FNECK: FNECK, FSHOULDER: FSHOULDER, FSTEM_TOP: FSTEM_TOP,
+               TW: TW, TX: FX - TW / 2, TTOP: TTOP, TBOT: TBOT,
+               CUT: FMOUTH - 6,                 /* the cut end of the stem: where bubbles are born */
+               GATHER: TTOP + 15 };             /* just inside the tube's closed end: collected */
+    })();
     function trueD() { return S.d; }
     function reading() { return S.measureTo === 'beaker' ? S.d - BEAKER_OFFSET_CM : S.d; }
     function I(d) { return Math.pow(10 / d, 2); }
@@ -552,11 +570,8 @@
        the funnel's mouth rests on the floor of the beaker with no gap and no platform under it;
        and the funnel covers the whole sprig, so every bubble it releases is caught. */
     function paintStage() {
-      var W = 840, H = 366;
-      var BENCH = 330;
-      /* the beaker is the unit everything else is measured against */
-      var BW = 136, BH = 176, BX = 466, BBOT = 322, BTOP = BBOT - BH, WTOP = BTOP + 20;
-      var FX = BX + BW / 2;
+      var W = G.W, H = G.H, BENCH = G.BENCH;
+      var BW = G.BW, BH = G.BH, BX = G.BX, BBOT = G.BBOT, BTOP = G.BTOP, WTOP = G.WTOP, FX = G.FX;
       var BATH_W = 190, BATH_H = 36, BATH_X = FX - BATH_W / 2, BATH_BOT = BENCH, BATH_TOP = BENCH - BATH_H;
       /* the ruler runs from the lamp to whichever point is measured to, at 8 px to the cm, so
          its drawn length always IS the reading — and the lamp does not move when the ruler does */
@@ -617,7 +632,7 @@
       s += '<rect x="' + (FX - FNECK) + '" y="' + FSTEM_TOP + '" width="' + (FNECK * 2) + '" height="' + (FSHOULDER - FSTEM_TOP) + '" fill="#EAF5FA" fill-opacity=".28" stroke="#6E97AC" stroke-width="1.8"/>';
 
       /* ---- the pondweed, wholly beneath the funnel ---- */
-      var wb = FMOUTH - 6, wt = FSHOULDER + 8;
+      var wb = G.CUT, wt = FSHOULDER + 8;
       s += '<path d="M' + (FX - 1) + ' ' + wb + ' C' + (FX - 10) + ' ' + (wb - 12) + ' ' + (FX + 7) + ' ' + (wb - 22) + ' ' + (FX - 2) + ' ' + (wb - 32) +
            ' C' + (FX - 9) + ' ' + (wb - 40) + ' ' + (FX + 4) + ' ' + (wb - 44) + ' ' + (FX - 1) + ' ' + wt + '" fill="none" stroke="#33804A" stroke-width="2.6" stroke-linecap="round"/>';
       for (var nI = 0; nI < 6; nI++) {
@@ -635,7 +650,7 @@
       });
 
       /* ---- the boiling tube: narrow, inverted, mouth over the funnel stem ---- */
-      var TW = 23, TX = FX - TW / 2, TTOP = WTOP + 8, TBOT = FSTEM_TOP + 26;
+      var TW = G.TW, TX = G.TX, TTOP = G.TTOP, TBOT = G.TBOT;
       s += '<path d="M' + TX + ' ' + TBOT + ' L' + TX + ' ' + (TTOP + 10) + ' Q' + TX + ' ' + TTOP + ' ' + (TX + TW / 2) + ' ' + TTOP +
            ' Q' + (TX + TW) + ' ' + TTOP + ' ' + (TX + TW) + ' ' + (TTOP + 10) + ' L' + (TX + TW) + ' ' + TBOT + '" fill="#E8F5FB" fill-opacity=".6" stroke="#6E97AC" stroke-width="1.8"/>';
       var gasH = Math.min(TBOT - TTOP - 16, S.gas * 0.8);
@@ -657,8 +672,8 @@
       for (var tk = 0; tk < 6; tk++) s += '<line x1="' + (THX + 3.2) + '" y1="' + (BTOP - 8 + tk * 17) + '" x2="' + (THX + 7.6) + '" y2="' + (BTOP - 8 + tk * 17) + '" stroke="#7E9EAF" stroke-width=".9"/>';
       var mercMax = BBOT - 26 - (BTOP - 20);
       var merc = Math.max(4, Math.min(mercMax, (temp - 2) / 48 * mercMax));
-      s += '<rect x="' + (THX - 1.4) + '" y="' + (BBOT - 22 - merc).toFixed(1) + '" width="2.8" height="' + merc.toFixed(1) + '" fill="' + (hot ? '#C4552F' : '#3C7FB1') + '"/>';
-      s += '<circle cx="' + THX + '" cy="' + (BBOT - 18) + '" r="5.4" fill="' + (hot ? '#C4552F' : '#3C7FB1') + '"/>';
+      s += '<rect x="' + (THX - 1.4) + '" y="' + (BBOT - 22 - merc).toFixed(1) + '" width="2.8" height="' + merc.toFixed(1) + '" fill="' + (hot ? '#C4552F' : '#D2492A') + '"/>';
+      s += '<circle cx="' + THX + '" cy="' + (BBOT - 18) + '" r="5.4" fill="' + (hot ? '#C4552F' : '#D2492A') + '"/>';
 
       s += '<path d="' + beaker + '" fill="url(#pwGlass)" stroke="none"/>';
       s += '<path d="M' + (BX - 5) + ' ' + BTOP + ' L' + (BX + BW + 5) + ' ' + BTOP + '" stroke="#7BA0B3" stroke-width="3" stroke-linecap="round"/>';
@@ -766,14 +781,14 @@
         var gap = target > 0 ? RUN_MS / target : 1e9;
         while (spawned < S.n && now - t0 >= (spawned + 1) * gap && S.bubbles.length < 30) {
           spawned++;
-          S.bubbles.push({ x: 354 + (Math.random() * 8 - 4), y: 310, r: 2.1 + Math.random() * 1.7,
+          S.bubbles.push({ x: G.FX + (Math.random() * 8 - 4), y: G.CUT, r: 2.1 + Math.random() * 1.7,
                            v: 46 + Math.random() * 14, fake: Math.random() < fakeShare,
                            born: t0 + spawned * gap });
         }
         S.bubbles = S.bubbles.filter(function (b) {
-          b.y = 310 - (now - b.born) / 1000 * b.v;
-          if (b.y < 262) { b.x += (354 - b.x) * 0.18; }           /* funnelled into the neck */
-          if (b.y < 196) { S.gas += 1; return false; }             /* collected in the tube */
+          b.y = G.CUT - (now - b.born) / 1000 * b.v;
+          if (b.y < G.FSHOULDER) { b.x += (G.FX - b.x) * 0.22; }  /* funnelled into the neck */
+          if (b.y < G.GATHER) { S.gas += 1; return false; }        /* collected in the tube */
           return true;
         });
         if (frac >= 1) { clearInterval(timer); timer = null; S.t = 60; S.n = target; S.running = false; paint(); finish(sfAtStart, fake, target); return; }
