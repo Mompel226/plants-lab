@@ -1515,3 +1515,22 @@ picture{display:block;line-height:0}
 .widget__h .widget__try ~ .widget__reset{margin-left:0}
 .widget__h .widget__reset:hover{color:var(--ink);border-color:var(--green)}
 @media (max-width:540px){ .widget__h{row-gap:3px} .widget__h .widget__try,.widget__h .widget__reset{padding:1px 8px} }
+
+/* ---- auxin: the experiment bench ---- */
+.ax__panel{display:flex;flex-direction:column;gap:7px;margin-bottom:10px}
+.ax__grp{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.ax__grpl{flex:0 0 auto;min-width:148px;font-size:12px;font-weight:700;color:#5A5A5A;letter-spacing:.01em}
+.ax__pills{display:flex;gap:6px;flex-wrap:wrap}
+.ax__cap{margin:8px 0 0;min-height:2.6em;font-size:14px;line-height:1.5;font-weight:600;color:#2A6B3B;
+  background:#F4F9F1;border-left:3px solid var(--k-grow);border-radius:0 var(--r) var(--r) 0;padding:8px 12px}
+.ax__res{margin:0 0 6px;font-size:15px;line-height:1.5;color:#2C2C2C}
+.ax__pts{margin:0;padding-left:20px;font-size:13.5px;line-height:1.6;color:#3C3C3C}
+.ax__pts li{margin:3px 0}
+.ax__who{margin:8px 0 0;font-size:12.5px;color:#6A6A6A;font-style:italic}
+.ax__again{font:inherit;font-size:12.5px;font-weight:600;margin-top:10px;padding:5px 12px;cursor:pointer;
+  border:1.5px solid var(--edge);border-radius:var(--r-pill);background:#fff;color:#3C3C3C}
+.ax__again:hover{border-color:var(--k-grow);color:var(--k-grow)}
+.ax__l{font-size:10.5px;fill:#4A4A4A;font-family:var(--font);font-weight:600}
+.ax__s{font-size:10px;fill:#7A7A7A;font-family:var(--font)}
+.exam-steps{margin:8px 0 2px;padding-left:22px;list-style:decimal}
+.exam-steps li{margin:4px 0;padding-left:3px;line-height:1.55}

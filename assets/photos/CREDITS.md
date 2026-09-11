@@ -27,6 +27,11 @@ Every base name below stands for four files: `-900.jpg`, `-900.webp`, `-1400.jpg
 
 ## From the lesson slides
 
+> `xylem-phloem-compare-*` carries a **ScienceFacts.net** watermark in the picture, so the
+> slide is not its origin. It is credited to ScienceFacts.net on the page, which the
+> watermark establishes.
+
+
 The deck is the PowerPoint in `IGCSE Lessons/Y11/Plants/`, the slide is its number in that deck.
 `labs/plants-lab-source/deck-pictures.json` holds the same list, with each picture's size.
 
@@ -46,6 +51,8 @@ The deck is the PowerPoint in `IGCSE Lessons/Y11/Plants/`, the slide is its numb
 | `root-structure-*` | 8.2–8.3 Water uptake and transpiration | 1 |
 | `stem-bundle-*` | 8.1 Xylem and phloem | 8 |
 | `tissues-map-*` | 8.1 Xylem and phloem | 18 |
+| `leaf-section-labelled-*` | 8.1 Xylem and phloem | 16 |
+| `xylem-phloem-compare-*` | 8.1 Xylem and phloem | 18 |
 | `xylem-vessel-*` | Topic 6–8 revision worksheet | 1 |
 | `sieve-tube-*` | 8.1 Xylem and phloem | 11 |
 | `sections-outline-*` | 8.1 Xylem and phloem | 19 |
@@ -80,7 +87,6 @@ The deck is the PowerPoint in `IGCSE Lessons/Y11/Plants/`, the slide is its numb
 | `wilted-plant-*` | 8.4 Translocation | 3 |
 | `cohesion-*` | 8.2–8.3 Water uptake and transpiration | 4 |
 | `leaf-water-path-*` | 8.4 Translocation | 1 |
-| `tropism-cartoon-*` | 14.5 Tropic responses | 1 |
 | `plant-on-side-*` | 14.5 Tropic responses | 10 |
 | `plant-on-side-grown-*` | 14.5 Tropic responses | 11 |
 | `lily-anthers-*` | 16.3 Plant reproduction | 11 |
@@ -121,7 +127,7 @@ demonstrations below do the same job better and are properly credited.
 Every video now carries its source **under the player**, where a reader sees it. Where a
 publisher's mark is in the picture it is named, because that is a fact about the file. Where
 nothing was recorded, the credit says *original source not recorded* rather than implying the
-lesson folder is a source — four of the eight still say that, and each is a gap worth closing.
+lesson folder is a source — three of the eight still say that, and each is a gap worth closing.
 
 > `water-absorption.mp4` carries the same Oxford University Press logo and the same
 > "Animation 10.x" numbering as the potometer practical, so it is very likely from the
@@ -133,7 +139,7 @@ lesson folder is a source — four of the eight still say that, and each is a ga
 | `germination.mp4` | 16.3 Plant reproduction · Seed germination practical | Seeds-and-Germination.mp4 | Science Sauce, YouTube: [youtube.com/watch?v=taaiH3XdSxw](https://www.youtube.com/watch?v=taaiH3XdSxw) |
 | `water-absorption.mp4` | 8.2–8.3 Water uptake and transpiration | Animation 10.3 Absorption of water in plants.mp4 | Oxford University Press logo in the picture |
 | `dye-flowers.mp4` | 8.2–8.3 Water uptake and transpiration | Color Changing Flowers Experiment (Biology).mp4 | |
-| `transport-animation.mp4` | 8.1 Xylem and phloem | Transport in plant animation.mp4 | |
+| `transport-animation.mp4` | 8.1 Xylem and phloem | Transport in plant animation.mp4 | **Science and Plants for Schools (SAPS)**, YouTube: [youtube.com/@ScienceAndPlants](https://www.youtube.com/@ScienceAndPlants) |
 | `photosynthesis.mp4` | 6.1 Photosynthesis | Amazing Process Of Photosynthesis.mp4 | designmate.com watermark |
 | `water-transport.mp4` | 8.2–8.3 Water uptake and transpiration | Water Transport In Plants.mp4 | |
 | `potometer.mp4` | 8.2–8.3 Water uptake and transpiration | Practical 10.5 Measurement of the rate of transpiration using a bubble potometer.mp4 | **Oxford Mastering Biology**, YouTube: [youtube.com/@oxfordmasteringbiology](https://www.youtube.com/@oxfordmasteringbiology) · Oxford University Press logo in the picture |
