@@ -18,7 +18,7 @@
 <link rel="stylesheet" media="print" onload="this.media='all'"
       href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&display=swap">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&display=swap"></noscript>
-<link rel="stylesheet" href="css/app.css?v=1789143306">
+<link rel="stylesheet" href="css/app.css?v=1789143535">
 </head>
 <body>
 <div class="app">
@@ -61,6 +61,7 @@
       </div>
       <div class="platecol__tools">
         <button class="tool tool--whole" id="tWhole" hidden title="Pull back to the whole plant">⤢ Whole plant</button>
+        <button class="tool tool--sim" id="simBtn" type="button" hidden></button>
         <span class="platecol__hint" id="plateHint">Click a part of the plant to open its station</span>
         <button class="tool fold" id="plateFold" type="button" aria-expanded="true" data-what="the plant" title="Fold the plant away to read the notes on their own">▲ Hide the plant</button>
       </div>
@@ -71,6 +72,7 @@
         <div class="tag" id="tag" aria-hidden="true"><span class="tag__pill"></span></div>
       </div>
       <div class="bench" id="benchHost" hidden aria-label="The bench: the potometer, drawn as it is"></div>
+      <div class="sim" id="simHost" hidden role="region" aria-label="The simulation, beside the questions"></div>
       <p class="said" id="said"><span class="said__name">One plant, root to fruit</span><span class="said__note">Every plant topic, on one bean</span></p>
     </section>
 
@@ -171,23 +173,23 @@
 </div>
 
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="js/config.js?v=1789143306" defer></script>
-<script src="js/data/glossary.js?v=1789143306" defer></script>
-<script src="js/data/syllabus.js?v=1789143306" defer></script>
-<script src="js/data/stations.js?v=1789143306" defer></script>
-<script src="js/data/photos.js?v=1789143306" defer></script>
-<script src="js/plant.js?v=1789143306" defer></script>
-<script src="js/plant-draw.js?v=1789143306" defer></script>
-<script src="js/terms.js?v=1789143306" defer></script>
-<script src="js/marking.js?v=1789143306" defer></script>
-<script src="js/sync.js?v=1789143306" defer></script>
-<script src="js/engine.js?v=1789143306" defer></script>
-<script src="js/syllabus.js?v=1789143306" defer></script>
-<script src="js/widgets.js?v=1789143306" defer></script>
-<script src="js/learn.js?v=1789143306" defer></script>
-<script src="js/engine-ext.js?v=1789143306" defer></script>
-<script src="js/plate.js?v=1789143306" defer></script>
-<script src="js/app.js?v=1789143306" defer></script>
+<script src="js/config.js?v=1789143535" defer></script>
+<script src="js/data/glossary.js?v=1789143535" defer></script>
+<script src="js/data/syllabus.js?v=1789143535" defer></script>
+<script src="js/data/stations.js?v=1789143535" defer></script>
+<script src="js/data/photos.js?v=1789143535" defer></script>
+<script src="js/plant.js?v=1789143535" defer></script>
+<script src="js/plant-draw.js?v=1789143535" defer></script>
+<script src="js/terms.js?v=1789143535" defer></script>
+<script src="js/marking.js?v=1789143535" defer></script>
+<script src="js/sync.js?v=1789143535" defer></script>
+<script src="js/engine.js?v=1789143535" defer></script>
+<script src="js/syllabus.js?v=1789143535" defer></script>
+<script src="js/widgets.js?v=1789143535" defer></script>
+<script src="js/learn.js?v=1789143535" defer></script>
+<script src="js/engine-ext.js?v=1789143535" defer></script>
+<script src="js/plate.js?v=1789143535" defer></script>
+<script src="js/app.js?v=1789143535" defer></script>
 <!-- The lab offline. The worker lives at this lab's root, so on Pages its scope is exactly
      /<lab>/. It fetches the HTML network-first, so a deploy always reaches an online student
      and the cache is only the fall-back for when the wifi is not there. -->

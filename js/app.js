@@ -155,6 +155,7 @@
   function paintPanel() {
     var st = S[current]; if (!st) return;
     var host = document.getElementById('panelInner'), sc = stationScore(current);
+    parkSim();                                      /* out of the panel before it is emptied */
     host.innerHTML = '';
     if (window.Learn && Learn.reap) Learn.reap();   /* the old station's widgets are detached now */
 
@@ -198,6 +199,7 @@
       pane.appendChild(key);
     }
     if (tab === 'learn') paintLearn(pane, st); else paintDo(pane, st);
+    paintSim(st, pane);
     var sc = panelScroller();
     if (sc) { var prev = sc.style.scrollBehavior; sc.style.scrollBehavior = 'auto'; sc.scrollTop = 0; sc.style.scrollBehavior = prev || ''; }
   }
@@ -206,6 +208,136 @@
     focus: function (gid) { if (window.Plate) window.Plate.focus(gid); },
     home: function () { if (window.Plate) window.Plate.home(); }
   };
+
+  /* ---------- a simulation standing beside the questions ----------
+     A question that can only be answered by trying something is worth more than one that can be
+     answered by remembering; but a student will not walk back to Learn, scroll to the widget, try
+     it, and walk back. So on the Practise tab the station's simulations can stand where the plant
+     is, and the questions are answered beside them.
+
+     ONE NODE per (station, widget), created once and RE-PARENTED — never a second live copy, and
+     never rebuilt on a repaint. Both rules are load-bearing. The potometer keeps its model in a
+     module-level PO_STATE, so two copies would share one model and neither would repaint when the
+     other wrote. And paintPanel runs on the tab bar, on both glossary known-word toggles, on a
+     sync and on Reset: rebuilding there would throw away a half-finished experiment because the
+     student looked up a word. */
+  var SIM_NOT = { photo: 1, video: 1, watch: 1, finder: 1, table: 1 };
+  var simView = null, simOpen = {}, simPick = {},
+      simWide = window.matchMedia ? window.matchMedia('(min-width: 1001px)') : { matches: true, addEventListener: function () {} };
+
+  function simsOf(st) {
+    return ((st.learn && st.learn.interact) || []).filter(function (w) {
+      return w && !SIM_NOT[w.type] && window.Widgets && window.Widgets.has(w.type);
+    });
+  }
+  function simName(w) {
+    return w.simLabel || w.title || ({ equation: 'The equation', diagram: 'The diagram' }[w.type]) || 'The simulation';
+  }
+  function simHostEl() { return document.getElementById('simHost'); }
+
+  function simSlot(pane) {
+    var el = pane.querySelector('.sim__slot');
+    if (!el) { el = document.createElement('div'); el.className = 'sim__slot'; pane.insertBefore(el, pane.firstChild); }
+    return el;
+  }
+  /* the chooser is rebuilt; the widget node beside it is not */
+  function simChooser(container, st, sims, idx) {
+    var old = container.querySelector('.sim__pick');
+    if (old) old.parentNode.removeChild(old);
+    if (sims.length < 2) return;
+    var row = document.createElement('div'); row.className = 'sim__pick';
+    sims.forEach(function (w, i) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'sim__pickb' + (i === idx ? ' is-on' : '');
+      b.textContent = simName(w);
+      b.addEventListener('click', function () { simPick[st.id] = i; paintPanel(); });
+      row.appendChild(b);
+    });
+    container.insertBefore(row, container.firstChild);
+  }
+
+  var simWired = false;
+  function wireSim() {
+    if (simWired) return; simWired = true;
+    var btn = document.getElementById('simBtn');
+    if (btn) btn.addEventListener('click', function () {
+      simOpen[current] = !simOpen[current];
+      paintPanel();
+      var h = simHostEl(), hd = h && h.querySelector('.widget__h');
+      if (simOpen[current] && hd) { hd.setAttribute('tabindex', '-1'); hd.focus(); }
+      else { var b2 = document.getElementById('simBtn'); if (b2) b2.focus(); }
+    });
+    if (simWide.addEventListener) simWide.addEventListener('change', function () { paintPanel(); });
+  }
+
+  function paintSim(st, pane) {
+    wireSim();
+    var btn = document.getElementById('simBtn'), host = simHostEl();
+    var sims = simsOf(st), onBench = !!(st.plate && st.plate.bench);
+
+    /* Phase A leaves the bench station alone: its widget has already moved half of itself into
+       #benchHost, and untangling that is its own job. */
+    if (tab !== 'do' || !sims.length || onBench) {
+      dropSim();
+      if (window.Plate && window.Plate.showSim) window.Plate.showSim(false);
+      if (btn) btn.hidden = true;
+      return;
+    }
+    if (simPick[st.id] == null) simPick[st.id] = 0;
+    var idx = Math.min(simPick[st.id], sims.length - 1), open = !!simOpen[st.id];
+
+    if (btn) {
+      btn.hidden = false;
+      btn.textContent = open ? '▲ Back to the plant'
+        : (sims.length > 1 ? '⚗ Try the ' + sims.length + ' simulations' : '⚗ ' + simName(sims[0]));
+      btn.title = open ? 'Put the plant back' : 'Open it beside the questions and try it while you answer';
+      btn.setAttribute('aria-pressed', open ? 'true' : 'false');
+    }
+    if (!open) {
+      dropSim();
+      if (window.Plate && window.Plate.showSim) window.Plate.showSim(false);
+      return;
+    }
+
+    var key = st.id + ':' + idx;
+    if (!simView || simView.key !== key) {
+      dropSim();
+      var node = buildSim(st, idx);
+      if (!node) { if (window.Plate && window.Plate.showSim) window.Plate.showSim(false); return; }
+      simView = { key: key, node: node };
+    }
+    /* below 1001px the plant column is a 42vh strip — a bench does not fit in it, so the same
+       single node mounts at the top of the questions instead. The query is the one the
+       potometer already uses. */
+    var wide = simWide.matches, target = wide ? host : simSlot(pane);
+    simChooser(target, st, sims, idx);
+    if (simView.node.parentNode !== target) target.appendChild(simView.node);
+    if (typeof simView.node.__onMove === 'function') simView.node.__onMove();
+    if (window.Plate && window.Plate.showSim) window.Plate.showSim(wide);
+  }
+
+  /* park it somewhere the panel wipe cannot reach, before the wipe */
+  function parkSim() {
+    var host = simHostEl();
+    if (simView && host && simView.node.parentNode !== host) host.appendChild(simView.node);
+  }
+  function dropSim() {
+    if (!simView) return;
+    /* pondweed and auxin both run intervals that only __onReset clears; dropping the node
+       without this leaks a timer for the life of the page */
+    if (typeof simView.node.__onReset === 'function') simView.node.__onReset();
+    if (simView.node.parentNode) simView.node.parentNode.removeChild(simView.node);
+    simView = null;
+  }
+  function buildSim(st, idx) {
+    var w = simsOf(st)[idx]; if (!w) return null;
+    /* quiet, because wireTermClicks is bound to #panel: a marked term rendered in the plant
+       column would look alive and be dead on click */
+    if (window.Terms) window.Terms.setQuiet(true);
+    var node = window.Learn.widget(w, WIDGET_CTX);
+    if (window.Terms) window.Terms.setQuiet(false);
+    return node;
+  }
 
   function paintLearn(pane, st) {
     if (window.Terms) window.Terms.setStation(st.id);

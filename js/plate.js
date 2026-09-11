@@ -9,7 +9,7 @@
   'use strict';
 
   var P = global.PLANT || { parts: [], scene: { w: 1600, h: 1120, horizon: 700, plantX: 560 } };
-  var plant = null, svg, map, tag, said, whole, hint, col, bench;
+  var plant = null, svg, map, tag, said, whole, hint, col, bench, sim;
   var onPick = function () {};
   var current = null;
   var still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -29,6 +29,7 @@
     svg = document.getElementById('plant'); map = document.getElementById('map'); tag = document.getElementById('tag');
     said = document.getElementById('said'); whole = document.getElementById('tWhole'); hint = document.getElementById('plateHint');
     col = document.querySelector('.platecol'); bench = document.getElementById('benchHost');
+    sim = document.getElementById('simHost');
     onPick = (opts && opts.onPick) || onPick;
     if (!svg || !global.PlantDraw) return;
     plant = global.PlantDraw(svg, P, {
@@ -59,6 +60,12 @@
   function showStation(st) {
     if (!plant) return;
     current = st;
+    /* Clear the simulation FIRST, before anything measures the column. frame() reads
+       map.getBoundingClientRect() and falls back to the full scene when it is 0x0, so a camera
+       computed while the plant is hidden is framed to the wrong aspect — with no error, just a
+       wrong shot when the plant comes back. */
+    if (col) col.classList.remove('is-sim');
+    if (sim) sim.hidden = true;
     var s = spec(st), ids = s.light || [];
     /* a station may stand something else on the bench — the potometer — in place of the plant */
     var onBench = !!s.bench;
@@ -104,6 +111,18 @@
     }
   }
 
-  global.Plate = { init: init, showStation: showStation, focus: focus, home: flyHome,
+  /* Stand a simulation where the plant is, or put the plant back. Plate owns the CLASS and the
+     hidden flag only — app.js owns the widget node itself, because the node has to survive being
+     re-parented and must not be rebuilt every time the panel repaints. Putting the plant back goes
+     through showStation, the one function that knows the whole contract: light, flow, breathe,
+     bend, hint, the said line and the zoom button. */
+  function showSim(on) {
+    if (col) col.classList.toggle('is-sim', !!on);
+    if (sim) sim.hidden = !on;
+    if (on) { if (bench) bench.hidden = true; if (tag) tag.classList.remove('on'); }
+    else if (current) showStation(current);
+  }
+
+  global.Plate = { init: init, showStation: showStation, focus: focus, home: flyHome, showSim: showSim,
                    partsOf: function (st) { return spec(st).light || []; }, plant: function () { return plant; } };
 })(window);
