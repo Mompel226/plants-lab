@@ -2579,8 +2579,12 @@
       '<path data-part="filament" class="fl__filament" d="M288 248 C304 200 324 160 334 124"/>' +
       '<ellipse data-part="anther" class="fl__anther" cx="164" cy="110" rx="12" ry="17"/>' +
       '<ellipse data-part="anther" class="fl__anther" cx="336" cy="110" rx="12" ry="17"/>' +
-      '<path data-part="nectary" class="fl__nectary" d="M232 252 a5 5 0 1 0 -10 0 a5 5 0 1 0 10 0 M278 252 a5 5 0 1 0 -10 0 a5 5 0 1 0 10 0"/>' +
       '<ellipse data-part="ovary" class="fl__ovary" cx="250" cy="224" rx="38" ry="44"/>' +
+      /* At (227,252) and (273,252) both nectaries fell INSIDE the ovary ellipse, which is painted
+         after them — so every click on a nectary hit the ovary and the part could not be chosen
+         at all. Moved down to the base of the ovary, where a nectary sits anyway, and drawn after
+         it so nothing can bury them again. */
+      '<path data-part="nectary" class="fl__nectary" d="M223 264 a5 5 0 1 0 -10 0 a5 5 0 1 0 10 0 M297 264 a5 5 0 1 0 -10 0 a5 5 0 1 0 10 0"/>' +
       '<circle data-part="ovule" class="fl__ovule" cx="232" cy="230" r="9"/><circle data-part="ovule" class="fl__ovule" cx="256" cy="206" r="9"/><circle data-part="ovule" class="fl__ovule" cx="262" cy="240" r="9"/>' +
       '<path data-part="style" class="fl__style" d="M244 182 C244 150 245 120 246 84 H254 C255 120 256 150 256 182 Z"/>' +
       '<ellipse data-part="stigma" class="fl__stigma" cx="250" cy="72" rx="17" ry="10"/>';
@@ -2589,7 +2593,7 @@
       /* two columns, each ordered by the height of what it names, so no two lines cross:
          the parts on the flower's axis and its right side read to the right, the petal and
          the sepal to the left */
-      var R = [[250, 72, 'stigma'], [336, 110, 'anther'], [251, 130, 'style'], [312, 176, 'filament'], [286, 224, 'ovary'], [262, 240, 'ovule'], [274, 252, 'nectary', true]];
+      var R = [[250, 72, 'stigma'], [336, 110, 'anther'], [251, 130, 'style'], [312, 176, 'filament'], [286, 224, 'ovary'], [262, 240, 'ovule'], [292, 264, 'nectary', true]];
       var Lf = [[120, 126, 'petal'], [130, 250, 'sepal']];
       var ysR = [44, 82, 120, 158, 196, 234, 272], ysL = [126, 250];
       R.forEach(function (l, i) {
