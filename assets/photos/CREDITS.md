@@ -109,13 +109,15 @@ The deck is the PowerPoint in `IGCSE Lessons/Y11/Plants/`, the slide is its numb
 
 ## The videos (`assets/video/`)
 
-Eight of the videos shown in class, from the same lesson folders, re-encoded to 960 px wide with
+Seven of the videos shown in class, from the same lesson folders, re-encoded to 960 px wide with
 a poster frame beside each (`.jpg`). They are shown with the browser's own controls, muted until
 played, and never start on their own. The germination video is *Seeds and Germination Explained*
 by Science Sauce (YouTube, 28 February 2022), and the potometer practical is from **Oxford
 Mastering Biology**; both credits on the page link to the source. The original sources of the
-other six were not recorded in the lesson folders; three of them carry a publisher's mark,
-noted below, and are used here on the same terms as in the lesson.
+other five were not recorded in the lesson folders; three of them carry a publisher's mark,
+noted below, and are used here on the same terms as in the lesson. A tropism time-lapse was
+removed on 11 September 2026: its source had never been recorded, and the two GPhase
+demonstrations below do the same job better and are properly credited.
 
 Every video now carries its source **under the player**, where a reader sees it. Where a
 publisher's mark is in the picture it is named, because that is a fact about the file. Where
@@ -136,7 +138,6 @@ lesson folder is a source — four of the eight still say that, and each is a ga
 | `photosynthesis.mp4` | 6.1 Photosynthesis | Amazing Process Of Photosynthesis.mp4 | designmate.com watermark |
 | `water-transport.mp4` | 8.2–8.3 Water uptake and transpiration | Water Transport In Plants.mp4 | |
 | `potometer.mp4` | 8.2–8.3 Water uptake and transpiration | Practical 10.5 Measurement of the rate of transpiration using a bubble potometer.mp4 | **Oxford Mastering Biology**, YouTube: [youtube.com/@oxfordmasteringbiology](https://www.youtube.com/@oxfordmasteringbiology) · Oxford University Press logo in the picture |
-| `tropism-timelapse.mp4` | 14.5 Tropic responses | Phototropism and Geotropism Time Lapse.mp4 | |
 
 Two longer videos in the lesson folders were left out on length alone (ten and eighteen minutes).
 
