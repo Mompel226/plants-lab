@@ -141,13 +141,14 @@ lesson folder is a source — four of the eight still say that, and each is a ga
 
 Two longer videos in the lesson folders were left out on length alone (ten and eighteen minutes).
 
-Three videos are **embedded from YouTube** rather than copied into `assets/video/`, and they play
+Four videos are **embedded from YouTube** rather than copied into `assets/video/`, and they play
 in the page, in the flow of the station, under the sentence each one illustrates:
 
 | Video | By | Station |
 |---|---|---|
 | [Bean Time-Lapse — 25 days, soil cross section](https://www.youtube.com/watch?v=w77zPAtVTuI) | GPhase | A seed wakes |
 | [Negative Gravitropism \| Demonstration](https://www.youtube.com/watch?v=Rb55mj8xkxk) | GPhase | Bending to the light |
+| [Pushing Tropism to the Limit with a Spinning Plant](https://www.youtube.com/watch?v=q4E8_K9Udcc) | mortrek | Bending to the light |
 | [Positive Phototropism \| Demonstration](https://www.youtube.com/watch?v=DhITXtENPrU) | GPhase | Bending to the light |
 | [Pushing Tropism to the Limit with a Spinning Plant](https://www.youtube.com/watch?v=q4E8_K9Udcc) | mortrek | Bending to the light | 
 
