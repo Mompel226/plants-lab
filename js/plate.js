@@ -116,6 +116,17 @@
      re-parented and must not be rebuilt every time the panel repaints. Putting the plant back goes
      through showStation, the one function that knows the whole contract: light, flow, breathe,
      bend, hint, the said line and the zoom button. */
+  /* The scroll-driven swap: show the drawing or the plant, and nothing else. showSim() below
+     rebuilds the whole station when it puts the plant back, which is right when a student closes
+     a simulation but far too much to do on every scroll. Nothing about the plant changed while
+     it was hidden, so there is nothing to rebuild. */
+  function stageSim(on) {
+    if (col) col.classList.toggle('is-sim', !!on);
+    if (sim) sim.hidden = !on;
+    if (on && bench) bench.hidden = true;
+    if (on && tag) tag.classList.remove('on');
+  }
+
   function showSim(on) {
     if (col) col.classList.toggle('is-sim', !!on);
     if (sim) sim.hidden = !on;
@@ -123,6 +134,6 @@
     else if (current) showStation(current);
   }
 
-  global.Plate = { init: init, showStation: showStation, focus: focus, home: flyHome, showSim: showSim,
+  global.Plate = { init: init, showStation: showStation, focus: focus, home: flyHome, showSim: showSim, stageSim: stageSim,
                    partsOf: function (st) { return spec(st).light || []; }, plant: function () { return plant; } };
 })(window);

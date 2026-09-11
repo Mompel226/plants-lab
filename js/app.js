@@ -283,10 +283,13 @@
     else if (tab !== 'do' || !sims.length) {
       dropSim();
       if (btn) btn.hidden = true;
-      /* A widget marked onStage puts its own drawing in the column on the Learn tab and asks
-         Plate to show it. Leave that alone, or this would hide it a moment after it appeared. */
+      /* A widget marked onStage keeps its drawing in the column and shows it only while the
+         reader is level with it. Start from the plant and let the widget decide; the heavy
+         showSim would rebuild the whole station, which the scroll must never do. */
       var staged = sims.some(function (w) { return w.onStage; });
-      if (!(tab === 'learn' && staged && simWide.matches) && window.Plate && window.Plate.showSim) window.Plate.showSim(false);
+      if (tab === 'learn' && staged && simWide.matches) {
+        if (window.Plate && window.Plate.stageSim) window.Plate.stageSim(false);
+      } else if (window.Plate && window.Plate.showSim) window.Plate.showSim(false);
       return;
     }
     if (simPick[st.id] == null) simPick[st.id] = 0;
