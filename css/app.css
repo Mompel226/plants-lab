@@ -1024,6 +1024,12 @@ picture{display:block;line-height:0}
 .pw__why:hover{filter:brightness(1.08)}
 .pw__table{margin-top:11px}
 .pw__row--check{grid-template-columns:auto 1fr;gap:9px;cursor:pointer}
+.pw__row--pick{grid-template-columns:minmax(160px,1fr) auto auto;gap:7px;align-items:center}
+.pw__pick{font:inherit;font-size:12px;font-weight:600;color:var(--ink);background:#fff;border:1.5px solid var(--edge);
+          border-radius:var(--r-pill);padding:4px 11px;cursor:pointer;transition:.14s}
+.pw__pick:hover:not(:disabled){border-color:var(--k-food)}
+.pw__pick.is-on{background:var(--k-food);border-color:var(--k-food);color:#fff}
+.pw__pick:disabled{opacity:.6;cursor:not-allowed}
 .pw__row--check input{width:16px;height:16px;accent-color:var(--k-food)}
 .pw__settle{position:relative;font-size:11.5px;color:var(--grey);padding-bottom:5px;min-width:132px}
 .pw__settle.is-wait{color:var(--k-food);font-weight:600}
