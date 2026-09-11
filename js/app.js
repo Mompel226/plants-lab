@@ -371,6 +371,20 @@
       if (typeof b === 'object' && b.sup) badge = '<span class="sup tip" tabindex="0" data-tip="Supplement — examined on Paper 4 (Extended) only. Core candidates can skip it.">S</span>';
       if (typeof b === 'object' && b.ext) badge = '<span class="sup sup--ext tip" tabindex="0" data-tip="Extension — not in the 2026–28 syllabus. Here to make sense of the rest; you will not be asked to write it.">extension</span>';
       li.innerHTML = badge + M(txt);
+      /* A sentence that names something shown further down — "that is demonstration 1" — should
+         take you to it. The phrase is already marked by _..._, so the mark becomes the link and
+         nothing new appears in the text. */
+      if (typeof b === 'object' && b.goto) {
+        Array.prototype.forEach.call(li.querySelectorAll('u.syl-u'), function (u) {
+          var to = b.goto[u.textContent.trim().toLowerCase()];
+          if (!to) return;
+          var j = document.createElement('button');
+          j.type = 'button'; j.className = 'goto'; j.setAttribute('data-goto', to);
+          j.title = 'Go to it';
+          j.innerHTML = u.innerHTML + '<span class="goto__a" aria-hidden="true">↓</span>';
+          u.parentNode.replaceChild(j, u);
+        });
+      }
       /* a numbered run of facts belongs on its own rows, not strung through the sentence:
          it is what the mark scheme is counting, so it is what the eye should be able to count */
       if (typeof b === 'object' && b.list) {
@@ -382,6 +396,7 @@
       /* the thing to press, drag or count sits under the sentence it belongs to */
       widgets.filter(function (w) { return w.after === i; }).forEach(function (w) {
         var el = window.Learn.widget(w, WIDGET_CTX);
+        if (el && w.anchor && el.setAttribute) el.setAttribute('data-anchor', w.anchor);
         /* A tall, narrow diagram set under the sentence leaves a column of empty paper beside it.
            Put it FIRST instead and let the sentence close round it — css floats it into the
            margin. Everything else still sits under the sentence it belongs to. */
@@ -389,7 +404,11 @@
         else li.appendChild(el);
       });
     });
-    widgets.filter(function (w) { return w.after == null; }).forEach(function (w) { card.appendChild(window.Learn.widget(w, WIDGET_CTX)); });
+    widgets.filter(function (w) { return w.after == null; }).forEach(function (w) {
+      var el = window.Learn.widget(w, WIDGET_CTX);
+      if (el && w.anchor && el.setAttribute) el.setAttribute('data-anchor', w.anchor);
+      card.appendChild(el);
+    });
 
     if (st.learn && st.learn.golden) {
       var g = document.createElement('div');
@@ -1015,6 +1034,19 @@
     pk.querySelector('.peek__x').addEventListener('click', closePeek);
     peekEl = pk;
   }
+  function wireGoto(root) {
+    root.addEventListener('click', function (e) {
+      var b = e.target && e.target.closest ? e.target.closest('[data-goto]') : null;
+      if (!b) return;
+      var t = document.querySelector('[data-anchor="' + b.getAttribute('data-goto') + '"]');
+      if (!t) return;
+      t.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      t.classList.remove('is-found');
+      void t.offsetWidth;                       /* restart the flash if it is clicked twice */
+      t.classList.add('is-found');
+    });
+  }
+
   function wireTermClicks(root) {
     function act(t) {
       markWhereWeAre();
@@ -1077,6 +1109,7 @@
     if (window.Plate) window.Plate.init({ onPick: openGroup });
     document.getElementById('btnSubmit').addEventListener('click', openSubmit);
     wireTermClicks(document.getElementById('panel'));
+    wireGoto(document.getElementById('panel'));
     window.addEventListener('resize', closePeek);
     var lb = document.getElementById('lightbox');
     lb.addEventListener('click', function () { lb.hidden = true; });
