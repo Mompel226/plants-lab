@@ -1233,7 +1233,7 @@
 
   /* ---------- trunk: a tree cut across — cork, phloem, cambium, and the rings of xylem it makes (opens from the words) ---------- */
   function trunkSvg() {
-    var cx = 132, cy = 196, s = '<svg viewBox="0 0 484 372" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A tree trunk cut across: bark on the outside, then a thin layer of phloem, the cambium, and ring after ring of xylem, the oldest at the centre">';
+    var cx = 132, cy = 196, s = '<svg viewBox="0 0 484 372" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A tree trunk cut across: cork on the outside, then a thin layer of phloem, the cambium, and ring after ring of xylem, the oldest at the centre">';
     function ring(r, fill, stroke) { return '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="' + fill + '"' + (stroke ? ' stroke="' + stroke + '" stroke-width="1"' : '') + '/>'; }
     function txt(x, y, t, size, weight, fill, anchor) { return '<text x="' + x + '" y="' + y + '" font-size="' + size + '"' + (weight ? ' font-weight="' + weight + '"' : '') + ' fill="' + fill + '"' + (anchor ? ' text-anchor="' + anchor + '"' : '') + '>' + t + '</text>'; }
     function lead(ang, r, x, y) { var a = ang * Math.PI / 180, px = cx + r * Math.cos(a), py = cy + r * Math.sin(a); return '<line x1="' + px.toFixed(1) + '" y1="' + py.toFixed(1) + '" x2="' + x + '" y2="' + y + '" stroke="#1F2A24" stroke-width="1"/><circle cx="' + px.toFixed(1) + '" cy="' + py.toFixed(1) + '" r="2.6" fill="#1F2A24"/>'; }
@@ -1250,7 +1250,7 @@
        wide enough for the longest line ("Xylem = wood, a ring a year:", bold) beside it. */
     var LABEL_X = 268;
     var L = [
-      [-38, 121, LABEL_X, 60, ['Bark: cork on the outside —', 'dead, waterproof cells']],
+      [-38, 121, LABEL_X, 60, ['Cork: the outer bark —', 'dead, waterproof cells']],
       [-20, 108, LABEL_X, 114, ['Phloem: a thin living layer', 'just under the bark']],
       [-4, 103, LABEL_X, 168, ['Cambium: one layer of', 'dividing cells — new xylem', 'inwards, new phloem outwards']],
       [22, 78, LABEL_X, 236, ['Xylem = wood, a ring a year:', 'pale wide spring wood, then', 'darker narrow summer wood']],
