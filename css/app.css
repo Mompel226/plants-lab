@@ -771,8 +771,23 @@ picture{display:block;line-height:0}
 .said__name{display:block;font-family:var(--sans);font-size:15px;font-weight:500;color:var(--c,#FFF7E6)}
 .said__note{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#F1DDBF;margin-top:3px}
 /* a station that stands something else on the bench: the potometer takes the whole column */
-.platecol.is-bench{background:#F3EFE4;background-image:none}
+.platecol.is-bench,.platecol.is-sim{background:#F3EFE4;background-image:none}
 .platecol.is-bench .field,.platecol.is-bench .platewrap,.platecol.is-bench .platecol__tools,.platecol.is-bench .said{display:none}
+/* a simulation standing where the plant is, while the student answers beside it. Unlike the
+   bench this KEEPS the tools row, because that row now carries the way back to the plant. */
+.platecol.is-sim .field,.platecol.is-sim .platewrap,.platecol.is-sim .said{display:none}
+.platecol.is-sim .tool--whole,.platecol.is-sim .platecol__hint{display:none}
+.sim{flex:1;min-height:0;overflow:auto;padding:0 14px 16px}
+.sim[hidden]{display:none}
+.sim .widget{margin-top:0;border:none;box-shadow:none;background:transparent;padding:0}
+.tool--sim{margin-right:auto}
+/* The widgets' own narrow layouts are VIEWPORT media queries, so in a 430-605 px column on a
+   1440 px screen they stay two- and three-column and overflow. These are required, not polish. */
+.sim .ind__row,.sim .tubes{grid-template-columns:1fr}
+.sim .lim__row{grid-template-columns:1fr}
+.sim .st{grid-template-columns:1fr}
+.sim .fl,.sim .pt,.sim .ad{grid-template-columns:1fr}
+.sim .po{grid-template-columns:1fr}
 .bench{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;justify-content:center;gap:14px;padding:18px 18px 20px}
 .bench[hidden]{display:none}
 .bench .po__stage{width:100%;flex:none}
@@ -1537,3 +1552,9 @@ picture{display:block;line-height:0}
 .ax__key{display:flex;flex-wrap:wrap;gap:6px 16px;margin:8px 0 0;font-size:12px;color:#5A5A5A}
 .ax__keyi{display:inline-flex;align-items:center;gap:5px}
 .ax__sw{width:15px;height:15px;flex:0 0 auto}
+.sim__pick{display:flex;flex-wrap:wrap;gap:6px;padding:10px 0 12px;position:sticky;top:0;background:#F3EFE4;z-index:2}
+.sim__pickb{font:inherit;font-size:12px;font-weight:600;border:1.5px solid var(--edge);border-radius:var(--r-pill);
+  background:#fff;color:#3C3C3C;padding:4px 11px;cursor:pointer}
+.sim__pickb.is-on{background:var(--k-grow);border-color:var(--k-grow);color:#fff}
+.sim__slot{margin:0 0 18px;padding:0 0 14px;border-bottom:2px solid var(--edge)}
+.sim__slot .sim__pick{background:var(--paper)}
