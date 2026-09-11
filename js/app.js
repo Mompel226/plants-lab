@@ -236,6 +236,13 @@
       if (typeof b === 'object' && b.sup) badge = '<span class="sup tip" tabindex="0" data-tip="Supplement — examined on Paper 4 (Extended) only. Core candidates can skip it.">S</span>';
       if (typeof b === 'object' && b.ext) badge = '<span class="sup sup--ext tip" tabindex="0" data-tip="Extension — not in the 2026–28 syllabus. Here to make sense of the rest; you will not be asked to write it.">extension</span>';
       li.innerHTML = badge + M(txt);
+      /* a numbered run of facts belongs on its own rows, not strung through the sentence:
+         it is what the mark scheme is counting, so it is what the eye should be able to count */
+      if (typeof b === 'object' && b.list) {
+        var ol = document.createElement('ol'); ol.className = 'exam-steps';
+        b.list.forEach(function (x) { var s2 = document.createElement('li'); s2.innerHTML = M(x); ol.appendChild(s2); });
+        li.appendChild(ol);
+      }
       list.appendChild(li);
       /* the thing to press, drag or count sits under the sentence it belongs to */
       widgets.filter(function (w) { return w.after === i; }).forEach(function (w) {
