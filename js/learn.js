@@ -185,6 +185,237 @@
     return box;
   }
 
+
+  /* ---------- limitgraph: the student plots the curves, then works out what happened ----------
+     The model is the SAME one the sliders above use — Blackman's: the rate is set by whichever
+     factor is in shortest supply, rate = min(fLight, fCO2, fTemp). That is what gives the exam's
+     shape: a smooth rise while the factor on the x-axis is the limiting one, then a flat plateau
+     from the moment something else becomes the limit. Raise the fixed factor and the whole
+     plateau lifts — which is the two-curve diagram 0610 asks candidates to explain.
+
+     Temperature is the odd axis, and deliberately so: its own response rises to about 35 °C and
+     then falls, because the reactions are enzyme-controlled and enzymes are denatured above their
+     optimum. So a temperature curve can rise, plateau AND fall, and the fall happens however much
+     light and carbon dioxide there is.
+
+     Nothing is explained until it is asked for. Where the curve does something worth noticing, a
+     small "?" is left on it; the reader is meant to work out why first, and press it to check. */
+  function limitgraph(spec) {
+    var box = h('div', 'widget');
+    box.appendChild(head(spec.title || 'Plot the curves yourself',
+      spec.ask || 'Choose what goes along the bottom, set the other two, and plot. Plot again with one of them changed, and compare the two curves. Where the curve does something worth noticing it is marked — work out why before you press it.',
+      'Plot and compare'));
+
+    /* the three responses, 0–1. Identical to the slider widget's, so the two never disagree. */
+    function fL(x) { return 1 - Math.exp(-3.2 * x / 100); }
+    function fC(x) { return 1 - Math.exp(-3.2 * x / 100); }
+    function fT(t) { return t <= 35 ? Math.max(0, t / 35) : Math.max(0, 1 - (t - 35) / 10); }
+
+    var AX = {
+      light: { key: 'light', name: 'Light intensity', unit: '%', min: 0, max: 100, f: fL,
+               others: ['co2', 'temp'] },
+      co2:   { key: 'co2', name: 'Carbon dioxide concentration', unit: '%', min: 0, max: 100, f: fC,
+               others: ['light', 'temp'] },
+      temp:  { key: 'temp', name: 'Temperature', unit: ' °C', min: 0, max: 50, f: fT,
+               others: ['light', 'co2'] }
+    };
+    var NAME = { light: 'light intensity', co2: 'carbon dioxide concentration', temp: 'temperature' };
+    var COL = ['#1F6FB2', '#D9772B', '#6E43A8', '#2E8B57'];
+    var COLW = ['blue', 'orange', 'purple', 'green'];
+
+    var state = { axis: 'light', light: 30, co2: 80, temp: 25, curves: [] };
+
+    /* rate at one point, as a percentage */
+    function rateAt(v) {
+      var a = state.axis;
+      var L = a === 'light' ? v : state.light;
+      var C = a === 'co2' ? v : state.co2;
+      var T = a === 'temp' ? v : state.temp;
+      return Math.min(fL(L), fC(C), fT(T)) * 100;
+    }
+    /* the same, for a SAVED curve (its own fixed values) */
+    function rateFor(cv, v) {
+      var L = cv.axis === 'light' ? v : cv.light;
+      var C = cv.axis === 'co2' ? v : cv.co2;
+      var T = cv.axis === 'temp' ? v : cv.temp;
+      return Math.min(fL(L), fC(C), fT(T)) * 100;
+    }
+
+    /* ---- the controls ---- */
+    var ctl = h('div', 'lg__ctl');
+    var axisRow = h('div', 'lg__axis');
+    axisRow.appendChild(h('span', 'lg__axlab', 'Along the bottom:'));
+    var axBtns = {};
+    ['light', 'co2', 'temp'].forEach(function (k) {
+      var b = h('button', 'lg__ax', AX[k].name); b.type = 'button';
+      b.addEventListener('click', function () { state.axis = k; paint(); });
+      axBtns[k] = b; axisRow.appendChild(b);
+    });
+    ctl.appendChild(axisRow);
+
+    var sliders = h('div', 'lg__sliders');
+    var srow = {};
+    ['light', 'co2', 'temp'].forEach(function (k) {
+      var a = AX[k];
+      var r = h('label', 'lg__row');
+      r.innerHTML = '<span class="lg__lab">' + esc(a.name) + '<b></b></span>';
+      var inp = document.createElement('input');
+      inp.type = 'range'; inp.min = a.min; inp.max = a.max; inp.step = 1; inp.value = state[k];
+      inp.setAttribute('aria-label', a.name);
+      inp.addEventListener('input', function () { state[k] = +inp.value; paint(); });
+      r.appendChild(inp);
+      sliders.appendChild(r);
+      srow[k] = { row: r, inp: inp, val: r.querySelector('b') };
+    });
+    ctl.appendChild(sliders);
+    box.appendChild(ctl);
+
+    /* ---- the plot ---- */
+    var W = 560, H = 330, P = { l: 56, r: 16, t: 14, b: 46 };
+    var plot = h('div', 'lg__plot');
+    box.appendChild(plot);
+
+    var note = h('div', 'lg__note'); note.hidden = true;
+    box.appendChild(note);
+
+    var btns = h('div', 'lg__btns');
+    var bPlot = h('button', 'wbtn', 'Plot this curve'); bPlot.type = 'button';
+    var bClear = h('button', 'wbtn wbtn--quiet', 'Clear the curves'); bClear.type = 'button';
+    bPlot.addEventListener('click', function () {
+      if (state.curves.length >= 4) { note.hidden = false; note.innerHTML = '<b>Four is enough to compare.</b> Clear them and start again.'; return; }
+      state.curves.push({ axis: state.axis, light: state.light, co2: state.co2, temp: state.temp, i: state.curves.length });
+      note.hidden = true; paint();
+    });
+    bClear.addEventListener('click', function () { state.curves = []; note.hidden = true; paint(); });
+    btns.appendChild(bPlot); btns.appendChild(bClear);
+    box.appendChild(btns);
+
+    var legend = h('div', 'lg__legend');
+    box.appendChild(legend);
+
+    function x2px(v, a) { return P.l + (v - a.min) / (a.max - a.min) * (W - P.l - P.r); }
+    function y2px(r) { return H - P.b - (r / 100) * (H - P.t - P.b); }
+
+    /* where a curve stops climbing: the first point at which the factor on the x-axis has
+       stopped being the limiting one. Returns null when it never plateaus. */
+    function elbowOf(cv) {
+      var a = AX[cv.axis];
+      if (cv.axis === 'temp') return null;             /* handled by peakOf */
+      var ceil = Math.min(
+        cv.axis === 'light' ? fC(cv.co2) : fL(cv.light),
+        fT(cv.temp)) * 100;
+      if (ceil >= 99.5) return null;                   /* nothing else is limiting: no elbow */
+      for (var v = a.min; v <= a.max; v += 0.5) {
+        if (rateFor(cv, v) >= ceil - 0.15) return { v: v, r: ceil, ceil: ceil };
+      }
+      return null;
+    }
+    /* the turn on a temperature curve: the rate falling while the temperature still rises */
+    function peakOf(cv) {
+      if (cv.axis !== 'temp') return null;
+      var ceil = Math.min(fL(cv.light), fC(cv.co2)) * 100;
+      var r35 = rateFor(cv, 35);
+      if (r35 <= 0.5) return null;
+      var v = 42, r = rateFor(cv, v);
+      if (r >= r35 - 0.5) return null;                 /* never falls within the axis */
+      return { v: v, r: r, ceil: ceil };
+    }
+
+    var marks = [];
+    function paint() {
+      var a = AX[state.axis];
+      ['light', 'co2', 'temp'].forEach(function (k) {
+        axBtns[k].classList.toggle('is-on', k === state.axis);
+        srow[k].row.classList.toggle('is-x', k === state.axis);
+        srow[k].inp.disabled = (k === state.axis);
+        srow[k].val.textContent = k === state.axis
+          ? ' — along the bottom'
+          : state[k] + AX[k].unit;
+      });
+
+      var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Rate of photosynthesis against ' + esc(a.name.toLowerCase()) + '">';
+      /* grid */
+      for (var g = 0; g <= 100; g += 25) {
+        var y = y2px(g);
+        s += '<line x1="' + P.l + '" y1="' + y.toFixed(1) + '" x2="' + (W - P.r) + '" y2="' + y.toFixed(1) + '" stroke="#E6E4DC" stroke-width="1"/>';
+        s += '<text x="' + (P.l - 8) + '" y="' + (y + 4).toFixed(1) + '" font-size="11" fill="#8A8A82" text-anchor="end">' + g + '</text>';
+      }
+      /* axes */
+      s += '<line x1="' + P.l + '" y1="' + P.t + '" x2="' + P.l + '" y2="' + (H - P.b) + '" stroke="#1F2A24" stroke-width="1.4"/>';
+      s += '<line x1="' + P.l + '" y1="' + (H - P.b) + '" x2="' + (W - P.r) + '" y2="' + (H - P.b) + '" stroke="#1F2A24" stroke-width="1.4"/>';
+      /* x ticks */
+      var step = (a.max - a.min) / 5;
+      for (var t = a.min; t <= a.max + 0.01; t += step) {
+        var xp = x2px(t, a);
+        s += '<line x1="' + xp.toFixed(1) + '" y1="' + (H - P.b) + '" x2="' + xp.toFixed(1) + '" y2="' + (H - P.b + 5) + '" stroke="#1F2A24" stroke-width="1"/>';
+        s += '<text x="' + xp.toFixed(1) + '" y="' + (H - P.b + 18) + '" font-size="11" fill="#5B6B63" text-anchor="middle">' + Math.round(t) + '</text>';
+      }
+      s += '<text x="' + ((P.l + W - P.r) / 2) + '" y="' + (H - 8) + '" font-size="12.5" fill="#3C3C3C" text-anchor="middle">' + esc(a.name) + ' /' + esc(a.unit.trim() || '%') + '</text>';
+      s += '<text transform="translate(15,' + ((P.t + H - P.b) / 2) + ') rotate(-90)" font-size="12.5" fill="#3C3C3C" text-anchor="middle">Rate of photosynthesis / %</text>';
+
+      /* saved curves */
+      marks = [];
+      state.curves.forEach(function (cv) {
+        if (cv.axis !== state.axis) return;            /* a curve belongs to its own axis */
+        var ax = AX[cv.axis], d = '';
+        for (var v = ax.min; v <= ax.max + 0.01; v += (ax.max - ax.min) / 160) {
+          var px = x2px(v, ax), py = y2px(rateFor(cv, v));
+          d += (d ? 'L' : 'M') + px.toFixed(1) + ',' + py.toFixed(1);
+        }
+        s += '<path d="' + d + '" fill="none" stroke="' + COL[cv.i % 4] + '" stroke-width="2.4" stroke-linejoin="round"/>';
+        var e = elbowOf(cv); if (e) marks.push({ cv: cv, kind: 'elbow', x: x2px(e.v, ax), y: y2px(e.r), e: e });
+        var pk = peakOf(cv); if (pk) marks.push({ cv: cv, kind: 'peak', x: x2px(pk.v, ax), y: y2px(pk.r), e: pk });
+      });
+      /* the live curve, dashed, before it is plotted */
+      var dl = '';
+      for (var v2 = a.min; v2 <= a.max + 0.01; v2 += (a.max - a.min) / 160) {
+        var px2 = x2px(v2, a), py2 = y2px(rateAt(v2));
+        dl += (dl ? 'L' : 'M') + px2.toFixed(1) + ',' + py2.toFixed(1);
+      }
+      s += '<path d="' + dl + '" fill="none" stroke="#9AA39C" stroke-width="1.8" stroke-dasharray="5 4"/>';
+      /* the marks, last so they sit on top */
+      marks.forEach(function (m, i) {
+        s += '<circle class="lg__mk" data-m="' + i + '" cx="' + m.x.toFixed(1) + '" cy="' + m.y.toFixed(1) + '" r="10" fill="#fff" stroke="' + COL[m.cv.i % 4] + '" stroke-width="2"/>' +
+             '<text class="lg__mkt" data-m="' + i + '" x="' + m.x.toFixed(1) + '" y="' + (m.y + 4).toFixed(1) + '" font-size="12" font-weight="700" fill="' + COL[m.cv.i % 4] + '" text-anchor="middle">?</text>';
+      });
+      s += '</svg>';
+      plot.innerHTML = s;
+      plot.querySelectorAll('[data-m]').forEach(function (el) {
+        el.style.cursor = 'pointer';
+        el.addEventListener('click', function () { explain(marks[+el.getAttribute('data-m')]); });
+      });
+
+      legend.innerHTML = state.curves.map(function (cv) {
+        var other = AX[cv.axis].others.map(function (k) { return NAME[k] + ' ' + cv[k] + AX[k].unit; }).join(', ');
+        return '<span class="lg__key"' + (cv.axis === state.axis ? '' : ' data-off="1"') + '>' +
+          '<i style="background:' + COL[cv.i % 4] + '"></i>' + esc(COLW[cv.i % 4]) + ' — ' + esc(other) +
+          (cv.axis === state.axis ? '' : ' <em>(drawn against ' + esc(NAME[cv.axis]) + ')</em>') + '</span>';
+      }).join('');
+    }
+
+    function explain(m) {
+      var cv = m.cv, txt;
+      if (m.kind === 'elbow') {
+        var otherLim = fT(cv.temp) < (cv.axis === 'light' ? fC(cv.co2) : fL(cv.light)) ? 'temp' : (cv.axis === 'light' ? 'co2' : 'light');
+        txt = '<b>The curve has levelled off.</b> Up to here, ' + NAME[cv.axis] + ' was the limiting factor: every increase raised the rate. ' +
+              'From this point it is not — raising it further changes nothing, because <b>' + NAME[otherLim] + '</b> is now in shortest supply and setting the ceiling. ' +
+              'Plot a second curve with ' + NAME[otherLim] + ' raised and you will see the whole plateau lift.';
+      } else {
+        txt = '<b>The rate is falling although the temperature is still rising.</b> Nothing has run short: the reactions of photosynthesis are controlled by enzymes, ' +
+              'and above about 35 °C those enzymes are being <b>denatured</b> — their active sites change shape and stop working. ' +
+              'That is why temperature is the odd one out: light and carbon dioxide level off, temperature peaks and falls.';
+      }
+      note.hidden = false;
+      note.innerHTML = txt;
+      note.scrollIntoView({ block: 'nearest' });
+    }
+
+    paint();
+    box.appendChild(h('p', 'widget__note', 'A model, not a measurement — but the shapes are the ones the exam draws, and the rule behind them is the exam’s too: the rate is set by whichever factor is in shortest supply.'));
+    box.__onReset = function () { state = { axis: 'light', light: 30, co2: 80, temp: 25, curves: [] }; };
+    return box;
+  }
+
   /* ---------- starchtest ---------- */
   function starchtest(spec) {
     var box = h('div', 'widget');
@@ -1383,7 +1614,7 @@
     return box;
   }
 
-  [['video', video], ['germinate', germinate], ['equation', equation], ['limiting', limiting], ['starchtest', starchtest], ['indicator', indicator],
+  [['video', video], ['germinate', germinate], ['equation', equation], ['limiting', limiting], ['limitgraph', limitgraph], ['starchtest', starchtest], ['indicator', indicator],
    ['potometer', potometer], ['sourcesink', sourcesink], ['auxin', auxin], ['diagram', diagram], ['pollentube', pollentube], ['adapt', adapt]]
     .forEach(function (m) { W.register(m[0], m[1]); });
 
