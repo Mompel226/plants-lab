@@ -374,6 +374,25 @@
       /* A sentence that names something shown further down — "that is demonstration 1" — should
          take you to it. The phrase is already marked by _..._, so the mark becomes the link and
          nothing new appears in the text. */
+      /* a numbered run of facts belongs on its own rows, not strung through the sentence:
+         it is what the mark scheme is counting, so it is what the eye should be able to count */
+      if (typeof b === 'object' && b.list) {
+        var ol = document.createElement('ol'); ol.className = 'exam-steps';
+        b.list.forEach(function (x) { var s2 = document.createElement('li'); s2.innerHTML = M(x); ol.appendChild(s2); });
+        li.appendChild(ol);
+      }
+      /* a phrase that opens a short aside, for a reader who wants to know why */
+      if (typeof b === 'object' && b.explain) {
+        Array.prototype.forEach.call(li.querySelectorAll('u.syl-u'), function (u) {
+          var e = b.explain[u.textContent.trim().toLowerCase()];
+          if (!e) return;
+          var j = document.createElement('button');
+          j.type = 'button'; j.className = 'xplain';
+          j.innerHTML = u.innerHTML + '<span class="xplain__a" aria-hidden="true">?</span>';
+          j.addEventListener('click', function () { openExplain(e); });
+          u.parentNode.replaceChild(j, u);
+        });
+      }
       if (typeof b === 'object' && b.goto) {
         Array.prototype.forEach.call(li.querySelectorAll('u.syl-u'), function (u) {
           var to = b.goto[u.textContent.trim().toLowerCase()];
@@ -384,13 +403,6 @@
           j.innerHTML = u.innerHTML + '<span class="goto__a" aria-hidden="true">↓</span>';
           u.parentNode.replaceChild(j, u);
         });
-      }
-      /* a numbered run of facts belongs on its own rows, not strung through the sentence:
-         it is what the mark scheme is counting, so it is what the eye should be able to count */
-      if (typeof b === 'object' && b.list) {
-        var ol = document.createElement('ol'); ol.className = 'exam-steps';
-        b.list.forEach(function (x) { var s2 = document.createElement('li'); s2.innerHTML = M(x); ol.appendChild(s2); });
-        li.appendChild(ol);
       }
       list.appendChild(li);
       /* the thing to press, drag or count sits under the sentence it belongs to */
@@ -1034,6 +1046,35 @@
     pk.querySelector('.peek__x').addEventListener('click', closePeek);
     peekEl = pk;
   }
+  /* A short aside a reader opens on purpose. Not the glossary, which defines a word, and not
+     the peek, which shows a picture: this is a paragraph or two of why, for the one student in
+     the class who wants it. Nothing in it is examined, and it says so. */
+  var xpBox = null;
+  function closeExplain() {
+    if (!xpBox) return;
+    xpBox.remove(); xpBox = null;
+    document.removeEventListener('keydown', xpKey);
+  }
+  function xpKey(e) { if (e.key === 'Escape') closeExplain(); }
+  function openExplain(spec) {
+    closeExplain();
+    xpBox = document.createElement('div');
+    xpBox.className = 'xp';
+    xpBox.setAttribute('role', 'dialog');
+    xpBox.setAttribute('aria-modal', 'true');
+    xpBox.setAttribute('aria-label', spec.title || 'Why');
+    var card = document.createElement('div');
+    card.className = 'xp__card';
+    card.innerHTML = '<div class="xp__h"><b>' + esc(spec.title || 'Why') + '</b>' +
+                     '<button type="button" class="xp__x" aria-label="Close">✕</button></div>' +
+                     '<div class="xp__b">' + spec.body + '</div>';
+    xpBox.appendChild(card);
+    xpBox.addEventListener('click', function (e) { if (e.target === xpBox || e.target.closest('.xp__x')) closeExplain(); });
+    document.body.appendChild(xpBox);
+    document.addEventListener('keydown', xpKey);
+    var x = card.querySelector('.xp__x'); if (x) x.focus();
+  }
+
   function wireGoto(root) {
     root.addEventListener('click', function (e) {
       var b = e.target && e.target.closest ? e.target.closest('[data-goto]') : null;

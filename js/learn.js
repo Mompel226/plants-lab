@@ -2108,7 +2108,7 @@
       }
       /* One column, and every anchor that has a choice of flank takes the one on its side, so a
          leader never crosses the drawing to reach its words. */
-      var labRight = root ? true : S.light !== 'right', labU = labRight ? HW : -HW;
+      var labRight = root ? true : S.light !== 'right', labU = labRight ? g.HW : -g.HW;
       var HW = g.HW, K = 9, CW = 11;
 
       var s = '<svg viewBox="0 0 ' + g.W + ' ' + g.H + '" role="img" aria-label="' + verdictPlain(M) + '">';
@@ -2540,8 +2540,9 @@
       paintKey();
       why.innerHTML = '';
       var still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (still) { S.p = 1; draw(M, 1); capt.textContent = STEPS[STEPS.length - 1][1](M); why.innerHTML = verdict(M); return; }
+      if (still) { S.p = 1; draw(M, 1); capt.textContent = ''; capt.hidden = true; why.innerHTML = verdict(M); return; }
       var t0 = Date.now(), MS = 4600, shown = -1;
+      capt.hidden = false;
       S.p = 0; draw(M, 0);
       S.t = setInterval(function () {
         var p = Math.min(1, (Date.now() - t0) / MS);
@@ -2549,7 +2550,11 @@
         for (var i = STEPS.length - 1; i >= 0; i--) {
           if (p >= STEPS[i][0]) { if (shown !== i) { shown = i; capt.textContent = STEPS[i][1](M); } break; }
         }
-        if (p >= 1) { clearInterval(S.t); S.t = null; why.innerHTML = verdict(M); }
+        if (p >= 1) {
+          clearInterval(S.t); S.t = null;
+          capt.textContent = ''; capt.hidden = true;   /* the narration is done; the result speaks for itself */
+          why.innerHTML = verdict(M);
+        }
       }, 40);
     }
 
