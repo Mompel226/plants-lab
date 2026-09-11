@@ -985,6 +985,33 @@ picture{display:block;line-height:0}
 .eq__bal small{flex:1 1 100%;font-size:12.5px;color:var(--grey)}
 
 /* limiting factors */
+/* ---------- limitgraph: the curves a reader plots and compares ---------- */
+.lg__ctl{display:grid;gap:10px;margin:2px 0 10px}
+.lg__axis{display:flex;flex-wrap:wrap;align-items:center;gap:7px}
+.lg__axlab{font-size:12.5px;color:var(--grey);margin-right:2px}
+.lg__ax{font-size:12.5px;font-weight:600;color:var(--ink);background:#fff;border:1.5px solid var(--edge);
+        border-radius:var(--r-pill);padding:5px 12px;cursor:pointer;transition:.14s}
+.lg__ax:hover{border-color:var(--k-food)}
+.lg__ax.is-on{background:var(--k-food);border-color:var(--k-food);color:#fff}
+.lg__sliders{display:grid;gap:7px}
+.lg__row{display:grid;grid-template-columns:minmax(150px,1fr) minmax(120px,1.2fr);align-items:center;gap:11px;font-size:13px}
+.lg__row.is-x{opacity:.55}
+.lg__row.is-x input{cursor:not-allowed}
+.lg__lab{color:#3C3C3C}
+.lg__lab b{color:var(--k-food);font-weight:700;margin-left:5px}
+.lg__plot{background:#fff;border:1px solid var(--edge);border-radius:var(--r);padding:6px 8px;overflow-x:auto}
+.lg__plot svg{width:100%;height:auto;display:block;min-width:430px}
+.lg__mk:hover,.lg__mkt:hover{opacity:.75}
+.lg__btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.lg__legend{display:grid;gap:4px;margin-top:9px}
+.lg__key{display:flex;align-items:center;gap:7px;font-size:12.5px;color:#3C3C3C}
+.lg__key[data-off]{opacity:.5}
+.lg__key i{width:16px;height:3px;border-radius:2px;flex:none}
+.lg__key em{color:var(--grey);font-style:normal}
+.lg__note{margin-top:10px;font-size:13.5px;line-height:1.55;color:#3C3C3C;background:var(--amber-tint);
+          border:1px solid #E6D6AE;border-radius:var(--r);padding:10px 13px}
+.lg__note b{color:var(--k-food)}
+
 .lim{display:flex;flex-direction:column;gap:8px}
 .lim__row{display:grid;grid-template-columns:200px 1fr 90px;gap:10px;align-items:center;padding:6px 10px;border:1.5px solid var(--edge);border-radius:var(--r);background:#fff;transition:.15s}
 .lim__row.is-limiting{border-color:var(--red);background:var(--red-tint)}

@@ -51,6 +51,9 @@
     'svg.is-fruiting .pl-flower:not(.is-shown) .pl-petal:nth-child(2){transition-delay:.14s}svg.is-fruiting .pl-flower:not(.is-shown) .pl-petal:nth-child(3){transition-delay:.3s}' +
     'svg.is-fruiting .pl-flower:not(.is-shown) .pl-petal:nth-child(4){transition-delay:.08s}svg.is-fruiting .pl-flower:not(.is-shown) .pl-petal:nth-child(5){transition-delay:.22s}' +
     /* the pod waits for the petals, then grows out of the cup the flower left */
+    /* the spent cup sheds its sepals as the pod arrives, so what is left is the pod and its stalk */
+    'svg.is-fruiting .pl-flower-spent .pl-sepal{opacity:0;transform:translateY(10px);transition:opacity .6s ease 1.1s,transform .8s ease 1.1s}' +
+    '.pl-flower-spent .pl-sepal{transition:opacity .45s ease,transform .45s ease}' +
     'svg.is-fruiting .pl-fruit.pl-grows.is-shown{transition:transform 1.3s cubic-bezier(.2,.7,.2,1) 1.2s,opacity .5s ease 1.2s}' +
     '.pl-fruit.pl-grows:not(.is-shown){transition:transform .5s,opacity .35s}' +
     /* the sap: dashed lines that only show when asked for */
@@ -303,7 +306,11 @@
     }
     function cup(g, from, ctrl, cx, cy) {                 /* the stalk, the sepals, the receptacle */
       el('path', { d: 'M' + f(from[0]) + ' ' + f(from[1]) + ' Q' + f(ctrl[0]) + ' ' + f(ctrl[1]) + ' ' + f(cx) + ' ' + f(cy), fill: 'none', stroke: '#2F7D46', 'stroke-width': 4, 'stroke-linecap': 'round' }, g);
-      petals(g, cx, cy, 5, 26, 11, 5, '#6DB56A', '#3F9A55');
+      /* the five sepals are their own pieces ('pl-sepal') so the lower cup can shed them once the
+         pod is there. On a real bean the calyx does persist at the base of the pod, but on a
+         drawing five green points left behind read as "the flower is still open", which is the
+         one thing the fruit stage must not say. Daniel's call, 11 Sep 2026. */
+      petals(g, cx, cy, 5, 26, 11, 5, '#6DB56A', '#3F9A55', 'pl-sepal');
       el('circle', { cx: cx, cy: cy, r: 8, fill: '#9BC76A', stroke: '#4E8A3A', 'stroke-width': 1.4 }, g);
     }
     function bloom(g, cx, cy) {                            /* five petals, each its own piece so it can fall; stamens; stigma */
