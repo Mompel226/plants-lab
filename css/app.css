@@ -1009,18 +1009,22 @@ picture{display:block;line-height:0}
            border:1px solid #E6D6AE;border-radius:var(--r);padding:10px 13px}
 .ind__note b{color:var(--k-food)}
 
-/* ---------- watch: a linked film, inline where it belongs ---------- */
-.watch{margin:12px 0 4px}
-.watch__a{display:flex;gap:12px;align-items:flex-start;text-decoration:none;background:#fff;
-          border:1px solid var(--edge);border-left:3px solid var(--teal);border-radius:var(--r);
-          padding:11px 13px;transition:border-color .15s ease,background .15s ease}
-.watch__a:hover{background:#FCFDFD;border-color:var(--teal)}
-.watch__play{flex:none;width:30px;height:30px;border-radius:50%;background:var(--teal);color:#fff;
-             font-size:12px;display:grid;place-items:center;margin-top:1px}
-.watch__body{display:grid;gap:3px;min-width:0}
-.watch__t{font-size:14.5px;font-weight:600;color:var(--ink);line-height:1.35}
-.watch__s{font-size:13px;line-height:1.5;color:#4A4A4A}
-.watch__by{font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;color:var(--grey)}
+/* ---------- watch: an embedded film, loaded only when pressed ---------- */
+.ytv{margin:12px 0 4px}
+.ytv__frame{position:relative;width:100%;aspect-ratio:16/9;background:#0E1512;border-radius:var(--r);overflow:hidden}
+.ytv__ifr,.ytv__poster{position:absolute;inset:0;width:100%;height:100%;border:0}
+.ytv__poster{padding:0;cursor:pointer;background:#0E1512;display:block}
+.ytv__still{width:100%;height:100%;object-fit:cover;display:block;opacity:.82;transition:opacity .18s ease}
+.ytv__poster:hover .ytv__still{opacity:1}
+.ytv__poster.is-bare .ytv__still{display:none}
+.ytv__btn{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:62px;height:62px;border-radius:50%;
+          background:rgba(200,32,32,.94);color:#fff;font-size:22px;display:grid;place-items:center;
+          box-shadow:0 4px 16px rgba(0,0,0,.35);transition:transform .16s ease,background .16s ease;padding-left:4px}
+.ytv__poster:hover .ytv__btn{transform:translate(-50%,-50%) scale(1.07);background:#D01F1F}
+.ytv__poster:focus-visible{outline:3px solid var(--green);outline-offset:2px}
+.ytv__over{position:absolute;left:0;right:0;bottom:0;padding:22px 14px 10px;color:#fff;font-size:13.5px;
+           font-weight:600;text-align:left;line-height:1.35;
+           background:linear-gradient(180deg,rgba(0,0,0,0),rgba(0,0,0,.72))}
 
 /* ---------- pondweed: the bubble-counting practical ---------- */
 .pw__ctl{display:grid;gap:7px;margin:2px 0 10px}

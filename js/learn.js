@@ -838,23 +838,48 @@
   }
 
 
-  /* ---------- watch: a film that is not ours, sitting where it belongs ----------
-     The lab's own videos are local files and play in the page. These are somebody else's, so
-     they are linked rather than copied or framed — but a link buried in "Going further" at the
-     foot of the station is a link nobody finds. This puts the card in the flow, under the very
-     sentence it illustrates, looking like the thing it is: a film, one tap away, on YouTube. */
+  /* ---------- watch: an embedded YouTube film ----------
+     These films are not ours, so they are not copied into the repository — they play from
+     YouTube, in the page, like any other video on the station.
+
+     Two details that are deliberate. The player is not loaded until somebody presses play: what
+     sits on the page is the film's own still with a play button over it, and the iframe is built
+     on the click. So a station with three films on it still loads three images rather than three
+     copies of YouTube's player, and a reader who never presses play is never handed to Google.
+     And when it does load it loads from youtube-nocookie.com, which is YouTube's own no-tracking
+     host — same film, no cookie until they choose to watch. */
   function watch(spec) {
-    var f = h('figure', 'watch');
-    var a = document.createElement('a');
-    a.className = 'watch__a'; a.href = spec.url; a.target = '_blank'; a.rel = 'noopener';
-    a.innerHTML =
-      '<span class="watch__play" aria-hidden="true">▶</span>' +
-      '<span class="watch__body">' +
-        '<span class="watch__t">' + esc(spec.title || 'Watch this') + '</span>' +
-        (spec.text ? '<span class="watch__s">' + mk(spec.text) + '</span>' : '') +
-        '<span class="watch__by">' + esc(spec.by || '') + ' · opens on YouTube ↗</span>' +
-      '</span>';
-    f.appendChild(a);
+    var id = spec.id || (String(spec.url || '').match(/[?&]v=([A-Za-z0-9_-]+)/) || [])[1] || '';
+    var f = h('figure', 'ytv');
+    var frame = h('div', 'ytv__frame');
+
+    var btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'ytv__poster';
+    btn.setAttribute('aria-label', 'Play: ' + (spec.title || 'video') + ' (on YouTube)');
+    var still = new Image();
+    still.src = 'https://i.ytimg.com/vi/' + id + '/hqdefault.jpg';
+    still.alt = ''; still.loading = 'lazy'; still.className = 'ytv__still';
+    still.addEventListener('error', function () { btn.classList.add('is-bare'); });
+    btn.appendChild(still);
+    btn.appendChild(h('span', 'ytv__btn', '▶'));
+    btn.appendChild(h('span', 'ytv__over', esc(spec.title || '')));
+    btn.addEventListener('click', function () {
+      var ifr = document.createElement('iframe');
+      ifr.className = 'ytv__ifr';
+      ifr.src = 'https://www.youtube-nocookie.com/embed/' + id + '?autoplay=1&rel=0&modestbranding=1&playsinline=1';
+      ifr.title = spec.title || 'Video';
+      ifr.allow = 'accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; web-share';
+      ifr.setAttribute('allowfullscreen', '');
+      ifr.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+      frame.innerHTML = ''; frame.appendChild(ifr);
+    });
+    frame.appendChild(btn);
+    f.appendChild(frame);
+
+    f.appendChild(h('figcaption', 'media__cap',
+      '<span class="kindtag">' + esc(spec.kind || 'Video') + '</span> ' + mk(spec.text || '') +
+      ' <a class="media__credit" href="' + esc(spec.url) + '" target="_blank" rel="noopener">' +
+      esc(spec.by || '') + ', on YouTube</a>'));
     return f;
   }
 
