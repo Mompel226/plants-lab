@@ -1007,6 +1007,21 @@ picture{display:block;line-height:0}
          border-radius:var(--r-pill);padding:3px 12px;margin-left:6px;cursor:pointer}
 .pw__why:hover{filter:brightness(1.08)}
 .pw__table{margin-top:11px}
+.pw__row--check{grid-template-columns:auto 1fr;gap:9px;cursor:pointer}
+.pw__row--check input{width:16px;height:16px;accent-color:var(--k-food)}
+.pw__settle{position:relative;font-size:11.5px;color:var(--grey);padding-bottom:5px;min-width:132px}
+.pw__settle.is-wait{color:var(--k-food);font-weight:600}
+.pw__settle i{position:absolute;left:0;bottom:0;height:3px;border-radius:2px;background:var(--k-food);transition:width .2s linear}
+.pw__int b.is-hot{color:#C4552F}
+.pw__finds{display:grid;gap:7px;margin-top:10px}
+.pw__find{display:flex;flex-wrap:wrap;align-items:baseline;gap:7px;font-size:13.5px;line-height:1.55;
+          background:var(--amber-tint);border:1px solid #E6D6AE;border-radius:var(--r);padding:9px 12px}
+.pw__find b{color:var(--k-food);font-weight:600}
+.pw__findq{flex:none;width:19px;height:19px;border-radius:50%;background:var(--k-food);color:#fff;
+           font-size:12px;font-weight:700;display:grid;place-items:center;align-self:center}
+.pw__findw{flex:1 1 100%;color:#3C3C3C}
+.pw__findw b{color:var(--ink)}
+.pw__warn{color:#C4552F;font-weight:600}
 .pw__hint{margin:7px 0 0;font-size:12.5px;color:var(--grey);line-height:1.5}
 
 /* ---------- limitgraph: the curves a reader plots and compares ---------- */
