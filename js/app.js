@@ -274,7 +274,10 @@
       L.innerHTML = '<div class="card__h">Going further — links to other topics, IB, and beyond the syllabus</div>' +
         '<ul class="later__list">' + further.map(function (x) {
           var kind = /^IB/.test(x.ref) ? ' later__ref--ib' : /^(Beyond|Not in)/.test(x.ref) ? ' later__ref--beyond' : '';
-          return '<li><span class="later__ref' + kind + '">' + esc(x.ref) + '</span>' + M(x.text) + '</li>';
+          /* an entry may point at something outside the lab. It opens in a new tab, and the
+             link says so, because a student halfway through a station should not lose it. */
+          var body = M(x.text) + (x.url ? ' <a class="later__out" href="' + esc(x.url) + '" target="_blank" rel="noopener">' + esc(x.link || 'Watch it') + ' ↗</a>' : '');
+          return '<li><span class="later__ref' + kind + '">' + esc(x.ref) + '</span>' + body + '</li>';
         }).join('') + '</ul>';
       pane.appendChild(L);
     }

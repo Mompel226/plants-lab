@@ -140,6 +140,14 @@ lesson folder is a source — four of the eight still say that, and each is a ga
 
 Two longer videos in the lesson folders were left out on length alone (ten and eighteen minutes).
 
+One video is **linked rather than embedded**: *Pushing Tropism to the Limit with a Spinning Plant —
+Gravitropism and Phototropism*, by **mortrek**
+([youtube.com/watch?v=q4E8_K9Udcc](https://www.youtube.com/watch?v=q4E8_K9Udcc)), under *Going
+further* on the tropisms station. It is not in `assets/video/` and it is not embedded in a frame:
+copying somebody's film into this repository is not ours to do, and a YouTube frame would load
+their code and their cookies into a page a class of children is using. A link costs the reader one
+tap and keeps both problems out of the lab.
+
 ## The drawings
 
 The plant on the left, its parts, the cactus and the water lily, the diagrams in the theory pages
