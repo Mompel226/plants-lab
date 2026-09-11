@@ -275,9 +275,12 @@
     var btn = document.getElementById('simBtn'), host = simHostEl();
     var sims = simsOf(st), onBench = !!(st.plate && st.plate.bench);
 
-    /* Phase A leaves the bench station alone: its widget has already moved half of itself into
-       #benchHost, and untangling that is its own job. */
-    if (tab !== 'do' || !sims.length || onBench) {
+    /* On a bench station there is no plant to go back to, and switching to Practise used to
+       destroy the potometer's controls while its apparatus and readout survived orphaned in
+       #benchHost — a student left looking at a bench they could not drive. So there the
+       simulation is simply always open, and no button is offered. */
+    if (tab === 'do' && onBench && sims.length) { simOpen[st.id] = true; if (btn) btn.hidden = true; }
+    else if (tab !== 'do' || !sims.length) {
       dropSim();
       if (window.Plate && window.Plate.showSim) window.Plate.showSim(false);
       if (btn) btn.hidden = true;
@@ -286,7 +289,7 @@
     if (simPick[st.id] == null) simPick[st.id] = 0;
     var idx = Math.min(simPick[st.id], sims.length - 1), open = !!simOpen[st.id];
 
-    if (btn) {
+    if (btn && !onBench) {
       btn.hidden = false;
       btn.textContent = open ? '▲ Back to the plant'
         : (sims.length > 1 ? '⚗ Try the ' + sims.length + ' simulations' : '⚗ ' + simName(sims[0]));

@@ -1775,8 +1775,12 @@
     box.appendChild(h('p', 'widget__note', 'A model, scaled to published class results rather than measured here (the sources are in the lab\'s credits file). Every run starts where the last one left the bubble unless you open the tap. Each run carries the small random errors of a real bench — hand timing, a bubble that hesitates, a reading to the nearest millimetre — so repeats differ, as they should.'));
     var wideQ = window.matchMedia('(min-width: 1001px)');
     function mount() {
-      var host = document.getElementById('benchHost');
-      var wide = wideQ.matches && host && !host.hidden;
+      var host = document.getElementById('benchHost'), sim = document.getElementById('simHost');
+      /* When the whole widget has been moved into the simulation column its apparatus must stay
+         with its controls; otherwise mount() keeps pulling the stage and the readout back to the
+         bench and the student is left with controls that drive something they cannot see. */
+      var inSim = !!(sim && sim.contains(box));
+      var wide = wideQ.matches && host && !host.hidden && !inSim;
       var target = wide ? host : slot;
       if (stage.parentNode !== target) {
         if (wide) host.innerHTML = '';
@@ -1784,6 +1788,7 @@
       }
       box.classList.toggle('po--split', !!wide);
     }
+    box.__onMove = mount;     /* app.js re-runs this after re-parenting the widget */
     var onWide = function () { if (box.isConnected) mount(); else wideQ.removeEventListener('change', onWide); };
     wideQ.addEventListener('change', onWide);
     mount();
