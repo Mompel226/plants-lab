@@ -1009,6 +1009,19 @@ picture{display:block;line-height:0}
            border:1px solid #E6D6AE;border-radius:var(--r);padding:10px 13px}
 .ind__note b{color:var(--k-food)}
 
+/* ---------- watch: a linked film, inline where it belongs ---------- */
+.watch{margin:12px 0 4px}
+.watch__a{display:flex;gap:12px;align-items:flex-start;text-decoration:none;background:#fff;
+          border:1px solid var(--edge);border-left:3px solid var(--teal);border-radius:var(--r);
+          padding:11px 13px;transition:border-color .15s ease,background .15s ease}
+.watch__a:hover{background:#FCFDFD;border-color:var(--teal)}
+.watch__play{flex:none;width:30px;height:30px;border-radius:50%;background:var(--teal);color:#fff;
+             font-size:12px;display:grid;place-items:center;margin-top:1px}
+.watch__body{display:grid;gap:3px;min-width:0}
+.watch__t{font-size:14.5px;font-weight:600;color:var(--ink);line-height:1.35}
+.watch__s{font-size:13px;line-height:1.5;color:#4A4A4A}
+.watch__by{font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;color:var(--grey)}
+
 /* ---------- pondweed: the bubble-counting practical ---------- */
 .pw__ctl{display:grid;gap:7px;margin:2px 0 10px}
 .pw__row{display:grid;grid-template-columns:minmax(160px,1fr) minmax(120px,1.2fr);align-items:center;gap:11px;font-size:13px}
