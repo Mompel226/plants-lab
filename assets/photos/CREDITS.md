@@ -140,18 +140,15 @@ lesson folder is a source — four of the eight still say that, and each is a ga
 
 Two longer videos in the lesson folders were left out on length alone (ten and eighteen minutes).
 
-Three videos are **linked rather than embedded**, as a card in the flow of the station, under the
-sentence each one illustrates:
+Three videos are **embedded from YouTube** rather than copied into `assets/video/`, and they play
+in the page, in the flow of the station, under the sentence each one illustrates:
 
 | Video | By | Station |
 |---|---|---|
 | [Bean Time-Lapse — 25 days, soil cross section](https://www.youtube.com/watch?v=w77zPAtVTuI) | GPhase | A seed wakes |
 | [Negative Gravitropism \| Demonstration](https://www.youtube.com/watch?v=Rb55mj8xkxk) | GPhase | Bending to the light |
 | [Positive Phototropism \| Demonstration](https://www.youtube.com/watch?v=DhITXtENPrU) | GPhase | Bending to the light |
-| [Pushing Tropism to the Limit with a Spinning Plant](https://www.youtube.com/watch?v=q4E8_K9Udcc) | mortrek | Bending to the light | It is not in `assets/video/` and it is not embedded in a frame:
-copying somebody's film into this repository is not ours to do, and a YouTube frame would load
-their code and their cookies into a page a class of children is using. A link costs the reader one
-tap and keeps both problems out of the lab.
+| [Pushing Tropism to the Limit with a Spinning Plant](https://www.youtube.com/watch?v=q4E8_K9Udcc) | mortrek | Bending to the light | 
 
 ## The drawings
 
@@ -210,3 +207,10 @@ bench, not measured here. What it is scaled to:
 | File | Source | Author | Licence |
 |---|---|---|---|
 | `seedling-*` | [Cucumber Seedling.jpg](https://commons.wikimedia.org/wiki/File:Cucumber_Seedling.jpg) — the picture behind the word *seedling* | Peter Chastain | Public domain |
+
+They are not copied into the repository, because they are not ours to copy — the eight local files
+are Daniel's own lesson videos. Two things make the embed as light as it can be. The player is
+**not loaded until somebody presses play**: what sits on the page is the film's own still with a
+play button over it, and the frame is built on the click, so a station with two films loads two
+images rather than two copies of YouTube's player. And it loads from **youtube-nocookie.com**,
+YouTube's own no-tracking host — the same film, and no cookie until a student chooses to watch.
