@@ -1558,3 +1558,12 @@ picture{display:block;line-height:0}
 .sim__pickb.is-on{background:var(--k-grow);border-color:var(--k-grow);color:#fff}
 .sim__slot{margin:0 0 18px;padding:0 0 14px;border-bottom:2px solid var(--edge)}
 .sim__slot .sim__pick{background:var(--paper)}
+/* a phrase that names something further down the page, and takes you to it */
+.goto{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;
+  text-decoration:underline;text-decoration-style:solid;text-underline-offset:2px;
+  text-decoration-color:var(--k-grow);text-decoration-thickness:1.5px}
+.goto:hover,.goto:focus-visible{color:var(--k-grow)}
+.goto__a{font-size:.82em;margin-left:2px;opacity:.75;text-decoration:none;display:inline-block}
+@keyframes gotoflash{0%{box-shadow:0 0 0 3px var(--k-grow)}100%{box-shadow:0 0 0 3px transparent}}
+.is-found{animation:gotoflash 1.5s ease-out 1;border-radius:var(--r)}
+@media (prefers-reduced-motion:reduce){ .is-found{animation:none;outline:3px solid var(--k-grow)} }
