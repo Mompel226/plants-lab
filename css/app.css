@@ -1009,6 +1009,19 @@ picture{display:block;line-height:0}
            border:1px solid #E6D6AE;border-radius:var(--r);padding:10px 13px}
 .ind__note b{color:var(--k-food)}
 
+/* ---------- auxin: the shoot, its cells and the grains inside ---------- */
+.ax{display:grid;gap:10px}
+.ax__lamps{display:flex;gap:7px;flex-wrap:wrap}
+.ax__lamp{font-size:12.5px;font-weight:600;color:var(--ink);background:#fff;border:1.5px solid var(--edge);
+          border-radius:var(--r-pill);padding:5px 13px;cursor:pointer;transition:.14s}
+.ax__lamp:hover{border-color:var(--k-grow)}
+.ax__lamp.is-on{background:var(--k-grow);border-color:var(--k-grow);color:#fff}
+.ax__stage{background:#fff;border:1px solid var(--edge);border-radius:var(--r);padding:4px 6px;overflow-x:auto}
+.ax__stage svg{width:100%;height:auto;display:block;min-width:330px}
+.ax__why{margin:0;font-size:13.5px;line-height:1.55;color:#3C3C3C;background:var(--purple-tint);
+         border:1px solid #D8CBE8;border-radius:var(--r);padding:10px 13px}
+.ax__why b{color:var(--k-grow)}
+
 /* ---------- watch: an embedded film, loaded only when pressed ---------- */
 .ytv{margin:12px 0 4px}
 .ytv__frame{position:relative;width:100%;aspect-ratio:16/9;background:#0E1512;border-radius:var(--r);overflow:hidden}
