@@ -515,24 +515,25 @@
     }
 
     /* ---- the apparatus ----
-       Drawn as a labelled laboratory diagram, because that is also a thing being taught: the
-       labels sit in a column clear of the drawing, each on a horizontal leader that touches the
-       thing it names, which is how a candidate is expected to label a diagram in Paper 6.
+       Drawn to ONE scale, which is what was wrong before: a bench lamp is roughly two and a half
+       times the height of a 1 dm³ beaker, a boiling tube is about a sixth of the beaker's width,
+       and a filter funnel is about two thirds of it. Everything here is set from those ratios,
+       so nothing towers over or shrinks against anything else.
 
-       Two details that matter and were wrong at first. The boiling tube is INVERTED — closed
-       rounded end uppermost, open mouth down over the funnel stem — because the oxygen has to
-       displace water downwards to collect. And the funnel is drawn as a funnel, a thin cone with
-       a long stem, not the conical flask it was reading as. */
+       Three things that must be physically true and were not: the water bath SITS ON the bench;
+       the funnel's mouth rests on the floor of the beaker with no gap and no platform under it;
+       and the funnel covers the whole sprig, so every bubble it releases is caught. */
     function paintStage() {
-      var W = 660, H = 300;
-      var lampX = 190 - (S.d - 10) / 50 * 92;
-      var temp = waterTemp(), hot = temp > S.bath + 1.5;
-      var BENCH = 262;
-      var BX = 288, BW = 148, BTOP = 62, BBOT = 224, WTOP = 80;
+      var W = 660, H = 366;
+      var BENCH = 330;
+      /* the beaker is the unit everything else is measured against */
+      var BW = 136, BH = 176, BX = 286, BBOT = 322, BTOP = BBOT - BH, WTOP = BTOP + 20;
       var FX = BX + BW / 2;
-      var BATH_X = 258, BATH_W = 196, BATH_TOP = 206, BATH_BOT = 254;
-      var LBL = 466;                                        /* where the label column starts */
-      var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Labelled apparatus: pondweed in a beaker of water standing in a water bath, an inverted funnel over the weed, an inverted boiling tube of water over the funnel stem collecting oxygen, a thermometer in the beaker, and a bench lamp ' + S.d + ' centimetres away' + (S.shield ? ' with a tank of water between them as a heat shield' : '') + '">';
+      var BATH_W = 190, BATH_H = 36, BATH_X = FX - BATH_W / 2, BATH_BOT = BENCH, BATH_TOP = BENCH - BATH_H;
+      var lampX = 186 - (S.d - 10) / 50 * 88;
+      var temp = waterTemp(), hot = temp > S.bath + 1.5;
+      var LBL = 470;
+      var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Labelled apparatus: a sprig of pondweed under an inverted funnel in a large beaker of water standing in a water bath, an inverted boiling tube over the funnel stem collecting oxygen, a thermometer in the beaker, and a bench lamp ' + S.d + ' centimetres away' + (S.shield ? ' with a tank of water between them as a heat shield' : '') + '">';
 
       s += '<defs>' +
         '<linearGradient id="pwGlass" x1="0" y1="0" x2="1" y2="0">' +
@@ -546,9 +547,9 @@
         '<radialGradient id="pwGlow" cx=".5" cy=".5" r=".5">' +
           '<stop offset="0" stop-color="#FFE6A0" stop-opacity=".9"/><stop offset="1" stop-color="#FFE08A" stop-opacity="0"/></radialGradient>' +
         '<linearGradient id="pwBeam" x1="0" y1="0" x2="1" y2="0">' +
-          '<stop offset="0" stop-color="#FFE08A" stop-opacity=".5"/><stop offset="1" stop-color="#FFE08A" stop-opacity="0"/></linearGradient>' +
+          '<stop offset="0" stop-color="#FFE08A" stop-opacity=".45"/><stop offset="1" stop-color="#FFE08A" stop-opacity="0"/></linearGradient>' +
         '<linearGradient id="pwShade" x1="0" y1="0" x2="0" y2="1">' +
-          '<stop offset="0" stop-color="#E6E3D8"/><stop offset="1" stop-color="#B2AEA0"/></linearGradient>' +
+          '<stop offset="0" stop-color="#E6E3D8"/><stop offset="1" stop-color="#AFAB9D"/></linearGradient>' +
         '<filter id="pwSoft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3"/></filter>' +
       '</defs>';
 
@@ -556,133 +557,132 @@
       s += '<line x1="0" y1="' + BENCH + '" x2="' + W + '" y2="' + BENCH + '" stroke="#C7C2B4" stroke-width="1.4"/>';
 
       var glow = Math.min(1, fI(I(S.d)) + 0.12);
-      var beamEnd = S.shield ? 228 : BX;
-      s += '<path d="M' + (lampX + 10) + ' 132 L' + beamEnd + ' 100 L' + beamEnd + ' 218 L' + (lampX + 10) + ' 172 Z" fill="url(#pwBeam)" opacity="' + (glow * 0.55).toFixed(2) + '"/>';
+      var beamEnd = S.shield ? 236 : BX;
+      s += '<path d="M' + (lampX + 12) + ' 128 L' + beamEnd + ' ' + (BTOP + 6) + ' L' + beamEnd + ' ' + (BBOT - 8) + ' L' + (lampX + 12) + ' 188 Z" fill="url(#pwBeam)" opacity="' + (glow * 0.5).toFixed(2) + '"/>';
 
-      /* the water bath: back wall first */
-      s += '<ellipse cx="366" cy="' + (BENCH - 1) + '" rx="122" ry="6" fill="#000" opacity=".09" filter="url(#pwSoft)"/>';
+      /* the water bath, standing ON the bench */
+      s += '<ellipse cx="' + FX + '" cy="' + (BENCH - 1) + '" rx="' + (BATH_W / 2 + 12) + '" ry="6" fill="#000" opacity=".09" filter="url(#pwSoft)"/>';
       s += '<path d="M' + BATH_X + ' ' + BATH_TOP + ' L' + BATH_X + ' ' + (BATH_BOT - 8) + ' Q' + BATH_X + ' ' + BATH_BOT + ' ' + (BATH_X + 10) + ' ' + BATH_BOT +
            ' L' + (BATH_X + BATH_W - 10) + ' ' + BATH_BOT + ' Q' + (BATH_X + BATH_W) + ' ' + BATH_BOT + ' ' + (BATH_X + BATH_W) + ' ' + (BATH_BOT - 8) +
            ' L' + (BATH_X + BATH_W) + ' ' + BATH_TOP + '" fill="url(#pwBath)" stroke="#89A9BA" stroke-width="2"/>';
 
-      /* the beaker */
-      var beaker = 'M' + BX + ' ' + BTOP + ' L' + BX + ' ' + (BBOT - 10) + ' Q' + BX + ' ' + BBOT + ' ' + (BX + 11) + ' ' + BBOT +
-                   ' L' + (BX + BW - 11) + ' ' + BBOT + ' Q' + (BX + BW) + ' ' + BBOT + ' ' + (BX + BW) + ' ' + (BBOT - 10) + ' L' + (BX + BW) + ' ' + BTOP;
+      /* the beaker, standing in it */
+      var beaker = 'M' + BX + ' ' + BTOP + ' L' + BX + ' ' + (BBOT - 12) + ' Q' + BX + ' ' + BBOT + ' ' + (BX + 13) + ' ' + BBOT +
+                   ' L' + (BX + BW - 13) + ' ' + BBOT + ' Q' + (BX + BW) + ' ' + BBOT + ' ' + (BX + BW) + ' ' + (BBOT - 12) + ' L' + (BX + BW) + ' ' + BTOP;
       s += '<path d="' + beaker + '" fill="#F7FBFD" stroke="#7BA0B3" stroke-width="2.4" stroke-linejoin="round"/>';
       s += '<path d="M' + (BX + 2) + ' ' + WTOP + ' Q' + (BX + 11) + ' ' + (WTOP - 4.5) + ' ' + (BX + 22) + ' ' + (WTOP + 1) +
            ' L' + (BX + BW - 22) + ' ' + (WTOP + 1) + ' Q' + (BX + BW - 11) + ' ' + (WTOP - 4.5) + ' ' + (BX + BW - 2) + ' ' + WTOP +
-           ' L' + (BX + BW - 2) + ' ' + (BBOT - 12) + ' Q' + (BX + BW - 2) + ' ' + (BBOT - 3) + ' ' + (BX + BW - 13) + ' ' + (BBOT - 3) +
-           ' L' + (BX + 13) + ' ' + (BBOT - 3) + ' Q' + (BX + 2) + ' ' + (BBOT - 3) + ' ' + (BX + 2) + ' ' + (BBOT - 12) + ' Z" fill="url(#pwWater)"/>';
-      [0.34, 0.58, 0.82].forEach(function (g) {
+           ' L' + (BX + BW - 2) + ' ' + (BBOT - 14) + ' Q' + (BX + BW - 2) + ' ' + (BBOT - 3) + ' ' + (BX + BW - 15) + ' ' + (BBOT - 3) +
+           ' L' + (BX + 15) + ' ' + (BBOT - 3) + ' Q' + (BX + 2) + ' ' + (BBOT - 3) + ' ' + (BX + 2) + ' ' + (BBOT - 14) + ' Z" fill="url(#pwWater)"/>';
+      [0.3, 0.52, 0.74].forEach(function (g) {
         var gy = WTOP + (BBOT - WTOP) * g;
-        s += '<line x1="' + (BX + 7) + '" y1="' + gy.toFixed(0) + '" x2="' + (BX + 21) + '" y2="' + gy.toFixed(0) + '" stroke="#7BA0B3" stroke-width="1.1" opacity=".5"/>';
+        s += '<line x1="' + (BX + 8) + '" y1="' + gy.toFixed(0) + '" x2="' + (BX + 24) + '" y2="' + gy.toFixed(0) + '" stroke="#7BA0B3" stroke-width="1.1" opacity=".45"/>';
       });
 
-      /* ---- the inverted funnel: a thin cone with a long stem, mouth DOWN ---- */
-      s += '<path d="M' + (FX - 40) + ' 210 L' + (FX - 6) + ' 162 L' + (FX + 6) + ' 162 L' + (FX + 40) + ' 210" fill="#EAF5FA" fill-opacity=".3" stroke="#6E97AC" stroke-width="1.9" stroke-linejoin="round"/>';
-      s += '<path d="M' + (FX - 40) + ' 210 L' + (FX + 40) + ' 210" stroke="#6E97AC" stroke-width="2.2" stroke-linecap="round"/>';
-      s += '<rect x="' + (FX - 6) + '" y="110" width="12" height="53" fill="#EAF5FA" fill-opacity=".3" stroke="#6E97AC" stroke-width="1.9"/>';
-      s += '<line x1="' + (FX - 34) + '" y1="210" x2="' + (FX - 34) + '" y2="219" stroke="#6E97AC" stroke-width="1.8"/>';
-      s += '<line x1="' + (FX + 34) + '" y1="210" x2="' + (FX + 34) + '" y2="219" stroke="#6E97AC" stroke-width="1.8"/>';
+      /* ---- the funnel: mouth flat on the floor of the beaker, no feet, no gap ---- */
+      var FMOUTH = BBOT - 5, FRIM = 46, FNECK = 7, FSHOULDER = FMOUTH - 62, FSTEM_TOP = FSHOULDER - 46;
+      s += '<path d="M' + (FX - FRIM) + ' ' + FMOUTH + ' L' + (FX - FNECK) + ' ' + FSHOULDER + ' L' + (FX + FNECK) + ' ' + FSHOULDER + ' L' + (FX + FRIM) + ' ' + FMOUTH + '" fill="#EAF5FA" fill-opacity=".28" stroke="#6E97AC" stroke-width="1.8" stroke-linejoin="round"/>';
+      s += '<path d="M' + (FX - FRIM) + ' ' + FMOUTH + ' L' + (FX + FRIM) + ' ' + FMOUTH + '" stroke="#6E97AC" stroke-width="2.2" stroke-linecap="round"/>';
+      s += '<rect x="' + (FX - FNECK) + '" y="' + FSTEM_TOP + '" width="' + (FNECK * 2) + '" height="' + (FSHOULDER - FSTEM_TOP) + '" fill="#EAF5FA" fill-opacity=".28" stroke="#6E97AC" stroke-width="1.8"/>';
 
-      /* ---- the pondweed ---- */
-      s += '<path d="M' + (FX - 1) + ' 206 C' + (FX - 11) + ' 197 ' + (FX + 7) + ' 190 ' + (FX - 2) + ' 183 C' + (FX - 10) + ' 177 ' + (FX + 5) + ' 174 ' + (FX - 1) + ' 170"' +
-           ' fill="none" stroke="#33804A" stroke-width="2.8" stroke-linecap="round"/>';
-      [[FX - 3, 202], [FX + 2, 195], [FX - 5, 189], [FX + 2, 183], [FX - 3, 177], [FX + 1, 172]].forEach(function (nd, i) {
+      /* ---- the pondweed, wholly beneath the funnel ---- */
+      var wb = FMOUTH - 6, wt = FSHOULDER + 8;
+      s += '<path d="M' + (FX - 1) + ' ' + wb + ' C' + (FX - 10) + ' ' + (wb - 12) + ' ' + (FX + 7) + ' ' + (wb - 22) + ' ' + (FX - 2) + ' ' + (wb - 32) +
+           ' C' + (FX - 9) + ' ' + (wb - 40) + ' ' + (FX + 4) + ' ' + (wb - 44) + ' ' + (FX - 1) + ' ' + wt + '" fill="none" stroke="#33804A" stroke-width="2.6" stroke-linecap="round"/>';
+      for (var nI = 0; nI < 6; nI++) {
+        var ny = wb - 5 - nI * ((wb - wt) / 6.5), nx = FX + (nI % 2 ? 3 : -4);
         [-1, 1].forEach(function (dir) {
-          var L = 8, ex = nd[0] + dir * L * 0.75, ey = nd[1] - 1.4;
-          s += '<ellipse cx="' + ex.toFixed(1) + '" cy="' + ey.toFixed(1) + '" rx="' + L + '" ry="2.4" fill="' + (i % 2 ? '#4C9A55' : '#59A962') + '" transform="rotate(' + (dir * 24) + ' ' + ex.toFixed(1) + ' ' + ey.toFixed(1) + ')"/>';
+          var L = 7.5, ex = nx + dir * L * 0.75, ey = ny - 1.2;
+          s += '<ellipse cx="' + ex.toFixed(1) + '" cy="' + ey.toFixed(1) + '" rx="' + L + '" ry="2.3" fill="' + (nI % 2 ? '#4C9A55' : '#59A962') + '" transform="rotate(' + (dir * 24) + ' ' + ex.toFixed(1) + ' ' + ey.toFixed(1) + ')"/>';
         });
-      });
-      s += '<line x1="' + (FX - 1) + '" y1="206" x2="' + (FX - 1) + '" y2="212" stroke="#7E5A2A" stroke-width="2.8" stroke-linecap="round"/>';
-      s += '<path d="M' + (FX - 9) + ' 214 a9 4 0 1 0 18 0 a9 4 0 1 0 -18 0" fill="#B9B7AE" stroke="#8E8C84" stroke-width="1.4"/>';
+      }
+      s += '<line x1="' + (FX - 1) + '" y1="' + wb + '" x2="' + (FX - 1) + '" y2="' + (wb + 5) + '" stroke="#7E5A2A" stroke-width="2.6" stroke-linecap="round"/>';
 
       S.bubbles.forEach(function (b) {
         s += '<circle cx="' + b.x.toFixed(1) + '" cy="' + b.y.toFixed(1) + '" r="' + b.r.toFixed(1) + '" fill="' + (b.fake ? '#FBEEDF' : '#EFFAFF') + '" fill-opacity=".92" stroke="' + (b.fake ? '#D5A36F' : '#68A3C2') + '" stroke-width=".9"/>';
         s += '<circle cx="' + (b.x - b.r * 0.32).toFixed(1) + '" cy="' + (b.y - b.r * 0.34).toFixed(1) + '" r="' + (b.r * 0.27).toFixed(1) + '" fill="#fff"/>';
       });
 
-      /* ---- the boiling tube, INVERTED: closed rounded end up, mouth down over the stem ---- */
-      var TX = FX - 16, TW = 32, TTOP = 90, TBOT = 150;
-      s += '<path d="M' + TX + ' ' + TBOT + ' L' + TX + ' ' + (TTOP + 13) + ' Q' + TX + ' ' + TTOP + ' ' + (TX + TW / 2) + ' ' + TTOP +
-           ' Q' + (TX + TW) + ' ' + TTOP + ' ' + (TX + TW) + ' ' + (TTOP + 13) + ' L' + (TX + TW) + ' ' + TBOT + '" fill="#E8F5FB" fill-opacity=".6" stroke="#6E97AC" stroke-width="1.9"/>';
-      var gasH = Math.min(52, S.gas * 0.85);
+      /* ---- the boiling tube: narrow, inverted, mouth over the funnel stem ---- */
+      var TW = 23, TX = FX - TW / 2, TTOP = WTOP + 8, TBOT = FSTEM_TOP + 26;
+      s += '<path d="M' + TX + ' ' + TBOT + ' L' + TX + ' ' + (TTOP + 10) + ' Q' + TX + ' ' + TTOP + ' ' + (TX + TW / 2) + ' ' + TTOP +
+           ' Q' + (TX + TW) + ' ' + TTOP + ' ' + (TX + TW) + ' ' + (TTOP + 10) + ' L' + (TX + TW) + ' ' + TBOT + '" fill="#E8F5FB" fill-opacity=".6" stroke="#6E97AC" stroke-width="1.8"/>';
+      var gasH = Math.min(TBOT - TTOP - 16, S.gas * 0.8);
       if (gasH > 0) {
-        s += '<path d="M' + (TX + 2) + ' ' + (TTOP + 14 + gasH).toFixed(1) + ' L' + (TX + 2) + ' ' + (TTOP + 13) + ' Q' + (TX + 2) + ' ' + (TTOP + 2) + ' ' + (TX + TW / 2) + ' ' + (TTOP + 2) +
-             ' Q' + (TX + TW - 2) + ' ' + (TTOP + 2) + ' ' + (TX + TW - 2) + ' ' + (TTOP + 13) + ' L' + (TX + TW - 2) + ' ' + (TTOP + 14 + gasH).toFixed(1) + ' Z" fill="#FCFEFF"/>';
-        s += '<line x1="' + (TX + 2) + '" y1="' + (TTOP + 14 + gasH).toFixed(1) + '" x2="' + (TX + TW - 2) + '" y2="' + (TTOP + 14 + gasH).toFixed(1) + '" stroke="#6E97AC" stroke-width="1.2"/>';
+        s += '<path d="M' + (TX + 1.8) + ' ' + (TTOP + 11 + gasH).toFixed(1) + ' L' + (TX + 1.8) + ' ' + (TTOP + 10) + ' Q' + (TX + 1.8) + ' ' + (TTOP + 1.8) + ' ' + (TX + TW / 2) + ' ' + (TTOP + 1.8) +
+             ' Q' + (TX + TW - 1.8) + ' ' + (TTOP + 1.8) + ' ' + (TX + TW - 1.8) + ' ' + (TTOP + 10) + ' L' + (TX + TW - 1.8) + ' ' + (TTOP + 11 + gasH).toFixed(1) + ' Z" fill="#FCFEFF"/>';
+        s += '<line x1="' + (TX + 1.8) + '" y1="' + (TTOP + 11 + gasH).toFixed(1) + '" x2="' + (TX + TW - 1.8) + '" y2="' + (TTOP + 11 + gasH).toFixed(1) + '" stroke="#6E97AC" stroke-width="1.1"/>';
       }
-      /* a scale, because the point of collecting it is that a VOLUME can be read */
       for (var v = 0; v < 5; v++) {
-        var vy = TTOP + 18 + v * 12;
-        s += '<line x1="' + (TX + TW - 9) + '" y1="' + vy + '" x2="' + (TX + TW - 2) + '" y2="' + vy + '" stroke="#6E97AC" stroke-width=".9" opacity=".8"/>';
+        var vy = TTOP + 16 + v * 11;
+        if (vy < TBOT - 6) s += '<line x1="' + (TX + TW - 7) + '" y1="' + vy + '" x2="' + (TX + TW - 1.8) + '" y2="' + vy + '" stroke="#6E97AC" stroke-width=".85" opacity=".75"/>';
       }
-      /* the open mouth, at the bottom */
-      s += '<path d="M' + (TX - 3) + ' ' + TBOT + ' L' + (TX + TW + 3) + ' ' + TBOT + '" stroke="#6E97AC" stroke-width="2.4" stroke-linecap="round"/>';
-      s += '<ellipse cx="' + (TX + TW / 2) + '" cy="' + TBOT + '" rx="' + (TW / 2 + 3) + '" ry="2.6" fill="none" stroke="#6E97AC" stroke-width="1.3" opacity=".8"/>';
-      s += '<path d="M' + (TX + 7) + ' ' + (TTOP + 18) + ' L' + (TX + 7) + ' ' + (TBOT - 12) + '" stroke="#fff" stroke-width="2.6" opacity=".6" stroke-linecap="round"/>';
+      s += '<path d="M' + (TX - 2.5) + ' ' + TBOT + ' L' + (TX + TW + 2.5) + ' ' + TBOT + '" stroke="#6E97AC" stroke-width="2.2" stroke-linecap="round"/>';
+      s += '<path d="M' + (TX + 5.5) + ' ' + (TTOP + 16) + ' L' + (TX + 5.5) + ' ' + (TBOT - 10) + '" stroke="#fff" stroke-width="2.2" opacity=".6" stroke-linecap="round"/>';
 
-      /* ---- the thermometer, raised so all of it can be seen ---- */
+      /* the thermometer, clear of the bath and wholly visible */
       var THX = BX + BW - 24;
-      s += '<rect x="' + (THX - 3.4) + '" y="52" width="6.8" height="' + (BBOT - 66) + '" rx="3.4" fill="#FBFDFE" stroke="#7E9EAF" stroke-width="1.3"/>';
-      for (var tk = 0; tk < 6; tk++) s += '<line x1="' + (THX + 3.4) + '" y1="' + (68 + tk * 17) + '" x2="' + (THX + 8) + '" y2="' + (68 + tk * 17) + '" stroke="#7E9EAF" stroke-width=".9"/>';
-      var merc = Math.max(4, Math.min(120, (temp - 2) / 48 * 120));
-      s += '<rect x="' + (THX - 1.5) + '" y="' + (BBOT - 20 - merc).toFixed(1) + '" width="3" height="' + merc.toFixed(1) + '" fill="' + (hot ? '#C4552F' : '#3C7FB1') + '"/>';
-      s += '<circle cx="' + THX + '" cy="' + (BBOT - 16) + '" r="5.6" fill="' + (hot ? '#C4552F' : '#3C7FB1') + '"/>';
+      s += '<rect x="' + (THX - 3.2) + '" y="' + (BTOP - 26) + '" width="6.4" height="' + (BBOT - 16 - (BTOP - 26)) + '" rx="3.2" fill="#FBFDFE" stroke="#7E9EAF" stroke-width="1.3"/>';
+      for (var tk = 0; tk < 6; tk++) s += '<line x1="' + (THX + 3.2) + '" y1="' + (BTOP - 8 + tk * 17) + '" x2="' + (THX + 7.6) + '" y2="' + (BTOP - 8 + tk * 17) + '" stroke="#7E9EAF" stroke-width=".9"/>';
+      var mercMax = BBOT - 26 - (BTOP - 20);
+      var merc = Math.max(4, Math.min(mercMax, (temp - 2) / 48 * mercMax));
+      s += '<rect x="' + (THX - 1.4) + '" y="' + (BBOT - 22 - merc).toFixed(1) + '" width="2.8" height="' + merc.toFixed(1) + '" fill="' + (hot ? '#C4552F' : '#3C7FB1') + '"/>';
+      s += '<circle cx="' + THX + '" cy="' + (BBOT - 18) + '" r="5.4" fill="' + (hot ? '#C4552F' : '#3C7FB1') + '"/>';
 
-      /* the glass in front, the rim, the highlight */
       s += '<path d="' + beaker + '" fill="url(#pwGlass)" stroke="none"/>';
-      s += '<path d="M' + (BX - 4) + ' ' + BTOP + ' L' + (BX + BW + 4) + ' ' + BTOP + '" stroke="#7BA0B3" stroke-width="3" stroke-linecap="round"/>';
-      s += '<path d="M' + (BX + 15) + ' ' + (BTOP + 12) + ' L' + (BX + 15) + ' ' + (BBOT - 30) + '" stroke="#fff" stroke-width="3.4" opacity=".6" stroke-linecap="round"/>';
+      s += '<path d="M' + (BX - 5) + ' ' + BTOP + ' L' + (BX + BW + 5) + ' ' + BTOP + '" stroke="#7BA0B3" stroke-width="3" stroke-linecap="round"/>';
+      s += '<path d="M' + (BX + 16) + ' ' + (BTOP + 14) + ' L' + (BX + 16) + ' ' + (BBOT - 34) + '" stroke="#fff" stroke-width="3.2" opacity=".6" stroke-linecap="round"/>';
 
-      /* the bath's FRONT wall — drawn low, so it hides as little as possible */
-      s += '<path d="M' + BATH_X + ' 224 L' + BATH_X + ' ' + (BATH_BOT - 8) + ' Q' + BATH_X + ' ' + BATH_BOT + ' ' + (BATH_X + 10) + ' ' + BATH_BOT +
+      /* the bath's front wall, over the beaker's foot */
+      s += '<path d="M' + BATH_X + ' ' + (BATH_TOP + 12) + ' L' + BATH_X + ' ' + (BATH_BOT - 8) + ' Q' + BATH_X + ' ' + BATH_BOT + ' ' + (BATH_X + 10) + ' ' + BATH_BOT +
            ' L' + (BATH_X + BATH_W - 10) + ' ' + BATH_BOT + ' Q' + (BATH_X + BATH_W) + ' ' + BATH_BOT + ' ' + (BATH_X + BATH_W) + ' ' + (BATH_BOT - 8) +
-           ' L' + (BATH_X + BATH_W) + ' 224 Z" fill="#CFE2EC" fill-opacity=".62" stroke="#89A9BA" stroke-width="2"/>';
-      s += '<path d="M' + (BATH_X + 2) + ' 224 Q' + (BATH_X + 30) + ' 219 ' + (BATH_X + 62) + ' 224 T' + (BATH_X + 124) + ' 224 T' + (BATH_X + 186) + ' 224 L' + (BATH_X + BATH_W - 2) + ' 224" fill="none" stroke="#8FB7CB" stroke-width="1.3" opacity=".8"/>';
+           ' L' + (BATH_X + BATH_W) + ' ' + (BATH_TOP + 12) + ' Z" fill="#CFE2EC" fill-opacity=".6" stroke="#89A9BA" stroke-width="2"/>';
+      s += '<path d="M' + (BATH_X + 2) + ' ' + (BATH_TOP + 12) + ' Q' + (BATH_X + 28) + ' ' + (BATH_TOP + 7) + ' ' + (BATH_X + 56) + ' ' + (BATH_TOP + 12) + ' T' + (BATH_X + 112) + ' ' + (BATH_TOP + 12) + ' T' + (BATH_X + 168) + ' ' + (BATH_TOP + 12) + ' L' + (BATH_X + BATH_W - 2) + ' ' + (BATH_TOP + 12) + '" fill="none" stroke="#8FB7CB" stroke-width="1.3" opacity=".8"/>';
       s += '<path d="M' + (BATH_X - 3) + ' ' + BATH_TOP + ' L' + (BATH_X + BATH_W + 3) + ' ' + BATH_TOP + '" stroke="#89A9BA" stroke-width="2.6" stroke-linecap="round"/>';
 
       /* ---- the heat shield ---- */
       if (S.shield) {
-        s += '<ellipse cx="228" cy="' + (BENCH - 1) + '" rx="28" ry="5" fill="#000" opacity=".09" filter="url(#pwSoft)"/>';
-        s += '<path d="M212 126 L212 254 Q212 259 217 259 L243 259 Q248 259 248 254 L248 126" fill="url(#pwBath)" fill-opacity=".92" stroke="#7BA0B3" stroke-width="2"/>';
-        s += '<path d="M214 142 Q222 138 230 142 Q238 146 246 142 L246 252 L214 252 Z" fill="#CFE6F3" opacity=".8"/>';
-        s += '<path d="M209 126 L251 126" stroke="#7BA0B3" stroke-width="2.6" stroke-linecap="round"/>';
-        s += '<path d="M241 138 L241 244" stroke="#fff" stroke-width="2.8" opacity=".6" stroke-linecap="round"/>';
+        s += '<ellipse cx="234" cy="' + (BENCH - 1) + '" rx="28" ry="5" fill="#000" opacity=".09" filter="url(#pwSoft)"/>';
+        s += '<path d="M216 176 L216 ' + (BENCH - 4) + ' Q216 ' + BENCH + ' 221 ' + BENCH + ' L247 ' + BENCH + ' Q252 ' + BENCH + ' 252 ' + (BENCH - 4) + ' L252 176" fill="url(#pwBath)" fill-opacity=".92" stroke="#7BA0B3" stroke-width="2"/>';
+        s += '<path d="M218 192 Q226 188 234 192 Q242 196 250 192 L250 ' + (BENCH - 6) + ' L218 ' + (BENCH - 6) + ' Z" fill="#CFE6F3" opacity=".8"/>';
+        s += '<path d="M213 176 L255 176" stroke="#7BA0B3" stroke-width="2.6" stroke-linecap="round"/>';
+        s += '<path d="M245 188 L245 ' + (BENCH - 14) + '" stroke="#fff" stroke-width="2.6" opacity=".6" stroke-linecap="round"/>';
+        s += '<text x="234" y="168" font-size="10" font-weight="600" fill="#2A2A26" text-anchor="middle">heat shield</text>';
       }
 
-      /* ---- the bench lamp ---- */
-      s += '<ellipse cx="' + lampX + '" cy="' + (BENCH - 1) + '" rx="28" ry="5" fill="#000" opacity=".1" filter="url(#pwSoft)"/>';
-      s += '<rect x="' + (lampX - 25) + '" y="' + (BENCH - 11) + '" width="50" height="9" rx="4.5" fill="#AAA89D" stroke="#7C7A70" stroke-width="1.2"/>';
-      s += '<rect x="' + (lampX - 2.5) + '" y="134" width="5" height="' + (BENCH - 144) + '" rx="2.5" fill="#AAA89D" stroke="#7C7A70" stroke-width="1"/>';
-      s += '<path d="M' + (lampX - 29) + ' 136 L' + (lampX + 29) + ' 136 L' + (lampX + 14) + ' 100 L' + (lampX - 14) + ' 100 Z" fill="url(#pwShade)" stroke="#6F6D64" stroke-width="1.8" stroke-linejoin="round"/>';
-      s += '<path d="M' + (lampX - 27) + ' 135 L' + (lampX + 27) + ' 135" stroke="#6F6D64" stroke-width="1.5"/>';
-      s += '<circle cx="' + lampX + '" cy="130" r="7" fill="#FFF6D8" stroke="#D9B860" stroke-width="1.2"/>';
-      s += '<path d="M' + (lampX - 3) + ' 132 l3 -5 l3 5" fill="none" stroke="#C99A2E" stroke-width="1.1"/>';
-      s += '<circle cx="' + lampX + '" cy="130" r="24" fill="url(#pwGlow)" opacity="' + (glow * 0.7).toFixed(2) + '"/>';
+      /* ---- the bench lamp: about two and a half beakers tall, as it is on a bench ---- */
+      var SHADE_BOT = 150, SHADE_TOP = 74, SHW = 46;
+      s += '<ellipse cx="' + lampX + '" cy="' + (BENCH - 1) + '" rx="36" ry="6" fill="#000" opacity=".11" filter="url(#pwSoft)"/>';
+      s += '<path d="M' + (lampX - 34) + ' ' + (BENCH - 2) + ' q34 -11 68 0 z" fill="#8C8A80"/>';
+      s += '<rect x="' + (lampX - 34) + '" y="' + (BENCH - 13) + '" width="68" height="11" rx="5.5" fill="#AAA89D" stroke="#7C7A70" stroke-width="1.3"/>';
+      s += '<rect x="' + (lampX - 3.5) + '" y="' + SHADE_BOT + '" width="7" height="' + (BENCH - 13 - SHADE_BOT) + '" rx="3.5" fill="#AAA89D" stroke="#7C7A70" stroke-width="1.1"/>';
+      s += '<path d="M' + (lampX - SHW) + ' ' + SHADE_BOT + ' L' + (lampX + SHW) + ' ' + SHADE_BOT + ' L' + (lampX + SHW * 0.5) + ' ' + SHADE_TOP + ' L' + (lampX - SHW * 0.5) + ' ' + SHADE_TOP + ' Z" fill="url(#pwShade)" stroke="#6F6D64" stroke-width="1.9" stroke-linejoin="round"/>';
+      s += '<path d="M' + (lampX - SHW + 2) + ' ' + (SHADE_BOT - 1) + ' L' + (lampX + SHW - 2) + ' ' + (SHADE_BOT - 1) + '" stroke="#6F6D64" stroke-width="1.6"/>';
+      s += '<circle cx="' + lampX + '" cy="' + (SHADE_BOT - 8) + '" r="10" fill="#FFF6D8" stroke="#D9B860" stroke-width="1.3"/>';
+      s += '<path d="M' + (lampX - 4) + ' ' + (SHADE_BOT - 5) + ' l4 -7 l4 7" fill="none" stroke="#C99A2E" stroke-width="1.2"/>';
+      s += '<circle cx="' + lampX + '" cy="' + (SHADE_BOT - 8) + '" r="32" fill="url(#pwGlow)" opacity="' + (glow * 0.7).toFixed(2) + '"/>';
+      s += '<text x="' + lampX + '" y="' + (SHADE_TOP - 10) + '" font-size="11.5" font-weight="600" fill="#2A2A26" text-anchor="middle">lamp</text>';
 
       /* ---- the ruler ---- */
       var RY = BENCH + 8, rw = BX - lampX;
-      s += '<rect x="' + lampX + '" y="' + RY + '" width="' + rw + '" height="12" rx="2" fill="#F7E9C0" stroke="#C7A64B" stroke-width="1.2"/>';
-      for (var t2 = 0; t2 <= rw; t2 += 10) s += '<line x1="' + (lampX + t2) + '" y1="' + RY + '" x2="' + (lampX + t2) + '" y2="' + (RY + (t2 % 50 === 0 ? 8 : 4.5)) + '" stroke="#AC8D3A" stroke-width="1"/>';
-      s += '<text x="' + ((lampX + BX) / 2) + '" y="' + (RY - 3) + '" font-size="11" font-weight="700" fill="#3C3C3C" text-anchor="middle">' + S.d + ' cm</text>';
+      s += '<rect x="' + lampX + '" y="' + RY + '" width="' + rw + '" height="13" rx="2" fill="#F7E9C0" stroke="#C7A64B" stroke-width="1.2"/>';
+      for (var t2 = 0; t2 <= rw; t2 += 10) s += '<line x1="' + (lampX + t2) + '" y1="' + RY + '" x2="' + (lampX + t2) + '" y2="' + (RY + (t2 % 50 === 0 ? 9 : 5)) + '" stroke="#AC8D3A" stroke-width="1"/>';
+      s += '<text x="' + ((lampX + BX) / 2) + '" y="' + (RY - 4) + '" font-size="11.5" font-weight="700" fill="#3C3C3C" text-anchor="middle">' + S.d + ' cm</text>';
 
-      /* ---- the labels: a column, each on a horizontal leader that touches what it names ---- */
+      /* ---- the labels ---- */
       var LAB = [
-        { y: 74,  to: [TX + TW, TTOP + 14], t: 'boiling tube', sub: 'inverted — read the volume' },
-        { y: 116, to: [THX + 8, 112],       t: 'thermometer', sub: 'the water’s true temperature' },
-        { y: 162, to: [FX + 7, 140],        t: 'inverted funnel', sub: 'guides the bubbles up' },
-        { y: 200, to: [FX + 14, 192],       t: 'pondweed', sub: 'cut end down, weighted' },
-        { y: 242, to: [BATH_X + BATH_W, 240], t: 'water bath', sub: 'holds temperature steady' }
+        { y: 150, to: [TX + TW, TTOP + 12],             t: 'boiling tube', sub: 'inverted — read the volume' },
+        { y: 192, to: [THX + 7.6, BTOP + 46],           t: 'thermometer', sub: 'the water’s true temperature' },
+        { y: 234, to: [FX + FNECK + 2, FSHOULDER + 4],  t: 'inverted funnel', sub: 'covers the whole sprig' },
+        { y: 276, to: [FX + 20, FMOUTH - 30],           t: 'pondweed', sub: 'cut end down' },
+        { y: 318, to: [BATH_X + BATH_W, BATH_TOP + 14], t: 'water bath', sub: 'holds temperature steady' }
       ];
       LAB.forEach(function (L) {
-        s += '<path d="M' + L.to[0] + ' ' + L.to[1] + ' L' + (LBL - 12) + ' ' + L.y + ' L' + (LBL - 4) + ' ' + L.y + '" fill="none" stroke="#8A8A82" stroke-width="1"/>';
+        s += '<path d="M' + L.to[0] + ' ' + L.to[1] + ' L' + (LBL - 14) + ' ' + L.y + ' L' + (LBL - 5) + ' ' + L.y + '" fill="none" stroke="#8A8A82" stroke-width="1"/>';
         s += '<circle cx="' + L.to[0] + '" cy="' + L.to[1] + '" r="2.2" fill="#8A8A82"/>';
         s += '<text x="' + LBL + '" y="' + (L.y + 3) + '" font-size="11.5" font-weight="600" fill="#2A2A26">' + esc(L.t) + '</text>';
         s += '<text x="' + LBL + '" y="' + (L.y + 16) + '" font-size="10" fill="#6B6B63">' + esc(L.sub) + '</text>';
       });
-      s += '<text x="' + (lampX) + '" y="90" font-size="11.5" font-weight="600" fill="#2A2A26" text-anchor="middle">lamp</text>';
-      if (S.shield) s += '<text x="230" y="118" font-size="10.5" font-weight="600" fill="#2A2A26" text-anchor="middle">heat shield</text>';
       s += '</svg>';
       stage.innerHTML = s;
     }
@@ -730,14 +730,14 @@
         var gap = target > 0 ? RUN_MS / target : 1e9;
         while (spawned < S.n && now - t0 >= (spawned + 1) * gap && S.bubbles.length < 30) {
           spawned++;
-          S.bubbles.push({ x: 362 + (Math.random() * 8 - 4), y: 204, r: 2.1 + Math.random() * 1.7,
+          S.bubbles.push({ x: 354 + (Math.random() * 8 - 4), y: 310, r: 2.1 + Math.random() * 1.7,
                            v: 46 + Math.random() * 14, fake: Math.random() < fakeShare,
                            born: t0 + spawned * gap });
         }
         S.bubbles = S.bubbles.filter(function (b) {
-          b.y = 204 - (now - b.born) / 1000 * b.v;
-          if (b.y < 160) { b.x += (362 - b.x) * 0.16; }           /* funnelled into the neck */
-          if (b.y < 104) { S.gas += 1; return false; }             /* collected in the tube */
+          b.y = 310 - (now - b.born) / 1000 * b.v;
+          if (b.y < 262) { b.x += (354 - b.x) * 0.18; }           /* funnelled into the neck */
+          if (b.y < 196) { S.gas += 1; return false; }             /* collected in the tube */
           return true;
         });
         if (frac >= 1) { clearInterval(timer); timer = null; S.t = 60; S.n = target; S.running = false; paint(); finish(sfAtStart, fake, target); return; }
@@ -859,7 +859,7 @@
     box.appendChild(note);
 
     function paintStage() {
-      var W = 560, H = 262, x0 = 76, gap = 136;
+      var W = 560, H = 246, x0 = 76, gap = 136;
       var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Four boiling tubes of hydrogencarbonate indicator in a rack, three with algal balls in bright light, dim light and darkness, and one with no algae as a control">';
       s += '<defs><linearGradient id="indGlass" x1="0" y1="0" x2="1" y2="0">' +
         '<stop offset="0" stop-color="#fff" stop-opacity=".4"/><stop offset=".2" stop-color="#fff" stop-opacity=".04"/>' +
@@ -868,7 +868,8 @@
 
       TUBES.forEach(function (t, i) {
         var cx = x0 + i * gap, r = readOf(t);
-        var TW = 40, TX = cx - TW / 2, TTOP = 34, TBOT = 196, LIQ = 62;
+        var TW = 40, TX = cx - TW / 2, TTOP = 34, TBOT = 200, LIQ = 62;
+        s += '<ellipse cx="' + cx + '" cy="' + (TBOT + 6) + '" rx="20" ry="4" fill="#000" opacity=".08" filter="url(#indSoft)"/>';
         /* the tube */
         s += '<path d="M' + TX + ' ' + TTOP + ' L' + TX + ' ' + (TBOT - 16) + ' Q' + TX + ' ' + TBOT + ' ' + cx + ' ' + TBOT +
              ' Q' + (TX + TW) + ' ' + TBOT + ' ' + (TX + TW) + ' ' + (TBOT - 16) + ' L' + (TX + TW) + ' ' + TTOP + '" fill="#F4FAFD" stroke="#7BA0B3" stroke-width="2.2"/>';
@@ -905,14 +906,9 @@
           }
         }
         /* the colour read off, under the tube */
-        s += '<text x="' + cx + '" y="250" font-size="11.5" font-weight="700" fill="' + COL[r.c] + '" text-anchor="middle">' + esc(r.name) + '</text>';
+        s += '<text x="' + cx + '" y="236" font-size="11.5" font-weight="700" fill="' + COL[r.c] + '" text-anchor="middle">' + esc(r.name) + '</text>';
       });
-      /* the rack */
-      s += '<rect x="26" y="200" width="' + (W - 52) + '" height="12" rx="3" fill="#C8A87A" stroke="#9E8254" stroke-width="1.6"/>';
-      s += '<rect x="34" y="212" width="10" height="16" fill="#B9976A" stroke="#9E8254" stroke-width="1.3"/>';
-      s += '<rect x="' + (W - 44) + '" y="212" width="10" height="16" fill="#B9976A" stroke="#9E8254" stroke-width="1.3"/>';
-      s += '<rect x="26" y="226" width="' + (W - 52) + '" height="9" rx="3" fill="#BE9B6D" stroke="#9E8254" stroke-width="1.4"/>';
-      s += '<ellipse cx="280" cy="238" rx="226" ry="5" fill="#000" opacity=".07" filter="url(#indSoft)"/>';
+      /* no rack: the tubes are the subject, and a rack only hides their contents */
       s += '</svg>';
       stage.innerHTML = s;
     }
