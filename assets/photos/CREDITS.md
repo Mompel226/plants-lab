@@ -117,9 +117,15 @@ Mastering Biology**; both credits on the page link to the source. The original s
 other six were not recorded in the lesson folders; three of them carry a publisher's mark,
 noted below, and are used here on the same terms as in the lesson.
 
-> The `water-absorption.mp4` animation carries the same Oxford University Press logo and the
-> same "Animation 10.3" numbering, so it is very likely from the same channel — but that has
-> not been confirmed, so it is not credited to them here.
+Every video now carries its source **under the player**, where a reader sees it. Where a
+publisher's mark is in the picture it is named, because that is a fact about the file. Where
+nothing was recorded, the credit says *original source not recorded* rather than implying the
+lesson folder is a source — four of the eight still say that, and each is a gap worth closing.
+
+> `water-absorption.mp4` carries the same Oxford University Press logo and the same
+> "Animation 10.x" numbering as the potometer practical, so it is very likely from the
+> **Oxford Mastering Biology** channel too. It is credited to Oxford University Press, which
+> the logo establishes, but not to the channel, which is not confirmed.
 
 | File | Lesson folder | Original file | Note |
 |---|---|---|---|
