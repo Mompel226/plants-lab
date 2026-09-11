@@ -310,7 +310,7 @@
   /* A widget a reader clicks through — tubes pressed, pins opened, sliders moved — gets a small reset in its
      header that builds it afresh in the same place. Pictures, videos, tables and the potometer (which has resets
      of its own) do not. */
-  var NO_RESET = { video: 1, photo: 1, table: 1, potometer: 1 };
+  var NO_RESET = { video: 1, photo: 1, table: 1, potometer: 1, auxin: 1 };
   function addReset(spec, e, remake) {
     if (NO_RESET[spec.type] || !e.querySelector) return;
     var hd = e.querySelector('.widget__h'); if (!hd || !e.querySelector('button, input, select, [role="button"]')) return;

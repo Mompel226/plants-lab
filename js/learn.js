@@ -1845,11 +1845,15 @@
 
     var wrap = h('div', 'ax');
     var panel = h('div', 'ax__panel');
+    var acts  = h('div', 'ax__acts');
+    var slot  = h('div', 'ax__slot');
     var stage = h('div', 'ax__stage');
     var key   = h('div', 'ax__key');
     var capt  = h('p', 'ax__cap');
     var why   = h('div', 'ax__why');
-    wrap.appendChild(panel); wrap.appendChild(stage); wrap.appendChild(key); wrap.appendChild(capt); wrap.appendChild(why);
+    slot.appendChild(stage);
+    wrap.appendChild(panel); wrap.appendChild(acts); wrap.appendChild(slot);
+    wrap.appendChild(key); wrap.appendChild(capt); wrap.appendChild(why);
     box.appendChild(wrap);
 
     /* ----- the controls ----- */
@@ -2558,14 +2562,45 @@
       }, 40);
     }
 
-    var again = h('button', 'ax__again', '↻ Play it again');
-    again.type = 'button';
-    again.addEventListener('click', run);
-    wrap.appendChild(again);
+    /* Start and Reset sit directly under the controls, where the settings are made — not in
+       the header. You set the apparatus up and then start it, which is the order the experiment
+       happens in, and it is the difference between watching the run and scrolling past it. */
+    var goBtn = h('button', 'ax__go', '▶ Start');
+    goBtn.type = 'button';
+    goBtn.addEventListener('click', run);
+    var resetBtn = h('button', 'ax__rst', '↺ Reset');
+    resetBtn.type = 'button';
+    resetBtn.addEventListener('click', function () {
+      if (S.t) { clearInterval(S.t); S.t = null; }
+      S.organ = 'shoot'; S.lay = 'up'; S.light = 'left'; S.top = 'intact'; S.layer = 'gel';
+      S.cover = 'none'; S.mica = 'none'; S.block = 'none'; S.cap = 'intact';
+      buildPanel(); run();
+    });
+    acts.appendChild(goBtn); acts.appendChild(resetBtn);
 
-    buildPanel(); run();
+    /* On the station page the drawing stands in the plant's column, so a change to the controls
+       is seen at once instead of being scrolled past. In the Practise column the whole widget is
+       already there, so it stays where it is. */
+    var wideQ = window.matchMedia('(min-width: 1001px)');
+    function mount() {
+      var host = document.getElementById('simHost');
+      var inSim = !!(host && host.contains(box));
+      var wide = !!spec.onStage && wideQ.matches && !!host && !inSim;
+      var target = wide ? host : slot;
+      if (stage.parentNode !== target) {
+        if (wide) host.innerHTML = '';
+        target.appendChild(stage);
+      }
+      box.classList.toggle('ax--split', !!wide);
+      if (spec.onStage && !inSim && global.Plate && global.Plate.showSim) global.Plate.showSim(wide);
+    }
+    box.__onMove = mount;
+    var onWide = function () { if (box.isConnected) mount(); else wideQ.removeEventListener('change', onWide); };
+    wideQ.addEventListener('change', onWide);
+
+    buildPanel(); mount(); run();
     box.appendChild(h('p', 'widget__note', 'The bend is not drawn on. Each flank of the elongation zone is drawn to the length its own auxin has earned it, and a column whose one side is longer than the other can only be a curve. Change the apparatus and the biology, not a stored answer, decides what happens.'));
-    box.__onReset = function () { if (S.t) clearInterval(S.t); };
+    box.__onReset = function () { if (S.t) clearInterval(S.t); wideQ.removeEventListener('change', onWide); };
     return box;
   }
 
