@@ -1,0 +1,16 @@
+<!doctype html><meta charset="utf-8"><title>frame</title>
+<style>html,body{margin:0;background:#ddd}iframe{width:380px;height:2200px;border:0;background:#fff;display:block}
+#j{font:9px monospace;white-space:pre-wrap;word-break:break-all}</style>
+<iframe id="f" src=""></iframe><pre id="j"></pre>
+<script>
+var P=new URLSearchParams(location.search);
+var f=document.getElementById('f');
+f.src='_pr.html?c='+(P.get('c')||'%5B%5D');
+var n=0;
+var t=setInterval(function(){
+  n++;
+  try{ var v=f.contentDocument.getElementById('j').textContent;
+       if(v&&v.indexOf('###')===0){ document.getElementById('j').textContent=v; clearInterval(t); } }catch(e){}
+  if(n>300){clearInterval(t); document.getElementById('j').textContent='###TIMEOUT###';}
+},50);
+</script>
