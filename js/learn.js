@@ -2058,9 +2058,22 @@
        column falls outside the visible box and the words shrink to five pixels. So the labels
        become numbered pins on the drawing and a numbered list under it — the same thing the
        finder widget does, and the same thing a printed figure does when it runs out of margin. */
-    function pinLabels(g) {
-      if (!LAB.length) { pins.innerHTML = ''; return ''; }
-      var out = '', rows = '';
+    /* A number on the drawing and its words somewhere below is a lookup, and a lookup the
+       reader has to scroll for is a lookup they will not make. The words go ON the drawing, in
+       the corner, with the numbers tying each line to its pin. */
+    function pinLabels(g, vx, vw) {
+      pins.innerHTML = '';
+      if (!LAB.length) return '';
+      var out = '', lines = [];
+      LAB.forEach(function (L, i) {
+        wrapText(L.text, 42).forEach(function (ln, k) { lines.push((k ? '   ' : (i + 1) + '. ') + ln); });
+      });
+      var padX = 7, lh = 12.6, boxW = Math.min(vw - 16, 244), boxH = lines.length * lh + 11;
+      out += '<rect x="' + (vx + 8) + '" y="10" width="' + boxW + '" height="' + boxH.toFixed(1) +
+             '" rx="4" fill="#FFFFFF" opacity=".88" stroke="#D8D2C4" stroke-width="1"/>';
+      lines.forEach(function (ln, i) {
+        out += '<text class="ax__pintxt" x="' + (vx + 8 + padX) + '" y="' + (10 + 14 + i * lh).toFixed(1) + '">' + ln + '</text>';
+      });
       LAB.forEach(function (L, i) {
         /* The disc sits OUTSIDE the organ with a short leader back to the feature. Centred on the
            anchor it covered the very cells, arrows and starch grains its own words were naming. */
@@ -2072,9 +2085,7 @@
         out += '<path d="M' + L.px.toFixed(1) + ' ' + L.py.toFixed(1) + ' L' + dx2.toFixed(1) + ' ' + dy2.toFixed(1) + '" stroke="#5A5A5A" stroke-width="1.2"/>';
         out += '<circle cx="' + dx2.toFixed(1) + '" cy="' + dy2.toFixed(1) + '" r="9" fill="#FFFFFF" stroke="#5A5A5A" stroke-width="1.5"/>';
         out += '<text class="ax__pin" x="' + dx2.toFixed(1) + '" y="' + (dy2 + 4).toFixed(1) + '" text-anchor="middle">' + n + '</text>';
-        rows += '<li>' + L.text + '</li>';
       });
-      pins.innerHTML = rows;
       return out;
     }
 
@@ -2415,15 +2426,25 @@
         /* lean on what ARRIVES (dL/dR), not on what left the tip (fL/fR): with a plate holding
            one flank back, the cloud in the zone is even, and the difference is the queue above
            the plate rather than a gradient below it. */
-        var mk = M.made || 1, lean = (M.dR - M.dL) / mk, kk = Math.max(-0.85, Math.min(0.85, lean));
+        var mk = M.made || 1, lean = (M.dR - M.dL) / mk;
+        /* The real split is about two to one, and two to one is not a difference the eye reads
+           across a narrow shoot — it looks like scatter. So the DRAWING is deliberately steeper
+           than the biology: roughly nine to one, which is unmistakable. The sentences and the
+           verdict still say two to one, which is the number a student writes; the widget's own
+           note says the picture leans harder than that on purpose. */
+        /* A straight-line density cannot lean far enough: even at its limit it only puts three
+           quarters of the grains on one side, which still reads as scatter. A power curve can put
+           nine tenths of them there while still filling the whole width, so there is no gap and
+           no second group — just a cloud heavily piled to one side. */
+        var want = 0.5 + 0.4 * Math.min(1, Math.abs(lean) / 0.34);          /* 0.5 even, 0.9 leaning */
+        var kSign = lean < 0 ? -1 : 1;
+        var kExp = Math.abs(lean) < 0.02 ? 1 : Math.log(0.5) / Math.log(1 - want);
         var surplus = blockL ? Math.max(0, M.fL * M.made - M.dL)
                     : blockR ? Math.max(0, M.fR * M.made - M.dR) : 0;
         var nQueue = Math.round(N * surplus / mk), queued = 0;
         function across(u01) {
-          if (Math.abs(kk) < 0.02) return 2 * u01 - 1;
-          var disc = 0.25 - kk * (0.5 - kk / 4 - u01);
-          var x = (-0.5 + Math.sqrt(disc > 0 ? disc : 0)) / (kk / 2);
-          return x < -1 ? -1 : x > 1 ? 1 : x;
+          var x = 2 * Math.pow(u01, kExp) - 1;
+          return kSign * (x < -1 ? -1 : x > 1 ? 1 : x);
         }
         var blockL = S.mica === 'left', blockR = S.mica === 'right';
         /* Auxin is made WHERE THE SOURCE IS, and the source is not always the organ's own tip:
@@ -2454,9 +2475,8 @@
              line too early it was undefined on the first grain, which put that grain at NaN — and
              every grain after it silently borrowed its predecessor's offset. */
           var js = (frac(a1 * 43.7 + b1 * 17.3) - 0.5) * 5.5, ju = (frac(a1 * 11.9 + b1 * 31.1) - 0.5) * 3.4;
-          var uSide = across(b1) * HW * 0.58;
+          var uSide = across(b1) * HW * 0.58 + ju;
           var side = uSide < 0 ? -1 : 1;
-          var u2 = uEven + (uSide + ju - uEven) * lat;
           /* The plate does not empty a flank; it holds that flank back to what the other one is
              carrying. The cloud already shows what ARRIVES, because the gradient is drawn from
              the delivered shares; what is left over is the surplus the plate is holding up, and
@@ -2466,13 +2486,24 @@
           if (stopped) queued++;
           var sEnd = stopped ? g.ZONE1 + 10 + b1 * 24        /* held up above the plate, in a queue */
                    : g.ZONE0 + 5 + a1 * (g.ZONE1 - g.ZONE0 - 10) + js;
-          /* each grain sets off at its own moment, so they travel as a spreading plume
-             rather than as one solid band sliding down the shoot */
-          var del = frac(a1 * 0.5 + b1 * 1.5) * 0.46, tt = clamp((down - del) / (1 - del));
-          var s2 = sTop + (sEnd - sTop) * tt;
-          var pg = at(Math.max(4, s2), u2);
-          var opa = made;
-          s += '<circle cx="' + pg[0].toFixed(1) + '" cy="' + pg[1].toFixed(1) + '" r="1.55" fill="#F0900E" opacity="' + opa.toFixed(2) + '"/>';
+
+          /* ONE continuous journey per grain, not three stages for all of them together. Staged,
+             the whole cloud sat at the tip, then split into two groups, then slid down — which is
+             where the robotic, stepping look came from, and it showed a separation happening in
+             one place at one moment. Each grain now appears at its own moment and drifts sideways
+             WHILE it travels down, so what you see is a stream leaving the tip and fanning to one
+             side: the same biology, told as a flow. */
+          var born = frac(a1 * 3.1 + b1 * 0.7) * 0.34;
+          var age = clamp((p - born) / Math.max(0.2, 0.86 - born));
+          if (age > 0) {
+            var es = age < 0.5 ? 2 * age * age : 1 - Math.pow(-2 * age + 2, 2) / 2;   /* along the shoot */
+            var eu = clamp(age * 1.6); eu = eu * eu * (3 - 2 * eu);                   /* across it, settling sooner */
+            var s2 = sTop + (sEnd - sTop) * es;
+            var u2 = uEven + (uSide - uEven) * eu;
+            var pg = at(Math.max(4, s2), u2);
+            var opa = Math.min(1, age * 7);
+            s += '<circle cx="' + pg[0].toFixed(1) + '" cy="' + pg[1].toFixed(1) + '" r="1.55" fill="#F0900E" opacity="' + opa.toFixed(2) + '"/>';
+          }
         }
       }
 
@@ -2536,7 +2567,7 @@
         }
       }
 
-      s += narrow ? pinLabels(g) : placeLabels(g, labRight);
+      s += narrow ? pinLabels(g, vx, vw) : placeLabels(g, labRight);
       s += '</svg>';
       stage.innerHTML = s;
     }
@@ -2797,7 +2828,7 @@
       return null;
     }
     function reading() {
-      var r = box.getBoundingClientRect(), sc = scrollerOf(box) || scroller;
+      var r = panel.getBoundingClientRect(), sc = scrollerOf(box) || scroller;
       var t = 0, b = window.innerHeight || 800;
       if (sc) { var q = sc.getBoundingClientRect(); t = q.top; b = q.bottom; }
       /* in the strip the drawing sits ABOVE the text, so the band that counts as "level with it"
@@ -2805,10 +2836,20 @@
       var hs = host(), lead = (mode() === 'strip' && hs) ? hs.getBoundingClientRect().height : 0;
       return r.bottom > t + lead + 40 && r.top < b - 40;
     }
+    /* Staging can change the height of the strip — most of all when it has to open a fold the
+       reader had closed — and that moves the page under them. The widget then finds itself
+       outside the band that put it there, unstages, the strip shrinks back, and it is inside
+       again: the flicker. Measuring the widget before and after and correcting the scroll by the
+       difference removes the shift, and with it the loop. */
     function say(v) {
       if (v === staged) return;
       staged = v;
+      var sc = scrollerOf(box), before = box.getBoundingClientRect().top;
       if (global.Plate && global.Plate.stageSim) global.Plate.stageSim(v);
+      if (sc) {
+        var moved = box.getBoundingClientRect().top - before;
+        if (Math.abs(moved) > 1) sc.scrollTop += moved;
+      }
     }
     function look() {
       if (!box.isConnected) { detach(); return; }
@@ -2826,20 +2867,35 @@
       var m = mode(); if (m === 'flow' || !window.IntersectionObserver) return;
       var col = document.querySelector('.platecol');
       var lead = (m === 'strip' && col) ? Math.round(col.getBoundingClientRect().height) : 0;
+      /* One band, fixed. Making it depend on whether the widget was already staged meant
+         rebuilding the observer every time the state changed, and the rebuilt observer answered
+         the boundary case differently from the one that had just fired — so at a scroll position
+         right on the edge it turned on, rebuilt, turned off, rebuilt, on again. That was the
+         flicker: not the scrolling, but the widget arguing with itself. */
+      var edge = 30;
       try {
         io = new IntersectionObserver(function (es) {
           if (!es || !es.length) return;
           say(!!es[es.length - 1].isIntersecting);
-        }, { root: scrollerOf(box) || null, rootMargin: (-lead - 30) + 'px 0px -30px 0px', threshold: 0 });
-        io.observe(box);
+        }, { root: scrollerOf(box) || null, rootMargin: (-lead - edge) + 'px 0px ' + (-edge) + 'px 0px', threshold: 0 });
+        /* Watch the CONTROLS, not the whole widget. Staging lifts the drawing out of the widget,
+           which makes the widget about 260 px shorter — so a widget observed whole would leave the
+           band the instant it was staged, come back the instant it was not, and flicker all the
+           way down the page. The controls never move and never change size, and they are the part
+           a reader is actually working with. */
+        io.observe(panel);
       } catch (e) { io = null; }
     }
+    /* The observer decides whether the drawing is staged, and NOTHING else does. A scroll
+       handler testing the same thing with a band of its own disagreed with the observer near the
+       edges, and the two of them took turns setting the state — on, off, on, off, all the way
+       down the page. That was the flicker. This only re-measures the box, for the label style. */
     function onScroll() {
       if (tick) return;
       tick = requestAnimationFrame(function () {
-        tick = 0; look();
+        tick = 0;
         var was = narrow; gauge();
-        if (narrow !== was) run();
+        if (narrow !== was) { run(); watch(); }
       });
     }
     var scroller = null;
@@ -2866,7 +2922,7 @@
 
     buildPanel();
     requestAnimationFrame(function () { attach(); gauge(); mount(); run(); });
-    box.appendChild(h('p', 'widget__note', 'The bend is not drawn on. Each flank of the elongation zone is drawn to the length its own auxin has earned it, and a column whose one side is longer than the other can only be a curve. Change the apparatus and the biology, not a stored answer, decides what happens.'));
+    box.appendChild(h('p', 'widget__note', 'The bend is not drawn on. Each flank of the elongation zone is drawn to the length its own auxin has earned it, and a column whose one side is longer than the other can only be a curve. Change the apparatus and the biology, not a stored answer, decides what happens. One thing is drawn harder than it happens: the real split is about two parts to one, and the picture leans nearer nine to one, because two to one across a shoot this narrow is not a difference an eye can read. Write two to one.'));
     box.__onReset = function () { if (S.t) clearInterval(S.t); detach(); };
     return box;
   }
