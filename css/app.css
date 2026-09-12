@@ -1352,16 +1352,29 @@ picture{display:block;line-height:0}
 
 /* the half-flower */
 .fl{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(180px,1fr);gap:14px;align-items:start}
+.fl__left{min-width:0}
+.fl__switch{display:flex;gap:6px;margin:0 0 8px}
+.fl__switch .wbtn{font-size:12.5px;padding:4px 11px}
 .fl__stage{background:#fff;border:1px solid var(--edge);border-radius:var(--r);padding:6px}
+.fl__photo{margin:0;background:#fff;border:1px solid var(--edge);border-radius:var(--r);padding:6px}
+.fl__photo img{display:block;width:100%;height:auto;border-radius:4px}
+.fl__photo figcaption{font-size:12px;line-height:1.45;color:var(--grey);margin-top:6px}
 .fl__svg{width:100%;height:auto;display:block;font-family:var(--font)}
 .fl__stalk{fill:#8FD48A;stroke:#2F7D46;stroke-width:1.6}
 .fl__sepal{fill:#9BC76A;stroke:#2F7D46;stroke-width:1.6}
 .fl__petal{fill:#F5A3C3;stroke:#B85C86;stroke-width:1.6}
 .fl__filament{fill:none;stroke:#8A5A0E;stroke-width:3.2;stroke-linecap:round}
 .fl__anther{fill:#F3C844;stroke:#8A5A0E;stroke-width:1.6}
+/* the petals of the far half stand behind the carpel: the same petal, further away */
+.fl__petal--back{fill:#FAC6DA;stroke:#C57B9E}
+/* pollen is drawn over the anther, so it must not be what a click lands on */
+.fl__pollen{fill:#E5A81B;stroke:#8A5A0E;stroke-width:.7;pointer-events:none}
 .fl__nectary{fill:#F7D96B;stroke:#8A5A0E;stroke-width:1}
 .fl__ovary{fill:#C7E3A6;stroke:#2F7D46;stroke-width:1.6}
 .fl__ovule{fill:#FFFFFF;stroke:#2F7D46;stroke-width:1.4}
+/* the cavity inside a cut ovary, and the stalk each ovule hangs from */
+.fl__locule{fill:#FBF7E8;stroke:#2F7D46;stroke-width:1.2}
+.fl__funicle{fill:none;stroke:#2F7D46;stroke-width:1.6;stroke-linecap:round;pointer-events:none}
 .fl__style{fill:#B9DB94;stroke:#2F7D46;stroke-width:1.4}
 .fl__stigma{fill:#7AA35A;stroke:#2F7D46;stroke-width:1.4}
 .fl__svg [data-part]{cursor:pointer;transition:filter .15s}
