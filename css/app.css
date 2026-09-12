@@ -1353,6 +1353,9 @@ picture{display:block;line-height:0}
 /* the half-flower */
 .fl{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(180px,1fr);gap:14px;align-items:start}
 .fl__left{min-width:0}
+/* nothing to click on a photograph, so it takes the room the naming panel was using */
+.fl.is-photo{grid-template-columns:1fr}
+.fl.is-photo .fl__info{display:none}
 .fl__switch{display:flex;gap:6px;margin:0 0 8px}
 .fl__switch .wbtn{font-size:12.5px;padding:4px 11px}
 .fl__stage{background:#fff;border:1px solid var(--edge);border-radius:var(--r);padding:6px}

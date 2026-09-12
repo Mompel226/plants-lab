@@ -3824,7 +3824,7 @@
            the words go in the margins, because there is no plain ground inside the frame to write
            on. Positions are given as percentages of the picture, so the margins follow its shape. */
         var wh = (global.PHOTO_SIZE || {})[spec.photo.img + '-900.jpg'] || [274, 284];
-        var IW = wh[0], IH = wh[1], PAD = Math.round(IW * 0.32), VW = IW + PAD * 2;
+        var IW = wh[0], IH = wh[1], PAD = Math.round(IW * 0.26), VW = IW + PAD * 2;
         var s = '<svg viewBox="0 0 ' + VW + ' ' + IH + '" class="fl__psvg" role="img" aria-label="' + esc(spec.photo.alt || '') + '">' +
           '<image href="assets/photos/' + spec.photo.img + '-900.jpg" x="' + PAD + '" y="0" width="' + IW + '" height="' + IH + '"/>';
         pins.forEach(function (q) {
@@ -3839,7 +3839,8 @@
         pic = '<picture><source srcset="assets/photos/' + spec.photo.img + '-900.webp" type="image/webp">' +
               '<img src="assets/photos/' + spec.photo.img + '-900.jpg" alt="' + esc(spec.photo.alt || '') + '" loading="lazy"></picture>';
       }
-      shot.innerHTML = pic + '<figcaption>' + mk(spec.photo.cap || '') + ' · ' + esc(spec.photo.credit || '') + '</figcaption>';
+      shot.innerHTML = pic + '<figcaption>' + (spec.photo.cap ? mk(spec.photo.cap) + ' · ' : '') +
+        esc(spec.photo.credit || '') + '</figcaption>';
       shot.hidden = true;
       left.appendChild(shot);
       var sw = h('div', 'fl__switch');
@@ -3847,6 +3848,7 @@
         var b = h('button', 'wbtn' + (i === 0 ? ' is-on' : ''), o[0]); b.type = 'button';
         b.addEventListener('click', function () {
           stage.hidden = o[1]; shot.hidden = !o[1];
+          wrap.classList.toggle('is-photo', o[1]);
           sw.querySelectorAll('button').forEach(function (x) { x.classList.toggle('is-on', x === b); });
         });
         sw.appendChild(b);
