@@ -193,39 +193,118 @@
       'A root underground, labelled root, curving downwards with its root cap at the end. Auxin grains lie along its lower flank, and the cell divisions show that flank is shorter than the upper one.');
   })();
 
-  /* a xylem vessel: dead cells stacked into one open pipe, no end walls, lignin rings */
+  /* ---------------- 1. xylem vessel ---------------- */
   F['xylem-vessel'] = svg('0 0 120 100',
-    '<rect x="38" y="6" width="44" height="88" rx="4" fill="#EAF2F8" stroke="#6B8FA8" stroke-width="2.4"/>' +
-    '<g stroke="#6B8FA8" stroke-width="2.2" fill="none" opacity=".85">' +
-    '<path d="M38 22 q22 7 44 0 M38 46 q22 7 44 0 M38 70 q22 7 44 0"/></g>' +
-    '<g stroke="' + W + '" stroke-width="3" stroke-linecap="round" opacity=".55">' +
-    '<path d="M50 88 V16 M70 88 V16"/></g>' +
-    arr(60, 84, 60, 14, W, 3),
-    'A xylem vessel drawn as one continuous open pipe with thickened rings around it and no walls across it, and an arrow showing water moving upwards.');
+    '<defs>' +
+    '<linearGradient id="xvW" x1="0" x2="1" y1="0" y2="0">' +
+    '<stop offset="0" stop-color="#7E683D"/><stop offset=".45" stop-color="#D6C6A5"/><stop offset="1" stop-color="#947C4D"/></linearGradient>' +
+    '<linearGradient id="xvL" x1="0" x2="1" y1="0" y2="0">' +
+    '<stop offset="0" stop-color="#94BAD7"/><stop offset=".45" stop-color="#EBF4FA"/><stop offset="1" stop-color="#A6C7DE"/></linearGradient>' +
+    '</defs>' +
+    /* the open lumen: the inside of the pipe, with no living contents in it */
+    '<rect x="44" y="13" width="44" height="79" fill="url(#xvL)"/>' +
+    /* the lignin rings, seen running round the far side of the pipe */
+    '<g stroke="#BFA876" stroke-width="2.4" fill="none" opacity=".42">' +
+    '<path d="M44 22 Q66 11 88 22"/><path d="M44 34 Q66 23 88 34"/><path d="M44 46 Q66 35 88 46"/>' +
+    '<path d="M44 58 Q66 47 88 58"/><path d="M44 70 Q66 59 88 70"/><path d="M44 82 Q66 71 88 82"/></g>' +
+    /* the two cut walls, thickened with lignin */
+    '<g fill="url(#xvW)" stroke="' + SD + '" stroke-width="1.5">' +
+    '<rect x="30" y="13" width="14" height="79"/><rect x="88" y="13" width="14" height="79"/></g>' +
+    '<g fill="#6B5629">' +
+    '<rect x="30" y="19.5" width="14" height="5"/><rect x="30" y="31.5" width="14" height="5"/>' +
+    '<rect x="30" y="43.5" width="14" height="5"/><rect x="30" y="55.5" width="14" height="5"/>' +
+    '<rect x="30" y="67.5" width="14" height="5"/><rect x="30" y="79.5" width="14" height="5"/>' +
+    '<rect x="88" y="19.5" width="14" height="5"/><rect x="88" y="31.5" width="14" height="5"/>' +
+    '<rect x="88" y="43.5" width="14" height="5"/><rect x="88" y="55.5" width="14" height="5"/>' +
+    '<rect x="88" y="67.5" width="14" height="5"/><rect x="88" y="79.5" width="14" height="5"/></g>' +
+    '<g fill="#EFE4CA" opacity=".8">' +
+    '<rect x="30" y="18.3" width="14" height="1.4"/><rect x="30" y="30.3" width="14" height="1.4"/>' +
+    '<rect x="30" y="42.3" width="14" height="1.4"/><rect x="30" y="54.3" width="14" height="1.4"/>' +
+    '<rect x="30" y="66.3" width="14" height="1.4"/><rect x="30" y="78.3" width="14" height="1.4"/>' +
+    '<rect x="88" y="18.3" width="14" height="1.4"/><rect x="88" y="30.3" width="14" height="1.4"/>' +
+    '<rect x="88" y="42.3" width="14" height="1.4"/><rect x="88" y="54.3" width="14" height="1.4"/>' +
+    '<rect x="88" y="66.3" width="14" height="1.4"/><rect x="88" y="78.3" width="14" height="1.4"/></g>' +
+    /* all that is left of the end walls between the cells: broken stumps */
+    '<g fill="#CDB78C" stroke="#6E5A30" stroke-width="1.4" stroke-linejoin="round">' +
+    '<path d="M44 37 H52 l2 2 l-2 2 l2 2 H44 Z"/><path d="M88 37 H80 l-2 2 l2 2 l-2 2 H88 Z"/>' +
+    '<path d="M44 61 H52 l2 2 l-2 2 l2 2 H44 Z"/><path d="M88 61 H80 l-2 2 l2 2 l-2 2 H88 Z"/></g>' +
+    /* the cut mouth: the pipe is open all the way through */
+    '<ellipse cx="66" cy="13" rx="36" ry="6.8" fill="url(#xvW)" stroke="' + SD + '" stroke-width="1.5"/>' +
+    '<ellipse cx="66" cy="13" rx="22" ry="4" fill="#D5E6F2" stroke="' + SD + '" stroke-width="1.2"/>' +
+    /* water rising the whole way up and out */
+    arr(60, 89, 60, 8, W, 3.6) +
+    pin(22, 46, 1) + pin(70, 64, 2) + pin(60, 33, 3),
+    'A xylem vessel drawn as a cut-open pipe. Its thick walls are banded with rings of lignin. Only broken stumps are left where the end walls between the cells used to be, so the pipe is one continuous open tube, empty of any living contents, with water rising straight up it.');
 
-  /* a phloem sieve tube, with its sieve plate and a companion cell */
+  /* ---------------- 2. phloem sieve tube ---------------- */
   F['phloem-tube'] = svg('0 0 120 100',
-    '<rect x="30" y="6" width="34" height="88" fill="#F3EAF6" stroke="#7A5C8E" stroke-width="2"/>' +
-    '<g stroke="#7A5C8E" stroke-width="2.6"><path d="M30 34 H64 M30 62 H64"/></g>' +
-    '<g stroke="#F7F2FA" stroke-width="1.6"><path d="M36 34 v0 M44 34 v0"/></g>' +
-    '<g fill="#F7F2FA"><circle cx="37" cy="34" r="1.7"/><circle cx="47" cy="34" r="1.7"/><circle cx="57" cy="34" r="1.7"/>' +
-    '<circle cx="37" cy="62" r="1.7"/><circle cx="47" cy="62" r="1.7"/><circle cx="57" cy="62" r="1.7"/></g>' +
-    '<rect x="68" y="18" width="20" height="64" fill="#E6D7EE" stroke="#7A5C8E" stroke-width="1.8"/>' +
-    '<circle cx="78" cy="44" r="5" fill="#7A5C8E" opacity=".5"/>' +
-    arr(47, 12, 47, 88, '#7A5C8E', 2.4),
-    'A phloem sieve tube with two sieve plates across it, each with pores, a companion cell alongside it, and an arrow showing sucrose moving down the tube.');
+    '<defs>' +
+    '<linearGradient id="ptS" x1="0" x2="1" y1="0" y2="0">' +
+    '<stop offset="0" stop-color="#EDE3F3"/><stop offset=".45" stop-color="#FCFAFD"/><stop offset="1" stop-color="#EFE6F4"/></linearGradient>' +
+    '<linearGradient id="ptC" x1="0" x2="1" y1="0" y2="0">' +
+    '<stop offset="0" stop-color="#B893CC"/><stop offset=".5" stop-color="#D3B6E2"/><stop offset="1" stop-color="#A87FC0"/></linearGradient>' +
+    '</defs>' +
+    /* the sieve tube: two living elements end to end, almost empty inside */
+    '<rect x="20" y="8" width="46" height="84" rx="3" fill="url(#ptS)" stroke="#7A5C8E" stroke-width="2.4"/>' +
+    /* a thin lining of cytoplasm hugging the wall, and no nucleus anywhere */
+    '<g fill="none" stroke="#C7AAD8" stroke-width="2.2" opacity=".95">' +
+    '<path d="M22.9 11 V46 M63.1 11 V46 M22.9 89 V58 M63.1 89 V58"/></g>' +
+    '<g fill="#B79ACA" opacity=".75"><circle cx="24" cy="24" r="1.4"/><circle cx="62" cy="33" r="1.4"/>' +
+    '<circle cx="24" cy="69" r="1.4"/><circle cx="62" cy="80" r="1.4"/></g>' +
+    /* the sieve plate, with pores through it */
+    '<rect x="20" y="47" width="46" height="10" fill="#7A5C8E"/>' +
+    '<rect x="20" y="47" width="46" height="1.6" fill="#BFA3D0" opacity=".85"/>' +
+    '<g fill="#F5F0F8" stroke="#4E3660" stroke-width=".9">' +
+    '<rect x="24.5" y="48.8" width="7" height="6.4" rx="1.2"/><rect x="34" y="48.8" width="7" height="6.4" rx="1.2"/>' +
+    '<rect x="43.5" y="48.8" width="7" height="6.4" rx="1.2"/><rect x="53" y="48.8" width="7" height="6.4" rx="1.2"/></g>' +
+    /* sucrose travelling along the tube and through a pore */
+    dots([[33, 20], [46, 27], [32, 34], [54, 20], [33, 66], [53, 68], [32, 80], [36, 88]], A) +
+    arr(47, 14, 47, 88, AD, 3.2) +
+    /* the companion cell: packed with cytoplasm, and it keeps its nucleus */
+    '<rect x="70" y="23" width="34" height="54" rx="4" fill="url(#ptC)" stroke="#7A5C8E" stroke-width="2.2"/>' +
+    '<g fill="#7B5B92" opacity=".85"><circle cx="76" cy="31" r="1.8"/><circle cx="86" cy="28" r="1.8"/>' +
+    '<circle cx="97" cy="32" r="1.8"/><circle cx="100" cy="43" r="1.8"/><circle cx="75" cy="44" r="1.8"/>' +
+    '<circle cx="76" cy="57" r="1.8"/><circle cx="88" cy="64" r="1.8"/><circle cx="99" cy="57" r="1.8"/>' +
+    '<circle cx="96" cy="70" r="1.8"/><circle cx="80" cy="70" r="1.8"/><circle cx="99" cy="24" r="1.8"/></g>' +
+    '<ellipse cx="87" cy="44" rx="9.6" ry="8" fill="#5E4176" stroke="#3E2A50" stroke-width="1.4"/>' +
+    '<ellipse cx="84" cy="41.6" rx="3.2" ry="2.5" fill="#AE92C4"/>' +
+    /* the strands that join the companion cell to the sieve tube */
+    '<g stroke="#7A5C8E" stroke-width="2.6" stroke-linecap="round"><path d="M66 33 H70 M66 44 H70 M66 66 H70"/></g>' +
+    pin(11, 52, 1) + pin(87, 66, 2) + pin(57, 78, 3),
+    'A phloem sieve tube: two living sieve tube elements end to end with only a thin lining of cytoplasm and no nucleus, a sieve plate with pores across the join between them, sucrose moving along the tube through those pores, and a companion cell beside it packed with cytoplasm and holding a nucleus.');
 
-  /* a root hair cell reaching between soil particles */
+  /* ---------------- 3. root hair cell ---------------- */
   F['root-hair'] = svg('0 0 120 100',
-    '<rect x="0" y="0" width="120" height="100" fill="' + SOIL + '"/>' +
-    '<g fill="#D6C6A0" opacity=".85"><circle cx="86" cy="22" r="11"/><circle cx="104" cy="48" r="9"/>' +
-    '<circle cx="80" cy="62" r="8"/><circle cx="98" cy="82" r="10"/><circle cx="64" cy="88" r="7"/></g>' +
-    '<rect x="6" y="26" width="34" height="48" rx="5" fill="#F3EAD6" stroke="' + SD + '" stroke-width="2"/>' +
-    '<circle cx="17" cy="40" r="4.4" fill="' + SD + '" opacity=".55"/>' +
-    '<path d="M40 50 C58 46 72 42 92 40" fill="none" stroke="#F3EAD6" stroke-width="8" stroke-linecap="round"/>' +
-    '<path d="M40 50 C58 46 72 42 92 40" fill="none" stroke="' + SD + '" stroke-width="9.6" stroke-linecap="round" opacity=".35"/>' +
-    arr(92, 66, 56, 56, W, 2.2),
-    'A root hair cell: a box of cytoplasm with its nucleus, drawn out into a long thread that reaches between round soil particles, and an arrow showing water entering it.');
+    '<defs>' +
+    '<radialGradient id="rhP" cx=".36" cy=".28" r=".85">' +
+    '<stop offset="0" stop-color="#F4EAD3"/><stop offset="1" stop-color="#BCA778"/></radialGradient>' +
+    '<linearGradient id="rhV" x1="0" x2="1" y1="0" y2="1">' +
+    '<stop offset="0" stop-color="#D9EAF4"/><stop offset="1" stop-color="#9BC3DE"/></linearGradient>' +
+    '</defs>' +
+    '<rect x="0" y="0" width="120" height="100" fill="#D5C6A1"/>' +
+    /* films of water in the gaps, and the soil particles the hair threads between */
+    '<g fill="#A2C8E2"><path d="M103 38 q10 8 6 17 q-13 -5 -6 -17 Z"/><path d="M82 58 q9 7 8 17 q-14 -5 -8 -17 Z"/>' +
+    '<path d="M60 24 q9 5 9 13 q-13 -2 -9 -13 Z"/></g>' +
+    '<g fill="url(#rhP)" stroke="#6B5526" stroke-width="1.5">' +
+    '<circle cx="88" cy="10" r="16"/><circle cx="46" cy="8" r="12"/><circle cx="116" cy="25" r="12"/>' +
+    '<circle cx="102" cy="66" r="15"/><circle cx="62" cy="89" r="18"/><circle cx="112" cy="94" r="14"/></g>' +
+    /* one epidermal cell: wall, a thin layer of cytoplasm, a big vacuole, a nucleus */
+    '<path d="M50 44.5 V29 a5 5 0 0 0 -5 -5 H9 a5 5 0 0 0 -5 5 V75 a5 5 0 0 0 5 5 H45 a5 5 0 0 0 5 -5 V54.5" ' +
+    'fill="#EFE2C4" stroke="#6B5526" stroke-width="2.5" stroke-linejoin="round"/>' +
+    '<path d="M45.5 45.5 V32 a3.5 3.5 0 0 0 -3.5 -3.5 H12 a3.5 3.5 0 0 0 -3.5 3.5 V72 a3.5 3.5 0 0 0 3.5 3.5 H42 a3.5 3.5 0 0 0 3.5 -3.5 V53.5" ' +
+    'fill="#FCF8EE" stroke="#CBB78A" stroke-width="1.1"/>' +
+    '<ellipse cx="26" cy="47" rx="16.5" ry="14" fill="url(#rhV)" stroke="#6E9DBE" stroke-width="1.3"/>' +
+    /* the hair: the same cell wall, drawn out into one long fine thread */
+    '<path d="M50 49.4 C62 47.7 71 38.2 86 36 S104 44 114 39" fill="none" stroke="#6B5526" stroke-width="9" stroke-linecap="round"/>' +
+    '<path d="M44 50 C59 48.1 70.5 38.2 86 36 S104 44 114 39" fill="none" stroke="#EFE2C4" stroke-width="6.2" stroke-linecap="round"/>' +
+    '<path d="M44 50 C59 48.1 70.5 38.2 86 36 S103 43.7 112 39.3" fill="none" stroke="#FCF8EE" stroke-width="3.2" stroke-linecap="round"/>' +
+    '<ellipse cx="34" cy="68.5" rx="7.6" ry="6.2" fill="#9A7A38" stroke="#5E4B1C" stroke-width="1.3"/>' +
+    '<ellipse cx="31.6" cy="66.6" rx="2.5" ry="2" fill="#D8C48C"/>' +
+    /* water entering all along the hair */
+    arr(56, 68, 58, 56, W, 2.3) + arr(74, 64, 73, 49, W, 2.3) +
+    arr(82, 18, 84, 28, W, 2.3) + arr(108, 58, 106, 49, W, 2.3) +
+    pin(66, 33, 1) + pin(22, 44, 2) + pin(74, 74, 3),
+    'A single root hair cell: one epidermal cell of the root with a cell wall, a thin layer of cytoplasm, a large vacuole and a nucleus, drawn out at one side into a long fine hair that threads between the soil particles. Short arrows show water entering all along the hair.');
 
   /* evaporation inside the leaf, then diffusion out through a stoma */
   F['transpiration'] = svg('0 0 120 100',
@@ -264,16 +343,39 @@
     '<circle cx="74" cy="34" r="4" fill="' + A + '" stroke="' + AD + '" stroke-width="1.4"/>',
     'A graph of rate against one factor: the line rises steeply, then levels off at a plateau marked with a dot, where a different factor has become the limiting one.');
 
-  /* sucrose moving from a source to a sink */
+  /* ---------------- 4. source and sink ---------------- */
   F['source-sink'] = svg('0 0 120 100',
-    '<path d="M60 20 V86" stroke="' + GL + '" stroke-width="7" stroke-linecap="round"/>' +
-    '<path d="M60 30 q-22 -12 -34 2 q20 12 34 -2 Z" fill="' + GL + '" stroke="' + G + '" stroke-width="1.6"/>' +
-    '<path d="M60 30 q22 -12 34 2 q-20 12 -34 -2 Z" fill="' + GL + '" stroke="' + G + '" stroke-width="1.6"/>' +
-    '<ellipse cx="60" cy="90" rx="20" ry="9" fill="' + S + '" stroke="' + SD + '" stroke-width="1.8"/>' +
-    dots([[38, 30], [30, 34], [82, 30], [90, 34]], A) +
-    arr(60, 40, 60, 76, AD, 2.6) +
-    dots([[54, 88], [62, 91], [68, 87]], AD),
-    'A plant with two leaves at the top and a swollen store at the bottom. Sugar made in the leaves, the source, moves down the stem to the store, the sink.');
+    '<defs>' +
+    '<linearGradient id="ssL" x1="0" x2="1" y1="0" y2="1">' +
+    '<stop offset="0" stop-color="#86C98D"/><stop offset="1" stop-color="#3B8544"/></linearGradient>' +
+    '<linearGradient id="ssT" x1="0" x2="0" y1="0" y2="1">' +
+    '<stop offset="0" stop-color="#E0D0AA"/><stop offset="1" stop-color="#A38954"/></linearGradient>' +
+    '<linearGradient id="ssP" x1="0" x2="1" y1="0" y2="0">' +
+    '<stop offset="0" stop-color="#C09FD3"/><stop offset=".5" stop-color="#EDE2F4"/><stop offset="1" stop-color="#C09FD3"/></linearGradient>' +
+    '<linearGradient id="ssX" x1="0" x2="1" y1="0" y2="0">' +
+    '<stop offset="0" stop-color="#A9CBE3"/><stop offset=".5" stop-color="#E4F0F8"/><stop offset="1" stop-color="#A9CBE3"/></linearGradient>' +
+    '</defs>' +
+    /* the soil, and the store buried in it */
+    '<rect x="0" y="74" width="120" height="26" fill="' + SOIL + '" opacity=".8"/>' +
+    '<path d="M0 74 H120" stroke="' + SD + '" stroke-width="1.3" opacity=".55"/>' +
+    /* two leaves: sucrose is made here */
+    '<path d="M48 30 q-20 -20 -42 -11 q15 20 42 11 Z" fill="url(#ssL)" stroke="' + G + '" stroke-width="1.7"/>' +
+    '<path d="M74 30 q20 -20 42 -11 q-15 20 -42 11 Z" fill="url(#ssL)" stroke="' + G + '" stroke-width="1.7"/>' +
+    '<g stroke="#DFF0DC" stroke-width="1.3" opacity=".85" fill="none">' +
+    '<path d="M46 26.5 q-18 -9 -34 -8 M76 26.5 q18 -9 34 -8"/></g>' +
+    dots([[26, 21], [37, 25], [15, 16], [94, 21], [83, 25], [105, 16]], A) +
+    /* the stem, cut open: phloem on one side, xylem on the other */
+    '<rect x="45" y="26" width="32" height="52" fill="#F0F6EB" stroke="' + G + '" stroke-width="1.8"/>' +
+    '<rect x="46" y="26" width="15" height="52" fill="url(#ssP)" stroke="#7A5C8E" stroke-width="1.6"/>' +
+    '<rect x="64.5" y="26" width="11" height="52" fill="url(#ssX)" stroke="' + W + '" stroke-width="1.4"/>' +
+    dots([[48.8, 38], [58.2, 50], [48.8, 64]], A) +
+    arr(53.5, 30, 53.5, 76, AD, 3.4) +
+    arr(70, 74, 70, 32, W, 1.8) +
+    /* the store: sucrose is used or kept here */
+    '<path d="M60 74 c20 0 30 5 30 12 s-14 12 -30 12 s-30 -5 -30 -12 s10 -12 30 -12 Z" fill="url(#ssT)" stroke="' + SD + '" stroke-width="1.9"/>' +
+    dots([[52, 84], [66, 82], [74, 88], [60, 91], [44, 87]], AD) +
+    pin(26, 21, 1) + pin(38, 88, 2) + pin(39, 52, 3),
+    'A plant with its leaves at the top and a swollen store below the soil. The stem is cut open to show two tissues side by side: sucrose made in the leaves travels down the phloem to the store, while water travels up the xylem beside it.');
 
   /* germination: the radicle first, then the plumule */
   F['germination'] = svg('0 0 120 100',
