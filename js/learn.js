@@ -3585,36 +3585,62 @@
 
   /* ---------- the drawings ---------- */
   function flowerSvg(labelled) {
-    /* a half-flower, drawn to the drawing rules: one outline per part, no shading, ruled
-       labels in a column. The geometry is fixed so the hotspot question can use the same
-       drawing without labels. viewBox 0 0 500 340. */
+    /* A half-flower: the near half cut away, so the carpel is open and the ovules show. Drawn to
+       the drawing rules — one outline per part, no shading, ruled labels in a column — and the
+       geometry is fixed, because the hotspot question uses the same drawing with the labels off.
+       viewBox 0 0 500 340.
+
+       Everything is attached to the RECEPTACLE, which is the point of drawing it at all: sepals
+       outermost and lowest, then petals, then the ring of stamens, and the carpel in the middle.
+       A flower where the stamens grow out of the side of the ovary is the commonest thing wrong
+       with a drawn one, and a student who copies it loses the mark for where the parts join. */
+    var back =
+      /* the two petals of the far half: narrower, standing higher, behind the carpel */
+      '<path data-part="petal" class="fl__petal fl__petal--back" d="M242 274 C222 234 196 168 186 52 C214 96 238 182 252 262 Z"/>' +
+      '<path data-part="petal" class="fl__petal fl__petal--back" d="M258 274 C278 234 304 168 314 52 C286 96 262 182 248 262 Z"/>';
     var parts =
-      '<path data-part="receptacle" class="fl__stalk" d="M244 340 V262 Q250 250 256 262 V340 Z"/>' +
-      '<path data-part="sepal" class="fl__sepal" d="M236 256 C200 246 140 232 96 246 C140 262 200 268 236 262 Z"/>' +
-      '<path data-part="sepal" class="fl__sepal" d="M264 256 C300 246 360 232 404 246 C360 262 300 268 264 262 Z"/>' +
-      '<path data-part="petal" class="fl__petal" d="M238 250 C170 230 80 190 60 92 C130 96 210 160 238 250 Z"/>' +
-      '<path data-part="petal" class="fl__petal" d="M262 250 C330 230 420 190 440 92 C370 96 290 160 262 250 Z"/>' +
-      '<path data-part="filament" class="fl__filament" d="M212 248 C196 200 176 160 166 124"/>' +
-      '<path data-part="filament" class="fl__filament" d="M288 248 C304 200 324 160 334 124"/>' +
-      '<ellipse data-part="anther" class="fl__anther" cx="164" cy="110" rx="12" ry="17"/>' +
-      '<ellipse data-part="anther" class="fl__anther" cx="336" cy="110" rx="12" ry="17"/>' +
-      '<ellipse data-part="ovary" class="fl__ovary" cx="250" cy="224" rx="38" ry="44"/>' +
-      /* At (227,252) and (273,252) both nectaries fell INSIDE the ovary ellipse, which is painted
-         after them — so every click on a nectary hit the ovary and the part could not be chosen
-         at all. Moved down to the base of the ovary, where a nectary sits anyway, and drawn after
-         it so nothing can bury them again. */
-      '<path data-part="nectary" class="fl__nectary" d="M223 264 a5 5 0 1 0 -10 0 a5 5 0 1 0 10 0 M297 264 a5 5 0 1 0 -10 0 a5 5 0 1 0 10 0"/>' +
-      '<circle data-part="ovule" class="fl__ovule" cx="232" cy="230" r="9"/><circle data-part="ovule" class="fl__ovule" cx="256" cy="206" r="9"/><circle data-part="ovule" class="fl__ovule" cx="262" cy="240" r="9"/>' +
-      '<path data-part="style" class="fl__style" d="M244 182 C244 150 245 120 246 84 H254 C255 120 256 150 256 182 Z"/>' +
-      '<ellipse data-part="stigma" class="fl__stigma" cx="250" cy="72" rx="17" ry="10"/>';
+      /* the stalk, widening into the receptacle every other part is attached to */
+      '<path data-part="receptacle" class="fl__stalk" d="M240 340 V310 C240 302 222 298 215 290 C210 282 224 272 250 272 C276 272 290 282 285 290 C278 298 260 302 260 310 V340 Z"/>' +
+      /* sepals: short green blades below the petals, curving down and out */
+      '<path data-part="sepal" class="fl__sepal" d="M230 278 C212 288 188 300 160 314 C186 318 212 312 232 303 C242 298 242 286 238 279 Z"/>' +
+      '<path data-part="sepal" class="fl__sepal" d="M270 278 C288 288 312 300 340 314 C314 318 288 312 268 303 C258 298 258 286 262 279 Z"/>' +
+      /* the two petals of the near half, cut through: the broad ones */
+      '<path data-part="petal" class="fl__petal" d="M232 278 C192 248 112 186 88 60 C146 92 216 176 246 264 Z"/>' +
+      '<path data-part="petal" class="fl__petal" d="M268 278 C308 248 388 186 412 60 C354 92 284 176 254 264 Z"/>' +
+      /* stamens: the filament rises from the receptacle, not from the side of the ovary */
+      '<path data-part="filament" class="fl__filament" d="M231 282 C218 248 196 194 172 156"/>' +
+      '<path data-part="filament" class="fl__filament" d="M269 282 C282 248 304 194 328 156"/>' +
+      /* an anther is two lobes side by side, which is why it splits down the middle to shed */
+      '<g data-part="anther" class="fl__anther"><ellipse cx="165" cy="140" rx="7.5" ry="17"/><ellipse cx="179" cy="140" rx="7.5" ry="17"/></g>' +
+      '<g data-part="anther" class="fl__anther"><ellipse cx="321" cy="140" rx="7.5" ry="17"/><ellipse cx="335" cy="140" rx="7.5" ry="17"/></g>' +
+      /* pollen, on the anthers and shaken loose: not clickable, or it would cover the anther */
+      '<g class="fl__pollen">' +
+      '<circle cx="165" cy="127" r="2.6"/><circle cx="178" cy="124" r="2.6"/><circle cx="172" cy="136" r="2.4"/>' +
+      '<circle cx="157" cy="148" r="2.4"/><circle cx="186" cy="151" r="2.6"/><circle cx="152" cy="116" r="2.2"/>' +
+      '<circle cx="190" cy="112" r="2.2"/><circle cx="174" cy="100" r="2"/>' +
+      '<circle cx="335" cy="127" r="2.6"/><circle cx="322" cy="124" r="2.6"/><circle cx="328" cy="136" r="2.4"/>' +
+      '<circle cx="343" cy="148" r="2.4"/><circle cx="314" cy="151" r="2.6"/><circle cx="348" cy="116" r="2.2"/>' +
+      '<circle cx="310" cy="112" r="2.2"/><circle cx="326" cy="100" r="2"/></g>' +
+      /* the carpel, standing in the middle of the receptacle */
+      '<g data-part="ovary" class="fl__ovary"><ellipse cx="250" cy="242" rx="40" ry="36"/>' +
+      '<ellipse class="fl__locule" cx="250" cy="244" rx="30" ry="27"/></g>' +
+      /* each ovule hangs from the ovary wall on a short stalk, which is what holds it there */
+      '<g class="fl__funicle"><path d="M222 228 L233 238"/><path d="M250 271 L250 260"/><path d="M278 226 L267 236"/></g>' +
+      '<circle data-part="ovule" class="fl__ovule" cx="233" cy="238" r="9"/>' +
+      '<circle data-part="ovule" class="fl__ovule" cx="250" cy="260" r="9"/>' +
+      '<circle data-part="ovule" class="fl__ovule" cx="267" cy="236" r="9"/>' +
+      '<path data-part="style" class="fl__style" d="M243 208 C243 174 246 132 247 94 H253 C254 132 257 174 257 208 Z"/>' +
+      '<path data-part="stigma" class="fl__stigma" d="M226 90 C226 74 238 68 245 76 C247 69 253 69 255 76 C262 68 274 74 274 90 C274 98 263 103 250 103 C237 103 226 98 226 90 Z"/>' +
+      /* nectaries sit on the receptacle beside the ovary, drawn last so nothing buries them */
+      '<path data-part="nectary" class="fl__nectary" d="M228 288 a6 6 0 1 0 -12 0 a6 6 0 1 0 12 0 M284 288 a6 6 0 1 0 -12 0 a6 6 0 1 0 12 0"/>';
     var labels = '';
     if (labelled) {
       /* two columns, each ordered by the height of what it names, so no two lines cross:
          the parts on the flower's axis and its right side read to the right, the petal and
          the sepal to the left */
-      var R = [[250, 72, 'stigma'], [336, 110, 'anther'], [251, 130, 'style'], [312, 176, 'filament'], [286, 224, 'ovary'], [262, 240, 'ovule'], [292, 264, 'nectary', true]];
-      var Lf = [[120, 126, 'petal'], [130, 250, 'sepal']];
-      var ysR = [44, 82, 120, 158, 196, 234, 272], ysL = [126, 250];
+      var R = [[250, 86, 'stigma'], [335, 140, 'anther'], [252, 150, 'style'], [294, 220, 'filament'], [288, 242, 'ovary'], [267, 236, 'ovule'], [282, 288, 'nectary', true]];
+      var Lf = [[110, 120, 'petal'], [196, 308, 'sepal']];
+      var ysR = [44, 82, 120, 158, 196, 234, 272], ysL = [110, 306];
       R.forEach(function (l, i) {
         var y = ysR[i], x2 = 452;
         labels += '<line class="fl__lead' + (l[3] ? ' fl__lead--extra' : '') + '" x1="' + l[0] + '" y1="' + l[1] + '" x2="' + (x2 - 6) + '" y2="' + y + '"/>' +
@@ -3629,8 +3655,9 @@
       });
       labels += '<text class="fl__title" x="8" y="332">An insect-pollinated flower, cut in half</text>';
     }
-    return '<svg viewBox="0 0 500 340" class="fl__svg" role="img" aria-label="A labelled drawing of an insect-pollinated flower cut in half">' + parts + labels + '</svg>';
+    return '<svg viewBox="0 0 500 340" class="fl__svg" role="img" aria-label="A labelled drawing of an insect-pollinated flower cut in half: sepals and petals attached round the receptacle, a ring of stamens whose filaments rise from the receptacle to two-lobed anthers dusted with pollen, and in the middle the carpel — ovary cut open to show three ovules, style, and a sticky stigma on top">' + back + parts + labels + '</svg>';
   }
+
   var PART_INFO = {
     sepal: ['Sepal', 'Protects the flower while it is a bud. Green, leaf-like, outside the petals.'],
     petal: ['Petal', 'Attracts insects: large, brightly coloured and often scented in an insect-pollinated flower.'],
@@ -3781,7 +3808,31 @@
   function diagram(spec) {
     var box = h('div', 'widget');
     box.appendChild(head(spec.title || 'A drawing', spec.ask, 'Click the parts'));
-    var wrap = h('div', 'fl'), stage = h('div', 'fl__stage'); stage.innerHTML = svgFor(spec.name || 'flower');
+    var wrap = h('div', 'fl'), left = h('div', 'fl__left'), stage = h('div', 'fl__stage');
+    stage.innerHTML = svgFor(spec.name || 'flower');
+    left.appendChild(stage);
+    /* A drawing names the parts; only a photograph shows what they look like. The same flower
+       both ways, on one switch, so a reader can put one over the other in their head — which is
+       the step between labelling a diagram and recognising the thing on the bench. */
+    var shot = null;
+    if (spec.photo) {
+      shot = h('figure', 'fl__photo');
+      shot.innerHTML = '<picture><source srcset="assets/photos/' + spec.photo.img + '-900.webp" type="image/webp">' +
+        '<img src="assets/photos/' + spec.photo.img + '-900.jpg" alt="' + esc(spec.photo.alt || '') + '" loading="lazy"></picture>' +
+        '<figcaption>' + mk(spec.photo.cap || '') + ' · ' + esc(spec.photo.credit || '') + '</figcaption>';
+      shot.hidden = true;
+      left.appendChild(shot);
+      var sw = h('div', 'fl__switch');
+      [['Drawing', false], ['Photograph', true]].forEach(function (o, i) {
+        var b = h('button', 'wbtn' + (i === 0 ? ' is-on' : ''), o[0]); b.type = 'button';
+        b.addEventListener('click', function () {
+          stage.hidden = o[1]; shot.hidden = !o[1];
+          sw.querySelectorAll('button').forEach(function (x) { x.classList.toggle('is-on', x === b); });
+        });
+        sw.appendChild(b);
+      });
+      left.insertBefore(sw, stage);
+    }
     var info = h('div', 'fl__info', '<b>Click any part</b><small>Ten names on the syllabus: sepals, petals, stamens (filament and anther), carpel (stigma, style, ovary and ovules).</small>');
     var seen = {}, done = null;
     stage.querySelectorAll('[data-part]').forEach(function (el) {
@@ -3799,7 +3850,7 @@
       el.addEventListener('click', pick);
       el.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); } });
     });
-    wrap.appendChild(stage); wrap.appendChild(info); box.appendChild(wrap);
+    wrap.appendChild(left); wrap.appendChild(info); box.appendChild(wrap);
     return box;
   }
 
