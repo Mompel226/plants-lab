@@ -2027,7 +2027,7 @@
         /* A tip pushed to one side is Paal's arrangement, not Boysen-Jensen's — his sat squarely
            on the stump, and the whole of his point was that nothing else had been changed. */
         else if (S.top === 'replaced' && S.layer === 'gel' && lateral) who = 'Boysen-Jensen, 1911';
-        else if (S.mica !== 'none' && lateral) who = 'Boysen-Jensen, 1913';
+        else if (S.mica !== 'none' && lateral && S.top === 'intact') who = 'Boysen-Jensen, 1913';
       }
 
       return { made: made, sees: sees, lit: lit, grav: grav, fL: fL, fR: fR, dL: dL, dR: dR,
@@ -3151,8 +3151,14 @@
       } else if (M.thru === 0) {
         pts.push('The tip is still <b>making</b> auxin — cutting a shoot does not stop its tip working. Put gelatin there instead and the same tip makes the same shoot bend.');
       } else {
+        /* Paal's run was in the DARK, and every account of it says so in the same breath as the
+           result: the point was that with no light at all the shoot still bent. Nobody appears to
+           have published the lit version, and the widget was quietly presenting the model's
+           answer to it as though somebody had. Say which is which. */
         if (M.offset !== 0 && S.top.indexOf('shift') === 0)
-          pts.push('Nothing detected anything one-sided here. The tip decides which flank gets the auxin simply by <b>sitting</b> over it — Paal showed this in the dark, with no light to respond to at all, and the shoot still bent away from the side the tip was on.');
+          pts.push(S.light === 'dark'
+            ? 'The tip decides which flank gets the auxin simply by <b>sitting</b> over it, and the shoot bends away from that side. That is Paál\'s result — and he worked in the dark for exactly this reason: with no light, nothing else can be acting.'
+            : 'Careful: nobody reports this one. Paál worked in the <b>dark</b>, so the tip\'s position was the only thing acting. With the lamp on, two things disagree — light sends auxin to the shaded flank, the tip sends it to the flank it sits on. What you see is this model\'s answer, not a measured one. Run it in the dark for the real experiment.');
         if (S.cover === 'collar')
           pts.push('The collar covers the stem but not the tip. The tip is the detector, so the response happens anyway.');
         if (M.note && !diff)
@@ -3160,7 +3166,9 @@
         else if (M.note)
           pts.push('The plate is on the lit flank, which was carrying less auxin anyway, so it holds nothing back that mattered. That is the control for the other arrangement.');
       }
-      return { line: line, pts: pts, who: M.who };
+      /* Four bullets after a five-line narration is a wall. The ones pushed first are the ones
+         most particular to this arrangement, so the tail is what goes. */
+      return { line: line, pts: pts.slice(0, 2), who: M.who };
     }
 
     /* The whole account as a list of moments: the five narration beats at their own points in
@@ -3205,12 +3213,13 @@
          class is reading in their second language. Nearly ten seconds gives about two seconds a
          line; and now that the lines stay on the page, nobody has to keep up at all. */
       var t0 = Date.now(), MS = 9600, next = 0, cur = null, curAt = 0, curDone = 0;
-      var CPS = 48;                      /* characters a second: alive, not a race */
+      var CPS = 48, TYPE_MAX = 2600;     /* characters a second, and a ceiling per line */
+      function dur(ty) { return Math.min(TYPE_MAX, ty.total / CPS * 1000); }
       S.p = 0; draw(M, 0);
       S.t = setInterval(function () {
         var now = Date.now(), p = Math.min(1, (now - t0) / MS);
         if (S.p < 1) { S.p = p; draw(M, p); }
-        if (cur) cur.show(Math.ceil((now - curAt) / 1000 * CPS));
+        if (cur) cur.show(Math.ceil((now - curAt) / dur(cur) * cur.total));
 
         if (next < beats.length) {
           var bt = beats[next], due;
@@ -3222,7 +3231,7 @@
           due = bt.kind === 'step' ? t0 + bt.at * MS : Math.max(t0 + MS, curDone) + 320;
           if (now >= due) {
             if (cur) cur.show(1e9);
-            cur = addLine(bt); curAt = now; curDone = now + cur.total / CPS * 1000; next++;
+            cur = addLine(bt); curAt = now; curDone = now + dur(cur); next++;
           }
         } else if (p >= 1 && now >= curDone) {
           clearInterval(S.t); S.t = null;
