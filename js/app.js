@@ -152,6 +152,37 @@
       '<path d="M12 21V9"/><path d="M12 13C8 13 5.5 10.5 5 6.5C9 6.5 12 9 12 13Z" fill="#8FE0A8"/><path d="M12 9C12 6 14.5 3.5 19 3.5C19 7.5 16 9.5 12 9Z" fill="#8FE0A8"/><path d="M8 21h8"/></svg>';
   }
 
+  /* A tall picture floated into the margin is often taller than the few lines beside it, and what
+     is left is a block of white the width of the column. Spread the numbered rows down into it —
+     but only so far: past about 22px a gap stops reading as rhythm and starts reading as a
+     mistake, so the rest of the white stays. Runs after every paint and on a resize, because the
+     picture's height comes from the column width. */
+  function fillBesidePortrait(root) {
+    if (!root || !root.querySelectorAll) return;
+    root.querySelectorAll('.exam-list > li').forEach(function (li) {
+      var fig = null, ol = null, k;
+      for (k = 0; k < li.children.length; k++) {
+        if (li.children[k].classList.contains('photo--portrait')) fig = li.children[k];
+        if (li.children[k].classList.contains('exam-steps')) ol = li.children[k];
+      }
+      if (!fig || !ol || ol.children.length < 2) return;
+      ol.style.marginTop = '';
+      for (k = 0; k < ol.children.length; k++) ol.children[k].style.marginBottom = '';
+      var slack = fig.getBoundingClientRect().bottom - ol.getBoundingClientRect().bottom;
+      if (slack < 12) return;
+      /* the space above the first row counts too: with three rows that is three places to put it,
+         not two, and the list keeps an even rhythm instead of bunching at the top */
+      var slots = ol.children.length, per = Math.min(26, slack / slots);
+      ol.style.marginTop = (8 + per).toFixed(1) + 'px';
+      for (k = 0; k < slots - 1; k++) ol.children[k].style.marginBottom = per.toFixed(1) + 'px';
+    });
+  }
+  var fillTimer = null;
+  window.addEventListener('resize', function () {
+    clearTimeout(fillTimer);
+    fillTimer = setTimeout(function () { fillBesidePortrait(document.getElementById('panelInner')); }, 120);
+  });
+
   function paintPanel() {
     var st = S[current]; if (!st) return;
     var host = document.getElementById('panelInner'), sc = stationScore(current);
@@ -204,6 +235,7 @@
        covered the column. Plate.showBench only unhides it — showStation would empty it. */
     if (tab === 'learn' && st.plate && st.plate.bench && window.Plate && window.Plate.showBench) window.Plate.showBench(true);
     if (tab === 'learn') paintLearn(pane, st); else paintDo(pane, st);
+    fillBesidePortrait(pane);
     paintSim(st, pane);
     var sc = panelScroller();
     if (sc) { var prev = sc.style.scrollBehavior; sc.style.scrollBehavior = 'auto'; sc.scrollTop = 0; sc.style.scrollBehavior = prev || ''; }
