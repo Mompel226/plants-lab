@@ -377,6 +377,13 @@
       }
       var li = document.createElement('li');
       var txt = typeof b === 'string' ? b : b.text;
+      /* visit every text node under an element, collected first so replacing one does not
+         disturb the walk */
+      function walkText(root, fn) {
+        var out = [], w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false), nd;
+        while ((nd = w.nextNode())) out.push(nd);
+        out.forEach(fn);
+      }
       var badge = '';
       if (typeof b === 'object' && b.sup) badge = '<span class="sup tip" tabindex="0" data-tip="Supplement — examined on Paper 4 (Extended) only. Core candidates can skip it.">S</span>';
       if (typeof b === 'object' && b.ext) badge = '<span class="sup sup--ext tip" tabindex="0" data-tip="Extension — not in the 2026–28 syllabus. Here to make sense of the rest; you will not be asked to write it.">extension</span>';
@@ -389,6 +396,23 @@
         fg.className = 'minifig';
         fg.innerHTML = window.FIGS[b.fig];
         li.insertBefore(fg, li.firstChild);
+        /* (1) in the sentence becomes the same numbered token that is pinned on the drawing, so
+           the word and the part it names are tied together and neither has to repeat the other.
+           Only inside a bullet that HAS a figure, so an ordinary bracketed number elsewhere in
+           the lab is left alone. */
+        walkText(li, function (node) {
+          if (!/\(\d\)/.test(node.data)) return;
+          var frag = document.createDocumentFragment(), rest = node.data, m;
+          while ((m = /\((\d)\)/.exec(rest))) {
+            if (m.index) frag.appendChild(document.createTextNode(rest.slice(0, m.index)));
+            var sp = document.createElement('span');
+            sp.className = 'figref'; sp.textContent = m[1];
+            frag.appendChild(sp);
+            rest = rest.slice(m.index + m[0].length);
+          }
+          if (rest) frag.appendChild(document.createTextNode(rest));
+          node.parentNode.replaceChild(frag, node);
+        });
       }
       /* A sentence that names something shown further down — "that is demonstration 1" — should
          take you to it. The phrase is already marked by _..._, so the mark becomes the link and
