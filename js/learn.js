@@ -1918,7 +1918,7 @@
 
     /* ----- the model: apparatus in, biology out ----- */
     function model() {
-      var made = 0, offset = 0, sees = false, note = '', who = '';
+      var made = 0, offset = 0, sees = false, note = '', who = '', thru = 1;
 
       if (S.organ === 'root') {
         made = 1;                                  /* auxin arrives from the shoot above */
@@ -1928,7 +1928,13 @@
           if (S.block.indexOf('auxin') === 0) { made = 1; offset = S.block.slice(-1) === 'L' ? -1 : 1; }
           else if (S.block.indexOf('plain') === 0) { made = 0; offset = S.block.slice(-1) === 'L' ? -1 : 1; }
         } else {
-          made = S.layer === 'mica' ? 0 : 1;       /* mica under the tip stops everything */
+          /* A tip put back on mica goes on MAKING auxin — cutting a shoot does not stop its tip
+             working. What the mica stops is the auxin getting down into the stump. Setting made
+             to zero drew a tip that had stopped producing, which is a different experiment and a
+             wrong one: the whole point of Boysen-Jensen's plate is that the auxin is there and
+             cannot pass. */
+          made = 1;
+          if (S.layer === 'mica') thru = 0;
           if (S.top === 'shiftL') offset = -1;
           if (S.top === 'shiftR') offset = 1;
         }
@@ -1965,7 +1971,7 @@
         fR = 1 - fL;
       }
 
-      var dL = made * fL, dR = made * fR;
+      var dL = made * fL * thru, dR = made * fR * thru;   /* what actually reaches the cells */
       /* A sheet pushed down one side stops the auxin travelling down THAT side. Where it
          blocks the side that was carrying more, the difference never reaches the cells that
          would have stretched, and the observed result is no curvature at all. */
@@ -1998,7 +2004,7 @@
       }
 
       return { made: made, sees: sees, lit: lit, grav: grav, fL: fL, fR: fR, dL: dL, dR: dR,
-               gL: gL, gR: gR, bend: bend, offset: offset, note: note, who: who };
+               gL: gL, gR: gR, bend: bend, offset: offset, note: note, who: who, thru: thru };
     }
 
     /* ----- geometry -----
@@ -2061,19 +2067,31 @@
     /* A number on the drawing and its words somewhere below is a lookup, and a lookup the
        reader has to scroll for is a lookup they will not make. The words go ON the drawing, in
        the corner, with the numbers tying each line to its pin. */
-    function pinLabels(g, vx, vw) {
+    /* How tall a band the words need above the drawing. Hunting for an empty corner does not
+       work: on a narrow box the drawing fills it, and whichever corner is free in one state is
+       occupied in the next — the sun moves, the pot is on one side, the wavy path runs off the
+       other. So the words are given a band of their own ABOVE the drawing and the box is made
+       taller to hold it. Then nothing can be covered, in any state. */
+    function pinBand(vw) {
+      if (!LAB.length) return 0;
+      var n = 0;
+      LAB.forEach(function (L) { n += wrapText(L.text, Math.max(28, Math.floor((vw - 26) / 5.1))).length; });
+      return n * 12.6 + 12;
+    }
+
+    function pinLabels(g, vx, vw, band) {
       pins.innerHTML = '';
       if (!LAB.length) return '';
       var out = '', lines = [];
       LAB.forEach(function (L, i) {
-        wrapText(L.text, 42).forEach(function (ln, k) { lines.push((k ? '   ' : (i + 1) + '. ') + ln); });
+        wrapText(L.text, Math.max(28, Math.floor((vw - 26) / 5.1))).forEach(function (ln, k) {
+          lines.push((k ? '   ' : (i + 1) + '. ') + ln);
+        });
       });
-      var padX = 7, lh = 12.6, boxW = Math.min(vw - 16, 244), boxH = lines.length * lh + 11;
-      out += '<rect x="' + (vx + 8) + '" y="10" width="' + boxW + '" height="' + boxH.toFixed(1) +
-             '" rx="4" fill="#FFFFFF" opacity=".88" stroke="#D8D2C4" stroke-width="1"/>';
       lines.forEach(function (ln, i) {
-        out += '<text class="ax__pintxt" x="' + (vx + 8 + padX) + '" y="' + (10 + 14 + i * lh).toFixed(1) + '">' + ln + '</text>';
+        out += '<text class="ax__pintxt" x="' + (vx + 9) + '" y="' + (-band + 13 + i * 12.6).toFixed(1) + '">' + ln + '</text>';
       });
+      out += '<path d="M' + (vx + 6) + ' -3 H' + (vx + vw - 6) + '" stroke="#E0DAC9" stroke-width="1"/>';
       LAB.forEach(function (L, i) {
         /* The disc sits OUTSIDE the organ with a short leader back to the feature. Centred on the
            anchor it covered the very cells, arrows and starch grains its own words were naming. */
@@ -2170,17 +2188,17 @@
         else if (S.lay === 'side') { vx = 40; vw = 420; }
         else { vw = 330; vx = g.BX - vw / 2; }
       }
-      var s = '<svg viewBox="' + vx + ' 0 ' + vw + ' ' + g.H + '" role="img" aria-label="' + verdictPlain(M) + '">';
+      var s = '';
       s += '<defs><linearGradient id="axBody" x1="0" y1="0" x2="1" y2="0">' +
            '<stop offset="0" stop-color="' + (root ? '#C9B896' : '#3E8F46') + '"/>' +
            '<stop offset=".45" stop-color="' + (root ? '#E4D6B8' : '#54AC5C') + '"/>' +
            '<stop offset="1" stop-color="' + (root ? '#C9B896' : '#3E8F46') + '"/></linearGradient>' +
            '<radialGradient id="axSun" cx=".42" cy=".38" r=".62"><stop offset="0" stop-color="#FFE07A"/><stop offset="1" stop-color="#F3AC16"/></radialGradient></defs>';
-      s += '<rect width="' + g.W + '" height="' + g.H + '" fill="#FBFAF6"/>';
+      var bg = '#FBFAF6';
 
       /* soil, or the bench the seedling lies on */
       if (root) {
-        s += '<rect x="0" y="0" width="' + g.W + '" height="' + g.H + '" fill="#F3EDE0"/>';
+        bg = '#F3EDE0';
         s += '<path d="M0 96 H' + g.W + '" stroke="#D8CBB0" stroke-width="1.2" stroke-dasharray="5 5"/>';
         s += '<text class="ax__s" x="10" y="90">soil surface</text>';
         s += '<path d="M150 122 q-34 -34 -30 -66" fill="none" stroke="#6FAE63" stroke-width="4.5" stroke-linecap="round"/>';
@@ -2426,7 +2444,7 @@
         /* lean on what ARRIVES (dL/dR), not on what left the tip (fL/fR): with a plate holding
            one flank back, the cloud in the zone is even, and the difference is the queue above
            the plate rather than a gradient below it. */
-        var mk = M.made || 1, lean = (M.dR - M.dL) / mk;
+        var mk = M.made || 1, lean = M.thru === 0 ? 0 : (M.dR - M.dL) / mk;
         /* The real split is about two to one, and two to one is not a difference the eye reads
            across a narrow shoot — it looks like scatter. So the DRAWING is deliberately steeper
            than the biology: roughly nine to one, which is unmistakable. The sentences and the
@@ -2484,7 +2502,8 @@
           var plated = (side < 0 && blockL) || (side > 0 && blockR);
           var stopped = plated && queued < nQueue;
           if (stopped) queued++;
-          var sEnd = stopped ? g.ZONE1 + 10 + b1 * 24        /* held up above the plate, in a queue */
+          var sEnd = M.thru === 0 ? srcLo + a1 * (srcHi - srcLo)   /* nothing crosses: it stays in the tip */
+                   : stopped ? g.ZONE1 + 10 + b1 * 24              /* held up above the plate, in a queue */
                    : g.ZONE0 + 5 + a1 * (g.ZONE1 - g.ZONE0 - 10) + js;
 
           /* ONE continuous journey per grain, not three stages for all of them together. Staged,
@@ -2567,9 +2586,15 @@
         }
       }
 
-      s += narrow ? pinLabels(g, vx, vw) : placeLabels(g, labRight);
-      s += '</svg>';
-      stage.innerHTML = s;
+      /* NOW the labels are known, so the band they need can be measured and the box opened to
+         hold it. Measured before they were collected it was always zero, and the words landed on
+         the drawing they were describing. */
+      var band = narrow ? pinBand(vw) : 0;
+      var head = '<svg viewBox="' + vx + ' ' + (-band) + ' ' + vw + ' ' + (g.H + band) +
+                 '" role="img" aria-label="' + verdictPlain(M) + '">' +
+                 '<rect x="' + (vx - 4) + '" y="' + (-band - 4) + '" width="' + (vw + 8) +
+                 '" height="' + (g.H + band + 8) + '" fill="' + bg + '"/>';
+      stage.innerHTML = head + s + (narrow ? pinLabels(g, vx, vw, band) : placeLabels(g, labRight)) + '</svg>';
     }
 
     function clamp(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
