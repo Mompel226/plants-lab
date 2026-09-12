@@ -1999,7 +1999,9 @@
         else if (S.top === 'cut' && S.block.indexOf('plain') === 0) who = 'Went, 1928 — the control';
         else if (S.top.indexOf('shift') === 0 && S.light === 'dark' && S.layer !== 'mica') who = 'Paál, 1919';
         else if (replaced && S.layer === 'mica') who = 'Boysen-Jensen, 1913';
-        else if (replaced && S.layer === 'gel' && lateral) who = 'Boysen-Jensen, 1913';
+        /* Three different papers. The gelatin experiment is the 1911 one; the mica sheet and the
+           plate slid into a slit are both 1913. Crediting all three to 1913 made one of them wrong. */
+        else if (replaced && S.layer === 'gel' && lateral) who = 'Boysen-Jensen, 1911';
         else if (S.mica !== 'none' && lateral) who = 'Boysen-Jensen, 1913';
       }
 
@@ -2438,7 +2440,7 @@
           s += ruled(at(g.LEN - 12, 0)[0], at(g.LEN - 12, 0)[1], 396, 300, 'root cap: starch grains sink to the lower side', true);
         } else {
           s += '<path d="M' + f1(at(g.TIP, HW)) + ' L' + f1(at(g.TIP, -HW)) + '" stroke="#8A7346" stroke-width="2" stroke-dasharray="4 3"/>';
-          s += ruled(at(g.TIP, 0)[0], at(g.TIP, 0)[1], 396, 300, 'root cap removed: nothing detects gravity', true);
+          s += ruled(at(g.TIP, 0)[0], at(g.TIP, 0)[1], 396, 300, 'root cap cut off: the main gravity detector is gone', true);
         }
       }
 
@@ -2554,7 +2556,14 @@
           var age = clamp((p - born) / Math.max(0.2, 0.86 - born));
           if (age > 0) {
             var es = age < 0.5 ? 2 * age * age : 1 - Math.pow(-2 * age + 2, 2) / 2;   /* along the shoot */
-            var eu = clamp(age * 1.6); eu = eu * eu * (3 - 2 * eu);                   /* across it, settling sooner */
+            /* Which stimulus is pushing decides WHERE the sideways move happens. Light works on
+               the tip — split the apex and the asymmetry disappears (Briggs, Tocher and Wilson
+               1957), and the gradient made up there is carried down intact (Baskin, Briggs and
+               Iino 1986) — so the fan finishes early, near the top. Gravity does not: the
+               lateral movement runs along the organ (Iino 1995), so with the shoot lying down
+               the fan opens the whole way down instead of at the tip. */
+            var eu = clamp(age * (S.organ === 'shoot' && S.lay === 'side' ? 1 : 1.6));
+            eu = eu * eu * (3 - 2 * eu);                                              /* across it */
             var s2 = sTop + (sEnd - sTop) * es;
             var u2 = uEven + (uSide - uEven) * eu;
             var pg = at(Math.max(4, s2), u2);
@@ -2569,12 +2578,16 @@
       /* the ruled labels for the parts that are always there */
       if (!root) {
         if (S.top === 'intact') {
-          /* the second clause has to follow the state: a capped tip detects nothing, and a shoot
-             lying in the dark is reading gravity, not light */
-          var tipSays = 'shoot tip: makes the auxin'
-            + (M.lit ? ', and detects the light'
-               : S.cover === 'opaque' ? ''            /* the cap's own label says it is blind */
-               : S.lay === 'side' ? ', and reads which way is down' : '');
+          /* The tip makes the auxin and reads the LIGHT. It does not read gravity, and saying
+             it did was the widget's worst claim: a stem senses which way is down all along its
+             length, in a sheath of cells whose starch grains sink. Decapitated stem segments
+             still bend to gravity as long as they keep the elongation zone (Fukaki, Fujisawa and
+             Tasaka 1996), shoots without a normal endodermis lose gravitropism while their roots
+             keep it (Fukaki et al. 1998), and in the very organ drawn here the lateral movement
+             of auxin is at the tip for light but along the organ for gravity (Iino 1995).
+             Beside a root cap that IS the detector, the old label taught a tidy false symmetry
+             that a student would later have to unlearn. */
+          var tipSays = 'shoot tip: makes the auxin' + (M.lit ? ', and detects the light' : '');
           var tp = at(S.cover === 'none' ? g.LEN - 16 : g.TIP + 8, labU);
           s += ruled(tp[0], tp[1], 0, 0, tipSays);
         }
@@ -2587,6 +2600,10 @@
         }
         var pe = at((g.ZONE0 + g.ZONE1) / 2, labU);
         s += ruled(pe[0], pe[1], 0, 0, 'zone of elongation');
+        if (S.lay === 'side' && M.made > 0) {          /* name the detector where it actually is */
+          var pg2 = at(g.ZONE0 * 0.55, labU);
+          s += ruled(pg2[0], pg2[1], 0, 0, 'the whole stem feels gravity, not just the tip');
+        }
         if (S.lay === 'side') {
           s += '<rect x="0" y="0" width="' + g.BX + '" height="' + g.H + '" fill="#E4D9C3"/>';
           s += '<line x1="' + g.BX + '" y1="0" x2="' + g.BX + '" y2="' + g.H + '" stroke="#B79E74" stroke-width="2"/>';
@@ -2687,7 +2704,7 @@
         : 'Auxin is made in the shoot tip — in the light or in the dark.'; }],
       [0.18, function (M) { return S.organ === 'root'
         ? (M.sees ? 'In the root cap, heavy starch grains sink. That is how the root feels gravity.'
-                  : 'With the cap gone there is nothing to detect gravity.')
+                  : 'With the cap gone, almost nothing is left to detect gravity.')
         : S.lay === 'side'
           ? (M.made === 0 ? 'Lying down, so gravity acts. But with no tip there is no auxin for it to move.'
              : M.lit ? 'Lying down, and lit from above. Gravity and light push the same way, so this run cannot tell you which did it.'
@@ -2699,16 +2716,19 @@
                      : S.light === 'top' ? 'Light from straight above falls on both sides equally.'
                      : 'Nothing one-sided is detected.')); }],
       [0.36, function (M) { return M.made === 0 ? 'Nothing to move.'
+        : M.thru === 0 ? 'It gathers in the tip. The mica is in its way.'
         : M.offset !== 0 ? 'The auxin can only enter the side it is sitting on.'
         : M.sees ? (S.organ === 'root' || S.lay === 'side' ? 'Auxin is carried across to the LOWER side. None is destroyed.'
                     : 'Auxin is carried across to the shaded side. None is destroyed.')
         : 'The auxin stays evenly spread.'; }],
       [0.58, function (M) { return M.made === 0 ? 'No auxin travels down.'
+        : M.thru === 0 ? 'The mica blocks it. None of it gets down into the stump.'
         : M.note ? 'The plate holds that side back.'
         : 'The auxin travels down to the zone of elongation.'; }],
       [0.78, function (M) {
         var diff = Math.abs(M.gL - M.gR) > 0.04;
         if (M.made === 0 && S.organ === 'shoot') return 'No auxin reaches the cells, so nothing elongates.';
+        if (M.thru === 0) return 'No auxin reaches the cells, so nothing elongates and nothing bends.';
         if (!diff) return S.organ === 'root'
           ? 'Both sides get the same, so the root grows straight.'
           : 'Both sides get the same, so the shoot grows straight.';
@@ -2725,6 +2745,7 @@
       var diff = Math.abs(M.gL - M.gR) > 0.04;
       if (S.organ === 'root') return diff ? 'A root bending downwards' : 'A root growing straight';
       if (M.made === 0) return 'A shoot that is not growing';
+      if (M.thru === 0) return 'A cut shoot that is not growing, its auxin held in the tip above the mica';
       if (S.lay === 'side') return diff ? 'A shoot lying on its side, turning upwards' : 'A shoot lying on its side, growing straight on';
       return diff ? 'A shoot bending to the ' + (M.gL > M.gR ? 'right' : 'left') : 'A shoot growing straight up';
     }
@@ -2754,6 +2775,7 @@
       var line = S.organ === 'root'
         ? (diff ? 'The root bends <b>downwards</b>.' : 'The root grows <b>straight</b>.')
         : M.made === 0 ? 'The shoot <b>does not grow and does not bend</b>.'
+        : M.thru === 0 ? 'The stump <b>does not grow and does not bend</b>: the auxin cannot get past the mica.'
         : S.lay === 'side'
           ? (diff && M.bend < 0 ? 'The shoot turns <b>upwards</b> — <b>negative gravitropism</b>.'
              : diff ? 'The shoot curves <b>downwards</b>.'
@@ -2766,7 +2788,7 @@
       var pts = [];
       if (S.organ === 'root') {
         pts.push(M.sees ? 'The root cap detects gravity: starch grains sink to the lower side.'
-                        : 'With no root cap, gravity is not detected, so the auxin stays even.');
+                        : 'With the cap gone, almost nothing is left to detect gravity, so the auxin stays even.');
         if (M.sees) {
           pts.push('Auxin is carried to the lower side of the root.');
           pts.push('In a <b>root</b>, a high auxin concentration <b>inhibits</b> cell elongation — the opposite of its effect in a shoot.');
@@ -2775,20 +2797,31 @@
         }
       } else {
         if (S.lay === 'side' && M.made > 0) {
-          pts.push('Lying down, the tip reads gravity and sends auxin to the LOWER flank.');
+          pts.push('Lying down, the stem feels which way is down. It does this <b>all along its length</b>, not with its tip: inside a sheath of cells, heavy starch grains sink to the lower wall.');
+          pts.push('Auxin is pushed across to the <b>LOWER</b> flank, along the whole growing region.');
           if (M.lit) pts.push('The lamp overhead also shades the lower flank, so light and gravity are pushing the auxin the same way. Run it again in the dark and only gravity is left — that is the control that makes the result mean something.');
           else if (S.light === 'dark') pts.push('In the dark there is no light to confuse it, so the turn upwards can only be a response to gravity.');
           else pts.push('The cap keeps the light off the tip, so although the lamp is on, gravity is the only stimulus the shoot can read.');
           pts.push('More auxin on the lower flank makes those cells <b>elongate</b> more, so the lower side becomes longer and the shoot curves up. A shoot is <b>negatively gravitropic</b>.');
         }
         else if (S.lay === 'side') {
-          pts.push('Gravity is still acting on it, and with its tip it would answer. Auxin is made in the tip, so with the tip gone there is none to send to the lower flank.');
-          pts.push('Nothing elongates, so it stays where it was laid. The tip is needed for gravitropism just as it is for phototropism.');
+          pts.push('Gravity is still acting, and the stem can still feel which way is down — it does not need the tip for that.');
+          pts.push('But the tip was where the auxin came from. With no auxin there is nothing to push to the lower flank and nothing to make cells elongate, so it stays where it was laid.');
+          pts.push('Give a shoot like this auxin further down and it can answer gravity again. It still cannot answer light — that needs the tip.');
         }
         else if (M.made === 0) pts.push(S.top === 'cut' && S.block.indexOf('plain') === 0
           ? 'Plain agar carries no auxin, so there is still no source. This is the control that shows it is the auxin in the block that matters, not the block.'
-          : S.layer === 'mica' && S.top !== 'cut' ? 'Mica lets nothing through, so no auxin reaches the stump from the tip above it.'
-          : 'Auxin is made in the tip. With the tip gone there is no auxin, so no cells elongate.');
+          : 'Auxin is made in the tip. With the tip gone, almost none reaches the cells, so they stop elongating.');
+        /* With mica between tip and stump the model makes auxin and delivers none of it, so
+           every sentence below fell through to the even-split wording and told the student both
+           flanks had elongated — under a drawing with no elongation at all and the auxin visibly
+           trapped in the tip. The sentence that explains this experiment was keyed on made === 0,
+           which this state never reaches, so it could never print. */
+        else if (M.thru === 0) {
+          pts.push('The tip is still <b>making</b> auxin — cutting a shoot does not stop its tip working. You can see it gathering in the tip above the plate.');
+          pts.push('Mica lets nothing through, so none of it reaches the stump.');
+          pts.push('No auxin reaches the elongating cells, so the stump neither elongates nor bends. Put gelatin there instead and the same tip makes the same shoot bend.');
+        }
         else if (S.lay !== 'side') {
           pts.push(M.offset !== 0
             ? 'The auxin can only enter the side it sits on, so that side gets nearly all of it.'
