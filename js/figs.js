@@ -19,34 +19,111 @@
            '<path d="M' + x2 + ' ' + y2 + ' L' + (hx + px).toFixed(1) + ' ' + (hy + py).toFixed(1) +
            ' L' + (hx - px).toFixed(1) + ' ' + (hy - py).toFixed(1) + ' Z" fill="' + col + '"/>';
   }
+  /* A numbered pin on the drawing. The same number appears in the sentence as (1), so the word
+     and the part it names are tied together without the label being written out twice — which at
+     this size there is no room for anyway. */
+  function pin(x, y, n) {
+    return '<g><circle cx="' + x + '" cy="' + y + '" r="7.4" fill="#FFFFFF" stroke="#3C3C3C" stroke-width="1.5" opacity=".96"/>' +
+           '<text x="' + x + '" y="' + (y + 3.7) + '" text-anchor="middle" font-size="10.5" font-weight="700" fill="#3C3C3C">' + n + '</text></g>';
+  }
   function dots(pts, col) {
     return pts.map(function (p) { return '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="2.1" fill="' + (col || A) + '"/>'; }).join('');
   }
 
+  /* An organ drawn as a curved band, so the two flanks are honestly unequal: the cell divisions
+     are drawn perpendicular to the centre line, and the outer edge of a curve simply IS longer
+     than the inner one. Fudging it with two rows of hand-placed boxes was what made the first
+     attempt look like a diagram of nothing. */
+  function band(p0, p1, p2, hw) {
+    function at(t) { var m = 1 - t; return [m * m * p0[0] + 2 * m * t * p1[0] + t * t * p2[0],
+                                            m * m * p0[1] + 2 * m * t * p1[1] + t * t * p2[1]]; }
+    function nrm(t) { var m = 1 - t,
+      dx = 2 * m * (p1[0] - p0[0]) + 2 * t * (p2[0] - p1[0]),
+      dy = 2 * m * (p1[1] - p0[1]) + 2 * t * (p2[1] - p1[1]), L = Math.hypot(dx, dy) || 1;
+      return [-dy / L, dx / L]; }
+    function pt(t, u) { var c = at(t), n = nrm(t); return [c[0] + n[0] * u, c[1] + n[1] * u]; }
+    function edge(u, n) { var a = [], i; for (i = 0; i <= n; i++) a.push(pt(i / n, u)); return a; }
+    function poly(a) { return a.map(function (q) { return q[0].toFixed(1) + ' ' + q[1].toFixed(1); }).join(' L'); }
+    return {
+      pt: pt,
+      body: function (grad) {
+        var up = edge(-hw, 16), lo = edge(hw, 16).reverse();
+        return '<path d="M' + poly(up) + ' L' + poly(lo) + ' Z" fill="' + grad + '" stroke="' + G +
+               '" stroke-width="1.6" stroke-linejoin="round"/>';
+      },
+      /* the divisions between cells, and the flank strips they sit in */
+      cells: function (n) {
+        var s = '', i;
+        for (i = 1; i < n; i++) {
+          var a = pt(i / n, -hw + 0.8), b = pt(i / n, hw - 0.8);
+          s += '<path d="M' + a[0].toFixed(1) + ' ' + a[1].toFixed(1) + ' L' + b[0].toFixed(1) + ' ' + b[1].toFixed(1) +
+               '" stroke="' + G + '" stroke-width="1.2" opacity=".55"/>';
+        }
+        return s;
+      },
+      tip: function () {
+        var c = pt(1, 0), l = pt(1, -hw), r = pt(1, hw), n = [c[0] - (l[0] + r[0]) / 2, c[1] - (l[1] + r[1]) / 2];
+        var d = Math.hypot(p2[0] - p1[0], p2[1] - p1[1]) || 1;
+        var ux = (p2[0] - p1[0]) / d, uy = (p2[1] - p1[1]) / d;
+        return '<path d="M' + l[0].toFixed(1) + ' ' + l[1].toFixed(1) + ' Q' + (c[0] + ux * hw * 1.15).toFixed(1) + ' ' +
+               (c[1] + uy * hw * 1.15).toFixed(1) + ' ' + r[0].toFixed(1) + ' ' + r[1].toFixed(1) +
+               ' Z" fill="' + G + '" stroke="' + G + '" stroke-width="1.4" stroke-linejoin="round"/>';
+      }
+    };
+  }
+
   var F = {};
 
-  /* a shoot laid on its side: the shoot turns up, the root turns down */
-  F['gravity-side'] = svg('0 0 120 100',
-    '<rect x="0" y="52" width="120" height="48" fill="' + SOIL + '"/>' +
-    '<path d="M0 52 H120" stroke="' + SD + '" stroke-width="1.4" opacity=".6"/>' +
-    '<ellipse cx="34" cy="62" rx="17" ry="12" fill="' + S + '" stroke="' + SD + '" stroke-width="1.6"/>' +
-    '<path d="M49 58 C66 56 78 52 84 36" fill="none" stroke="' + GL + '" stroke-width="7" stroke-linecap="round"/>' +
-    '<path d="M84 36 q3 -9 11 -11 q1 10 -8 13 Z" fill="' + GL + '" stroke="' + G + '" stroke-width="1.2"/>' +
-    '<path d="M49 68 C66 72 80 76 88 90" fill="none" stroke="' + S + '" stroke-width="6" stroke-linecap="round"/>' +
-    '<path d="M88 90 l4 6" stroke="' + SD + '" stroke-width="5" stroke-linecap="round"/>' +
-    arr(106, 18, 106, 40, GREY, 2),
-    'A seed lying on its side under the soil: the shoot curves upwards and out of the ground, the root curves downwards, with an arrow showing the direction of gravity.');
+  /* THE SENTENCE: "Lay a shoot on its side and the auxin collects along the LOWER side. Those
+     cells elongate more than the ones on top, so the shoot bends UPWARDS."  So the picture is
+     not a seedling portrait: it is the auxin on the lower flank, the lower cells drawn longer,
+     and the shoot turning up because of it. */
+  F['gravity-side'] = (function () {
+    var b = band([16, 74], [58, 74], [98, 34], 13), s = '', i;
+    s += '<defs><linearGradient id="fgS1" x1="0" y1="0" x2="0" y2="1">' +
+         '<stop offset="0" stop-color="#6FBF6C"/><stop offset=".5" stop-color="#B7E0A6"/>' +
+         '<stop offset="1" stop-color="#4F9E52"/></linearGradient></defs>';
+    s += '<path d="M2 92 H118" stroke="' + SD + '" stroke-width="1.4" opacity=".45"/>';
+    s += b.body('url(#fgS1)') + b.cells(7) + b.tip();
+    /* auxin on the LOWER flank only */
+    for (i = 0; i < 16; i++) {
+      var tt = 0.06 + (i % 8) / 9.2, uu = 4.5 + (i < 8 ? 0 : 4.2) + (i % 3) * 1.1;
+      var q = b.pt(tt, uu);
+      s += '<circle cx="' + q[0].toFixed(1) + '" cy="' + q[1].toFixed(1) + '" r="2" fill="' + A + '"/>';
+    }
+    var g1 = b.pt(0.3, 23), g2 = b.pt(0.74, 23), g3 = b.pt(0.93, -22);
+    s += arr(112, 56, 112, 80, GREY, 2);
+    s += pin(g1[0], g1[1], 1) + pin(g2[0], g2[1], 2) + pin(g3[0], g3[1], 3);
+    return svg('0 0 120 100', s,
+      'A shoot lying on its side. Auxin grains are gathered along its lower flank. The cell divisions show the lower flank is longer than the upper one, and the shoot is curving upwards. An arrow shows gravity acting downwards.');
+  })();
 
-  /* a shoot bending towards the sun */
-  F['phototropism'] = svg('0 0 120 100',
-    '<rect x="0" y="80" width="120" height="20" fill="' + SOIL + '"/>' +
-    '<circle cx="20" cy="24" r="11" fill="#FFD34E" stroke="#E8A31C" stroke-width="1.4"/>' +
-    '<g stroke="#E8A31C" stroke-width="2" stroke-linecap="round"><path d="M20 7 v-4 M7 24 h-4 M31 13 l3 -3 M31 35 l3 3 M20 41 v4"/></g>' +
-    arr(34, 30, 60, 40, '#EFA82B', 1.8) + arr(34, 44, 60, 52, '#EFA82B', 1.8) +
-    '<path d="M86 80 C86 62 82 52 70 46" fill="none" stroke="' + GL + '" stroke-width="9" stroke-linecap="round"/>' +
-    '<path d="M86 80 C86 62 82 52 70 46" fill="none" stroke="' + G + '" stroke-width="11" stroke-linecap="round" opacity=".22"/>' +
-    '<path d="M70 46 q-4 -9 3 -14 q7 7 1 14 Z" fill="' + GL + '" stroke="' + G + '" stroke-width="1.2"/>',
-    'A shoot growing out of the soil and curving towards a sun drawn at the left, with light rays reaching it.');
+  /* THE SENTENCE: "Light shines from one side. The auxin moves to the SHADED side. That side now
+     has more auxin, so its cells elongate more than the cells on the lit side, and the bend
+     points TOWARDS the light." */
+  F['phototropism'] = (function () {
+    var b = band([74, 94], [74, 50], [44, 18], 12), s = '', i;
+    s += '<defs><linearGradient id="fgS2" x1="0" y1="0" x2="1" y2="0">' +
+         '<stop offset="0" stop-color="#4F9E52"/><stop offset=".5" stop-color="#B7E0A6"/>' +
+         '<stop offset="1" stop-color="#6FBF6C"/></linearGradient></defs>';
+    s += '<path d="M2 94 H118" stroke="' + SD + '" stroke-width="1.4" opacity=".45"/>';
+    s += '<circle cx="17" cy="20" r="10" fill="#FFD34E" stroke="#E8A31C" stroke-width="1.4"/>';
+    s += '<g stroke="#E8A31C" stroke-width="1.8" stroke-linecap="round">' +
+         '<path d="M17 5 v-3 M4 20 h-3 M27 10 l2 -2 M27 30 l2 2 M17 35 v3"/></g>';
+    s += arr(28, 26, 52, 40, '#EFA82B', 1.7) + arr(28, 38, 52, 58, '#EFA82B', 1.7);
+    s += b.body('url(#fgS2)') + b.cells(7) + b.tip();
+    /* auxin on the SHADED flank: +u, which is the right-hand side of a shoot drawn going up */
+    for (i = 0; i < 16; i++) {
+      var tt = 0.05 + (i % 8) / 9.4, uu = 4 + (i < 8 ? 0 : 4) + (i % 3) * 1.1;
+      var q = b.pt(tt, uu);
+      s += '<circle cx="' + q[0].toFixed(1) + '" cy="' + q[1].toFixed(1) + '" r="2" fill="' + A + '"/>';
+    }
+    var q1 = b.pt(0.22, 23), q2 = b.pt(0.66, 23), q3 = b.pt(1.0, -22);
+    s += pin(34, 12, 1) + pin(q1[0], q1[1], 2) + pin(q2[0], q2[1], 3);
+    void q3;
+    return svg('0 0 120 100', s,
+      'A shoot growing upwards with the sun at the top left. Auxin grains are gathered along the shaded right-hand flank. The cell divisions show that flank is longer, and the shoot is curving to the left, towards the light.');
+  })();
 
   /* the four steps: made at the tip, carried down, gathers on one side, those cells elongate */
   F['auxin-chain'] = svg('0 0 120 100',

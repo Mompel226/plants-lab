@@ -1635,12 +1635,15 @@ picture{display:block;line-height:0}
 .ax__pintxt{font-size:10.5px;fill:#3C3C3C;font-family:var(--font)}
 
 /* ---------- minifig: a postage-stamp diagram beside a sentence ---------- */
-.minifig{float:right;width:122px;margin:1px 0 6px 14px;padding:0;
+.minifig{float:right;width:152px;margin:1px 0 6px 14px;padding:0;
   background:#FBFAF6;border:1px solid var(--edge);border-radius:var(--r);overflow:hidden}
 .minifig__svg{display:block;width:100%;height:auto}
 .exam-list li{overflow:hidden}          /* the row grows to contain its own float */
 @media (max-width:560px){
   /* on a phone a 122 px float leaves a 3-word column beside it, which is worse than no
      picture at all: it goes full width and the text runs under it instead of round it */
-  .minifig{float:none;width:150px;margin:4px auto 8px}
+  .minifig{float:none;width:186px;margin:4px auto 8px}
 }
+.figref{display:inline-flex;align-items:center;justify-content:center;width:1.3em;height:1.3em;
+  margin:0 .1em 0 .16em;border:1.4px solid #3C3C3C;border-radius:50%;font-size:.76em;font-weight:700;
+  line-height:1;vertical-align:.06em;color:#3C3C3C;flex:0 0 auto}
