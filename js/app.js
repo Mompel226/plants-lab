@@ -198,6 +198,11 @@
       key.innerHTML = window.Terms.legend();
       pane.appendChild(key);
     }
+    /* The bench has to be showing BEFORE the pane is built. The potometer's mount() reads
+       #benchHost.hidden to decide whether its apparatus stands in the column or stays inside the
+       widget, and coming back from Practise the bench is still hidden from when the simulation
+       covered the column. Plate.showBench only unhides it — showStation would empty it. */
+    if (tab === 'learn' && st.plate && st.plate.bench && window.Plate && window.Plate.showBench) window.Plate.showBench(true);
     if (tab === 'learn') paintLearn(pane, st); else paintDo(pane, st);
     paintSim(st, pane);
     var sc = panelScroller();
@@ -285,9 +290,15 @@
       if (btn) btn.hidden = true;
       /* A widget marked onStage keeps its drawing in the column and shows it only while the
          reader is level with it. Start from the plant and let the widget decide; the heavy
-         showSim would rebuild the whole station, which the scroll must never do. */
+         showSim would rebuild the whole station, which the scroll must never do.
+
+         A BENCH station must not take showSim either, and for a sharper reason: showSim(false)
+         puts the plant back by re-running showStation, and showStation empties #benchHost. On
+         the potometer's Learn tab the widget has just mounted its apparatus there, so that call
+         deleted the bench a moment after it was built and left the column blank. There is no
+         plant to put back on a bench station; all that is wanted is the simulation layer off. */
       var staged = sims.some(function (w) { return w.onStage; });
-      if (tab === 'learn' && staged && simWide.matches) {
+      if (onBench || (tab === 'learn' && staged && simWide.matches)) {
         if (window.Plate && window.Plate.stageSim) window.Plate.stageSim(false);
       } else if (window.Plate && window.Plate.showSim) window.Plate.showSim(false);
       return;

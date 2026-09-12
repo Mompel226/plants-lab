@@ -135,6 +135,13 @@
     else if (current) showStation(current);
   }
 
+  /* Show or hide the bench without touching what is standing on it. showStation also empties
+     #benchHost, which is right when the station changes and fatal when it does not: the
+     potometer mounts its apparatus there while the panel is being built, and anything that
+     re-runs showStation afterwards deletes it. */
+  function showBench(on) { if (bench) bench.hidden = !on; }
+
   global.Plate = { init: init, showStation: showStation, focus: focus, home: flyHome, showSim: showSim, stageSim: stageSim,
+                   showBench: showBench,
                    partsOf: function (st) { return spec(st).light || []; }, plant: function () { return plant; } };
 })(window);
