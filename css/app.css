@@ -1622,3 +1622,15 @@ picture{display:block;line-height:0}
 .ax__pins:empty{display:none}
 .ax__pins li{margin:3px 0}
 .ax__pin{font-size:12px;font-weight:700;fill:#3C3C3C;font-family:var(--font)}
+
+/* On a phone the strip is about a third of the screen, and a 46 px row of tools on top of the
+   drawing is a sixth of that spent on one button. While a simulation is standing there the row
+   floats over the drawing instead, and the drawing takes the whole strip. */
+@media (max-width:1000px) and (min-height:561px){
+  .platecol.is-sim .platecol__tools{position:absolute;top:0;right:0;left:auto;z-index:8;
+    padding:5px 8px;min-height:0;background:none;pointer-events:none}
+  .platecol.is-sim .platecol__tools > *{pointer-events:auto}
+  .platecol.is-sim .fold{font-size:10.5px;padding:3px 9px;background:rgba(255,255,255,.86);
+    border-radius:var(--r-pill);border:1px solid var(--edge);backdrop-filter:blur(2px)}
+  .platecol.is-sim .sim{padding:0 8px 8px}
+}
