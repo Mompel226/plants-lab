@@ -381,6 +381,15 @@
       if (typeof b === 'object' && b.sup) badge = '<span class="sup tip" tabindex="0" data-tip="Supplement — examined on Paper 4 (Extended) only. Core candidates can skip it.">S</span>';
       if (typeof b === 'object' && b.ext) badge = '<span class="sup sup--ext tip" tabindex="0" data-tip="Extension — not in the 2026–28 syllabus. Here to make sense of the rest; you will not be asked to write it.">extension</span>';
       li.innerHTML = badge + M(txt);
+      /* A small picture beside the sentence, with the words running round it. One idea each and
+         about the size of a postage stamp: a reader takes a picture in faster than a clause, and
+         a big diagram in the middle of a paragraph stops the reading instead of helping it. */
+      if (typeof b === 'object' && b.fig && window.FIGS && window.FIGS[b.fig]) {
+        var fg = document.createElement('figure');
+        fg.className = 'minifig';
+        fg.innerHTML = window.FIGS[b.fig];
+        li.insertBefore(fg, li.firstChild);
+      }
       /* A sentence that names something shown further down — "that is demonstration 1" — should
          take you to it. The phrase is already marked by _..._, so the mark becomes the link and
          nothing new appears in the text. */
