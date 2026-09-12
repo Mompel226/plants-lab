@@ -396,6 +396,20 @@
         fg.className = 'minifig';
         fg.innerHTML = window.FIGS[b.fig];
         li.insertBefore(fg, li.firstChild);
+      }
+      /* A sentence that names something shown further down — "that is demonstration 1" — should
+         take you to it. The phrase is already marked by _..._, so the mark becomes the link and
+         nothing new appears in the text. */
+      /* a numbered run of facts belongs on its own rows, not strung through the sentence:
+         it is what the mark scheme is counting, so it is what the eye should be able to count */
+      if (typeof b === 'object' && b.list) {
+        var ol = document.createElement('ol'); ol.className = 'exam-steps';
+        b.list.forEach(function (x) { var s2 = document.createElement('li'); s2.innerHTML = M(x); ol.appendChild(s2); });
+        li.appendChild(ol);
+      }
+      /* Run AFTER the nested list is in place, or a (1) inside one of the numbered facts is
+         still plain text when the walk goes past. */
+      if (typeof b === 'object' && b.fig && window.FIGS && window.FIGS[b.fig]) {
         /* (1) in the sentence becomes the same numbered token that is pinned on the drawing, so
            the word and the part it names are tied together and neither has to repeat the other.
            Only inside a bullet that HAS a figure, so an ordinary bracketed number elsewhere in
@@ -413,16 +427,6 @@
           if (rest) frag.appendChild(document.createTextNode(rest));
           node.parentNode.replaceChild(frag, node);
         });
-      }
-      /* A sentence that names something shown further down — "that is demonstration 1" — should
-         take you to it. The phrase is already marked by _..._, so the mark becomes the link and
-         nothing new appears in the text. */
-      /* a numbered run of facts belongs on its own rows, not strung through the sentence:
-         it is what the mark scheme is counting, so it is what the eye should be able to count */
-      if (typeof b === 'object' && b.list) {
-        var ol = document.createElement('ol'); ol.className = 'exam-steps';
-        b.list.forEach(function (x) { var s2 = document.createElement('li'); s2.innerHTML = M(x); ol.appendChild(s2); });
-        li.appendChild(ol);
       }
       /* a phrase that opens a short aside, for a reader who wants to know why */
       if (typeof b === 'object' && b.explain) {

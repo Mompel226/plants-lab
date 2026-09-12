@@ -72,6 +72,19 @@
     };
   }
 
+  /* Some claims are not worth drawing. "Auxin is made in the shoot tip" wants a real shoot with
+     a real tip on it, not a green rectangle with a dome. A figure may therefore be a photograph,
+     with the same numbered pins laid over it in per-cent coordinates. */
+  function photo(name, alt, pins) {
+    var s = '<span class="minifig__ph">' +
+            '<picture><source srcset="assets/photos/' + name + '-900.webp" type="image/webp">' +
+            '<img src="assets/photos/' + name + '-900.jpg" alt="' + alt + '" class="minifig__img" loading="lazy"></picture>';
+    (pins || []).forEach(function (p) {
+      s += '<i class="minifig__pin" style="left:' + p[0] + '%;top:' + p[1] + '%">' + p[2] + '</i>';
+    });
+    return s + '</span>';
+  }
+
   var F = {};
 
   /* THE SENTENCE: "Lay a shoot on its side and the auxin collects along the LOWER side. Those
@@ -91,9 +104,9 @@
       var q = b.pt(tt, uu);
       s += '<circle cx="' + q[0].toFixed(1) + '" cy="' + q[1].toFixed(1) + '" r="2" fill="' + A + '"/>';
     }
-    var g1 = b.pt(0.3, 23), g2 = b.pt(0.74, 23), g3 = b.pt(0.93, -22);
+    var g1 = b.pt(0.28, 23), g2 = b.pt(0.76, 23);
     s += arr(112, 56, 112, 80, GREY, 2);
-    s += pin(g1[0], g1[1], 1) + pin(g2[0], g2[1], 2) + pin(g3[0], g3[1], 3);
+    s += pin(g1[0], g1[1], 1) + pin(g2[0], g2[1], 2);
     return svg('0 0 120 100', s,
       'A shoot lying on its side. Auxin grains are gathered along its lower flank. The cell divisions show the lower flank is longer than the upper one, and the shoot is curving upwards. An arrow shows gravity acting downwards.');
   })();
@@ -118,41 +131,54 @@
       var q = b.pt(tt, uu);
       s += '<circle cx="' + q[0].toFixed(1) + '" cy="' + q[1].toFixed(1) + '" r="2" fill="' + A + '"/>';
     }
-    var q1 = b.pt(0.22, 23), q2 = b.pt(0.66, 23), q3 = b.pt(1.0, -22);
-    s += pin(34, 12, 1) + pin(q1[0], q1[1], 2) + pin(q2[0], q2[1], 3);
-    void q3;
+    /* One pin below the light, one on the shaded flank. A third for "the cells elongate more"
+       pointed at the same flank as the second and only made the reader look twice. */
+    var q1 = b.pt(0.42, 24);
+    s += pin(17, 42, 1) + pin(q1[0], q1[1], 2);
     return svg('0 0 120 100', s,
       'A shoot growing upwards with the sun at the top left. Auxin grains are gathered along the shaded right-hand flank. The cell divisions show that flank is longer, and the shoot is curving to the left, towards the light.');
   })();
 
-  /* the four steps: made at the tip, carried down, gathers on one side, those cells elongate */
-  F['auxin-chain'] = svg('0 0 120 100',
-    '<path d="M40 26 q20 -16 40 0 V34 H40 Z" fill="' + G + '"/>' +
-    dots([[52, 22], [64, 19], [71, 25], [58, 26]]) +
-    '<g fill="' + GP + '" stroke="' + G + '" stroke-width="1.3">' +
-    '<rect x="40" y="36" width="13" height="17" rx="2"/><rect x="40" y="55" width="13" height="17" rx="2"/>' +
-    '<rect x="40" y="74" width="13" height="17" rx="2"/>' +
-    '<rect x="67" y="36" width="13" height="11" rx="2"/><rect x="67" y="49" width="13" height="11" rx="2"/>' +
-    '<rect x="67" y="62" width="13" height="11" rx="2"/><rect x="67" y="75" width="13" height="11" rx="2"/></g>' +
-    '<rect x="53" y="36" width="14" height="55" fill="#F6FAF2" stroke="' + G + '" stroke-width="1.1"/>' +
-    dots([[46, 42], [45, 60], [47, 80], [44, 50], [46, 70], [45, 88]]) +
-    arr(60, 32, 60, 44, AD, 1.6),
-    'A shoot tip with auxin grains in it and an arrow carrying them down into the shoot. The cells drawn down the left side, where the auxin has gathered, are taller than the cells down the right side.');
+  /* "Auxin is made in the shoot tip." A drawing of that is worth nothing; this is a photograph
+     of real seedlings with their growing tips at the top of each shoot, and the pin is on one. */
+  F['auxin-chain'] = photo('seedlings-pot',
+    'Young sunflower seedlings in a pot, their shoots hooked over as they push up out of the soil, with the growing tip at the top of each shoot.',
+    [[47, 25, 1]]);
 
-  /* the inversion: in a root, MORE auxin means LESS elongation, so it bends down */
-  F['root-inversion'] = svg('0 0 120 100',
-    '<rect x="0" y="0" width="120" height="100" fill="' + SOIL + '"/>' +
-    '<g fill="#EFE4C9" stroke="' + SD + '" stroke-width="1.3">' +
-    '<rect x="10" y="30" width="22" height="14" rx="2"/><rect x="34" y="31" width="22" height="14" rx="2"/>' +
-    '<rect x="58" y="34" width="21" height="14" rx="2"/><rect x="81" y="40" width="18" height="14" rx="2"/></g>' +
-    '<g fill="#EFE4C9" stroke="' + SD + '" stroke-width="1.3">' +
-    '<rect x="10" y="46" width="13" height="14" rx="2"/><rect x="25" y="47" width="13" height="14" rx="2"/>' +
-    '<rect x="40" y="49" width="13" height="14" rx="2"/><rect x="55" y="53" width="13" height="14" rx="2"/>' +
-    '<rect x="70" y="59" width="12" height="14" rx="2"/></g>' +
-    '<path d="M99 47 q9 5 7 14 q-9 -2 -7 -14 Z" fill="' + S + '" stroke="' + SD + '" stroke-width="1.4"/>' +
-    dots([[16, 55], [30, 56], [45, 58], [60, 62], [73, 68], [24, 57], [38, 58], [52, 60], [66, 65]]) +
-    arr(108, 12, 108, 32, GREY, 2),
-    'A root drawn as two rows of cells with its tip at the lower right. The cells along the top are long; the cells along the bottom, where the auxin grains lie, are short. An arrow shows the direction of gravity.');
+  /* THE SENTENCE: "In a root auxin INHIBITS cell elongation: those cells elongate LESS. So when
+     a root lies on its side, auxin collects along the lower side, the cells there elongate less
+     than the ones on the upper side, and the root bends downwards."
+     Drawn with the same band as the two shoot figures, so the pair can be compared directly —
+     the only differences are that the auxin side is the SHORT one here, and that the organ is
+     underground. It is labelled in a word, because two rows of rectangles do not say "root". */
+  F['root-inversion'] = (function () {
+    var b = band([12, 36], [56, 36], [96, 76], 12), s = '', i;
+    s += '<defs><linearGradient id="fgR1" x1="0" y1="0" x2="0" y2="1">' +
+         '<stop offset="0" stop-color="#F2E7CE"/><stop offset=".5" stop-color="#FBF5E6"/>' +
+         '<stop offset="1" stop-color="#DCC9A2"/></linearGradient></defs>';
+    s += '<rect x="0" y="0" width="120" height="100" fill="' + SOIL + '"/>';
+    s += '<g fill="#D6C6A0" opacity=".5"><circle cx="16" cy="86" r="6"/><circle cx="40" cy="92" r="5"/>' +
+         '<circle cx="70" cy="94" r="6"/><circle cx="104" cy="88" r="5"/><circle cx="108" cy="60" r="4"/>' +
+         '<circle cx="24" cy="66" r="4"/></g>';
+    /* the root cap: a blunt thimble over the very end */
+    var c0 = b.pt(1, -12), c1 = b.pt(1, 12), cm = b.pt(1, 0), cd = b.pt(1.14, 0);
+    s += '<path d="M' + c0[0].toFixed(1) + ' ' + c0[1].toFixed(1) + ' Q' + cd[0].toFixed(1) + ' ' + cd[1].toFixed(1) +
+         ' ' + c1[0].toFixed(1) + ' ' + c1[1].toFixed(1) + ' Z" fill="#BFA478" stroke="#8A7346" stroke-width="1.6" stroke-linejoin="round"/>';
+    void cm;
+    s += b.body('url(#fgR1)') + b.cells(7);
+    /* auxin along the LOWER flank — which on a downward curve is the INNER, shorter one */
+    for (i = 0; i < 15; i++) {
+      var tt = 0.05 + (i % 8) / 9.6, uu = 4 + (i < 8 ? 0 : 3.8) + (i % 3) * 1.1;
+      var q = b.pt(tt, uu);
+      s += '<circle cx="' + q[0].toFixed(1) + '" cy="' + q[1].toFixed(1) + '" r="2" fill="' + A + '"/>';
+    }
+    s += '<text x="8" y="14" font-size="11" font-weight="700" fill="' + SD + '">root</text>';
+    s += arr(112, 8, 112, 30, GREY, 2);
+    var r1 = b.pt(0.26, 22), r2 = b.pt(0.66, 22);
+    s += pin(r1[0], r1[1], 1) + pin(r2[0], r2[1], 2);
+    return svg('0 0 120 100', s,
+      'A root underground, labelled root, curving downwards with its root cap at the end. Auxin grains lie along its lower flank, and the cell divisions show that flank is shorter than the upper one.');
+  })();
 
   /* a xylem vessel: dead cells stacked into one open pipe, no end walls, lignin rings */
   F['xylem-vessel'] = svg('0 0 120 100',

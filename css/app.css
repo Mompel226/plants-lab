@@ -1656,3 +1656,8 @@ picture{display:block;line-height:0}
 .figref{display:inline-flex;align-items:center;justify-content:center;width:1.3em;height:1.3em;
   margin:0 .1em 0 .16em;border:1.4px solid #3C3C3C;border-radius:50%;font-size:.76em;font-weight:700;
   line-height:1;vertical-align:.06em;color:#3C3C3C;flex:0 0 auto}
+.minifig__ph{position:relative;display:block;line-height:0}
+.minifig__img{display:block;width:100%;height:auto}
+.minifig__pin{position:absolute;transform:translate(-50%,-50%);width:19px;height:19px;border-radius:50%;
+  background:#fff;border:1.5px solid #3C3C3C;color:#3C3C3C;font:700 11px/16px var(--font);
+  text-align:center;font-style:normal;box-shadow:0 1px 3px rgba(0,0,0,.35)}
