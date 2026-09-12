@@ -1926,6 +1926,7 @@
        a ten-second run. Everything else — how the growth splits between the flanks, and
        therefore how far the organ turns — is read off the model. */
     var EXT = 54;
+    var TIP_OVER = 0.66;        /* how far a replaced tip is pushed across, in half-widths */
 
     /* ----- the model: apparatus in, biology out ----- */
     function model() {
@@ -1976,10 +1977,38 @@
       sees = lit || grav;
       var fR = 0.5 + (HI - 0.5) * bias, fL = 1 - fR;
 
-      if (offset !== 0 && made > 0) {              /* a tip or block set to one side feeds that side */
+      /* A BLOCK on half a stump simply feeds that half: there is nothing else going on. */
+      if (offset !== 0 && made > 0 && S.top === 'cut') {
         var strong = 0.85;
         fL = offset < 0 ? strong : 1 - strong;
         fR = 1 - fL;
+      }
+      /* A TIP put back off-centre is not so simple, and overriding the light here was the
+         widget telling a lie it had not earned. Shifting the tip does not switch the light off:
+         the tip still detects it and still moves its auxin across to its own shaded half. What
+         the shift changes is which part of the tip is in a position to hand anything down —
+         only the part actually sitting on the cut face can, and a tip pushed two thirds of its
+         width across hangs that much of itself out over the air. So work the delivery out
+         instead of asserting it: how much of each half of the tip overlaps each flank of the
+         stump, and how much auxin each half of the tip is holding.
+         The geometry wins, which is why Paál got a bend in the dark — but the lamp is not
+         doing nothing. Shine it from the side the tip HANGS OVER and the two act against each
+         other and the bend is smaller; shine it from the far side and they pull together and
+         the bend is bigger. It never reverses: even working against the shift, the light can
+         only move about a fifth of what the tip is holding, and the overhang has already
+         taken a third of the tip out of contact. */
+      if (offset !== 0 && made > 0 && S.top.indexOf('shift') === 0) {
+        var dd = offset * TIP_OVER;                 /* where the tip sits, in half-widths */
+        var wl = lit ? (S.light === 'left' ? 1 - HI : HI) : 0.5;   /* the tip's LEFT half holds */
+        var wr = 1 - wl, lo = Math.max(-1, dd - 1), hi = Math.min(1, dd + 1);
+        var seg = function (a, b) {
+          a = Math.max(a, lo); b = Math.min(b, hi);
+          if (b <= a) return 0;
+          return wl * Math.max(0, Math.min(b, dd) - Math.max(a, dd - 1)) +
+                 wr * Math.max(0, Math.min(b, dd + 1) - Math.max(a, dd));
+        };
+        var aL = seg(-1, 0), aR = seg(0, 1);
+        if (aL + aR > 0) { fL = aL / (aL + aR); fR = 1 - fL; }
       }
 
       var dL = made * fL * thru, dR = made * fR * thru;   /* what actually reaches the cells */
@@ -2393,7 +2422,7 @@
          a cap hung in the air beside a shifted tip and left the tip bare, which is the one
          thing Paal's experiment must not show. */
       var putBack = !root && S.top !== 'intact' && S.top !== 'cut';
-      var tipOff  = S.top === 'shiftL' ? -13 : S.top === 'shiftR' ? 13 : 0;   /* across the stump */
+      var tipOff  = (S.top === 'shiftL' ? -1 : S.top === 'shiftR' ? 1 : 0) * TIP_OVER * HW;  /* across the stump */
       var tipApex = bodyTop + 51;                  /* the crown of a tip that has been put back */
 
       var d = 'M' + f1(at(0, HW));
@@ -3158,7 +3187,7 @@
         if (M.offset !== 0 && S.top.indexOf('shift') === 0)
           pts.push(S.light === 'dark'
             ? 'The tip decides which flank gets the auxin simply by <b>sitting</b> over it, and the shoot bends away from that side. That is Paál\'s result — and he worked in the dark for exactly this reason: with no light, nothing else can be acting.'
-            : 'Careful: nobody reports this one. Paál worked in the <b>dark</b>, so the tip\'s position was the only thing acting. With the lamp on, two things disagree — light sends auxin to the shaded flank, the tip sends it to the flank it sits on. What you see is this model\'s answer, not a measured one. Run it in the dark for the real experiment.');
+            : 'The light has not stopped working — the tip still moves auxin across to its own shaded half. But a tip pushed this far across hangs a third of itself over the air, and only the part on the cut face can deliver, so <b>position wins</b>. The lamp changes the size of the bend, not its direction: from the side the tip overhangs it is smaller, from the far side bigger. Try all three. This is not one of the classic runs — Paál worked in the dark — so it is the model reasoning it out, not a measured result.');
         if (S.cover === 'collar')
           pts.push('The collar covers the stem but not the tip. The tip is the detector, so the response happens anyway.');
         if (M.note && !diff)
