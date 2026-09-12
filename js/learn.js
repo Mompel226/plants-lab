@@ -1833,7 +1833,7 @@
      having to guess which button the author anticipated.
 
      Two things the old version had wrong and which the literature settles:
-     light REDISTRIBUTES auxin, it does not destroy it (Briggs 1963 recovered the same
+     light REDISTRIBUTES auxin, it does not destroy it (Briggs, Tocher and Wilson 1957 recovered the same
      total from lit and dark coleoptiles, split about 2:1 towards the shade); and in a
      ROOT the same auxin INHIBITS elongation, so the side with more of it grows less. */
   function auxin(spec) {
@@ -2062,9 +2062,16 @@
       if (!LAB.length) { pins.innerHTML = ''; return ''; }
       var out = '', rows = '';
       LAB.forEach(function (L, i) {
+        /* The disc sits OUTSIDE the organ with a short leader back to the feature. Centred on the
+           anchor it covered the very cells, arrows and starch grains its own words were naming. */
+        var away = Math.abs(g.phi0) < 0.1
+          ? [L.px >= g.BX ? 19 : -19, 0]      /* an upright organ: push the disc sideways */
+          : [0, L.py >= g.BY ? 19 : -19];     /* one lying down: push it up or down */
+        var dx2 = L.px + away[0], dy2 = L.py + away[1];
         var n = i + 1;
-        out += '<circle cx="' + L.px.toFixed(1) + '" cy="' + L.py.toFixed(1) + '" r="10" fill="#FFFFFF" stroke="#5A5A5A" stroke-width="1.6"/>';
-        out += '<text class="ax__pin" x="' + L.px.toFixed(1) + '" y="' + (L.py + 4.2).toFixed(1) + '" text-anchor="middle">' + n + '</text>';
+        out += '<path d="M' + L.px.toFixed(1) + ' ' + L.py.toFixed(1) + ' L' + dx2.toFixed(1) + ' ' + dy2.toFixed(1) + '" stroke="#5A5A5A" stroke-width="1.2"/>';
+        out += '<circle cx="' + dx2.toFixed(1) + '" cy="' + dy2.toFixed(1) + '" r="9" fill="#FFFFFF" stroke="#5A5A5A" stroke-width="1.5"/>';
+        out += '<text class="ax__pin" x="' + dx2.toFixed(1) + '" y="' + (dy2 + 4).toFixed(1) + '" text-anchor="middle">' + n + '</text>';
         rows += '<li>' + L.text + '</li>';
       });
       pins.innerHTML = rows;
@@ -2135,7 +2142,11 @@
       }
       /* One column, and every anchor that has a choice of flank takes the one on its side, so a
          leader never crosses the drawing to reach its words. */
-      var labRight = root ? true : S.light !== 'right', labU = labRight ? g.HW : -g.HW;
+      /* On an organ lying down the label column is still to the right, so an anchor on the LOWER
+         flank sends its leader straight along the body. Anchoring on the upper flank lets it rise
+         clear of the drawing before it turns for the words. */
+      var labRight = root ? true : S.light !== 'right';
+      var labU = (root || S.lay === 'side') ? -g.HW : (labRight ? g.HW : -g.HW);
       var HW = g.HW, K = 9, CW = 11;
 
       /* With the words underneath, the column they used to occupy is dead space. Cropping it at
@@ -2208,8 +2219,9 @@
         }
       }
       if (root) {                                   /* the stimulus is gravity: show it as such */
-        s += '<g opacity="' + (0.3 + 0.7 * detect).toFixed(2) + '"><line x1="430" y1="52" x2="430" y2="102" stroke="#7A7A7A" stroke-width="2.4"/>' +
-             '<path d="M430 108 l-6 -10 h12 Z" fill="#7A7A7A"/><text class="ax__s" x="430" y="42" text-anchor="middle">gravity</text></g>';
+        var rgx = narrow ? vx + vw - 40 : 300;
+        s += '<g opacity="' + (0.3 + 0.7 * detect).toFixed(2) + '"><line x1="' + rgx + '" y1="52" x2="' + rgx + '" y2="102" stroke="#7A7A7A" stroke-width="2.4"/>' +
+             '<path d="M' + rgx + ' 108 l-6 -10 h12 Z" fill="#7A7A7A"/><text class="ax__s" x="' + rgx + '" y="42" text-anchor="middle">gravity</text></g>';
       }
 
       /* the body */
@@ -2326,10 +2338,11 @@
           var cA = at(sC, labU < 0 ? -(HW + 4) : HW + 4);
           s += ruled(cA[0], cA[1], 0, 0, 'opaque collar; the tip is still bare');
         } else {
-          s += rider(g.LEN) + '<path d="M' + (-HW - 3) + ' 30 v-26 q0 -16 ' + (HW + 3) + ' -16 q' + (HW + 3) + ' 0 ' + (HW + 3) + ' 16 v26 Z" fill="' +
+          s += rider(g.LEN) + '<path d="M' + (-HW - 3) + ' 30 v-30 q0 -20 ' + (HW + 3) + ' -20 q' + (HW + 3) + ' 0 ' + (HW + 3) + ' 20 v30 Z" fill="' +
                (S.cover === 'opaque' ? '#3A3A3A' : '#BFD8E8') + '" opacity="' + (S.cover === 'opaque' ? '.9' : '.55') + '" stroke="' + (S.cover === 'opaque' ? '#222' : '#7FA8C4') + '" stroke-width="1.6"/></g>';
           var kA = at(g.LEN + 8, labU < 0 ? -(HW + 3) : HW + 3);   /* on the cap's crown, clear of the tip's own leader */
-          s += ruled(kA[0], kA[1], 0, 0, S.cover === 'opaque' ? 'opaque cap: the tip is blind' : 'clear cap: the tip still sees');
+          s += ruled(kA[0], kA[1], 0, 0, S.cover === 'opaque' ? 'opaque cap: the tip is blind'
+            : M.lit ? 'clear cap: the tip still sees' : 'clear cap: it lets light through');
         }
       }
 
@@ -2338,11 +2351,11 @@
          halfway across. It blocks what comes down that half. Drawn as a vertical slice down
          the flank it was not his experiment and did not match what the model was doing. */
       if (!root && S.top !== 'cut' && S.mica !== 'none') {
-        var sgn = S.mica === 'left' ? -1 : 1, sM = Math.max(6, g.TIP - 10);
+        var sgn = S.mica === 'left' ? -1 : 1, sM = Math.max(6, g.TIP - 4);   /* under the tip, above the zone */
         var m0 = at(sM, sgn * -2), m1 = at(sM, sgn * (HW + 16));
         s += '<path d="M' + f1(m0) + ' L' + f1(m1) + '" stroke="#6C7681" stroke-width="5.5" stroke-linecap="round"/>';
         var mid = at(sM, sgn * HW * 0.6);
-        s += ruled(mid[0], mid[1], 0, 0, 'mica plate across half the tip: nothing passes down this half');
+        s += ruled(mid[0], mid[1], 0, 0, 'mica plate under half the tip: it holds this half back');
       }
 
       /* the root cap and its statoliths — the detector, and the thing that does the detecting */
@@ -2399,14 +2412,19 @@
            organ is drawn from a density that leans towards the fuller flank — the inverse of a
            linear distribution, which for a two-to-one split means twice as many grains arriving
            at one edge as at the other, with every value in between filled. */
-        var lean = M.fR - M.fL, kk = Math.max(-0.85, Math.min(0.85, lean));
+        /* lean on what ARRIVES (dL/dR), not on what left the tip (fL/fR): with a plate holding
+           one flank back, the cloud in the zone is even, and the difference is the queue above
+           the plate rather than a gradient below it. */
+        var mk = M.made || 1, lean = (M.dR - M.dL) / mk, kk = Math.max(-0.85, Math.min(0.85, lean));
+        var surplus = blockL ? Math.max(0, M.fL * M.made - M.dL)
+                    : blockR ? Math.max(0, M.fR * M.made - M.dR) : 0;
+        var nQueue = Math.round(N * surplus / mk), queued = 0;
         function across(u01) {
           if (Math.abs(kk) < 0.02) return 2 * u01 - 1;
           var disc = 0.25 - kk * (0.5 - kk / 4 - u01);
           var x = (-0.5 + Math.sqrt(disc > 0 ? disc : 0)) / (kk / 2);
           return x < -1 ? -1 : x > 1 ? 1 : x;
         }
-        var level = Math.abs(M.fR - M.fL) < 0.04;          /* nothing has pushed it to one side */
         var blockL = S.mica === 'left', blockR = S.mica === 'right';
         /* Auxin is made WHERE THE SOURCE IS, and the source is not always the organ's own tip:
            a replaced tip sits above the cut face, and an agar block sits on it. Starting every
@@ -2430,25 +2448,22 @@
           var uEven = M.offset !== 0
             ? M.offset * HW * (0.18 + 0.34 * b1)
             : (a1 * 2 - 1) * HW * 0.54;
-          /* Evenly spread means one cloud across the whole width. Unequally distributed means two
-             groups, each held out against its own flank, so the fuller one is plainly the fuller
-             one. Sharing one central band made a 2:1 split look like no split at all. */
+          /* A low-discrepancy pair packed this densely starts to look like a lattice, which reads
+             as pattern rather than as scattered grains. A small fixed offset per grain breaks it
+             without making anything jump between frames. Declared BEFORE it is used: read one
+             line too early it was undefined on the first grain, which put that grain at NaN — and
+             every grain after it silently borrowed its predecessor's offset. */
+          var js = (frac(a1 * 43.7 + b1 * 17.3) - 0.5) * 5.5, ju = (frac(a1 * 11.9 + b1 * 31.1) - 0.5) * 3.4;
           var uSide = across(b1) * HW * 0.58;
           var side = uSide < 0 ? -1 : 1;
           var u2 = uEven + (uSide + ju - uEven) * lat;
           /* The plate does not empty a flank; it holds that flank back to what the other one is
-             carrying. Stopping every grain on the plated side drew a shoot fed on one flank only
-             and then drew it dead straight, with the verdict underneath saying both flanks got
-             the same. Let each flank deliver the number the model credits it with, and queue the
-             surplus above the plate where a reader can see it waiting. */
-          var passL = Math.round(N * M.dL / (M.made || 1)), passR = Math.round(N * M.dR / (M.made || 1));
-          var nth = side < 0 ? q : q - nL;
+             carrying. The cloud already shows what ARRIVES, because the gradient is drawn from
+             the delivered shares; what is left over is the surplus the plate is holding up, and
+             it queues above the plate where a reader can see it waiting. */
           var plated = (side < 0 && blockL) || (side > 0 && blockR);
-          var stopped = plated && nth >= (side < 0 ? passL : passR);
-          /* A low-discrepancy pair packed this densely starts to look like a lattice, which reads
-             as pattern rather than as scattered grains. A small fixed offset per grain breaks it
-             without making anything jump between frames. */
-          var js = (frac(a1 * 43.7 + b1 * 17.3) - 0.5) * 5.5, ju = (frac(a1 * 11.9 + b1 * 31.1) - 0.5) * 3.4;
+          var stopped = plated && queued < nQueue;
+          if (stopped) queued++;
           var sEnd = stopped ? g.ZONE1 + 10 + b1 * 24        /* held up above the plate, in a queue */
                    : g.ZONE0 + 5 + a1 * (g.ZONE1 - g.ZONE0 - 10) + js;
           /* each grain sets off at its own moment, so they travel as a spreading plume
@@ -2603,12 +2618,13 @@
       return diff ? 'A shoot bending to the ' + (M.gL > M.gR ? 'right' : 'left') : 'A shoot growing straight up';
     }
 
-    function paintKey() {
-      var it = [];
+    function paintKey(M) {
+      var it = [], hasAuxin = !M || M.made > 0;
+      var hasArrows = !M || (M.made > 0 && (M.gL > 0.02 || M.gR > 0.02));
       function sw(inner) { return '<svg class="ax__sw" viewBox="0 0 16 16" aria-hidden="true">' + inner + '</svg>'; }
-      it.push([sw('<circle cx="8" cy="8" r="5" fill="#F5A623" stroke="#B9761A" stroke-width="1.4"/><circle cx="6.4" cy="6.4" r="1.7" fill="#FFE7B5"/>'), 'auxin']);
+      if (hasAuxin) it.push([sw('<circle cx="8" cy="8" r="5" fill="#F5A623" stroke="#B9761A" stroke-width="1.4"/><circle cx="6.4" cy="6.4" r="1.7" fill="#FFE7B5"/>'), 'auxin']);
       it.push([sw('<rect x="2" y="3" width="12" height="10" rx="1.5" fill="' + (S.organ === 'root' ? '#E9DCC0' : '#C6E2AC') + '" stroke="' + (S.organ === 'root' ? '#9A8459' : '#2C6E36') + '" stroke-width="1.6"/>'), 'one cell']);
-      it.push([sw('<g stroke="' + (S.organ === 'root' ? '#6B5A33' : '#1F5A31') + '" stroke-width="1.6" fill="none" stroke-linecap="round">' +
+      if (hasArrows) it.push([sw('<g stroke="' + (S.organ === 'root' ? '#6B5A33' : '#1F5A31') + '" stroke-width="1.6" fill="none" stroke-linecap="round">' +
                   '<line x1="3" y1="8" x2="13" y2="8"/><path d="M3 8 L6 5 M3 8 L6 11 M13 8 L10 5 M13 8 L10 11"/></g>'),
                'this cell is elongating — the longer the arrow, the more it has stretched']);
       if (S.organ === 'root' && S.cap === 'intact')
@@ -2683,7 +2699,7 @@
     function run() {
       var M = model();
       if (S.t) { clearInterval(S.t); S.t = null; }
-      paintKey();
+      paintKey(M);
       why.innerHTML = '';
       var still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (still) { S.p = 1; draw(M, 1); capt.textContent = ''; capt.hidden = true; why.innerHTML = verdict(M); return; }
