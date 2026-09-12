@@ -4,6 +4,8 @@
    Every one is stroke-and-fill only: no text inside, because at 120 px nothing
    readable fits, and the sentence beside it is the caption. */
 (function (global) {
+  var SHC = ['#C6E2AC', '#A8D98C', '#2C6E36'];   /* shoot cell, stretched shoot cell, its outline */
+  var RTC = ['#F0E7D2', '#D3EAC8', '#9A8459'];   /* the same three for a root */
   var G = '#2C6E36', GL = '#54AC5C', GP = '#C6E2AC', A = '#F5A623', AD = '#B9761A',
       S = '#C9B896', SD = '#8A7346', SOIL = '#E4D9C3', W = '#4E93C9', WL = '#BFD8E8', GREY = '#7A7A7A';
 
@@ -46,18 +48,27 @@
     function poly(a) { return a.map(function (q) { return q[0].toFixed(1) + ' ' + q[1].toFixed(1); }).join(' L'); }
     return {
       pt: pt,
-      body: function (grad) {
+      body: function (grad, col) {
         var up = edge(-hw, 16), lo = edge(hw, 16).reverse();
-        return '<path d="M' + poly(up) + ' L' + poly(lo) + ' Z" fill="' + grad + '" stroke="' + G +
+        return '<path d="M' + poly(up) + ' L' + poly(lo) + ' Z" fill="' + grad + '" stroke="' + (col || G) +
                '" stroke-width="1.6" stroke-linejoin="round"/>';
       },
-      /* the divisions between cells, and the flank strips they sit in */
-      cells: function (n) {
-        var s = '', i;
-        for (i = 1; i < n; i++) {
-          var a = pt(i / n, -hw + 0.8), b = pt(i / n, hw - 0.8);
-          s += '<path d="M' + a[0].toFixed(1) + ' ' + a[1].toFixed(1) + ' L' + b[0].toFixed(1) + ' ' + b[1].toFixed(1) +
-               '" stroke="' + G + '" stroke-width="1.2" opacity=".55"/>';
+      /* The cells, drawn the way the simulation draws them: a strip of boxes down EACH flank with
+         an empty lumen between, not a ladder of rungs across the whole organ. A student who has
+         just used the widget should recognise the same shoot. `grow` says which flank is the one
+         elongating, and gets the deeper fill the widget gives a stretched cell. */
+      flanks: function (n, cw, cols, grow) {
+        var s = '', i, k;
+        for (k = 0; k < 2; k++) {
+          var sg = k ? 1 : -1, fill = (sg === grow) ? cols[1] : cols[0];
+          for (i = 0; i < n; i++) {
+            var t0 = i / n, t1 = (i + 1) / n;
+            var a = pt(t0, sg * hw), b = pt(t1, sg * hw),
+                c = pt(t1, sg * (hw - cw)), d = pt(t0, sg * (hw - cw));
+            s += '<path d="M' + a[0].toFixed(1) + ' ' + a[1].toFixed(1) + ' L' + b[0].toFixed(1) + ' ' + b[1].toFixed(1) +
+                 ' L' + c[0].toFixed(1) + ' ' + c[1].toFixed(1) + ' L' + d[0].toFixed(1) + ' ' + d[1].toFixed(1) +
+                 ' Z" fill="' + fill + '" stroke="' + cols[2] + '" stroke-width="1.1"/>';
+          }
         }
         return s;
       },
@@ -94,18 +105,19 @@
   F['gravity-side'] = (function () {
     var b = band([16, 74], [58, 74], [98, 34], 13), s = '', i;
     s += '<defs><linearGradient id="fgS1" x1="0" y1="0" x2="0" y2="1">' +
-         '<stop offset="0" stop-color="#6FBF6C"/><stop offset=".5" stop-color="#B7E0A6"/>' +
-         '<stop offset="1" stop-color="#4F9E52"/></linearGradient></defs>';
+         '<stop offset="0" stop-color="#3E8F46"/><stop offset=".45" stop-color="#54AC5C"/>' +
+         '<stop offset="1" stop-color="#3E8F46"/></linearGradient></defs>';
     s += '<path d="M2 92 H118" stroke="' + SD + '" stroke-width="1.4" opacity=".45"/>';
-    s += b.body('url(#fgS1)') + b.cells(7) + b.tip();
+    s += b.body('url(#fgS1)') + b.flanks(6, 4.6, SHC, 1) + b.tip();
     /* auxin on the LOWER flank only */
     for (i = 0; i < 16; i++) {
-      var tt = 0.06 + (i % 8) / 9.2, uu = 4.5 + (i < 8 ? 0 : 4.2) + (i % 3) * 1.1;
+      var tt = 0.08 + (i % 8) / 9.6, uu = 0.5 + (i < 8 ? 0 : 3.4) + (i % 3) * 1.2;
       var q = b.pt(tt, uu);
-      s += '<circle cx="' + q[0].toFixed(1) + '" cy="' + q[1].toFixed(1) + '" r="2" fill="' + A + '"/>';
+      s += '<circle cx="' + q[0].toFixed(1) + '" cy="' + q[1].toFixed(1) + '" r="1.9" fill="#F0900E"/>';
     }
     var g1 = b.pt(0.28, 23), g2 = b.pt(0.76, 23);
     s += arr(112, 56, 112, 80, GREY, 2);
+    s += '<text x="7" y="14" font-size="11" font-weight="700" fill="' + G + '">shoot</text>';
     s += pin(g1[0], g1[1], 1) + pin(g2[0], g2[1], 2);
     return svg('0 0 120 100', s,
       'A shoot lying on its side. Auxin grains are gathered along its lower flank. The cell divisions show the lower flank is longer than the upper one, and the shoot is curving upwards. An arrow shows gravity acting downwards.');
@@ -117,23 +129,24 @@
   F['phototropism'] = (function () {
     var b = band([74, 94], [74, 50], [44, 18], 12), s = '', i;
     s += '<defs><linearGradient id="fgS2" x1="0" y1="0" x2="1" y2="0">' +
-         '<stop offset="0" stop-color="#4F9E52"/><stop offset=".5" stop-color="#B7E0A6"/>' +
-         '<stop offset="1" stop-color="#6FBF6C"/></linearGradient></defs>';
+         '<stop offset="0" stop-color="#3E8F46"/><stop offset=".45" stop-color="#54AC5C"/>' +
+         '<stop offset="1" stop-color="#3E8F46"/></linearGradient></defs>';
     s += '<path d="M2 94 H118" stroke="' + SD + '" stroke-width="1.4" opacity=".45"/>';
     s += '<circle cx="17" cy="20" r="10" fill="#FFD34E" stroke="#E8A31C" stroke-width="1.4"/>';
     s += '<g stroke="#E8A31C" stroke-width="1.8" stroke-linecap="round">' +
          '<path d="M17 5 v-3 M4 20 h-3 M27 10 l2 -2 M27 30 l2 2 M17 35 v3"/></g>';
     s += arr(28, 26, 52, 40, '#EFA82B', 1.7) + arr(28, 38, 52, 58, '#EFA82B', 1.7);
-    s += b.body('url(#fgS2)') + b.cells(7) + b.tip();
+    s += b.body('url(#fgS2)') + b.flanks(6, 4.4, SHC, 1) + b.tip();
     /* auxin on the SHADED flank: +u, which is the right-hand side of a shoot drawn going up */
     for (i = 0; i < 16; i++) {
-      var tt = 0.05 + (i % 8) / 9.4, uu = 4 + (i < 8 ? 0 : 4) + (i % 3) * 1.1;
+      var tt = 0.07 + (i % 8) / 9.6, uu = 0.4 + (i < 8 ? 0 : 3.2) + (i % 3) * 1.2;
       var q = b.pt(tt, uu);
-      s += '<circle cx="' + q[0].toFixed(1) + '" cy="' + q[1].toFixed(1) + '" r="2" fill="' + A + '"/>';
+      s += '<circle cx="' + q[0].toFixed(1) + '" cy="' + q[1].toFixed(1) + '" r="1.9" fill="#F0900E"/>';
     }
     /* One pin below the light, one on the shaded flank. A third for "the cells elongate more"
        pointed at the same flank as the second and only made the reader look twice. */
-    var q1 = b.pt(0.42, 24);
+    var q1 = b.pt(0.42, 23);
+    s += '<text x="7" y="88" font-size="11" font-weight="700" fill="' + G + '">shoot</text>';
     s += pin(17, 42, 1) + pin(q1[0], q1[1], 2);
     return svg('0 0 120 100', s,
       'A shoot growing upwards with the sun at the top left. Auxin grains are gathered along the shaded right-hand flank. The cell divisions show that flank is longer, and the shoot is curving to the left, towards the light.');
@@ -154,23 +167,23 @@
   F['root-inversion'] = (function () {
     var b = band([12, 36], [56, 36], [96, 76], 12), s = '', i;
     s += '<defs><linearGradient id="fgR1" x1="0" y1="0" x2="0" y2="1">' +
-         '<stop offset="0" stop-color="#F2E7CE"/><stop offset=".5" stop-color="#FBF5E6"/>' +
-         '<stop offset="1" stop-color="#DCC9A2"/></linearGradient></defs>';
+         '<stop offset="0" stop-color="#CFBC93"/><stop offset=".42" stop-color="#EFE4C9"/>' +
+         '<stop offset="1" stop-color="#CFBC93"/></linearGradient></defs>';
     s += '<rect x="0" y="0" width="120" height="100" fill="' + SOIL + '"/>';
     s += '<g fill="#D6C6A0" opacity=".5"><circle cx="16" cy="86" r="6"/><circle cx="40" cy="92" r="5"/>' +
          '<circle cx="70" cy="94" r="6"/><circle cx="104" cy="88" r="5"/><circle cx="108" cy="60" r="4"/>' +
          '<circle cx="24" cy="66" r="4"/></g>';
     /* the root cap: a blunt thimble over the very end */
-    var c0 = b.pt(1, -12), c1 = b.pt(1, 12), cm = b.pt(1, 0), cd = b.pt(1.14, 0);
+    s += b.body('url(#fgR1)', '#9A8459') + b.flanks(6, 4.2, RTC, -1);   /* the UPPER flank stretches */
+    /* the root cap, over the end rather than under it */
+    var c0 = b.pt(1, -12.4), c1 = b.pt(1, 12.4), cd = b.pt(1.16, 0);
     s += '<path d="M' + c0[0].toFixed(1) + ' ' + c0[1].toFixed(1) + ' Q' + cd[0].toFixed(1) + ' ' + cd[1].toFixed(1) +
          ' ' + c1[0].toFixed(1) + ' ' + c1[1].toFixed(1) + ' Z" fill="#BFA478" stroke="#8A7346" stroke-width="1.6" stroke-linejoin="round"/>';
-    void cm;
-    s += b.body('url(#fgR1)') + b.cells(7);
     /* auxin along the LOWER flank — which on a downward curve is the INNER, shorter one */
     for (i = 0; i < 15; i++) {
-      var tt = 0.05 + (i % 8) / 9.6, uu = 4 + (i < 8 ? 0 : 3.8) + (i % 3) * 1.1;
+      var tt = 0.07 + (i % 8) / 9.8, uu = 0.4 + (i < 8 ? 0 : 3.2) + (i % 3) * 1.2;
       var q = b.pt(tt, uu);
-      s += '<circle cx="' + q[0].toFixed(1) + '" cy="' + q[1].toFixed(1) + '" r="2" fill="' + A + '"/>';
+      s += '<circle cx="' + q[0].toFixed(1) + '" cy="' + q[1].toFixed(1) + '" r="1.9" fill="#F0900E"/>';
     }
     s += '<text x="8" y="14" font-size="11" font-weight="700" fill="' + SD + '">root</text>';
     s += arr(112, 8, 112, 30, GREY, 2);
