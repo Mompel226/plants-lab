@@ -324,7 +324,8 @@
        sizes the build wrote, so nothing moves once it arrives. */
     var wh0 = sizeOf(spec.img + '-900.jpg') || sizeOf(spec.img);
     var tall = wh0 && wh0[0] && wh0[1] / wh0[0] > 1.15;
-    var f = h('figure', 'photo' + (spec.small ? ' photo--small' : '') + (tall ? ' photo--portrait' : '')); if (spec.group) f.setAttribute('data-group', spec.group);   /* small: a low-resolution diagram drawn at its own size, not blown up */
+    var f = h('figure', 'photo' + (spec.small ? ' photo--small' : '') + (tall ? ' photo--portrait' : '') +
+                       (spec.align === 'right' ? ' photo--right' : '')); if (spec.group) f.setAttribute('data-group', spec.group);   /* small: a low-resolution diagram drawn at its own size, not blown up */
     var pic = picture(spec);
     if (pic) {
       f.appendChild(pic.pic);
