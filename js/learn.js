@@ -1882,12 +1882,6 @@
         when: function () { return S.organ === 'shoot' && S.top.indexOf('replaced') === 0 || S.organ === 'shoot' && S.top.indexOf('shift') === 0; } },
       { key: 'cover', label: 'Cover', opts: [['none', 'nothing'], ['opaque', 'opaque cap on the tip'], ['clear', 'clear cap on the tip'], ['collar', 'opaque collar lower down']],
         when: function () { return S.organ === 'shoot' && S.top !== 'cut'; } },
-      /* Boysen-Jensen slit an INTACT coleoptile and slid the plate into the slit. Offered
-         alongside a cut, replaced or shifted tip it produced arrangements nobody has run — a
-         gelatin layer and a mica plate at once, or a plate under a tip that has been pushed
-         off the stump — and the widget then answered for them as though they were settled. */
-      { key: 'mica', label: 'Mica plate under half the tip', opts: [['none', 'none'], ['left', 'under the left half'], ['right', 'under the right half']],
-        when: function () { return S.organ === 'shoot' && S.lay === 'up' && S.top === 'intact' && (S.light === 'left' || S.light === 'right'); } },
       { key: 'block', label: 'Agar block on the stump', opts: [['none', 'none'], ['plainL', 'plain, left'], ['plainR', 'plain, right'], ['auxinL', 'soaked in auxin, left'], ['auxinR', 'soaked in auxin, right']],
         when: function () { return S.organ === 'shoot' && S.lay === 'up' && S.top === 'cut'; } },
       { key: 'cap', label: 'The root cap', opts: [['intact', 'left on'], ['cut', 'cut off']],
@@ -1909,14 +1903,12 @@
             /* a control that has just become meaningless should not keep an odd value */
             if (g.key === 'top' && o[0] !== 'cut') S.block = 'none';
             if (g.key === 'top' && o[0] === 'cut') S.cover = 'none';
-            if (g.key === 'top' && o[0] !== 'intact') S.mica = 'none';
             /* a sideways shoot has no left or right flank to light */
             if (g.key === 'lay' && o[0] === 'side') {
               if (S.light === 'left' || S.light === 'right') S.light = 'dark';
               if (S.top !== 'intact' && S.top !== 'cut') S.top = 'intact';   /* the off-centre replacements are upright experiments */
-              S.block = 'none'; S.mica = 'none';
+              S.block = 'none';
             }
-            if (g.key === 'light' && o[0] !== 'left' && o[0] !== 'right') S.mica = 'none';
             buildPanel(); run();
           });
           pills.appendChild(b);
@@ -1935,7 +1927,7 @@
 
     /* ----- the model: apparatus in, biology out ----- */
     function model() {
-      var made = 0, offset = 0, sees = false, note = '', who = '', thru = 1;
+      var made = 0, offset = 0, sees = false, who = '', thru = 1;
 
       if (S.organ === 'root') {
         made = 1;                                  /* auxin arrives from the shoot above */
@@ -2017,11 +2009,6 @@
       }
 
       var dL = made * fL * thru, dR = made * fR * thru;   /* what actually reaches the cells */
-      /* A sheet pushed down one side stops the auxin travelling down THAT side. Where it
-         blocks the side that was carrying more, the difference never reaches the cells that
-         would have stretched, and the observed result is no curvature at all. */
-      if (S.organ === 'shoot' && S.mica === 'left')  { note = 'mica-left';  dL = Math.min(dL, dR); }
-      if (S.organ === 'shoot' && S.mica === 'right') { note = 'mica-right'; dR = Math.min(dL, dR); }
 
       /* the inversion: more auxin stretches a shoot cell and holds back a root cell */
       var gL = S.organ === 'root' ? (1 - dL) : dL,
@@ -2047,7 +2034,6 @@
          Darwin taught a student that the cap alone was the point. */
       var lateral = S.light === 'left' || S.light === 'right';
       if (S.organ === 'shoot' && S.lay === 'up') {
-        var replaced = S.top === 'replaced' || S.top.indexOf('shift') === 0;
         if (S.top === 'intact' && lateral && S.cover === 'opaque') who = 'Darwin, 1880';
         else if (S.top === 'intact' && lateral && S.cover === 'collar') who = 'Darwin, 1880';
         else if (S.top === 'intact' && lateral && S.cover === 'clear') who = 'Darwin, 1880';
@@ -2061,11 +2047,10 @@
         /* A tip pushed to one side is Paal's arrangement, not Boysen-Jensen's — his sat squarely
            on the stump, and the whole of his point was that nothing else had been changed. */
         else if (S.top === 'replaced' && S.layer === 'gel' && lateral) who = 'Boysen-Jensen, 1911';
-        else if (S.mica !== 'none' && lateral && S.top === 'intact') who = 'Boysen-Jensen, 1913';
       }
 
       return { made: made, sees: sees, lit: lit, grav: grav, fL: fL, fR: fR, dL: dL, dR: dR,
-               gL: gL, gR: gR, bend: bend, offset: offset, note: note, who: who, thru: thru };
+               gL: gL, gR: gR, bend: bend, offset: offset, who: who, thru: thru };
     }
 
     /* ----- geometry -----
@@ -2648,43 +2633,6 @@
         }
       }
 
-      /* a mica sheet pushed down into one flank */
-      /* Boysen-Jensen slit the shoot just below the tip and slid the plate in HORIZONTALLY,
-         halfway across. It blocks what comes down that half. Drawn as a vertical slice down
-         the flank it was not his experiment and did not match what the model was doing. */
-      if (!root && S.top !== 'cut' && S.mica !== 'none') {
-        var sgn = S.mica === 'left' ? -1 : 1, sM = Math.max(6, (putBack ? bodyTop : g.TIP) - 11);   /* clear of the line marking the foot of the tip */
-        var m0 = at(sM, sgn * -2), m1 = at(sM, sgn * (HW + 16));
-        sOver += '<path d="M' + f1(m0) + ' L' + f1(m1) + '" stroke="#6C7681" stroke-width="5.5" stroke-linecap="round"/>';
-        var mid = at(sM, sgn * HW * 0.6);
-        sOver += ruled(mid[0], mid[1], 0, 0, 'mica plate under half the tip: it holds this half back');
-      }
-
-      /* THE SEED, and it is drawn HERE rather than with the soil so that it covers the root's
-         square base end. Drawn first, the root was laid over it and the two met at a butt joint
-         that read as a root with an egg parked beside it; drawn last, the root comes out from
-         under the seed coat, which is what actually happens at the micropyle. */
-      if (root) {
-        /* A bean, not an egg: broad and round at the far end, drawn in a little where the root
-           comes out, with the hilum — the scar where it was joined to the pod — on the flat edge
-           beside it. And BIG: on a germinating seedling the seed is far and away the largest
-           thing in the picture, with a thread of a root out of one end and a thread of a shoot
-           out of the other. At a seed barely wider than the root was thick, the two together
-           made one shape rather than two, and it was the wrong shape. It is now about three
-           times the root's thickness, which is roughly life. */
-        s += '<g transform="translate(' + (g.BX - 114) + ',' + (g.BY + 48) + ') rotate(-13) scale(3)">' +
-             '<path d="M52 -4 C51 12 34 24 11 27 C-15 30 -43 21 -50 5 C-56 -10 -42 -25 -17 -28 C11 -32 44 -21 52 -4 Z" ' +
-             'fill="url(#axSeed)" stroke="#9C7F4E" stroke-width="1.2" stroke-linejoin="round"/>' +
-             /* the seam between the two halves of the seed, and the scar where it was joined to
-                the pod: the two marks that say seed rather than pebble */
-             '<path d="M-46 -4 C-30 -14 8 -16 40 -7" fill="none" stroke="#B89A63" stroke-width="1.2" opacity=".65"/>' +
-             /* the hilum sits at the end the radicle and the plumule come out of, not away from it */
-             '<ellipse cx="40" cy="7" rx="6" ry="2.2" transform="rotate(74 40 7)" fill="#DCC79C" stroke="#BFA372" stroke-width=".5" opacity=".9"/>' +
-             '<path d="M-36 -14 C-28 -21 -14 -24 0 -22" fill="none" stroke="#FBF4E2" stroke-width="3" stroke-linecap="round" opacity=".4"/>' +
-             '</g>';
-        s += '<text class="ax__s" x="' + (g.BX - 116) + '" y="' + (g.BY + 208) + '" text-anchor="middle">seed</text>';
-      }
-
       /* the root cap and its statoliths — the detector, and the thing that does the detecting */
       if (root) {
         if (S.cap === 'intact') {
@@ -2784,13 +2732,6 @@
         var want = 0.5 + 0.4 * Math.min(1, Math.abs(lean) / 0.34);          /* 0.5 even, 0.9 leaning */
         var kSign = lean < 0 ? -1 : 1;
         var kExp = Math.abs(lean) < 0.02 ? 1 : Math.log(0.5) / Math.log(1 - want);
-        /* Declared BEFORE the surplus that reads them: below it, both were still undefined
-           when the queue was sized, so nQueue was always zero and the auxin waiting above the
-           plate — the whole point of the plate — was never drawn. */
-        var blockL = S.mica === 'left', blockR = S.mica === 'right';
-        var surplus = blockL ? Math.max(0, M.fL * M.made - M.dL)
-                    : blockR ? Math.max(0, M.fR * M.made - M.dR) : 0;
-        var nQueue = Math.round(N * surplus / mk), queued = 0;
         function across(u01) {
           var x = 2 * Math.pow(u01, kExp) - 1;
           return kSign * (x < -1 ? -1 : x > 1 ? 1 : x);
@@ -2816,7 +2757,6 @@
            soil, inside a cap that is not there. It now turns just inside the cut end, which is
            what is left of the apex to turn in. */
         var viaS = (root && S.cap === 'cut') ? Math.max(8, g.TIP - 14) : g.TIP + 12;
-        var sMica = Math.max(6, (putBack ? bodyTop : g.TIP) - 11);   /* where the plate is */
         for (var q = 0; q < N; q++) {
           /* The R2 sequence — the plastic number's two reciprocals — which is built to spread
              points evenly in TWO dimensions. The golden ratio paired with something else is not:
@@ -2832,12 +2772,7 @@
              across the whole of ITSELF, which for a shifted tip is not the middle of the
              stump. Reading only M.offset, a shifted tip made half its auxin in the air
              beside it. */
-          /* Settled first, because it decides where the grain starts as well as where it goes. */
-          var stopped = queued < nQueue;
-          if (stopped) queued++;
-          var bSgn = blockL ? -1 : 1;
-          var uEven = stopped ? bSgn * HW * (0.30 + 0.34 * a1)   /* already on the flank the tip favoured */
-            : putBack ? srcU + (a1 * 2 - 1) * HW * 0.5
+          var uEven = putBack ? srcU + (a1 * 2 - 1) * HW * 0.5
             : root ? (a1 * 2 - 1) * HW * 0.24          /* down the middle: the stele, not the flanks */
             : M.offset !== 0 ? M.offset * HW * (0.18 + 0.34 * b1)
             : (a1 * 2 - 1) * HW * 0.54;
@@ -2879,30 +2814,6 @@
               u2 = uEven + (uSide - uEven) * eU;
               var pgR = at(Math.max(4, s2), u2);
               s += '<circle cx="' + pgR[0].toFixed(1) + '" cy="' + pgR[1].toFixed(1) + '" r="1.55" fill="#F0900E" opacity="' +
-                   Math.min(1, age * 7).toFixed(2) + '"/>';
-              continue;
-            }
-            if (stopped) {
-              /* ROUND THE PLATE, not piled up behind it. The plate is a partial barrier pushed
-                 halfway across a slit, so auxin coming down that flank cannot carry straight on
-                 — but it is not trapped either. It is deflected inwards, passes the plate's
-                 inner end and rejoins the stream below.
-                 That is the whole reason the result is NO curvature rather than curvature the
-                 other way. Block the shaded flank completely and the lit flank would be left
-                 with more than it, and the shoot would bend AWAY from the light; what actually
-                 happens is that the plate destroys the separation the tip had made without
-                 destroying the supply, so both flanks below it end up carrying the same.
-                 Drawn as a queue held above the plate, the picture could not say where the
-                 auxin below it had come from. */
-              var pA = clamp(age / 0.55), pB = clamp((age - 0.55) / 0.45);
-              var ePA = pA * pA * (3 - 2 * pA);
-              var ePB = pB < 0.5 ? 2 * pB * pB : 1 - Math.pow(-2 * pB + 2, 2) / 2;
-              var sGap = sMica + 5, uGap = -bSgn * 7;          /* just past the plate's inner end */
-              var s3 = pB <= 0 ? sTop + (sGap - sTop) * ePA : sGap + (sEnd - sGap) * ePB;
-              var u3 = pB <= 0 ? uEven + (uGap - uEven) * ePA
-                               : uGap + (uSide - uGap) * (pB * pB * (3 - 2 * pB));
-              var pgP = at(Math.max(4, s3), u3);
-              s += '<circle cx="' + pgP[0].toFixed(1) + '" cy="' + pgP[1].toFixed(1) + '" r="1.55" fill="#F0900E" opacity="' +
                    Math.min(1, age * 7).toFixed(2) + '"/>';
               continue;
             }
@@ -3119,7 +3030,6 @@
       [0.58, function (M) { return M.made === 0 ? ''
         : S.organ === 'root' ? 'It travels back from the tip to the zone of elongation.'
         : M.thru === 0 ? 'The mica is impermeable, so none of it reaches the stump.'
-        : M.note ? 'The plate blocks that side of the stump.'
         : 'The auxin travels down to the zone of elongation.'; }],
       /* This beat says WHY, and stops there. The result — which way it goes, and what that is
          called — is the line that follows it, in bold. Saying the outcome here as well meant
@@ -3156,8 +3066,6 @@
         it.push([sw('<circle cx="8" cy="8" r="4.4" fill="#6B5A33"/>'), 'starch grain (statolith)']);
       if (S.organ === 'root')
         it.push([sw('<path d="M3 14 C7 8 9 8 13 2" fill="none" stroke="#9A8459" stroke-width="2.2" stroke-dasharray="4 3"/>'), 'dashed line: the path it takes through the soil']);
-      if (S.organ === 'shoot' && S.mica !== 'none')
-        it.push([sw('<rect x="1" y="6.5" width="14" height="3.4" rx="1.7" fill="#6C7681"/>'), 'mica — nothing crosses it']);
       if (S.organ === 'shoot' && S.top !== 'intact' && S.top !== 'cut')
         it.push([sw('<rect x="1.5" y="5.5" width="13" height="5.5" rx="1.2" fill="' + (S.layer === 'mica' ? '#B9BFC7' : '#F2E7C8') + '" stroke="' + (S.layer === 'mica' ? '#6C7681' : '#C9B77E') + '" stroke-width="1.4"/>'), S.layer === 'mica' ? 'mica layer' : 'gelatin — auxin crosses it']);
       if (S.organ === 'shoot' && S.top === 'cut' && S.block !== 'none')
@@ -3218,10 +3126,6 @@
             : 'The <b>position</b> of the tip decides the distribution here, not the direction of the light.');
         if (S.cover === 'collar')
           pts.push('The collar covers the stem but not the tip. The tip is the detector, so the response still occurs.');
-        if (M.note && !diff)
-          pts.push('The plate blocks the flank that was carrying more auxin, so the difference never reaches the elongating cells and there is no curvature.');
-        else if (M.note)
-          pts.push('This plate is on the flank that was carrying less auxin, so it blocks nothing that mattered. That is the control.');
       }
       /* Four bullets after a five-line narration is a wall. The ones pushed first are the ones
          most particular to this arrangement, so the tail is what goes. */
@@ -3318,7 +3222,7 @@
     resetBtn.addEventListener('click', function () {
       if (S.t) { clearInterval(S.t); S.t = null; }
       S.organ = 'shoot'; S.lay = 'up'; S.light = 'left'; S.top = 'intact'; S.layer = 'gel';
-      S.cover = 'none'; S.mica = 'none'; S.block = 'none'; S.cap = 'intact';
+      S.cover = 'none'; S.block = 'none'; S.cap = 'intact';
       buildPanel(); run();
     });
     acts.appendChild(goBtn); acts.appendChild(resetBtn);
