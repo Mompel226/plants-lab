@@ -3039,8 +3039,8 @@
         if (M.made === 0 && S.organ === 'shoot') return 'With no auxin, no cell elongates.';
         if (M.thru === 0) return 'Without auxin, none of the cells below can elongate.';
         if (!diff) return '';                      /* the result line carries this one on its own */
-        if (S.organ === 'root') return 'More auxin below. In a root that HOLDS CELLS BACK, so the upper side stretches more than the lower.';
-        if (S.lay === 'side') return 'More auxin below. In a shoot that means MORE elongation, so the lower side stretches more than the upper.';
+        if (S.organ === 'root') return 'More auxin below. In a root a high concentration INHIBITS cell elongation, so the lower cells elongate less than the upper ones.';
+        if (S.lay === 'side') return 'More auxin below. In a shoot a high concentration STIMULATES cell elongation, so the lower cells elongate more than the upper ones.';
         return 'The ' + (M.dL > M.dR ? 'left' : 'right') + ' side has more auxin, so those cells elongate more, and that flank is now longer than the other.'; }]
     ];
 
@@ -3097,7 +3097,7 @@
 
       if (S.organ === 'root') {
         if (M.sees) {
-          pts.push('In a <b>root</b>, a lot of auxin <b>inhibits</b> cell elongation — it slows the cells down. That is the sentence to learn.');
+          pts.push('In a <b>root</b> a high concentration of auxin <b>inhibits</b> cell elongation, the opposite of its effect in a shoot. That is the sentence to learn.');
           pts.push('A real root overshoots the vertical and corrects, and stones deflect the tip. That is why its path waves.');
         } else {
           pts.push('The cap is the <b>detector</b>, not the source. Auxin still arrives and the root still grows; it can no longer detect the direction of gravity.');

@@ -131,7 +131,7 @@ window.GLOSSARY = [
  },
  {
   "term": "auxin",
-  "def": "A plant hormone made in the shoot tip. It diffuses through the plant, and it stimulates cell elongation; light and gravity make it unequally distributed, so one side of a shoot grows faster than the other and the shoot bends.",
+  "def": "A plant hormone made in the shoot tip. It diffuses through the plant, and it stimulates cell elongation; light and gravity make it unequally distributed, so the cells on one side of a shoot elongate more than those on the other and the shoot bends.",
   "sup": true
  },
  {
