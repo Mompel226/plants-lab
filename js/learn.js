@@ -2816,6 +2816,7 @@
            soil, inside a cap that is not there. It now turns just inside the cut end, which is
            what is left of the apex to turn in. */
         var viaS = (root && S.cap === 'cut') ? Math.max(8, g.TIP - 14) : g.TIP + 12;
+        var sMica = Math.max(6, (putBack ? bodyTop : g.TIP) - 11);   /* where the plate is */
         for (var q = 0; q < N; q++) {
           /* The R2 sequence — the plastic number's two reciprocals — which is built to spread
              points evenly in TWO dimensions. The golden ratio paired with something else is not:
@@ -2831,7 +2832,12 @@
              across the whole of ITSELF, which for a shifted tip is not the middle of the
              stump. Reading only M.offset, a shifted tip made half its auxin in the air
              beside it. */
-          var uEven = putBack ? srcU + (a1 * 2 - 1) * HW * 0.5
+          /* Settled first, because it decides where the grain starts as well as where it goes. */
+          var stopped = queued < nQueue;
+          if (stopped) queued++;
+          var bSgn = blockL ? -1 : 1;
+          var uEven = stopped ? bSgn * HW * (0.30 + 0.34 * a1)   /* already on the flank the tip favoured */
+            : putBack ? srcU + (a1 * 2 - 1) * HW * 0.5
             : root ? (a1 * 2 - 1) * HW * 0.24          /* down the middle: the stele, not the flanks */
             : M.offset !== 0 ? M.offset * HW * (0.18 + 0.34 * b1)
             : (a1 * 2 - 1) * HW * 0.54;
@@ -2841,24 +2847,8 @@
              line too early it was undefined on the first grain, which put that grain at NaN — and
              every grain after it silently borrowed its predecessor's offset. */
           var js = (frac(a1 * 43.7 + b1 * 17.3) - 0.5) * 5.5, ju = (frac(a1 * 11.9 + b1 * 31.1) - 0.5) * 3.4;
-          /* WHICH GRAINS ARE HELD UP has to be settled before the cloud below is laid out, and
-             not by reading off which flank each grain happened to land on. Decided that way, the
-             held-back grains were taken out of one flank of the delivered cloud as well — so
-             with the plate under the shaded half the picture showed a cloud piled hard to the
-             LIT side, under an elongation zone whose two flanks were drawn equal. The drawing
-             was contradicting the model, and the model was the one that was right: the plate
-             does not empty a flank, it holds that flank back to what the other one is carrying,
-             and the whole result of the experiment is that the two sides come out the same.
-             The queue is now taken off the top of the count and placed against the plate on the
-             blocked flank; what is left travels on and is spread by the delivered shares. */
-          var stopped = queued < nQueue;
-          if (stopped) queued++;
-          var uSide = stopped ? (blockL ? -1 : 1) * HW * (0.20 + 0.5 * a1) + ju   /* a1, not b1: the
-                        queue's height already comes off b1, and sharing one hash for both drew
-                        the held-up grains along a single diagonal chain instead of a heap */
-                    : (M.thru === 0 ? srcU : 0) + across(b1) * HW * (M.thru === 0 ? 0.5 : 0.58) + ju;
+          var uSide = (M.thru === 0 ? srcU : 0) + across(b1) * HW * (M.thru === 0 ? 0.5 : 0.58) + ju;
           var sEnd = M.thru === 0 ? srcLo + a1 * (srcHi - srcLo)   /* nothing crosses: it stays in the tip */
-                   : stopped ? g.ZONE1 + 4 + b1 * 20               /* held up against the plate, in a queue */
                    : g.ZONE0 + 5 + a1 * (g.ZONE1 - g.ZONE0 - 10) + js;
 
           /* ONE continuous journey per grain, not three stages for all of them together. Staged,
@@ -2889,6 +2879,30 @@
               u2 = uEven + (uSide - uEven) * eU;
               var pgR = at(Math.max(4, s2), u2);
               s += '<circle cx="' + pgR[0].toFixed(1) + '" cy="' + pgR[1].toFixed(1) + '" r="1.55" fill="#F0900E" opacity="' +
+                   Math.min(1, age * 7).toFixed(2) + '"/>';
+              continue;
+            }
+            if (stopped) {
+              /* ROUND THE PLATE, not piled up behind it. The plate is a partial barrier pushed
+                 halfway across a slit, so auxin coming down that flank cannot carry straight on
+                 — but it is not trapped either. It is deflected inwards, passes the plate's
+                 inner end and rejoins the stream below.
+                 That is the whole reason the result is NO curvature rather than curvature the
+                 other way. Block the shaded flank completely and the lit flank would be left
+                 with more than it, and the shoot would bend AWAY from the light; what actually
+                 happens is that the plate destroys the separation the tip had made without
+                 destroying the supply, so both flanks below it end up carrying the same.
+                 Drawn as a queue held above the plate, the picture could not say where the
+                 auxin below it had come from. */
+              var pA = clamp(age / 0.55), pB = clamp((age - 0.55) / 0.45);
+              var ePA = pA * pA * (3 - 2 * pA);
+              var ePB = pB < 0.5 ? 2 * pB * pB : 1 - Math.pow(-2 * pB + 2, 2) / 2;
+              var sGap = sMica + 5, uGap = -bSgn * 7;          /* just past the plate's inner end */
+              var s3 = pB <= 0 ? sTop + (sGap - sTop) * ePA : sGap + (sEnd - sGap) * ePB;
+              var u3 = pB <= 0 ? uEven + (uGap - uEven) * ePA
+                               : uGap + (uSide - uGap) * (pB * pB * (3 - 2 * pB));
+              var pgP = at(Math.max(4, s3), u3);
+              s += '<circle cx="' + pgP[0].toFixed(1) + '" cy="' + pgP[1].toFixed(1) + '" r="1.55" fill="#F0900E" opacity="' +
                    Math.min(1, age * 7).toFixed(2) + '"/>';
               continue;
             }
