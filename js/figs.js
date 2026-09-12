@@ -222,86 +222,6 @@
       'A root underground, labelled root, curving downwards with its root cap at the end. Auxin grains lie along its lower flank, and the cell divisions show that flank is shorter than the upper one.');
   })();
 
-  /* ---------------- 1. xylem vessel ---------------- */
-  F['xylem-vessel'] = svg('0 0 120 100',
-    '<defs>' +
-    '<linearGradient id="xvW" x1="0" x2="1" y1="0" y2="0">' +
-    '<stop offset="0" stop-color="#7E683D"/><stop offset=".45" stop-color="#D6C6A5"/><stop offset="1" stop-color="#947C4D"/></linearGradient>' +
-    '<linearGradient id="xvL" x1="0" x2="1" y1="0" y2="0">' +
-    '<stop offset="0" stop-color="#94BAD7"/><stop offset=".45" stop-color="#EBF4FA"/><stop offset="1" stop-color="#A6C7DE"/></linearGradient>' +
-    '</defs>' +
-    /* the open lumen: the inside of the pipe, with no living contents in it */
-    '<rect x="44" y="13" width="44" height="79" fill="url(#xvL)"/>' +
-    /* the lignin rings, seen running round the far side of the pipe */
-    '<g stroke="#BFA876" stroke-width="2.4" fill="none" opacity=".42">' +
-    '<path d="M44 22 Q66 11 88 22"/><path d="M44 34 Q66 23 88 34"/><path d="M44 46 Q66 35 88 46"/>' +
-    '<path d="M44 58 Q66 47 88 58"/><path d="M44 70 Q66 59 88 70"/><path d="M44 82 Q66 71 88 82"/></g>' +
-    /* the two cut walls, thickened with lignin */
-    '<g fill="url(#xvW)" stroke="' + SD + '" stroke-width="1.5">' +
-    '<rect x="30" y="13" width="14" height="79"/><rect x="88" y="13" width="14" height="79"/></g>' +
-    '<g fill="#6B5629">' +
-    '<rect x="30" y="19.5" width="14" height="5"/><rect x="30" y="31.5" width="14" height="5"/>' +
-    '<rect x="30" y="43.5" width="14" height="5"/><rect x="30" y="55.5" width="14" height="5"/>' +
-    '<rect x="30" y="67.5" width="14" height="5"/><rect x="30" y="79.5" width="14" height="5"/>' +
-    '<rect x="88" y="19.5" width="14" height="5"/><rect x="88" y="31.5" width="14" height="5"/>' +
-    '<rect x="88" y="43.5" width="14" height="5"/><rect x="88" y="55.5" width="14" height="5"/>' +
-    '<rect x="88" y="67.5" width="14" height="5"/><rect x="88" y="79.5" width="14" height="5"/></g>' +
-    '<g fill="#EFE4CA" opacity=".8">' +
-    '<rect x="30" y="18.3" width="14" height="1.4"/><rect x="30" y="30.3" width="14" height="1.4"/>' +
-    '<rect x="30" y="42.3" width="14" height="1.4"/><rect x="30" y="54.3" width="14" height="1.4"/>' +
-    '<rect x="30" y="66.3" width="14" height="1.4"/><rect x="30" y="78.3" width="14" height="1.4"/>' +
-    '<rect x="88" y="18.3" width="14" height="1.4"/><rect x="88" y="30.3" width="14" height="1.4"/>' +
-    '<rect x="88" y="42.3" width="14" height="1.4"/><rect x="88" y="54.3" width="14" height="1.4"/>' +
-    '<rect x="88" y="66.3" width="14" height="1.4"/><rect x="88" y="78.3" width="14" height="1.4"/></g>' +
-    /* all that is left of the end walls between the cells: broken stumps */
-    '<g fill="#CDB78C" stroke="#6E5A30" stroke-width="1.4" stroke-linejoin="round">' +
-    '<path d="M44 37 H52 l2 2 l-2 2 l2 2 H44 Z"/><path d="M88 37 H80 l-2 2 l2 2 l-2 2 H88 Z"/>' +
-    '<path d="M44 61 H52 l2 2 l-2 2 l2 2 H44 Z"/><path d="M88 61 H80 l-2 2 l2 2 l-2 2 H88 Z"/></g>' +
-    /* the cut mouth: the pipe is open all the way through */
-    '<ellipse cx="66" cy="13" rx="36" ry="6.8" fill="url(#xvW)" stroke="' + SD + '" stroke-width="1.5"/>' +
-    '<ellipse cx="66" cy="13" rx="22" ry="4" fill="#D5E6F2" stroke="' + SD + '" stroke-width="1.2"/>' +
-    /* water rising the whole way up and out */
-    arr(60, 89, 60, 8, W, 3.6) +
-    
-    'A xylem vessel drawn as a cut-open pipe. Its thick walls are banded with rings of lignin. Only broken stumps are left where the end walls between the cells used to be, so the pipe is one continuous open tube, empty of any living contents, with water rising straight up it.');
-
-  /* ---------------- 2. phloem sieve tube ---------------- */
-  F['phloem-tube'] = svg('0 0 120 100',
-    '<defs>' +
-    '<linearGradient id="ptS" x1="0" x2="1" y1="0" y2="0">' +
-    '<stop offset="0" stop-color="#EDE3F3"/><stop offset=".45" stop-color="#FCFAFD"/><stop offset="1" stop-color="#EFE6F4"/></linearGradient>' +
-    '<linearGradient id="ptC" x1="0" x2="1" y1="0" y2="0">' +
-    '<stop offset="0" stop-color="#B893CC"/><stop offset=".5" stop-color="#D3B6E2"/><stop offset="1" stop-color="#A87FC0"/></linearGradient>' +
-    '</defs>' +
-    /* the sieve tube: two living elements end to end, almost empty inside */
-    '<rect x="20" y="8" width="46" height="84" rx="3" fill="url(#ptS)" stroke="#7A5C8E" stroke-width="2.4"/>' +
-    /* a thin lining of cytoplasm hugging the wall, and no nucleus anywhere */
-    '<g fill="none" stroke="#C7AAD8" stroke-width="2.2" opacity=".95">' +
-    '<path d="M22.9 11 V46 M63.1 11 V46 M22.9 89 V58 M63.1 89 V58"/></g>' +
-    '<g fill="#B79ACA" opacity=".75"><circle cx="24" cy="24" r="1.4"/><circle cx="62" cy="33" r="1.4"/>' +
-    '<circle cx="24" cy="69" r="1.4"/><circle cx="62" cy="80" r="1.4"/></g>' +
-    /* the sieve plate, with pores through it */
-    '<rect x="20" y="47" width="46" height="10" fill="#7A5C8E"/>' +
-    '<rect x="20" y="47" width="46" height="1.6" fill="#BFA3D0" opacity=".85"/>' +
-    '<g fill="#F5F0F8" stroke="#4E3660" stroke-width=".9">' +
-    '<rect x="24.5" y="48.8" width="7" height="6.4" rx="1.2"/><rect x="34" y="48.8" width="7" height="6.4" rx="1.2"/>' +
-    '<rect x="43.5" y="48.8" width="7" height="6.4" rx="1.2"/><rect x="53" y="48.8" width="7" height="6.4" rx="1.2"/></g>' +
-    /* sucrose travelling along the tube and through a pore */
-    dots([[33, 20], [46, 27], [32, 34], [54, 20], [33, 66], [53, 68], [32, 80], [36, 88]], A) +
-    arr(47, 14, 47, 88, AD, 3.2) +
-    /* the companion cell: packed with cytoplasm, and it keeps its nucleus */
-    '<rect x="70" y="23" width="34" height="54" rx="4" fill="url(#ptC)" stroke="#7A5C8E" stroke-width="2.2"/>' +
-    '<g fill="#7B5B92" opacity=".85"><circle cx="76" cy="31" r="1.8"/><circle cx="86" cy="28" r="1.8"/>' +
-    '<circle cx="97" cy="32" r="1.8"/><circle cx="100" cy="43" r="1.8"/><circle cx="75" cy="44" r="1.8"/>' +
-    '<circle cx="76" cy="57" r="1.8"/><circle cx="88" cy="64" r="1.8"/><circle cx="99" cy="57" r="1.8"/>' +
-    '<circle cx="96" cy="70" r="1.8"/><circle cx="80" cy="70" r="1.8"/><circle cx="99" cy="24" r="1.8"/></g>' +
-    '<ellipse cx="87" cy="44" rx="9.6" ry="8" fill="#5E4176" stroke="#3E2A50" stroke-width="1.4"/>' +
-    '<ellipse cx="84" cy="41.6" rx="3.2" ry="2.5" fill="#AE92C4"/>' +
-    /* the strands that join the companion cell to the sieve tube */
-    '<g stroke="#7A5C8E" stroke-width="2.6" stroke-linecap="round"><path d="M66 33 H70 M66 44 H70 M66 66 H70"/></g>' +
-    
-    'A phloem sieve tube: two living sieve tube elements end to end with only a thin lining of cytoplasm and no nucleus, a sieve plate with pores across the join between them, sucrose moving along the tube through those pores, and a companion cell beside it packed with cytoplasm and holding a nucleus.');
-
   /* ---------- 2. transpiration: the large internal surface ---------- */
   F['transpiration'] = svg('0 0 120 100',
     '<defs>' +
@@ -412,40 +332,6 @@
     '<circle cx="70" cy="30" r="4.6" fill="' + A + '" stroke="' + AD + '" stroke-width="1.6"/>' +
     pin(44, 63, 1) + pin(94, 17, 2),
     'A graph of rate against one factor. The line climbs steeply while that factor is in short supply, then stops climbing at a marked point and runs flat, because a different factor has become the limit.');
-
-  /* ---------------- 4. source and sink ---------------- */
-  F['source-sink'] = svg('0 0 120 100',
-    '<defs>' +
-    '<linearGradient id="ssL" x1="0" x2="1" y1="0" y2="1">' +
-    '<stop offset="0" stop-color="#86C98D"/><stop offset="1" stop-color="#3B8544"/></linearGradient>' +
-    '<linearGradient id="ssT" x1="0" x2="0" y1="0" y2="1">' +
-    '<stop offset="0" stop-color="#E0D0AA"/><stop offset="1" stop-color="#A38954"/></linearGradient>' +
-    '<linearGradient id="ssP" x1="0" x2="1" y1="0" y2="0">' +
-    '<stop offset="0" stop-color="#C09FD3"/><stop offset=".5" stop-color="#EDE2F4"/><stop offset="1" stop-color="#C09FD3"/></linearGradient>' +
-    '<linearGradient id="ssX" x1="0" x2="1" y1="0" y2="0">' +
-    '<stop offset="0" stop-color="#A9CBE3"/><stop offset=".5" stop-color="#E4F0F8"/><stop offset="1" stop-color="#A9CBE3"/></linearGradient>' +
-    '</defs>' +
-    /* the soil, and the store buried in it */
-    '<rect x="0" y="74" width="120" height="26" fill="' + SOIL + '" opacity=".8"/>' +
-    '<path d="M0 74 H120" stroke="' + SD + '" stroke-width="1.3" opacity=".55"/>' +
-    /* two leaves: sucrose is made here */
-    '<path d="M48 30 q-20 -20 -42 -11 q15 20 42 11 Z" fill="url(#ssL)" stroke="' + G + '" stroke-width="1.7"/>' +
-    '<path d="M74 30 q20 -20 42 -11 q-15 20 -42 11 Z" fill="url(#ssL)" stroke="' + G + '" stroke-width="1.7"/>' +
-    '<g stroke="#DFF0DC" stroke-width="1.3" opacity=".85" fill="none">' +
-    '<path d="M46 26.5 q-18 -9 -34 -8 M76 26.5 q18 -9 34 -8"/></g>' +
-    dots([[26, 21], [37, 25], [15, 16], [94, 21], [83, 25], [105, 16]], A) +
-    /* the stem, cut open: phloem on one side, xylem on the other */
-    '<rect x="45" y="26" width="32" height="52" fill="#F0F6EB" stroke="' + G + '" stroke-width="1.8"/>' +
-    '<rect x="46" y="26" width="15" height="52" fill="url(#ssP)" stroke="#7A5C8E" stroke-width="1.6"/>' +
-    '<rect x="64.5" y="26" width="11" height="52" fill="url(#ssX)" stroke="' + W + '" stroke-width="1.4"/>' +
-    dots([[48.8, 38], [58.2, 50], [48.8, 64]], A) +
-    arr(53.5, 30, 53.5, 76, AD, 3.4) +
-    arr(70, 74, 70, 32, W, 1.8) +
-    /* the store: sucrose is used or kept here */
-    '<path d="M60 74 c20 0 30 5 30 12 s-14 12 -30 12 s-30 -5 -30 -12 s10 -12 30 -12 Z" fill="url(#ssT)" stroke="' + SD + '" stroke-width="1.9"/>' +
-    dots([[52, 84], [66, 82], [74, 88], [60, 91], [44, 87]], AD) +
-    
-    'A plant with its leaves at the top and a swollen store below the soil. The stem is cut open to show two tissues side by side: sucrose made in the leaves travels down the phloem to the store, while water travels up the xylem beside it.');
 
   /* ---------- 4. germination: the order ---------- */
   F['germination'] = svg('0 0 120 100',

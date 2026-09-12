@@ -909,9 +909,9 @@
         say: 'Light is needed. Both parts are on the <b>same leaf</b>, so they had the same water, the same carbon dioxide, the same temperature and the same chlorophyll. Light is the only thing the covered strip did not get, so light is what it was missing.' },
 
       { k: 'vari', chip: 'Variegated leaf', sub: 'is chlorophyll needed?',
-        before: 'A variegated leaf is green in the middle and white round the edge: the white cells hold no chlorophyll. De-starched in the dark, then 48 hours in the light. Draw the leaf before you start — the ethanol takes the colour out and you will not be able to tell the parts apart.',
-        fresh: 'a leaf with a green centre and a white margin',
-        out: 'the middle blue-black, the margin orange-brown',
+        before: 'A variegated leaf is green in some places and white in others, and the white cells hold no chlorophyll. De-starched in the dark, then 48 hours in the light. Draw the leaf before you start: the ethanol takes the colour out, and afterwards you cannot tell which part was which.',
+        fresh: 'a variegated leaf: green in places, white in others',
+        out: 'blue-black wherever the leaf was green, orange-brown where it was white',
         res: 'Blue-black only where the leaf had been green.',
         say: 'Chlorophyll is needed. Again both parts are on one leaf, so the light, the water, the carbon dioxide and the temperature were the same for both. Only the chlorophyll differed.' },
 
@@ -940,8 +940,52 @@
     var BLADE = 'M20 138 C30 58 100 18 180 20 C180 88 120 143 20 138 Z';
     var RIB   = 'M22 136 C70 98 130 58 178 22';
     var VEINS = 'M58 108 C78 94 98 88 116 90 M78 94 C88 78 102 64 120 58 M106 76 C118 68 136 60 150 56';
-    var CORE  = 'translate(100,79) scale(.68) translate(-100,-79)'; /* the green middle of a variegated leaf */
     var STRIP = 'M9 -2 L49 -32 L191 160 L151 190 Z';                  /* the band of leaf the foil covered */
+
+    /* The green of a variegated leaf, laid out along the midrib rather than scaled off the
+       outline. A scaled outline gives an even border, and nothing about a real variegated
+       leaf is even: the green runs out to the margin in places and pulls right back in
+       others, with islands of white stranded in the green and islands of green out in the
+       white. The two tables below are how far the green reaches on each side of the midrib,
+       from the base to the tip — they are the drawing. */
+    function ribAt(t) {
+      var u = 1 - t, a = u * u * u, b = 3 * u * u * t, c = 3 * u * t * t, d = t * t * t;
+      return [a * 22 + b * 70 + c * 130 + d * 178, a * 136 + b * 98 + c * 58 + d * 22];
+    }
+    var NRM = [0.596, 0.808];                    /* across the leaf, towards the lower edge */
+    var V_HI = [5, 19, 31, 20, 34, 25, 13, 28, 34, 17, 4];
+    var V_LO = [5, 15, 27, 35, 18, 32, 24, 12, 29, 23, 5];
+    /* stranded patches: [where along the leaf, how far across, radii, tilt] */
+    var V_WHITE = [[0.30, -7, 7, 4.5, -32], [0.53, 11, 6, 4, 20], [0.74, -5, 5.5, 3.5, -40]];
+    var V_GREEN = [[0.36, -38, 8, 5, -30], [0.60, 40, 9, 5.5, 25], [0.84, 31, 7, 4.5, 15]];
+
+    function smooth(p) {                         /* closed Catmull-Rom, written out as cubics */
+      var n = p.length, d = 'M' + p[0][0].toFixed(1) + ' ' + p[0][1].toFixed(1), i;
+      for (i = 0; i < n; i++) {
+        var q0 = p[(i - 1 + n) % n], q1 = p[i], q2 = p[(i + 1) % n], q3 = p[(i + 2) % n];
+        d += 'C' + (q1[0] + (q2[0] - q0[0]) / 6).toFixed(1) + ' ' + (q1[1] + (q2[1] - q0[1]) / 6).toFixed(1) +
+             ' ' + (q2[0] - (q3[0] - q1[0]) / 6).toFixed(1) + ' ' + (q2[1] - (q3[1] - q1[1]) / 6).toFixed(1) +
+             ' ' + q2[0].toFixed(1) + ' ' + q2[1].toFixed(1);
+      }
+      return d + 'Z';
+    }
+    var VARI = (function () {
+      var up = [], dn = [], i, t, m;
+      for (i = 0; i < V_HI.length; i++) {
+        t = i / (V_HI.length - 1); m = ribAt(t);
+        up.push([m[0] - NRM[0] * V_HI[i], m[1] - NRM[1] * V_HI[i]]);
+        dn.push([m[0] + NRM[0] * V_LO[i], m[1] + NRM[1] * V_LO[i]]);
+      }
+      return smooth(up.concat(dn.reverse()));
+    }());
+    function patches(list, fill, stroke) {
+      return list.map(function (b) {
+        var m = ribAt(b[0]), x = m[0] + NRM[0] * b[1], y = m[1] + NRM[1] * b[1];
+        return '<ellipse cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" rx="' + b[2] + '" ry="' + b[3] +
+               '" transform="rotate(' + b[4] + ' ' + x.toFixed(1) + ' ' + y.toFixed(1) + ')" fill="' + fill +
+               (stroke ? '" stroke="' + stroke + '" stroke-width="1' : '') + '"/>';
+      }).join('');
+    }
 
     var GREEN = ['#5DBF6E', '#2A6B3B'], DULL = ['#8CBE95', '#4E7A55'],
         PALE  = ['#F3F0E4', '#B9B29C'], WHITE = ['#F2EEDC', '#93A07B'],
@@ -970,13 +1014,14 @@
       if (reg) {
         s += '<g clip-path="url(#stClip)">';
         s += k === 'vari'
-          ? '<path d="' + BLADE + '" transform="' + CORE + '" fill="' + reg[0] + '" stroke="' + reg[1] + '" stroke-width="2.2"/>'
+          ? '<path d="' + VARI + '" fill="' + reg[0] + '" stroke="' + reg[1] + '" stroke-width="1.2"/>' +
+            patches(V_WHITE, base[0], base[1]) + patches(V_GREEN, reg[0], reg[1])
           : '<path d="' + STRIP + '" fill="' + reg[0] + '"/>';
         s += '</g>';
       }
       if (ghost) {
         s += '<g clip-path="url(#stClip)" fill="none" stroke="#A79E86" stroke-width="1.5" stroke-dasharray="5 4">';
-        s += k === 'vari' ? '<path d="' + BLADE + '" transform="' + CORE + '"/>' : '<path d="' + STRIP + '"/>';
+        s += k === 'vari' ? '<path d="' + VARI + '"/>' + patches(V_GREEN, 'none', '#A79E86') : '<path d="' + STRIP + '"/>';
         s += '</g>';
       }
       var vc = st >= 2 && st <= 3 ? '#CFC8B2' : st === 4 ? 'none' : base[1];
