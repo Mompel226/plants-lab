@@ -2202,8 +2202,9 @@
       /* Cells outside the zone keep the length they started with; the four inside it are
          redrawn longer as the zone extends. Dividing the whole flank into equal boxes, as
          this did before, made every cell grow — which is the one thing that is not happening. */
+      var CELL = 19;                                  /* the length of a cell before it stretches */
       function cellBounds() {
-        var CELL = 19, z0 = Math.max(0, Math.min(g.ZONE0, bodyTop)), z1 = Math.max(z0, Math.min(g.ZONE1, bodyTop));
+        var z0 = Math.max(0, Math.min(g.ZONE0, bodyTop)), z1 = Math.max(z0, Math.min(g.ZONE1, bodyTop));
         var b = [0], v;
         for (v = CELL; v < z0 - 5; v += CELL) b.push(v);
         if (z0 > 0.5) b.push(z0);
@@ -2218,16 +2219,23 @@
           var s0 = B[i], s1 = B[i + 1];
           var mid = (s0 + s1) / 2, inZone = mid >= g.ZONE0 - 0.5 && mid <= g.ZONE1 + 0.5;
           var stretched = inZone ? gth * grow : 0;
+          /* What decides whether a cell is drawn as elongating is whether it IS longer than it
+             started, not whether its share of the auxin beat a fixed number. The old cut-off at
+             0.42 left the lit flank pale and arrowless while the same frame drew it 28% longer,
+             and with a plate on the shaded side it silenced BOTH flanks of a shoot that had
+             visibly grown — the key saying "this cell is elongating" against a drawing that
+             showed none. */
+          var grew = inZone && (s1 - s0) > CELL + 0.6;
           var p1 = at(s0, sign * HW), p2 = at(s1, sign * HW), p3 = at(s1, sign * (HW - CW)), p4 = at(s0, sign * (HW - CW));
           var fill = !inZone ? (root ? '#EFE6D0' : '#C6E2AC')
-                   : root ? (stretched > 0.42 ? '#CFE8C4' : '#E9DCC0')
-                          : (stretched > 0.42 ? '#A8D98C' : '#D9E9CC');
+                   : root ? (grew ? '#CFE8C4' : '#E9DCC0')
+                          : (grew ? '#A8D98C' : '#D9E9CC');
           out += '<path d="M' + f1(p1) + ' L' + f1(p2) + ' L' + f1(p3) + ' L' + f1(p4) + ' Z" fill="' + fill +
                  '" stroke="' + (root ? '#9A8459' : '#2C6E36') + '" stroke-width="1.3"/>';
           /* the divider between cells fades as the cell stretches: a stretched cell is longer,
              so its neighbours are further apart */
           /* the arrow says "this cell is elongating"; its length says by how much */
-          if (inZone && stretched > 0.42) {
+          if (grew) {
             var am = Math.min(5.5, (s1 - s0) * 0.16);
             out += dblArrow(at(s0 + am, sign * (HW - CW / 2)), at(s1 - am, sign * (HW - CW / 2)), root ? '#6B5A33' : '#1F5A31');
           }
@@ -2286,7 +2294,7 @@
         } else {
           s += rider(g.LEN) + '<path d="M' + (-HW - 3) + ' 30 v-26 q0 -16 ' + (HW + 3) + ' -16 q' + (HW + 3) + ' 0 ' + (HW + 3) + ' 16 v26 Z" fill="' +
                (S.cover === 'opaque' ? '#3A3A3A' : '#BFD8E8') + '" opacity="' + (S.cover === 'opaque' ? '.9' : '.55') + '" stroke="' + (S.cover === 'opaque' ? '#222' : '#7FA8C4') + '" stroke-width="1.6"/></g>';
-          var kA = at(g.LEN - 18, labU < 0 ? -(HW + 3) : HW + 3);
+          var kA = at(g.LEN + 8, labU < 0 ? -(HW + 3) : HW + 3);   /* on the cap's crown, clear of the tip's own leader */
           s += ruled(kA[0], kA[1], 0, 0, S.cover === 'opaque' ? 'opaque cap: the tip is blind' : 'clear cap: the tip still sees');
         }
       }
@@ -2306,17 +2314,20 @@
       /* the root cap and its statoliths — the detector, and the thing that does the detecting */
       if (root) {
         if (S.cap === 'intact') {
-          var pc = at(g.LEN, 0), phc = pc[2];
-          /* A quadratic from s = TIP through a control c beyond the apex peaks halfway between
-             them, so the multiplier has to be solved from the body's own cap (0.95) rather than
-             guessed — guessed at 1.5 it stopped 11 px short and left a nub of root sticking out. */
-          var capM = (g.LEN - g.TIP) / HW + 0.95;
-          s += '<path d="M' + f1(at(g.TIP, HW)) + ' Q' + (pc[0] + Math.sin(phc) * HW * capM).toFixed(1) + ' ' + (pc[1] - Math.cos(phc) * HW * capM).toFixed(1) +
-               ' ' + f1(at(g.TIP, -HW)) + ' Z" fill="#B59B6A" stroke="#8A7346" stroke-width="1.8"/>';
+          /* A root cap is blunt. A quadratic stretched far enough to cover the body's own tip
+             came to a point instead, so it is a cubic: two controls out beyond the apex hold the
+             curve wide, and the cap covers the root end without turning into a wedge. */
+          var c1 = at(g.LEN + 30, HW * 0.85), c2 = at(g.LEN + 30, -HW * 0.85);
+          s += '<path d="M' + f1(at(g.TIP, HW)) + ' C' + f1(c1) + ' ' + f1(c2) + ' ' + f1(at(g.TIP, -HW)) +
+               ' Z" fill="#B59B6A" stroke="#8A7346" stroke-width="1.8"/>';
           for (var q3 = 0; q3 < 7; q3++) {
-            var uu = -HW * 0.55 + (q3 % 4) * HW * 0.36, sss = g.TIP + 8 + Math.floor(q3 / 4) * 9;
-            var sink = detect * HW * 0.5;
-            var ps = at(sss, Math.min(uu + sink, HW * 0.68));   /* the deepest grain stays inside the cap */
+            var sss = g.TIP + 8 + Math.floor(q3 / 4) * 9;
+            /* They must finish on the LOWER side — that is the whole observation. A fixed offset
+               could not carry the grain that starts highest past the axis, so two of the seven
+               settled above the centre line and the cap appeared to detect nothing. */
+            var uFrom = -HW * 0.55 + (q3 % 4) * HW * 0.34;
+            var uTo = HW * (0.26 + 0.14 * ((q3 % 4) / 3));
+            var ps = at(sss, uFrom + (uTo - uFrom) * detect);
             s += '<circle cx="' + ps[0].toFixed(1) + '" cy="' + ps[1].toFixed(1) + '" r="3" fill="#6B5A33" opacity=".9"/>';
           }
           s += ruled(at(g.LEN - 12, 0)[0], at(g.LEN - 12, 0)[1], 396, 300, 'root cap: starch grains sink to the lower side', true);
@@ -2330,22 +2341,45 @@
          one-sided stimulus, then carried down. Nothing is destroyed on the way: the count
          of grains never changes, only where they end up, which is the point Briggs settled. */
       if (M.made > 0) {
-        var N = 26, nL = Math.round(N * M.fL), sTop = flat ? bodyTop - 6 : g.LEN - 14;
+        var N = 26, nL = Math.round(N * M.fL);
         var level = Math.abs(M.fR - M.fL) < 0.04;          /* nothing has pushed it to one side */
         var blockL = S.mica === 'left', blockR = S.mica === 'right';
+        /* Auxin is made WHERE THE SOURCE IS, and the source is not always the organ's own tip:
+           a replaced tip sits above the cut face, and an agar block sits on it. Starting every
+           grain at the stump's own height put the auxin below the very thing that made it, and
+           in the replaced-tip states it began life already inside the elongation zone. */
+        var srcLo, srcHi;
+        if (S.organ === 'shoot' && S.top !== 'intact' && S.top !== 'cut') { srcLo = bodyTop + 12; srcHi = bodyTop + 46; }
+        else if (S.organ === 'shoot' && S.top === 'cut') { srcLo = bodyTop - 14; srcHi = bodyTop - 2; }
+        else { srcLo = g.TIP + 4; srcHi = g.LEN - 8; }     /* the tip region itself */
         for (var q = 0; q < N; q++) {
           var side = q < nL ? -1 : 1;
           /* Two low-discrepancy sequences instead of modular arithmetic. `(q*53)%100` kept
              landing grains on the same few heights, which is what made it look clumped. */
           var a1 = frac((q + 0.5) * 0.6180339887), b1 = frac((q + 0.5) * 0.7548776662);
-          var uEven = (a1 * 2 - 1) * HW * 0.54;              /* where it starts: even across the tip */
+          /* spread THROUGH the source region, not along one line across it: born on a single
+             height, twenty-six grains read as a bar rather than as auxin being made */
+          var sTop = srcLo + frac((q + 0.5) * 0.5698402910) * (srcHi - srcLo);
+          /* A tip or a block set to one side makes its auxin on that side. Starting even and
+             sliding across would show a redistribution that never happened. */
+          var uEven = M.offset !== 0
+            ? M.offset * HW * (0.18 + 0.34 * b1)
+            : (a1 * 2 - 1) * HW * 0.54;
           /* Evenly spread means one cloud across the whole width. Unequally distributed means two
              groups, each held out against its own flank, so the fuller one is plainly the fuller
              one. Sharing one central band made a 2:1 split look like no split at all. */
           var uSide = level ? (b1 * 2 - 1) * HW * 0.54
                             : side * HW * (0.20 + 0.34 * b1);
           var u2 = uEven + (uSide - uEven) * lat;
-          var stopped = (side < 0 && blockL) || (side > 0 && blockR);
+          /* The plate does not empty a flank; it holds that flank back to what the other one is
+             carrying. Stopping every grain on the plated side drew a shoot fed on one flank only
+             and then drew it dead straight, with the verdict underneath saying both flanks got
+             the same. Let each flank deliver the number the model credits it with, and queue the
+             surplus above the plate where a reader can see it waiting. */
+          var passL = Math.round(N * M.dL / (M.made || 1)), passR = Math.round(N * M.dR / (M.made || 1));
+          var nth = side < 0 ? q : q - nL;
+          var plated = (side < 0 && blockL) || (side > 0 && blockR);
+          var stopped = plated && nth >= (side < 0 ? passL : passR);
           var sEnd = stopped ? g.ZONE1 + 10 + b1 * 24        /* held up above the plate, in a queue */
                    : g.ZONE0 + 5 + a1 * (g.ZONE1 - g.ZONE0 - 10);
           /* each grain sets off at its own moment, so they travel as a spreading plume
@@ -2361,8 +2395,23 @@
 
       /* the ruled labels for the parts that are always there */
       if (!root) {
-        if (S.top === 'intact') { var tp = at(g.LEN - 16, labU); s += ruled(tp[0], tp[1], 0, 0, 'shoot tip: makes the auxin, detects the light'); }
-        else { var sp = at(bodyTop - 12, labU); s += ruled(sp[0], sp[1], 0, 0, 'the stump: no tip, so no auxin of its own'); }
+        if (S.top === 'intact') {
+          /* the second clause has to follow the state: a capped tip detects nothing, and a shoot
+             lying in the dark is reading gravity, not light */
+          var tipSays = 'shoot tip: makes the auxin'
+            + (M.lit ? ', and detects the light'
+               : S.cover === 'opaque' ? ''            /* the cap's own label says it is blind */
+               : S.lay === 'side' ? ', and reads which way is down' : '');
+          var tp = at(S.cover === 'none' ? g.LEN - 16 : g.TIP + 8, labU);
+          s += ruled(tp[0], tp[1], 0, 0, tipSays);
+        }
+        else {
+          var sp = at(bodyTop - 12, labU);
+          s += ruled(sp[0], sp[1], 0, 0, S.top === 'cut'
+            ? 'the stump: no tip, so no auxin of its own'
+            : S.layer === 'mica' ? 'the stump: the mica keeps the tip\'s auxin out'
+            : 'the stump: the tip\'s auxin passes into it');
+        }
         var pe = at((g.ZONE0 + g.ZONE1) / 2, labU);
         s += ruled(pe[0], pe[1], 0, 0, 'zone of elongation');
         if (S.lay === 'side') {
@@ -2381,10 +2430,25 @@
         /* Correcting towards the vertical overshoots, and the tip is knocked aside by stones.
            Both are real, and together they are why a root in soil follows a wavy path. */
         if (grow > 0.85 && M.sees) {
-          var e0 = at(g.LEN, 0), wx = e0[0], wy = e0[1], wd = 'M' + f1(e0);
-          for (var wv = 1; wv <= 26; wv++) wd += ' L' + (wx + Math.sin(wv / 3.1) * 13).toFixed(1) + ' ' + (wy + wv * 4.2).toFixed(1);
-          s += '<path d="' + wd + '" fill="none" stroke="#9A8459" stroke-width="2.4" stroke-dasharray="5 4" opacity=".65"/>';
-          s += ruled(wx + 10, wy + 74, 396, 356, 'it overshoots and corrects, so the path waves', true);
+          /* The path has to leave the tip pointing where the tip points, and start beyond the cap
+             rather than inside it. Built in screen coordinates with a fixed downward step it left
+             the root at 26 degrees off its own heading, out of the middle of the cap. */
+          var e0 = at(g.LEN, 0), ph0 = e0[2], DOWN = Math.PI;
+          var off0 = HW * 1.7;                /* start beyond the cap, not inside it */
+          var cx = e0[0] + Math.sin(ph0) * off0, cy = e0[1] - Math.cos(ph0) * off0;
+          var pts = [[cx, cy]];
+          /* It goes on turning towards the vertical, which is what a correcting root does — and
+             it keeps the path in the empty soil below rather than running it out to the right
+             through the words. */
+          for (var wv = 1; wv <= 22; wv++) {
+            var ph = ph0 + (DOWN - ph0) * Math.min(1, wv / 22 * 2.2);
+            cx += Math.sin(ph) * 5; cy -= Math.cos(ph) * 5;
+            var across = Math.sin(wv / 2.8) * 9;
+            pts.push([cx + Math.cos(ph) * across, cy + Math.sin(ph) * across]);
+          }
+          s += '<path d="M' + pts.map(f1).join(' L') + '" fill="none" stroke="#9A8459" stroke-width="2.4" stroke-dasharray="5 4" opacity=".65"/>';
+          var wLab = pts[13];
+          s += ruled(wLab[0], wLab[1], 0, 0, 'it overshoots and corrects, so the path waves');
         }
       }
 
@@ -2422,7 +2486,10 @@
     var STEPS = [
       [0.00, function (M) { return S.organ === 'root'
         ? 'Auxin travels down from the shoot and gathers at the root tip.'
-        : (M.made > 0 ? 'Auxin is made in the shoot tip, evenly across it.' : 'There is no tip, so no auxin is made.'); }],
+        : M.made <= 0 ? 'There is no auxin here to move.'
+        : S.top === 'cut' ? 'The auxin in the agar block passes into the side of the stump it is standing on.'
+        : S.top !== 'intact' ? 'Auxin is made in the cut tip, which is sitting back on the stump.'
+        : 'Auxin is made in the shoot tip, evenly across it.'; }],
       [0.18, function (M) { return S.organ === 'root'
         ? (M.sees ? 'Inside the root cap, heavy starch grains sink to the lower side. That is how the root detects gravity.'
                   : 'With the cap gone there is nothing to detect gravity.')
