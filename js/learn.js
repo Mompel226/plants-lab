@@ -3089,7 +3089,7 @@
                                        : 'It turns back at the cut end, with no side favoured.')
         : M.thru === 0 ? 'It gathers in the tip. The mica is in its way.'
         : M.offset !== 0 ? 'The auxin can only enter the side it is sitting on.'
-        : M.sees ? (S.lay === 'side' ? 'Starch grains sink in a sheath of cells running the WHOLE length of the stem, and auxin is pushed across to the LOWER flank.'
+        : M.sees ? (S.lay === 'side' ? 'Starch grains sink in a sheath of cells all along the stem, and auxin is pushed to the LOWER flank.'
                     : 'Auxin is carried across to the shaded side. None is destroyed.')
         : 'The auxin stays evenly spread.'; }],
       [0.58, function (M) { return M.made === 0 ? ''
@@ -3161,24 +3161,24 @@
 
       if (S.organ === 'root') {
         if (M.sees) {
-          pts.push('In a <b>root</b>, a high auxin concentration <b>inhibits</b> cell elongation. That is the opposite of what it does in a shoot, and it is the sentence to learn.');
-          pts.push('A real root does not settle at once: it overshoots the vertical and corrects, and stones knock the tip off course. That is why its path waves.');
+          pts.push('In a <b>root</b>, a lot of auxin <b>inhibits</b> cell elongation — it slows the cells down. That is the sentence to learn.');
+          pts.push('A real root overshoots the vertical and corrects, and stones knock the tip aside. That is why its path waves.');
         } else {
-          pts.push('The cap is the <b>detector</b>, not the source. The auxin still arrives and the root still grows — it just no longer knows which way is down.');
+          pts.push('The cap is the <b>detector</b>, not the source. Auxin still arrives and the root still grows; it just cannot tell which way is down.');
         }
       } else if (S.lay === 'side' && M.made > 0) {
         /* Nothing here when the tip is capped: the second beat has already said that the cap
            leaves gravity as the only stimulus, in very nearly the same words. */
-        if (M.lit) pts.push('Light and gravity are pushing the auxin the same way here, so this run cannot tell you which did it. Run it again in the dark and only gravity is left — that is the control that makes the result mean something.');
+        if (M.lit) pts.push('Light and gravity are pushing the same way here, so this run cannot tell you which did it. Run it again in the dark.');
         else if (S.light === 'dark') pts.push('In the dark there is no light to confuse it, so the turn upwards can only be a response to gravity.');
       } else if (S.lay === 'side') {
-        pts.push('What is missing is the <b>auxin</b>, not the sense of direction. Give a shoot like this auxin further down and it answers gravity again — it still cannot answer light, because that needs the tip.');
+        pts.push('What is missing is the <b>auxin</b>, not the sense of direction. Give this shoot auxin lower down and it answers gravity again.');
       } else if (M.made === 0) {
         pts.push(S.top === 'cut' && S.block.indexOf('plain') === 0
-          ? 'This is the control that shows it is the <b>auxin</b> in the block that matters, not the block: the same agar, the same position, and no response.'
-          : 'The tip was the <b>source</b>. Left a few hours, though, a stump starts making auxin of its own again and growth returns — so "no auxin" is only true to begin with.');
+          ? 'Same agar, same position, no response. That is the control: it is the <b>auxin</b> in the block that matters, not the block.'
+          : 'The tip was the <b>source</b>. Left a few hours a stump makes auxin of its own again, and growth returns.');
       } else if (M.thru === 0) {
-        pts.push('The tip is still <b>making</b> auxin — cutting a shoot does not stop its tip working. Put gelatin there instead and the same tip makes the same shoot bend.');
+        pts.push('The tip is still <b>making</b> auxin — cutting a shoot does not stop its tip working. Put gelatin there and the same shoot bends.');
       } else {
         /* Paal's run was in the DARK, and every account of it says so in the same breath as the
            result: the point was that with no light at all the shoot still bent. Nobody appears to
@@ -3186,14 +3186,14 @@
            answer to it as though somebody had. Say which is which. */
         if (M.offset !== 0 && S.top.indexOf('shift') === 0)
           pts.push(S.light === 'dark'
-            ? 'The tip decides which flank gets the auxin simply by <b>sitting</b> over it, and the shoot bends away from that side. That is Paál\'s result — and he worked in the dark for exactly this reason: with no light, nothing else can be acting.'
-            : 'The light has not stopped working — the tip still moves auxin across to its own shaded half. But a tip pushed this far across hangs a third of itself over the air, and only the part on the cut face can deliver, so <b>position wins</b>. The lamp changes the size of the bend, not its direction: from the side the tip overhangs it is smaller, from the far side bigger. Try all three. This is not one of the classic runs — Paál worked in the dark — so it is the model reasoning it out, not a measured result.');
+            ? 'The tip decides which flank gets the auxin just by <b>sitting</b> over it. Paál worked in the dark, so nothing else could be acting.'
+            : 'The tip decides which flank gets the auxin just by <b>sitting</b> over it. The lamp cannot outvote that.');
         if (S.cover === 'collar')
           pts.push('The collar covers the stem but not the tip. The tip is the detector, so the response happens anyway.');
         if (M.note && !diff)
-          pts.push('The plate stops the extra auxin travelling down that flank, so the difference never reaches the elongating cells and there is no curvature. That is the result Boysen-Jensen got with the plate on the shaded side.');
+          pts.push('The plate blocks the flank that was carrying more, so the difference never reaches the growing cells. No difference, no bend.');
         else if (M.note)
-          pts.push('The plate is on the lit flank, which was carrying less auxin anyway, so it holds nothing back that mattered. That is the control for the other arrangement.');
+          pts.push('This plate is on the flank that was carrying less anyway, so it holds back nothing that mattered. That is the control.');
       }
       /* Four bullets after a five-line narration is a wall. The ones pushed first are the ones
          most particular to this arrangement, so the tail is what goes. */
