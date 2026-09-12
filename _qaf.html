@@ -1,0 +1,7 @@
+<!doctype html><meta charset="utf-8"><title>qaframe</title>
+<style>html,body{margin:0;background:#ddd}iframe{width:380px;height:2400px;border:0;background:#fff;display:block}#d{font:10px monospace;white-space:pre-wrap}</style>
+<iframe id="f" src=""></iframe><pre id="d"></pre>
+<script>
+var P = new URLSearchParams(location.search);
+document.getElementById('f').src = '_qa.html?c=' + encodeURIComponent(P.get('c') || '[]');
+</script>

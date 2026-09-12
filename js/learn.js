@@ -2371,7 +2371,7 @@
           for (i2 = 0; i2 <= 8; i2++) a.push(at(lo + (hi - lo) * i2 / 8, sg * (HW - CW + 1)));
           for (i2 = 8; i2 >= 0; i2--) a.push(at(lo + (hi - lo) * i2 / 8, sg * 1.5));
           s += '<path d="M' + a.map(f1).join(' L') + ' Z" fill="#F5A623" opacity="' +
-               (share * 0.62 * down).toFixed(3) + '"/>';
+               (share * 0.30 * down).toFixed(3) + '"/>';
         });
       }
 
@@ -2379,7 +2379,9 @@
          one-sided stimulus, then carried down. Nothing is destroyed on the way: the count
          of grains never changes, only where they end up, which is the point Briggs settled. */
       if (M.made > 0) {
-        var N = 26, nL = Math.round(N * M.fL);
+        /* Many small grains rather than a few large ones. Nine against seventeen is a count
+           you have to make; twenty-six against fifty is a density you simply see. */
+        var N = 76, nL = Math.round(N * M.fL);
         var level = Math.abs(M.fR - M.fL) < 0.04;          /* nothing has pushed it to one side */
         var blockL = S.mica === 'left', blockR = S.mica === 'right';
         /* Auxin is made WHERE THE SOURCE IS, and the source is not always the organ's own tip:
@@ -2392,12 +2394,14 @@
         else { srcLo = g.TIP + 4; srcHi = g.LEN - 8; }     /* the tip region itself */
         for (var q = 0; q < N; q++) {
           var side = q < nL ? -1 : 1;
-          /* Two low-discrepancy sequences instead of modular arithmetic. `(q*53)%100` kept
-             landing grains on the same few heights, which is what made it look clumped. */
-          var a1 = frac((q + 0.5) * 0.6180339887), b1 = frac((q + 0.5) * 0.7548776662);
+          /* The R2 sequence — the plastic number's two reciprocals — which is built to spread
+             points evenly in TWO dimensions. The golden ratio paired with something else is not:
+             it laid the grains along visible diagonal chains, which read as structure that is not
+             there. */
+          var a1 = frac(0.5 + q * 0.7548776662), b1 = frac(0.5 + q * 0.5698402910);
           /* spread THROUGH the source region, not along one line across it: born on a single
              height, twenty-six grains read as a bar rather than as auxin being made */
-          var sTop = srcLo + frac((q + 0.5) * 0.5698402910) * (srcHi - srcLo);
+          var sTop = srcLo + frac(b1 + a1 * 0.5) * (srcHi - srcLo);
           /* A tip or a block set to one side makes its auxin on that side. Starting even and
              sliding across would show a redistribution that never happened. */
           var uEven = M.offset !== 0
@@ -2406,9 +2410,9 @@
           /* Evenly spread means one cloud across the whole width. Unequally distributed means two
              groups, each held out against its own flank, so the fuller one is plainly the fuller
              one. Sharing one central band made a 2:1 split look like no split at all. */
-          var uSide = level ? (b1 * 2 - 1) * HW * 0.54
-                            : side * HW * (0.20 + 0.34 * b1);
-          var u2 = uEven + (uSide - uEven) * lat;
+          var uSide = level ? (b1 * 2 - 1) * HW * 0.56
+                            : side * HW * (0.12 + 0.44 * b1);
+          var u2 = uEven + (uSide + ju - uEven) * lat;
           /* The plate does not empty a flank; it holds that flank back to what the other one is
              carrying. Stopping every grain on the plated side drew a shoot fed on one flank only
              and then drew it dead straight, with the verdict underneath saying both flanks got
@@ -2418,16 +2422,19 @@
           var nth = side < 0 ? q : q - nL;
           var plated = (side < 0 && blockL) || (side > 0 && blockR);
           var stopped = plated && nth >= (side < 0 ? passL : passR);
+          /* A low-discrepancy pair packed this densely starts to look like a lattice, which reads
+             as pattern rather than as scattered grains. A small fixed offset per grain breaks it
+             without making anything jump between frames. */
+          var js = (frac(a1 * 43.7 + b1 * 17.3) - 0.5) * 5.5, ju = (frac(a1 * 11.9 + b1 * 31.1) - 0.5) * 3.4;
           var sEnd = stopped ? g.ZONE1 + 10 + b1 * 24        /* held up above the plate, in a queue */
-                   : g.ZONE0 + 5 + a1 * (g.ZONE1 - g.ZONE0 - 10);
+                   : g.ZONE0 + 5 + a1 * (g.ZONE1 - g.ZONE0 - 10) + js;
           /* each grain sets off at its own moment, so they travel as a spreading plume
              rather than as one solid band sliding down the shoot */
-          var del = frac(b1 + a1 * 0.5) * 0.46, tt = clamp((down - del) / (1 - del));
+          var del = frac(a1 * 0.5 + b1 * 1.5) * 0.46, tt = clamp((down - del) / (1 - del));
           var s2 = sTop + (sEnd - sTop) * tt;
           var pg = at(Math.max(4, s2), u2);
           var opa = made;
-          s += '<circle cx="' + pg[0].toFixed(1) + '" cy="' + pg[1].toFixed(1) + '" r="3.5" fill="#F5A623" stroke="#B9761A" stroke-width=".9" opacity="' + opa.toFixed(2) + '"/>';
-          s += '<circle cx="' + (pg[0] - 1).toFixed(1) + '" cy="' + (pg[1] - 1).toFixed(1) + '" r="1.2" fill="#FFE7B5" opacity="' + opa.toFixed(2) + '"/>';
+          s += '<circle cx="' + pg[0].toFixed(1) + '" cy="' + pg[1].toFixed(1) + '" r="2" fill="#F0900E" opacity="' + opa.toFixed(2) + '"/>';
         }
       }
 
