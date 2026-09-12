@@ -2050,12 +2050,12 @@
          has to show that. At a 10 px stem beside a 38 px root the seedling read as one solid
          shape with a thin whisker on top. A stem that thick needs headroom, so the root's own
          canvas is taller than the shoot's and the soil line sits lower down it. */
-      root:      { W: 640, H: 470, BX: 214, BY: 200, phi0: Math.PI * 0.689, LEN: 230, HW: 19, ELO: [110, 184], TIP: 196 }
+      root:      { W: 640, H: 520, BX: 232, BY: 250, phi0: Math.PI * 0.689, LEN: 230, HW: 19, ELO: [110, 184], TIP: 196 }
     };
     /* The soil is fixed geometry, so it is built once and handed back on every frame after
        that. draw() runs sixty times a run behind 130 auxin grains; rebuilding and reparsing a
        hundred and fifty circles that never move is work for nothing. */
-    var SOIL_Y = 120;                    /* where the ground is, on the root's own canvas */
+    var SOIL_Y = 170;                    /* where the ground is, on the root's own canvas */
     var SOIL = '';
     function soilBody(g) {
       if (SOIL) return SOIL;
@@ -2262,6 +2262,7 @@
            '<stop offset="1" stop-color="' + (root ? '#DFD1B3' : '#3E8F46') + '"/></linearGradient>' +
            '<radialGradient id="axSeed" cx=".36" cy=".3" r=".78"><stop offset="0" stop-color="#F3E7CB"/><stop offset=".55" stop-color="#E2CFA4"/><stop offset="1" stop-color="#C8AE7C"/></radialGradient>' +
            '<linearGradient id="axStem" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#4E9B4F"/><stop offset=".45" stop-color="#7CC06E"/><stop offset="1" stop-color="#4E9B4F"/></linearGradient>' +
+           '<linearGradient id="axLeaf" x1="0" y1="1" x2=".7" y2="0"><stop offset="0" stop-color="#57A555"/><stop offset=".55" stop-color="#7CC46E"/><stop offset="1" stop-color="#9AD68A"/></linearGradient>' +
            '<radialGradient id="axSun" cx=".42" cy=".38" r=".62"><stop offset="0" stop-color="#FFE07A"/><stop offset="1" stop-color="#F3AC16"/></radialGradient></defs>';
       var bg = '#FBFAF6';
 
@@ -2284,20 +2285,40 @@
            seed leaves and a hook — small beside the root, as a young seedling's shoot is, but
            plainly the same plant. Placed off the root's own origin rather than at absolute page
            coordinates, so it follows if the root's geometry is ever moved again. */
-        var stX = g.BX - 10, stY = g.BY - 24;  /* beside the radicle: both come out at the hilum end */
-        var stem = 'M' + stX + ' ' + stY + ' C ' + (stX - 4) + ' ' + (stY - 54) + ' ' + (stX - 26) + ' ' + (stY - 104) + ' ' + (stX - 34) + ' ' + (stY - 146);
-        s += '<path d="' + stem + '" fill="none" stroke="#3F7F41" stroke-width="' + (2 * HW - 2) + '" stroke-linecap="round"/>';
-        s += '<path d="' + stem + '" fill="none" stroke="url(#axStem)" stroke-width="' + (2 * HW - 8) + '" stroke-linecap="round"/>';
-        s += '<g transform="translate(' + (stX - 34) + ',' + (stY - 146) + ') scale(1.75)">' +
-             '<path d="M0 0 q2 -16 16 -20 q2 18 -12 23 Z" fill="#5FAE59" stroke="#3F7F41" stroke-width="1" stroke-linejoin="round"/>' +
-             '<path d="M1 10 q-16 -9 -15 -26 q17 8 17 25 Z" fill="#6FBC63" stroke="#3F7F41" stroke-width="1" stroke-linejoin="round"/></g>';
-        s += '<text class="ax__s" x="' + (stX + 22) + '" y="' + (stY - 120) + '">shoot, growing up</text>';
+        var stX = g.BX - 40, stY = g.BY - 20;  /* beside the radicle: both come out at the hilum end */
+        var apX = stX - 26, apY = stY - 120, c2X = stX - 20, c2Y = stY - 86;
+        var stem = 'M' + stX + ' ' + stY + ' C ' + (stX + 2) + ' ' + (stY - 44) + ' ' + c2X + ' ' + c2Y + ' ' + apX + ' ' + apY;
+        s += '<path d="' + stem + '" fill="none" stroke="#3F7F41" stroke-width="' + (2 * HW) + '" stroke-linecap="round"/>';
+        s += '<path d="' + stem + '" fill="none" stroke="url(#axStem)" stroke-width="' + (2 * HW - 6) + '" stroke-linecap="round"/>';
+        /* A pair of seed leaves, drawn at the size the stem asks for rather than at a size of
+           their own: two blades the length of two and a half stem widths, opposite each other
+           on short stalks, with a midrib and three pairs of veins each, and the growing point
+           still folded between them. Two flat wedges a fifth of that size read as a bird. */
+        var lfA = Math.atan2(apX - c2X, c2Y - apY) * 180 / Math.PI;   /* the stem's own heading */
+        var lfL = 2.5 * HW * 2;
+        function blade(turn) {
+          var k = (lfL / 100).toFixed(3), v = '';
+          for (var iv = 0; iv < 3; iv++) {
+            var y0 = -28 - iv * 20, y1 = -46 - iv * 19, xw = 19 - iv * 5;
+            v += '<path d="M0 ' + y0 + ' Q' + (xw * 0.7) + ' ' + (y0 - 5) + ' ' + xw + ' ' + y1 +
+                 ' M0 ' + y0 + ' Q' + (-xw * 0.7) + ' ' + (y0 - 5) + ' ' + (-xw) + ' ' + y1 + '"/>';
+          }
+          return '<g transform="rotate(' + turn + ') scale(' + k + ')">' +
+                 '<path d="M0 -3 L0 -16" stroke="#3B7A3E" stroke-width="5" stroke-linecap="round"/>' +
+                 '<path d="M0 -14 C 23 -33 31 -71 0 -104 C -31 -71 -23 -33 0 -14 Z" fill="url(#axLeaf)" stroke="#3B7A3E" stroke-width="2.4" stroke-linejoin="round"/>' +
+                 '<path d="M0 -18 L0 -98" stroke="#3B7A3E" stroke-width="2" opacity=".6"/>' +
+                 '<g fill="none" stroke="#3B7A3E" stroke-width="1.5" opacity=".42">' + v + '</g></g>';
+        }
+        s += '<g transform="translate(' + apX + ',' + apY + ') rotate(' + lfA.toFixed(1) + ')">' +
+             blade(-46) + blade(46) +
+             '<path d="M0 2 C 7 -8 7 -20 0 -30 C -7 -20 -7 -8 0 2 Z" fill="#8FD07F" stroke="#3B7A3E" stroke-width="1.8" stroke-linejoin="round"/>' +
+             '</g>';
+        s += '<text class="ax__s" x="' + (stX + 28) + '" y="' + (stY - 104) + '">shoot, growing up</text>';
         /* The seed itself is drawn LAST, with the root cap, so that it covers the root's square
            base end instead of being butt-jointed to it — see below. */
       }
 
       /* the beam first: the light needs to know where the flank it is lighting actually is */
-      function edge(u) { var a = []; for (var i = 0; i <= K; i++) a.push(at(g.LEN * i / K, u)); return a; }
       /* the light, and which flank of the organ it falls on */
       var lit = null;
       if (!root && S.light !== 'dark') {
@@ -2343,7 +2364,6 @@
       }
 
       /* the body */
-      var R = edge(HW), L = edge(-HW), tipP = at(g.LEN, 0);
       var cut = S.organ === 'shoot' && S.top !== 'intact';
       var flat = cut || (root && S.cap === 'cut');  /* a cut end is square; only an intact tip is domed */
       var bodyTop = cut ? g.TIP - 8 : root && S.cap === 'cut' ? g.TIP : g.LEN;
@@ -2359,7 +2379,7 @@
 
       var d = 'M' + f1(at(0, HW));
       for (var i4 = 1; i4 <= K; i4++) { var ss = bodyTop * i4 / K; d += ' L' + f1(at(ss, HW)); }
-      var topR = at(bodyTop, HW), topL = at(bodyTop, -HW);
+      var topL = at(bodyTop, -HW);
       if (flat) d += ' L' + f1(topL);
       else {
         var pTip = at(bodyTop, 0), phiT = pTip[2];
@@ -2566,17 +2586,17 @@
            out of the other. At a seed barely wider than the root was thick, the two together
            made one shape rather than two, and it was the wrong shape. It is now about three
            times the root's thickness, which is roughly life. */
-        s += '<g transform="translate(' + (g.BX - 72) + ',' + (g.BY + 24) + ') rotate(-13) scale(2)">' +
+        s += '<g transform="translate(' + (g.BX - 128) + ',' + (g.BY + 52) + ') rotate(-13) scale(3)">' +
              '<path d="M52 -4 C51 12 34 24 11 27 C-15 30 -43 21 -50 5 C-56 -10 -42 -25 -17 -28 C11 -32 44 -21 52 -4 Z" ' +
-             'fill="url(#axSeed)" stroke="#9C7F4E" stroke-width="1.7" stroke-linejoin="round"/>' +
+             'fill="url(#axSeed)" stroke="#9C7F4E" stroke-width="1.2" stroke-linejoin="round"/>' +
              /* the seam between the two halves of the seed, and the scar where it was joined to
                 the pod: the two marks that say seed rather than pebble */
              '<path d="M-46 -4 C-30 -14 8 -16 40 -7" fill="none" stroke="#B89A63" stroke-width="1.2" opacity=".65"/>' +
              /* the hilum sits at the end the radicle and the plumule come out of, not away from it */
-             '<ellipse cx="33" cy="9" rx="9" ry="3.2" transform="rotate(58 33 9)" fill="#D8C193" stroke="#A98C59" stroke-width="1"/>' +
+             '<ellipse cx="42" cy="4" rx="6.5" ry="2.4" transform="rotate(72 42 4)" fill="#D8C193" stroke="#A98C59" stroke-width=".8"/>' +
              '<path d="M-36 -14 C-28 -21 -14 -24 0 -22" fill="none" stroke="#FBF4E2" stroke-width="3" stroke-linecap="round" opacity=".4"/>' +
              '</g>';
-        s += '<text class="ax__s" x="' + (g.BX - 72) + '" y="' + (g.BY + 128) + '" text-anchor="middle">seed</text>';
+        s += '<text class="ax__s" x="' + (g.BX - 116) + '" y="' + (g.BY + 208) + '" text-anchor="middle">seed</text>';
       }
 
       /* the root cap and its statoliths — the detector, and the thing that does the detecting */
@@ -2969,7 +2989,6 @@
         if (!diff) return S.organ === 'root'
           ? 'Both sides get the same, so the root grows straight.'
           : 'Both sides get the same, so the shoot grows straight.';
-        var more = M.gL > M.gR ? 'left' : 'right';
         if (S.organ === 'root') return 'More auxin below. In a root that HOLDS CELLS BACK, so the upper side stretches and the root bends down.';
         if (S.lay === 'side') return M.bend < 0
           ? 'More auxin below. In a shoot that means MORE elongation, so the lower side stretches and the shoot turns up.'
