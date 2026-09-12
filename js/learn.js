@@ -2653,7 +2653,7 @@
          halfway across. It blocks what comes down that half. Drawn as a vertical slice down
          the flank it was not his experiment and did not match what the model was doing. */
       if (!root && S.top !== 'cut' && S.mica !== 'none') {
-        var sgn = S.mica === 'left' ? -1 : 1, sM = Math.max(6, (putBack ? bodyTop : g.TIP) - 4);   /* under the tip */
+        var sgn = S.mica === 'left' ? -1 : 1, sM = Math.max(6, (putBack ? bodyTop : g.TIP) - 11);   /* clear of the line marking the foot of the tip */
         var m0 = at(sM, sgn * -2), m1 = at(sM, sgn * (HW + 16));
         sOver += '<path d="M' + f1(m0) + ' L' + f1(m1) + '" stroke="#6C7681" stroke-width="5.5" stroke-linecap="round"/>';
         var mid = at(sM, sgn * HW * 0.6);
@@ -2841,19 +2841,24 @@
              line too early it was undefined on the first grain, which put that grain at NaN — and
              every grain after it silently borrowed its predecessor's offset. */
           var js = (frac(a1 * 43.7 + b1 * 17.3) - 0.5) * 5.5, ju = (frac(a1 * 11.9 + b1 * 31.1) - 0.5) * 3.4;
-          /* Where it ends up across the organ. With mica between tip and stump nothing gets
-             down, so it settles inside the TIP — which for a shifted tip is off to one side. */
-          var uSide = (M.thru === 0 ? srcU : 0) + across(b1) * HW * (M.thru === 0 ? 0.5 : 0.58) + ju;
-          var side = uSide < 0 ? -1 : 1;
-          /* The plate does not empty a flank; it holds that flank back to what the other one is
-             carrying. The cloud already shows what ARRIVES, because the gradient is drawn from
-             the delivered shares; what is left over is the surplus the plate is holding up, and
-             it queues above the plate where a reader can see it waiting. */
-          var plated = (side < 0 && blockL) || (side > 0 && blockR);
-          var stopped = plated && queued < nQueue;
+          /* WHICH GRAINS ARE HELD UP has to be settled before the cloud below is laid out, and
+             not by reading off which flank each grain happened to land on. Decided that way, the
+             held-back grains were taken out of one flank of the delivered cloud as well — so
+             with the plate under the shaded half the picture showed a cloud piled hard to the
+             LIT side, under an elongation zone whose two flanks were drawn equal. The drawing
+             was contradicting the model, and the model was the one that was right: the plate
+             does not empty a flank, it holds that flank back to what the other one is carrying,
+             and the whole result of the experiment is that the two sides come out the same.
+             The queue is now taken off the top of the count and placed against the plate on the
+             blocked flank; what is left travels on and is spread by the delivered shares. */
+          var stopped = queued < nQueue;
           if (stopped) queued++;
+          var uSide = stopped ? (blockL ? -1 : 1) * HW * (0.20 + 0.5 * a1) + ju   /* a1, not b1: the
+                        queue's height already comes off b1, and sharing one hash for both drew
+                        the held-up grains along a single diagonal chain instead of a heap */
+                    : (M.thru === 0 ? srcU : 0) + across(b1) * HW * (M.thru === 0 ? 0.5 : 0.58) + ju;
           var sEnd = M.thru === 0 ? srcLo + a1 * (srcHi - srcLo)   /* nothing crosses: it stays in the tip */
-                   : stopped ? g.ZONE1 + 10 + b1 * 24              /* held up above the plate, in a queue */
+                   : stopped ? g.ZONE1 + 4 + b1 * 20               /* held up against the plate, in a queue */
                    : g.ZONE0 + 5 + a1 * (g.ZONE1 - g.ZONE0 - 10) + js;
 
           /* ONE continuous journey per grain, not three stages for all of them together. Staged,
