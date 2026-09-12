@@ -2256,10 +2256,23 @@
          cylinder. Written once for a shoot standing up it ran left to right, and on a root —
          which lies along the page — that shaded the base and the tip dark and the middle pale,
          like a bone. So the root takes the same gradient turned through a right angle. */
-      s += '<defs><linearGradient id="axBody" x1="0" y1="0" x2="' + (root ? '0' : '1') + '" y2="' + (root ? '1' : '0') + '">' +
-           '<stop offset="0" stop-color="' + (root ? '#DFD1B3' : '#3E8F46') + '"/>' +
-           '<stop offset=".45" stop-color="' + (root ? '#F8F2E2' : '#54AC5C') + '"/>' +
-           '<stop offset="1" stop-color="' + (root ? '#DFD1B3' : '#3E8F46') + '"/></linearGradient>' +
+      /* A shaded band is what makes a flat shape read as a cylinder, and it only works if the
+         shading runs ACROSS the organ. In page coordinates that is a different direction for
+         every organ: the upright shoot is shaded left to right, the root lies on a diagonal.
+         Given in the page's own units, straight across the root's own width, the highlight
+         follows the root instead of drifting across it as it descends. */
+      var bgrad = root ? (function () { var a = at(0, -HW), b = at(0, HW);
+            return ' gradientUnits="userSpaceOnUse" x1="' + a[0].toFixed(1) + '" y1="' + a[1].toFixed(1) +
+                   '" x2="' + b[0].toFixed(1) + '" y2="' + b[1].toFixed(1) + '"'; })()
+          : ' x1="0" y1="0" x2="1" y2="0"';
+      s += '<defs><linearGradient id="axBody"' + bgrad + '>' +
+           '<stop offset="0" stop-color="' + (root ? '#CFBC93' : '#3E8F46') + '"/>' +
+           '<stop offset=".42" stop-color="' + (root ? '#EFE4C9' : '#54AC5C') + '"/>' +
+           '<stop offset="1" stop-color="' + (root ? '#CFBC93' : '#3E8F46') + '"/></linearGradient>' +
+           (root ? '<linearGradient id="axUnder" gradientUnits="userSpaceOnUse" x1="' + at(0, 0)[0].toFixed(1) + '" y1="' + at(0, 0)[1].toFixed(1) +
+                   '" x2="' + at(52, 0)[0].toFixed(1) + '" y2="' + at(52, 0)[1].toFixed(1) + '">' +
+                   '<stop offset="0" stop-color="#8A7346" stop-opacity=".45"/><stop offset=".55" stop-color="#8A7346" stop-opacity=".12"/>' +
+                   '<stop offset="1" stop-color="#8A7346" stop-opacity="0"/></linearGradient>' : '') +
            '<radialGradient id="axSeed" cx=".36" cy=".3" r=".78"><stop offset="0" stop-color="#F3E7CB"/><stop offset=".55" stop-color="#E2CFA4"/><stop offset="1" stop-color="#C8AE7C"/></radialGradient>' +
            '<linearGradient id="axStem" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#4E9B4F"/><stop offset=".45" stop-color="#7CC06E"/><stop offset="1" stop-color="#4E9B4F"/></linearGradient>' +
            '<linearGradient id="axLeaf" x1="0" y1="1" x2=".7" y2="0"><stop offset="0" stop-color="#57A555"/><stop offset=".55" stop-color="#7CC46E"/><stop offset="1" stop-color="#9AD68A"/></linearGradient>' +
@@ -2285,7 +2298,7 @@
            seed leaves and a hook — small beside the root, as a young seedling's shoot is, but
            plainly the same plant. Placed off the root's own origin rather than at absolute page
            coordinates, so it follows if the root's geometry is ever moved again. */
-        var stX = g.BX - 40, stY = g.BY - 20;  /* beside the radicle: both come out at the hilum end */
+        var stX = g.BX - 16, stY = g.BY - 28;  /* beside the radicle: one embryo, one way out */
         var apX = stX - 26, apY = stY - 120, c2X = stX - 20, c2Y = stY - 86;
         var stem = 'M' + stX + ' ' + stY + ' C ' + (stX + 2) + ' ' + (stY - 44) + ' ' + c2X + ' ' + c2Y + ' ' + apX + ' ' + apY;
         s += '<path d="' + stem + '" fill="none" stroke="#3F7F41" stroke-width="' + (2 * HW) + '" stroke-linecap="round"/>';
@@ -2386,6 +2399,10 @@
         d += ' Q' + (pTip[0] + Math.sin(phiT) * HW * 0.95).toFixed(1) + ' ' + (pTip[1] - Math.cos(phiT) * HW * 0.95).toFixed(1) + ' ' + f1(topL);
       }
       for (var i5 = K - 1; i5 >= 0; i5--) d += ' L' + f1(at(bodyTop * i5 / K, -HW));
+      /* A radicle does not end in a square cut where it meets the seed: it narrows and runs on
+         into the embryo inside. Closed with a straight line the tube showed a corner sticking
+         out past the seed coat, which is the join the eye goes to first. */
+      if (root) d += ' C' + f1(at(-34, -HW * 0.72)) + ' ' + f1(at(-34, HW * 0.72)) + ' ' + f1(at(0, HW));
       d += ' Z';
       s += '<path d="' + d + '" fill="url(#axBody)" stroke="' + (root ? '#9A8459' : '#2C6E36') + '" stroke-width="2" stroke-linejoin="round"/>';
 
@@ -2422,6 +2439,10 @@
         for (var i = 0; i < B.length - 1; i++) {
           var s0 = B[i], s1 = B[i + 1];
           var mid = (s0 + s1) / 2, inZone = mid >= g.ZONE0 - 0.5 && mid <= g.ZONE1 + 0.5;
+          /* On the root the long mature stretch between the seed and the zone is where the root
+             hairs are, and a ladder of cell outlines under them read as graph paper. Two cells
+             either side of the zone still make the point that those are not the ones stretching. */
+          if (root && !inZone && s1 < g.ZONE0 + 0.5) continue;
           var p1 = at(s0, sign * HW), p2 = at(s1, sign * HW), p3 = at(s1, sign * (HW - CW)), p4 = at(s0, sign * (HW - CW));
           /* What decides whether a cell is drawn as elongating is whether it IS longer than it
              started, not whether its share of the auxin beat a fixed number. The old cut-off at
@@ -2454,6 +2475,14 @@
       }
       s += chain(1) + chain(-1);
 
+      /* Where the radicle passes under the seed coat it is in the seed's shadow, and without
+         that the coat's edge just cut cleanly across a flat ribbon. The band is the body's own
+         shape over the same stretch, so it needs no clipping and cannot spill. */
+      if (root) {
+        s += '<path d="M' + f1(at(0, -HW)) + ' L' + f1(at(52, -HW)) + ' L' + f1(at(52, HW)) + ' L' + f1(at(0, HW)) +
+             ' Z" fill="url(#axUnder)"/>';
+      }
+
       /* ROOT HAIRS. They are what tells you at a glance that this is a root and not a pale
          shoot, and WHERE they are is itself the lesson the root station teaches: a hair is an
          outgrowth of an epidermal cell that has finished elongating, so they cover the mature
@@ -2462,9 +2491,9 @@
          Drawn in the organ's own frame, so they stay seated on the flank however it bends, and
          bounded by ZONE0 rather than by a number, so the growing zone never overruns them. */
       if (root) {
-        var hS0 = 34, hS1 = g.ZONE0 - 9;              /* clear of the seed; short of the zone */
+        var hS0 = 48, hS1 = g.ZONE0 - 9;              /* clear of the seed; short of the zone */
         if (hS1 - hS0 > 16) {
-          var hN = Math.max(4, Math.round((hS1 - hS0) / 3.2));
+          var hN = Math.max(4, Math.round((hS1 - hS0) / 2.1));
           for (var hf = 0; hf < 2; hf++) {
             var hSg = hf ? 1 : -1;
             for (var hi = 0; hi <= hN; hi++) {
@@ -2477,16 +2506,22 @@
                  elongation zone, are barely out; they are at their longest a third of the way
                  back; and the oldest, nearest the seed, are shorter again, because root hairs
                  live a few days and the oldest are being shed. */
-              var hL = (3.5 + 12 * Math.pow(Math.sin(Math.PI * (0.28 + 0.62 * ht)), 1.3)) * (0.74 + 0.46 * hj);
+              var hL = (4 + 16 * Math.pow(Math.sin(Math.PI * (0.26 + 0.64 * ht)), 1.25)) * (0.62 + 0.72 * hj);
               /* Every hair the same length and the same lean is a comb, not a root; every hair
                  leaning its own way is straw. They stand out from the flank, most of them tipped
                  a little back towards the seed, and each keeps its own lean. */
-              var hSw = -0.06 + 0.5 * hk;                 /* how far back it leans, in hair-lengths */
-              var hP0 = at(hs, hSg * (HW - 1.4));
-              var hPc = at(hs - hL * hSw * 0.3, hSg * (HW + hL * 0.55));
+              /* A hair is a single epidermal cell drawn out into a fine thread, so it is thin,
+                 it is not straight, and it does not point the same way as its neighbour. Drawn
+                 as one quadratic they came out as stiff bristles; a cubic with the two controls
+                 pulled different ways gives each one a slight S, which is what a thread lying
+                 among soil grains does. */
+              var hSw = -0.10 + 0.62 * hk;                /* how far back it leans, in hair-lengths */
+              var hP0 = at(hs, hSg * (HW - 1.2));
+              var hC1 = at(hs + hL * 0.10, hSg * (HW + hL * 0.34));
+              var hC2 = at(hs - hL * (hSw * 0.75), hSg * (HW + hL * 0.72));
               var hP1 = at(hs - hL * hSw, hSg * (HW + hL));
-              s += '<path d="M' + f1(hP0) + ' Q' + f1(hPc) + ' ' + f1(hP1) + '" fill="none" stroke="#A98B55" stroke-width="' +
-                   (1 + 0.3 * hj).toFixed(2) + '" stroke-linecap="round" opacity="' + (0.78 + 0.22 * hj).toFixed(2) + '"/>';
+              s += '<path d="M' + f1(hP0) + ' C' + f1(hC1) + ' ' + f1(hC2) + ' ' + f1(hP1) + '" fill="none" stroke="#B09164" stroke-width="' +
+                   (0.7 + 0.4 * hj).toFixed(2) + '" stroke-linecap="round" opacity="' + (0.6 + 0.34 * hj).toFixed(2) + '"/>';
             }
           }
         }
@@ -2586,14 +2621,14 @@
            out of the other. At a seed barely wider than the root was thick, the two together
            made one shape rather than two, and it was the wrong shape. It is now about three
            times the root's thickness, which is roughly life. */
-        s += '<g transform="translate(' + (g.BX - 128) + ',' + (g.BY + 52) + ') rotate(-13) scale(3)">' +
+        s += '<g transform="translate(' + (g.BX - 114) + ',' + (g.BY + 48) + ') rotate(-13) scale(3)">' +
              '<path d="M52 -4 C51 12 34 24 11 27 C-15 30 -43 21 -50 5 C-56 -10 -42 -25 -17 -28 C11 -32 44 -21 52 -4 Z" ' +
              'fill="url(#axSeed)" stroke="#9C7F4E" stroke-width="1.2" stroke-linejoin="round"/>' +
              /* the seam between the two halves of the seed, and the scar where it was joined to
                 the pod: the two marks that say seed rather than pebble */
              '<path d="M-46 -4 C-30 -14 8 -16 40 -7" fill="none" stroke="#B89A63" stroke-width="1.2" opacity=".65"/>' +
              /* the hilum sits at the end the radicle and the plumule come out of, not away from it */
-             '<ellipse cx="42" cy="4" rx="6.5" ry="2.4" transform="rotate(72 42 4)" fill="#D8C193" stroke="#A98C59" stroke-width=".8"/>' +
+             '<ellipse cx="40" cy="7" rx="6" ry="2.2" transform="rotate(74 40 7)" fill="#DCC79C" stroke="#BFA372" stroke-width=".5" opacity=".9"/>' +
              '<path d="M-36 -14 C-28 -21 -14 -24 0 -22" fill="none" stroke="#FBF4E2" stroke-width="3" stroke-linecap="round" opacity=".4"/>' +
              '</g>';
         s += '<text class="ax__s" x="' + (g.BX - 116) + '" y="' + (g.BY + 208) + '" text-anchor="middle">seed</text>';
@@ -2725,7 +2760,11 @@
            seed, run down the centre line to the tip, and only then fan out and come back. */
         else if (root) { srcLo = 4; srcHi = 40; }
         else { srcLo = g.TIP + 4; srcHi = g.LEN - 8; }     /* the tip region itself */
-        var viaS = g.TIP + 12;                             /* the turn, inside the cap */
+        /* Where the auxin turns round. With the cap on, that is inside the cap. With the cap
+           CUT OFF it was still turning at g.TIP + 12 — twelve units past the cut face, in open
+           soil, inside a cap that is not there. It now turns just inside the cut end, which is
+           what is left of the apex to turn in. */
+        var viaS = (root && S.cap === 'cut') ? Math.max(8, g.TIP - 14) : g.TIP + 12;
         for (var q = 0; q < N; q++) {
           /* The R2 sequence — the plastic number's two reciprocals — which is built to spread
              points evenly in TWO dimensions. The golden ratio paired with something else is not:
@@ -2957,8 +2996,8 @@
         : S.top !== 'intact' ? 'Auxin is made in the cut tip, which is sitting back on the stump.'
         : 'Auxin is made in the shoot tip — in the light or in the dark.'; }],
       [0.18, function (M) { return S.organ === 'root'
-        ? (M.sees ? 'In the root cap, heavy starch grains sink. That is how the root feels gravity.'
-                  : 'With the cap gone, almost nothing is left to detect gravity.')
+        ? (M.sees ? 'Heavy starch grains sink inside the cap cells. That is how the root feels which way is down.'
+                  : 'The cap is gone. Almost nothing is left with sinking starch grains in it.')
         : S.lay === 'side'
           ? (M.made === 0 ? 'Lying down, so gravity acts. But with no tip there is no auxin for it to move.'
              : M.lit ? 'Lying down, and lit from above. Gravity and light push the same way, so this run cannot tell you which did it.'
@@ -2970,8 +3009,8 @@
                      : S.light === 'top' ? 'Light from straight above falls on both sides equally.'
                      : 'Nothing one-sided is detected.')); }],
       [0.36, function (M) { return M.made === 0 ? 'Nothing to move.'
-        : S.organ === 'root' ? (M.sees ? 'The cap turns it back — and sends more of it down the LOWER side.'
-                                       : 'The cap is gone. It turns back with no side favoured.')
+        : S.organ === 'root' ? (M.sees ? 'Those cells pump it out of their LOWER wall. The auxin does not sink; it is moved.'
+                                       : 'It turns back at the cut end, with no side favoured.')
         : M.thru === 0 ? 'It gathers in the tip. The mica is in its way.'
         : M.offset !== 0 ? 'The auxin can only enter the side it is sitting on.'
         : M.sees ? (S.organ === 'root' || S.lay === 'side' ? 'Auxin is carried across to the LOWER side. None is destroyed.'
@@ -3050,10 +3089,13 @@
            What IS true, and is what the cap experiment turns on, is the route: down the middle,
            round at the tip, back up the outside. */
         pts.push('Auxin reaches the root from the shoot above. It travels to the tip down the <b>middle</b> of the root, and is then carried back to the growing region along the <b>outside</b> — so everything the root uses has passed through the tip.');
-        pts.push(M.sees ? 'The root cap detects gravity: starch grains sink to the lower side.'
-                        : 'With the cap gone, almost nothing is left to detect gravity, so the auxin stays even. It still arrives and the root still grows — what has been cut off is the detector, not the supply.');
+        /* The commonest wrong picture a student leaves with is that gravity pulls the auxin
+           down. It cannot: auxin is a small molecule in solution and does not sink. What sinks
+           is starch grains inside particular cells, and those cells then do the moving. */
+        if (M.sees) pts.push('Gravity does not pull the auxin down — auxin is a small molecule dissolved in water, and it does not sink. What sinks is heavy <b>starch grains</b> inside the cells of the cap.');
+        pts.push(M.sees ? 'Those cells answer by moving their auxin <b>pumps</b> to their lower wall, so more of it is sent back down the <b>lower</b> side of the root.'
+                        : 'With the cap gone, almost nothing is left with sinking starch grains in it, so nothing tells the auxin which side is down. It still reaches the tip and still comes back, but it comes back <b>evenly</b>. The root goes on growing; it just grows straight.');
         if (M.sees) {
-          pts.push('On the way back, more of it is carried down the <b>lower</b> side of the root.');
           pts.push('In a <b>root</b>, a high auxin concentration <b>inhibits</b> cell elongation — the opposite of its effect in a shoot.');
           pts.push('So the lower cells elongate less, the upper cells elongate more, and the root curves down.');
           pts.push('The correction overshoots slightly and stones knock the tip off course, which is why a real root follows a wavy path rather than a straight one.');
