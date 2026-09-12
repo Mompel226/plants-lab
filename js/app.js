@@ -1120,6 +1120,24 @@
                         rather than in each panel so no panel can ever be written without one. */
                      '<div class="xp__b"><p class="xp__warn">Not on the syllabus — here out of curiosity. ' +
                      'You will not be asked to write any of this.</p>' + spec.body + '</div>';
+    /* These panels are the one place in the lab where a hard word got no help: the body is HTML,
+       and Terms.mark escapes its input, so it can never be passed a whole panel. Walking the text
+       nodes and marking each one separately gives the panel the same tappable definitions as the
+       rest of the station — which matters more here than anywhere, since this is where words like
+       coleoptile and expansin live. Links and the citation are left alone. */
+    if (window.Terms && window.Terms.mark) {
+      var tn = [], tw = document.createTreeWalker(card.querySelector('.xp__b'), NodeFilter.SHOW_TEXT, null, false), nd;
+      while ((nd = tw.nextNode())) tn.push(nd);
+      tn.forEach(function (node) {
+        if (!node.data.trim() || !node.parentNode) return;
+        if (node.parentNode.closest('a, b.t, .xp__cite, .xp__warn')) return;
+        var html = window.Terms.mark(node.data);
+        if (html.indexOf('<b class="t') < 0) return;
+        var sp = document.createElement('span');
+        sp.innerHTML = html;
+        node.parentNode.replaceChild(sp, node);
+      });
+    }
     xpBox.appendChild(card);
     xpBox.addEventListener('click', function (e) { if (e.target === xpBox || e.target.closest('.xp__x')) closeExplain(); });
     document.body.appendChild(xpBox);
