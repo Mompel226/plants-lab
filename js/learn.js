@@ -1916,6 +1916,13 @@
       });
     }
 
+    /* How much longer a flank of the elongation zone gets when all the auxin it could have
+       reaches it, in the px the geometry is written in. It is the ONLY size in the drawing
+       that is a choice: it is set large enough that a lesson's worth of growth is visible in
+       a ten-second run. Everything else — how the growth splits between the flanks, and
+       therefore how far the organ turns — is read off the model. */
+    var EXT = 54;
+
     /* ----- the model: apparatus in, biology out ----- */
     function model() {
       var made = 0, offset = 0, sees = false, note = '', who = '', thru = 1;
@@ -1983,7 +1990,19 @@
           gR = S.organ === 'root' ? (1 - dR) : dR;
       if (S.organ === 'shoot' && made === 0) { gL = 0; gR = 0; }
 
-      var bend = (gL - gR) * 54 * Math.PI / 180;   /* + bends right, − bends left */
+      /* The bend is not chosen, it is forced. Give the two flanks the lengths their auxin has
+         earned them — Z + gL·EXT down one side, Z + gR·EXT down the other — and pin them to the
+         two edges of one organ of width 2·HW, and there is exactly one angle the pair can turn
+         through: the difference in their lengths divided by the width. Hence the division.
+         A fixed number of degrees here instead (it used to be 54, for every organ alike) drew
+         whatever curve looked about right and left the cells to inherit their length from the
+         curve — the explanation backwards. It also could not be right for both organs at once,
+         because the root is drawn thinner than the shoot: the same 54 over-drew the shoot's
+         flank difference by a ninth and under-drew the thin root's by a third, so the root, the
+         one place where the flank lengths ARE the lesson, was the one drawn least truthfully.
+         Dividing by the organ's own width makes the thin root turn further for the same
+         difference in growth, which is also what a thin organ really does. */
+      var bend = (gL - gR) * EXT / (2 * geoFor().HW);   /* + bends right, − bends left */
 
       /* Whose experiment is on the bench. Each clause has to name the WHOLE arrangement,
          stimulus included: a cap with the lamp off is nobody's experiment, and crediting it to
@@ -2021,7 +2040,13 @@
          the seed it came out of, and at HW 29 against a 66 px seed the thing read as a sausage
          with an egg stuck on the end. Everything inside it — the cells, the wash, the grains,
          the cap — is written in terms of HW, so they all follow. */
-      root:      { W: 640, H: 400, BX: 172, BY: 150, phi0: Math.PI / 2, LEN: 230, HW: 19, ELO: [110, 184], TIP: 196 }
+      /* phi0 is where the organ points before any bending. A radicle does not come out of a
+         seed sideways and then think about it: it leaves the seed heading DOWN and turns further
+         down as it goes. Drawn horizontally it was also the wrong shape on the page — a smooth
+         pale shaft sticking straight out of a round seed, which is not a silhouette to put in
+         front of a class. Angled at 34 degrees below the horizontal it reads as a root from the
+         first frame, and the gravitropic turn then has somewhere to go. */
+      root:      { W: 640, H: 400, BX: 196, BY: 140, phi0: Math.PI * 0.689, LEN: 230, HW: 19, ELO: [110, 184], TIP: 196 }
     };
     /* The soil is fixed geometry, so it is built once and handed back on every frame after
        that. draw() runs sixty times a run behind 130 auxin grains; rebuilding and reparsing a
@@ -2182,7 +2207,7 @@
       /* Elongation is the whole point, so it has to be visible as LENGTH, not only as a bend.
          The zone lengthens by what the auxin reaching it has earned, which is why a shoot with
          its tip cut off now sits there and does nothing while an intact one climbs. */
-      var ext = (M.gL + M.gR) / 2 * 54 * grow;
+      var ext = (M.gL + M.gR) / 2 * EXT * grow;
       var g = { W: base.W, H: base.H, BX: base.BX, BY: base.BY, phi0: base.phi0, HW: base.HW,
                 LEN: base.LEN + ext, TIP: base.TIP + ext, ELO: [base.ELO[0], base.ELO[1] + ext],
                 ZONE0: base.ELO[0], ZONE1: base.ELO[1] + ext };
@@ -2252,14 +2277,14 @@
            seed leaves and a hook — small beside the root, as a young seedling's shoot is, but
            plainly the same plant. Placed off the root's own origin rather than at absolute page
            coordinates, so it follows if the root's geometry is ever moved again. */
-        var stX = g.BX - 33, stY = g.BY - 28;
-        var stem = 'M' + stX + ' ' + stY + ' C ' + (stX - 5) + ' ' + (stY - 30) + ' ' + (stX - 12) + ' ' + (stY - 56) + ' ' + (stX - 15) + ' ' + (stY - 84);
+        var stX = g.BX - 8, stY = g.BY - 16;   /* beside the radicle: both come out at the hilum end */
+        var stem = 'M' + stX + ' ' + stY + ' C ' + (stX - 3) + ' ' + (stY - 32) + ' ' + (stX - 16) + ' ' + (stY - 60) + ' ' + (stX - 20) + ' ' + (stY - 86);
         s += '<path d="' + stem + '" fill="none" stroke="#3F7F41" stroke-width="10" stroke-linecap="round"/>';
         s += '<path d="' + stem + '" fill="none" stroke="url(#axStem)" stroke-width="7" stroke-linecap="round"/>';
-        s += '<g transform="translate(' + (stX - 15) + ',' + (stY - 84) + ')">' +
+        s += '<g transform="translate(' + (stX - 20) + ',' + (stY - 86) + ')">' +
              '<path d="M0 0 q2 -16 16 -20 q2 18 -12 23 Z" fill="#5FAE59" stroke="#3F7F41" stroke-width="1.6" stroke-linejoin="round"/>' +
              '<path d="M1 10 q-16 -9 -15 -26 q17 8 17 25 Z" fill="#6FBC63" stroke="#3F7F41" stroke-width="1.6" stroke-linejoin="round"/></g>';
-        s += '<text class="ax__s" x="' + (stX + 13) + '" y="' + (stY - 76) + '">shoot, growing up</text>';
+        s += '<text class="ax__s" x="' + (stX + 10) + '" y="' + (stY - 78) + '">shoot, growing up</text>';
         /* The seed itself is drawn LAST, with the root cap, so that it covers the root's square
            base end instead of being butt-jointed to it — see below. */
       }
@@ -2305,7 +2330,7 @@
         }
       }
       if (root) {                                   /* the stimulus is gravity: show it as such */
-        var rgx = narrow ? vx + vw - 40 : 300;
+        var rgx = narrow ? vx + vw - 40 : 392;   /* clear of the shoot's own label */
         s += '<g opacity="' + (0.3 + 0.7 * detect).toFixed(2) + '"><line x1="' + rgx + '" y1="52" x2="' + rgx + '" y2="102" stroke="#7A7A7A" stroke-width="2.4"/>' +
              '<path d="M' + rgx + ' 108 l-6 -10 h12 Z" fill="#7A7A7A"/><text class="ax__s" x="' + rgx + '" y="42" text-anchor="middle">gravity</text></g>';
       }
@@ -2339,11 +2364,22 @@
 
       /* the cells. In the elongation zone the boxes on each flank are drawn to the length
          that flank's auxin has earned it, so the curve above is the sum of what is drawn
-         here rather than a shape imposed on top of it. */
+         here rather than a shape imposed on top of it.
+         Both flanks are cut from the SAME four intervals of s, and that is not a shortcut.
+         Sweeping an interval of the centre line out to +HW and to −HW gives two edges whose
+         lengths differ by exactly 2·HW·bend shared between them, and model() picks bend so
+         that that difference IS gL·EXT − gR·EXT. So one set of bounds, drawn once at +HW and
+         once at −HW, hands each flank its own earned length to the pixel, and the body outline
+         they tile cannot develop a seam. Stretching the boxes by hand from the growth instead
+         would compute the same two lengths a second way and let the two ways drift apart. */
       /* Cells outside the zone keep the length they started with; the four inside it are
          redrawn longer as the zone extends. Dividing the whole flank into equal boxes, as
          this did before, made every cell grow — which is the one thing that is not happening. */
       var CELL = 19;                                  /* the length of a cell before it stretches */
+      /* What an in-zone box measures before anything stretches it. The zone is always cut into
+         four however long it is, and it is not a whole number of CELLs long, so "it has grown"
+         has to be measured against this and not against CELL. */
+      var REST = (base.ELO[1] - base.ELO[0]) / 4;
       function cellBounds() {
         var z0 = Math.max(0, Math.min(g.ZONE0, bodyTop)), z1 = Math.max(z0, Math.min(g.ZONE1, bodyTop));
         var b = [0], v;
@@ -2355,19 +2391,23 @@
         return b;
       }
       function chain(sign) {
-        var gth = sign < 0 ? M.gL : M.gR, out = '', B = cellBounds();
+        var out = '', B = cellBounds();
         for (var i = 0; i < B.length - 1; i++) {
           var s0 = B[i], s1 = B[i + 1];
           var mid = (s0 + s1) / 2, inZone = mid >= g.ZONE0 - 0.5 && mid <= g.ZONE1 + 0.5;
-          var stretched = inZone ? gth * grow : 0;
+          var p1 = at(s0, sign * HW), p2 = at(s1, sign * HW), p3 = at(s1, sign * (HW - CW)), p4 = at(s0, sign * (HW - CW));
           /* What decides whether a cell is drawn as elongating is whether it IS longer than it
              started, not whether its share of the auxin beat a fixed number. The old cut-off at
              0.42 left the lit flank pale and arrowless while the same frame drew it 28% longer,
              and with a plate on the shaded side it silenced BOTH flanks of a shoot that had
              visibly grown — the key saying "this cell is elongating" against a drawing that
-             showed none. */
-          var grew = inZone && (s1 - s0) > CELL + 0.6;
-          var p1 = at(s0, sign * HW), p2 = at(s1, sign * HW), p3 = at(s1, sign * (HW - CW)), p4 = at(s0, sign * (HW - CW));
+             showed none.
+             Measured along the edge actually drawn, p1 to p2, because that is the length the
+             reader can see. Reading (s1 - s0) instead measured the CENTRE line, which is the
+             mean of the two flanks and so returns the same answer on both: the held-back flank
+             was handed an arrow earned by the flank opposite it. */
+          var drawn = Math.hypot(p2[0] - p1[0], p2[1] - p1[1]);
+          var grew = inZone && drawn > REST + 0.6;
           /* On the root the not-yet-elongating cell was so near white that the one box between
              the zone and the cap read as a gap in the drawing rather than as a cell. */
           var fill = !inZone ? (root ? '#F0E7D2' : '#C6E2AC')
@@ -2513,18 +2553,23 @@
          under the seed coat, which is what actually happens at the micropyle. */
       if (root) {
         /* A bean, not an egg: broad and round at the far end, drawn in a little where the root
-           comes out, with the hilum — the scar where it was joined to the pod — on the flat
-           edge beside it. An ellipse read as a balloon tied to the root. */
-        s += '<g transform="translate(' + (g.BX - 26) + ',' + (g.BY + 5) + ') rotate(-9)">' +
+           comes out, with the hilum — the scar where it was joined to the pod — on the flat edge
+           beside it. And BIG: on a germinating seedling the seed is far and away the largest
+           thing in the picture, with a thread of a root out of one end and a thread of a shoot
+           out of the other. At a seed barely wider than the root was thick, the two together
+           made one shape rather than two, and it was the wrong shape. It is now about three
+           times the root's thickness, which is roughly life. */
+        s += '<g transform="translate(' + (g.BX - 60) + ',' + (g.BY + 8) + ') rotate(-13) scale(1.42)">' +
              '<path d="M52 -4 C51 12 34 24 11 27 C-15 30 -43 21 -50 5 C-56 -10 -42 -25 -17 -28 C11 -32 44 -21 52 -4 Z" ' +
-             'fill="url(#axSeed)" stroke="#9C7F4E" stroke-width="2.2" stroke-linejoin="round"/>' +
+             'fill="url(#axSeed)" stroke="#9C7F4E" stroke-width="1.7" stroke-linejoin="round"/>' +
              /* the seam between the two halves of the seed, and the scar where it was joined to
                 the pod: the two marks that say seed rather than pebble */
-             '<path d="M-46 -4 C-30 -14 8 -16 40 -7" fill="none" stroke="#B89A63" stroke-width="1.5" opacity=".65"/>' +
-             '<ellipse cx="4" cy="24" rx="11" ry="3.6" transform="rotate(-7 4 24)" fill="#D8C193" stroke="#A98C59" stroke-width="1.3"/>' +
-             '<path d="M-36 -14 C-28 -21 -14 -24 0 -22" fill="none" stroke="#FBF4E2" stroke-width="4" stroke-linecap="round" opacity=".4"/>' +
+             '<path d="M-46 -4 C-30 -14 8 -16 40 -7" fill="none" stroke="#B89A63" stroke-width="1.2" opacity=".65"/>' +
+             /* the hilum sits at the end the radicle and the plumule come out of, not away from it */
+             '<ellipse cx="41" cy="11" rx="10" ry="3.4" transform="rotate(64 41 11)" fill="#D8C193" stroke="#A98C59" stroke-width="1"/>' +
+             '<path d="M-36 -14 C-28 -21 -14 -24 0 -22" fill="none" stroke="#FBF4E2" stroke-width="3" stroke-linecap="round" opacity=".4"/>' +
              '</g>';
-        s += '<text class="ax__s" x="' + (g.BX - 24) + '" y="' + (g.BY + 62) + '" text-anchor="middle">seed</text>';
+        s += '<text class="ax__s" x="' + (g.BX - 60) + '" y="' + (g.BY + 80) + '" text-anchor="middle">seed</text>';
       }
 
       /* the root cap and its statoliths — the detector, and the thing that does the detecting */
@@ -2644,7 +2689,16 @@
         var srcLo, srcHi, srcU = 0;
         if (putBack) { srcLo = bodyTop + 12; srcHi = bodyTop + 46; srcU = tipOff; }
         else if (S.organ === 'shoot' && S.top === 'cut') { srcLo = bodyTop - 14; srcHi = bodyTop - 2; }
+        /* A ROOT DOES NOT MAKE THE AUXIN IT BENDS WITH, and the drawing used to say it did:
+           every grain was born inside the root cap, which told the student the cap was the
+           source. It is the detector and the relay. The auxin comes down from the shoot above,
+           travels to the tip through the MIDDLE of the root, and is then carried BACK to the
+           growing region through the outer layers — which is precisely how the cap gets to
+           decide which flank receives more of it. So the root's grains are born just below the
+           seed, run down the centre line to the tip, and only then fan out and come back. */
+        else if (root) { srcLo = 4; srcHi = 40; }
         else { srcLo = g.TIP + 4; srcHi = g.LEN - 8; }     /* the tip region itself */
+        var viaS = g.TIP + 12;                             /* the turn, inside the cap */
         for (var q = 0; q < N; q++) {
           /* The R2 sequence — the plastic number's two reciprocals — which is built to spread
              points evenly in TWO dimensions. The golden ratio paired with something else is not:
@@ -2661,6 +2715,7 @@
              stump. Reading only M.offset, a shifted tip made half its auxin in the air
              beside it. */
           var uEven = putBack ? srcU + (a1 * 2 - 1) * HW * 0.5
+            : root ? (a1 * 2 - 1) * HW * 0.24          /* down the middle: the stele, not the flanks */
             : M.offset !== 0 ? M.offset * HW * (0.18 + 0.34 * b1)
             : (a1 * 2 - 1) * HW * 0.54;
           /* A low-discrepancy pair packed this densely starts to look like a lattice, which reads
@@ -2693,6 +2748,21 @@
           var born = frac(a1 * 3.1 + b1 * 0.7) * 0.34;
           var age = clamp((p - born) / Math.max(0.2, 0.86 - born));
           if (age > 0) {
+            var s2, u2;
+            if (root) {
+              /* two legs, because the journey has two: down the middle to the tip, then back up
+                 the outside to the elongation zone. Drawn as one move it could only ever show
+                 auxin appearing where it is used. */
+              var lA = clamp(age / 0.46), lB = clamp((age - 0.46) / 0.54);
+              var eA = lA * lA * (3 - 2 * lA);
+              var eB = lB < 0.5 ? 2 * lB * lB : 1 - Math.pow(-2 * lB + 2, 2) / 2;
+              s2 = lB <= 0 ? sTop + (viaS - sTop) * eA : viaS + (sEnd - viaS) * eB;
+              u2 = uEven + (uSide - uEven) * (lB * lB * (3 - 2 * lB));
+              var pgR = at(Math.max(4, s2), u2);
+              s += '<circle cx="' + pgR[0].toFixed(1) + '" cy="' + pgR[1].toFixed(1) + '" r="1.55" fill="#F0900E" opacity="' +
+                   Math.min(1, age * 7).toFixed(2) + '"/>';
+              continue;
+            }
             var es = age < 0.5 ? 2 * age * age : 1 - Math.pow(-2 * age + 2, 2) / 2;   /* along the shoot */
             /* Which stimulus is pushing decides WHERE the sideways move happens. Light works on
                the tip — split the apex and the asymmetry disappears (Briggs, Tocher and Wilson
@@ -2847,7 +2917,7 @@
     /* ----- what the student is told, built from the model and not from a table ----- */
     var STEPS = [
       [0.00, function (M) { return S.organ === 'root'
-        ? 'Auxin travels down and gathers at the root tip.'
+        ? 'The root does not make it. Auxin comes down from the shoot above.'
         : M.made <= 0 ? 'There is no auxin here to move.'
         : S.top === 'cut' ? 'Auxin passes from the block into the side it stands on.'
         : S.top !== 'intact' ? 'Auxin is made in the cut tip, which is sitting back on the stump.'
@@ -2866,12 +2936,15 @@
                      : S.light === 'top' ? 'Light from straight above falls on both sides equally.'
                      : 'Nothing one-sided is detected.')); }],
       [0.36, function (M) { return M.made === 0 ? 'Nothing to move.'
+        : S.organ === 'root' ? (M.sees ? 'At the tip the cap turns it back, and sends more of it down the LOWER side.'
+                                       : 'At the tip it turns back. Nothing sends it to one side.')
         : M.thru === 0 ? 'It gathers in the tip. The mica is in its way.'
         : M.offset !== 0 ? 'The auxin can only enter the side it is sitting on.'
         : M.sees ? (S.organ === 'root' || S.lay === 'side' ? 'Auxin is carried across to the LOWER side. None is destroyed.'
                     : 'Auxin is carried across to the shaded side. None is destroyed.')
         : 'The auxin stays evenly spread.'; }],
       [0.58, function (M) { return M.made === 0 ? 'No auxin travels down.'
+        : S.organ === 'root' ? 'It travels back from the tip to the zone of elongation.'
         : M.thru === 0 ? 'The mica blocks it. None of it gets down into the stump.'
         : M.note ? 'The plate holds that side back.'
         : 'The auxin travels down to the zone of elongation.'; }],
@@ -2939,10 +3012,11 @@
 
       var pts = [];
       if (S.organ === 'root') {
+        pts.push('The auxin is <b>not made in the root</b>. It comes down from the shoot above, travels to the tip through the middle of the root, and is then carried back to the growing region through the outer layers.');
         pts.push(M.sees ? 'The root cap detects gravity: starch grains sink to the lower side.'
-                        : 'With the cap gone, almost nothing is left to detect gravity, so the auxin stays even.');
+                        : 'With the cap gone, almost nothing is left to detect gravity, so the auxin stays even. The auxin still arrives and the root still grows — what has been taken off is the detector, not the supply.');
         if (M.sees) {
-          pts.push('Auxin is carried to the lower side of the root.');
+          pts.push('On the way back, more of it is carried down the <b>lower</b> side of the root.');
           pts.push('In a <b>root</b>, a high auxin concentration <b>inhibits</b> cell elongation — the opposite of its effect in a shoot.');
           pts.push('So the lower cells elongate less, the upper cells elongate more, and the root curves down.');
           pts.push('The correction overshoots slightly and stones knock the tip off course, which is why a real root follows a wavy path rather than a straight one.');
@@ -3199,7 +3273,7 @@
 
     buildPanel();
     requestAnimationFrame(function () { attach(); gauge(); mount(); run(); });
-    box.appendChild(h('p', 'widget__note', 'The bend is not drawn on. Each flank of the elongation zone is drawn to the length its own auxin has earned it, and a column whose one side is longer than the other can only be a curve. Change the apparatus and the biology, not a stored answer, decides what happens. One thing is drawn harder than it happens: the real split is about two parts to one, and the picture leans nearer nine to one, because two to one across a shoot this narrow is not a difference an eye can read. Write two to one.'));
+    box.appendChild(h('p', 'widget__note', 'The bend is not drawn on. Each flank of the elongation zone is drawn to the length its own auxin has earned it, and the turn then follows on its own: the angle is the difference between the two flank lengths, divided by the width of the organ. Change the apparatus and the biology, not a stored answer, decides what happens. One thing is worth reading carefully. Two parts of auxin to one gives a flank twice the STRETCH, not twice the length, because both flanks already had a length before either of them stretched. On the root that leaves the upper flank about a fifth longer than the lower one — and a fifth is all a curve needs. So write two to one for the auxin, and do not expect to measure two to one on the drawing.'));
     box.__onReset = function () { if (S.t) clearInterval(S.t); detach(); };
     return box;
   }
