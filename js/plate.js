@@ -125,6 +125,7 @@
     if (sim) sim.hidden = !on;
     if (on && bench) bench.hidden = true;
     if (on && tag) tag.classList.remove('on');
+    if (global.PlateFold) global.PlateFold.lend(!!on);   /* on a phone the strip may be folded away */
   }
 
   function showSim(on) {

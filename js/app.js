@@ -1274,7 +1274,19 @@
         try { foldedNow = localStorage.getItem(FOLD_KEY) === '1'; } catch (e) {}
         var paintFold = function () { plate.classList.toggle('is-folded', foldedNow); fold.setAttribute('aria-expanded', foldedNow ? 'false' : 'true'); fold.textContent = (foldedNow ? '▼ Show ' : '▲ Hide ') + fold.getAttribute('data-what'); };
         paintFold();
-        fold.addEventListener('click', function () { foldedNow = !foldedNow; try { localStorage.setItem(FOLD_KEY, foldedNow ? '1' : '0'); } catch (e) {} paintFold(); });
+        fold.addEventListener('click', function () { foldedNow = !foldedNow; lentTo = false; try { localStorage.setItem(FOLD_KEY, foldedNow ? '1' : '0'); } catch (e) {} paintFold(); });
+        /* A simulation arriving in the strip while the strip is folded away would be invisible,
+           and the reader would never know it was there. So it opens itself — and closes again
+           afterwards, unless the reader has since made the choice themselves, in which case their
+           choice stands and is what gets remembered. */
+        var lentTo = false;
+        window.PlateFold = {
+          lend: function (on) {
+            if (on) {
+              if (foldedNow) { lentTo = true; plate.classList.remove('is-folded'); fold.setAttribute('aria-expanded', 'true'); fold.textContent = '▲ Hide ' + fold.getAttribute('data-what'); }
+            } else if (lentTo) { lentTo = false; paintFold(); }
+          }
+        };
       }
       qStat.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goQuestions(); } });
     }
