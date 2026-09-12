@@ -1850,10 +1850,14 @@
     var pack  = h('div', 'ax__pack');
     var stage = h('div', 'ax__stage');
     var key   = h('div', 'ax__key');
-    var capt  = h('p', 'ax__cap');
-    var why   = h('div', 'ax__why');
+    /* ONE place for the words. A green strip that replaced itself line by line, and then a
+       purple box underneath that said most of it again, made the reader do the joining up and
+       repeated half the content. The account is now written into a single list as the run goes:
+       each line types itself out, and it STAYS, so by the end the whole story is on the page in
+       the order it happened, at whatever speed the reader wants to go back over it. */
+    var logEl = h('ul', 'ax__log');
     var pins = h('ol', 'ax__pins');
-    pack.appendChild(stage); pack.appendChild(pins); pack.appendChild(key); pack.appendChild(capt); pack.appendChild(why);
+    pack.appendChild(stage); pack.appendChild(pins); pack.appendChild(key); pack.appendChild(logEl);
     slot.appendChild(pack);
     wrap.appendChild(panel); wrap.appendChild(acts); wrap.appendChild(slot);
     box.appendChild(wrap);
@@ -2197,7 +2201,7 @@
     }
 
     /* ----- the drawing ----- */
-    var narrow = false, capNow = '';
+    var narrow = false;
     function gauge() { var w2 = stage.clientWidth || 0; if (w2) narrow = w2 < 470; }
 
     function draw(M, p) {
@@ -2911,7 +2915,7 @@
         s += ruled(phr[0], phr[1], 0, 0, 'root hair cells: behind the tip, not on it');
         /* Correcting towards the vertical overshoots, and the tip is knocked aside by stones.
            Both are real, and together they are why a root in soil follows a wavy path. */
-        if (grow > 0.85 && M.sees) {
+        if (grow > 0.85) {
           /* The path has to leave the tip pointing where the tip points, and start beyond the cap
              rather than inside it. Built in screen coordinates with a fixed downward step it left
              the root at 26 degrees off its own heading, out of the middle of the cap. */
@@ -2928,8 +2932,14 @@
                was clamped at the vertical, so nothing overshot anything; the waving was a plain
                sideways displacement laid on a straight line, and the words described a picture
                that was not there. One mechanism, drawn once. */
-            var ph = ph0 + (DOWN - ph0) * Math.min(1, wv / 22 * 2.2)
-                   + 0.5 * Math.exp(-wv / 14) * Math.sin(wv / 2.3);
+            /* With no cap there is nothing to detect which way is down, so there is nothing to
+               correct towards: the root simply carries on the way it was pointing. Drawing the
+               path only when the cap is ON left the one state where a straight path IS the
+               result with no path at all — and a straight line beside a waving one is the
+               clearest way to show what the cap was doing. */
+            var ph = M.sees
+              ? ph0 + (DOWN - ph0) * Math.min(1, wv / 22 * 2.2) + 0.5 * Math.exp(-wv / 14) * Math.sin(wv / 2.3)
+              : ph0;
             cx += Math.sin(ph) * 5; cy -= Math.cos(ph) * 5;
             pts.push([cx, cy]);
           }
@@ -2937,7 +2947,8 @@
           var wLab = pts[narrow ? 8 : 4];    /* early, on the LEFT of the path: anchored at 13 the
                                                 dot landed on the words themselves and the leader
                                                 ran backwards to reach them */
-          s += ruled(wLab[0], wLab[1], 0, 0, 'it overshoots and corrects, so the path waves');
+          s += ruled(wLab[0], wLab[1], 0, 0, M.sees ? 'it overshoots and corrects, so the path waves'
+            : 'no detector, so no correction: it carries straight on');
         }
       }
 
@@ -2945,20 +2956,14 @@
          hold it. Measured before they were collected it was always zero, and the words landed on
          the drawing they were describing. */
       var band = narrow ? pinBand(vw) : 0;
-      /* a fixed strip below the drawing for the narration: fixed, because a band that grew and
-         shrank with each sentence would resize the drawing five times a run */
-      var capH = (narrow && capNow) ? 46 : 0;
-      if (capH) {
-        var cw = Math.max(30, Math.floor((vw - 24) / 5.0));
-        wrapText(capNow, cw).slice(0, 3).forEach(function (ln, i) {
-          s += '<text class="ax__pintxt" x="' + (vx + 10) + '" y="' + (g.H + 15 + i * 13).toFixed(1) + '">' + ln + '</text>';
-        });
-        s += '<path d="M' + (vx + 6) + ' ' + (g.H + 3) + ' H' + (vx + vw - 6) + '" stroke="#E0DAC9" stroke-width="1"/>';
-      }
-      var head = '<svg viewBox="' + vx + ' ' + (-band) + ' ' + vw + ' ' + (g.H + band + capH) +
+      /* The narration used to be repeated INSIDE the drawing on a phone, because the strip
+         below it replaced itself line by line and a reader looking at the drawing missed it.
+         The account is now a list that keeps every line, so there is nothing to miss and no
+         reason to say it twice. The drawing gets its full height back. */
+      var head = '<svg viewBox="' + vx + ' ' + (-band) + ' ' + vw + ' ' + (g.H + band) +
                  '" role="img" aria-label="' + verdictPlain(M) + '">' +
                  '<rect x="' + (vx - 4) + '" y="' + (-band - 4) + '" width="' + (vw + 8) +
-                 '" height="' + (g.H + band + capH + 8) + '" fill="' + bg + '"/>';
+                 '" height="' + (g.H + band + 8) + '" fill="' + bg + '"/>';
       stage.innerHTML = head + s + (narrow ? pinLabels(g, vx, vw, band) : placeLabels(g, labRight)) + '</svg>';
     }
 
@@ -2987,6 +2992,31 @@
       return o;
     }
 
+    /* Reveal a line of markup a character at a time without ever showing a half-written tag:
+       the markup is parsed first, its text nodes are emptied, and the characters are handed
+       back in order. Typing the raw string instead would put "<b" on the screen. */
+    function typer(el, html) {
+      el.innerHTML = html;
+      var nodes = [], total = 0;
+      (function walk(node) {
+        for (var i = 0; i < node.childNodes.length; i++) {
+          var c = node.childNodes[i];
+          if (c.nodeType === 3) { nodes.push({ n: c, s: c.data }); total += c.data.length; c.data = ''; }
+          else walk(c);
+        }
+      })(el);
+      return { total: total, show: function (k) {
+        var left = k;
+        for (var i = 0; i < nodes.length; i++) {
+          var s = nodes[i].s, want;
+          if (left <= 0) want = '';
+          else if (left >= s.length) { want = s; left -= s.length; }
+          else { want = s.slice(0, left); left = 0; }
+          if (nodes[i].n.data !== want) nodes[i].n.data = want;
+        }
+      } };
+    }
+
     /* ----- what the student is told, built from the model and not from a table ----- */
     var STEPS = [
       [0.00, function (M) { return S.organ === 'root'
@@ -3013,7 +3043,7 @@
                                        : 'It turns back at the cut end, with no side favoured.')
         : M.thru === 0 ? 'It gathers in the tip. The mica is in its way.'
         : M.offset !== 0 ? 'The auxin can only enter the side it is sitting on.'
-        : M.sees ? (S.organ === 'root' || S.lay === 'side' ? 'Auxin is carried across to the LOWER side. None is destroyed.'
+        : M.sees ? (S.lay === 'side' ? 'Starch grains sink in a sheath of cells running the WHOLE length of the stem, and auxin is pushed across to the LOWER flank.'
                     : 'Auxin is carried across to the shaded side. None is destroyed.')
         : 'The auxin stays evenly spread.'; }],
       [0.58, function (M) { return M.made === 0 ? 'No auxin travels down.'
@@ -3056,7 +3086,7 @@
                'this cell is elongating — the longer the arrow, the more it has stretched']);
       if (S.organ === 'root' && S.cap === 'intact')
         it.push([sw('<circle cx="8" cy="8" r="4.4" fill="#6B5A33"/>'), 'starch grain (statolith)']);
-      if (S.organ === 'root' && S.cap === 'intact')
+      if (S.organ === 'root')
         it.push([sw('<path d="M3 14 C7 8 9 8 13 2" fill="none" stroke="#9A8459" stroke-width="2.2" stroke-dasharray="4 3"/>'), 'dashed line: the path it takes through the soil']);
       if (S.organ === 'shoot' && S.mica !== 'none')
         it.push([sw('<rect x="1" y="6.5" width="14" height="3.4" rx="1.7" fill="#6C7681"/>'), 'mica — nothing crosses it']);
@@ -3067,10 +3097,13 @@
       key.innerHTML = it.map(function (x) { return '<span class="ax__keyi">' + x[0] + x[1] + '</span>'; }).join('');
     }
 
-    function verdict(M) {
-      var diff = Math.abs(M.gL - M.gR) > 0.04, out = '';
+    /* The run has already narrated what happened, line by line, so this adds only the two
+       things it cannot: the result stated as a result, and the sentences a student has to be
+       able to write down. Everything here used to repeat a step almost word for word. */
+    function closing(M) {
+      var diff = Math.abs(M.gL - M.gR) > 0.04, pts = [];
       var line = S.organ === 'root'
-        ? (diff ? 'The root bends <b>downwards</b>.' : 'The root grows <b>straight</b>.')
+        ? (diff ? 'The root bends <b>downwards</b> — it is <b>positively gravitropic</b>.' : 'The root grows <b>straight</b>.')
         : M.made === 0 ? 'The shoot <b>does not grow and does not bend</b>.'
         : M.thru === 0 ? 'The stump <b>does not grow and does not bend</b>: the auxin cannot get past the mica.'
         : S.lay === 'side'
@@ -3080,103 +3113,106 @@
         : diff ? 'The shoot bends <b>' + (M.gL > M.gR ? 'to the right' : 'to the left') + '</b>' +
                  (M.sees && M.offset === 0 ? ' — <b>towards the light</b>.' : '.')
                : 'The shoot grows <b>straight</b>.';
-      out += '<p class="ax__res">' + line + '</p>';
 
-      var pts = [];
       if (S.organ === 'root') {
-        /* "The root does not make auxin" is the tidy version and it is not true: the root tip
-           is itself a significant site of synthesis (Ljung et al. 2005, Plant Cell 17:1090).
-           What IS true, and is what the cap experiment turns on, is the route: down the middle,
-           round at the tip, back up the outside. */
-        pts.push('Auxin reaches the root from the shoot above. It travels to the tip down the <b>middle</b> of the root, and is then carried back to the growing region along the <b>outside</b> — so everything the root uses has passed through the tip.');
-        /* The commonest wrong picture a student leaves with is that gravity pulls the auxin
-           down. It cannot: auxin is a small molecule in solution and does not sink. What sinks
-           is starch grains inside particular cells, and those cells then do the moving. */
-        if (M.sees) pts.push('Gravity does not pull the auxin down — auxin is a small molecule dissolved in water, and it does not sink. What sinks is heavy <b>starch grains</b> inside the cells of the cap.');
-        pts.push(M.sees ? 'Those cells answer by moving their auxin <b>pumps</b> to their lower wall, so more of it is sent back down the <b>lower</b> side of the root.'
-                        : 'With the cap gone, almost nothing is left with sinking starch grains in it, so nothing tells the auxin which side is down. It still reaches the tip and still comes back, but it comes back <b>evenly</b>. The root goes on growing; it just grows straight.');
         if (M.sees) {
-          pts.push('In a <b>root</b>, a high auxin concentration <b>inhibits</b> cell elongation — the opposite of its effect in a shoot.');
-          pts.push('So the lower cells elongate less, the upper cells elongate more, and the root curves down.');
-          pts.push('The correction overshoots slightly and stones knock the tip off course, which is why a real root follows a wavy path rather than a straight one.');
+          pts.push('In a <b>root</b>, a high auxin concentration <b>inhibits</b> cell elongation. That is the opposite of what it does in a shoot, and it is the sentence to learn.');
+          pts.push('A real root does not settle at once: it overshoots the vertical and corrects, and stones knock the tip off course. That is why its path waves.');
+        } else {
+          pts.push('The cap is the <b>detector</b>, not the source. The auxin still arrives and the root still grows — it just no longer knows which way is down.');
         }
-      } else {
-        if (S.lay === 'side' && M.made > 0) {
-          pts.push('Lying down, the stem feels which way is down. It does this <b>all along its length</b>, not with its tip: inside a sheath of cells, heavy starch grains sink to the lower wall.');
-          pts.push('Auxin is pushed across to the <b>LOWER</b> flank, along the whole growing region.');
-          if (M.lit) pts.push('The lamp overhead also shades the lower flank, so light and gravity are pushing the auxin the same way. Run it again in the dark and only gravity is left — that is the control that makes the result mean something.');
-          else if (S.light === 'dark') pts.push('In the dark there is no light to confuse it, so the turn upwards can only be a response to gravity.');
-          else pts.push('The cap keeps the light off the tip, so although the lamp is on, gravity is the only stimulus the shoot can read.');
-          pts.push('More auxin on the lower flank makes those cells <b>elongate</b> more, so the lower side becomes longer and the shoot curves up. A shoot is <b>negatively gravitropic</b>.');
-        }
-        else if (S.lay === 'side') {
-          pts.push('Gravity is still acting, and the stem can still feel which way is down — it does not need the tip for that.');
-          pts.push('But the tip was where the auxin came from. With no auxin there is nothing to push to the lower flank and nothing to make cells elongate, so it stays where it was laid.');
-          pts.push('Give a shoot like this auxin further down and it can answer gravity again. It still cannot answer light — that needs the tip.');
-        }
-        else if (M.made === 0) pts.push(S.top === 'cut' && S.block.indexOf('plain') === 0
+      } else if (S.lay === 'side' && M.made > 0) {
+        pts.push(M.lit ? 'The lamp overhead shades the lower flank as well, so light and gravity are pushing the auxin the same way. Run it again in the dark and only gravity is left — that is the control that makes the result mean something.'
+          : S.light === 'dark' ? 'In the dark there is no light to confuse it, so the turn upwards can only be a response to gravity.'
+          : 'The cap keeps the light off the tip, so although the lamp is on, gravity is the only stimulus the shoot can read.');
+      } else if (S.lay === 'side') {
+        pts.push('The stem can still feel which way is down — that does not need the tip. What is missing is the auxin. Give a shoot like this auxin further down and it answers gravity again; it still cannot answer light.');
+      } else if (M.made === 0) {
+        pts.push(S.top === 'cut' && S.block.indexOf('plain') === 0
           ? 'Plain agar carries no auxin, so there is still no source. This is the control that shows it is the auxin in the block that matters, not the block.'
           : 'Auxin is made in the tip. With the tip gone, almost none reaches the cells, so they stop elongating.');
-        /* With mica between tip and stump the model makes auxin and delivers none of it, so
-           every sentence below fell through to the even-split wording and told the student both
-           flanks had elongated — under a drawing with no elongation at all and the auxin visibly
-           trapped in the tip. The sentence that explains this experiment was keyed on made === 0,
-           which this state never reaches, so it could never print. */
-        else if (M.thru === 0) {
-          pts.push('The tip is still <b>making</b> auxin — cutting a shoot does not stop its tip working. You can see it gathering in the tip above the plate.');
-          pts.push('Mica lets nothing through, so none of it reaches the stump.');
-          pts.push('No auxin reaches the elongating cells, so the stump neither elongates nor bends. Put gelatin there instead and the same tip makes the same shoot bend.');
-        }
-        else if (S.lay !== 'side') {
-          pts.push(M.offset !== 0
-            ? 'The auxin can only enter the side it sits on, so that side gets nearly all of it.'
-            : M.sees ? 'The tip detects the light and carries auxin across to the shaded side, about two parts to one. The total is unchanged: light moves auxin, it does not destroy it.'
-            : S.cover === 'opaque' ? 'The cap stops light reaching the tip, so no side is favoured and the auxin stays even.'
-            : S.cover === 'collar' ? 'The collar covers the stem but not the tip. The tip is the detector, so the response happens anyway.'
-            : 'Nothing one-sided reaches the tip, so the auxin stays evenly spread.');
-          if (M.note && Math.abs(M.gL - M.gR) < 0.04) pts.push('The plate stops the extra auxin travelling down that flank, so the difference never reaches the elongating cells and there is no curvature. That is the result Boysen-Jensen got with the plate on the shaded side.');
-          else if (M.note) pts.push('The plate is on the lit flank, which was carrying less auxin anyway, so it holds nothing back that mattered and the shoot bends as it would have done. That is the control for the other arrangement.');
-          else if (Math.abs(M.gL - M.gR) > 0.04) pts.push('More auxin on one side makes those cells take in more water and <b>elongate</b> more. One flank longer than the other can only be a curve.');
-          else pts.push('Both flanks elongate equally, so there is nothing to bend it.');
-        }
+      } else if (M.thru === 0) {
+        pts.push('The tip is still <b>making</b> auxin — cutting a shoot does not stop its tip working. Put gelatin there instead and the same tip makes the same shoot bend.');
+      } else {
+        if (M.sees && M.offset === 0)
+          pts.push('The total is unchanged: light <b>moves</b> auxin, it does not destroy it. About <b>two parts to one</b> towards the shade.');
+        if (S.cover === 'collar')
+          pts.push('The collar covers the stem but not the tip. The tip is the detector, so the response happens anyway.');
+        if (M.note && !diff)
+          pts.push('The plate stops the extra auxin travelling down that flank, so the difference never reaches the elongating cells and there is no curvature. That is the result Boysen-Jensen got with the plate on the shaded side.');
+        else if (M.note)
+          pts.push('The plate is on the lit flank, which was carrying less auxin anyway, so it holds nothing back that mattered. That is the control for the other arrangement.');
       }
-      out += '<ul class="ax__pts">' + pts.map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ul>';
-      if (M.who) out += '<p class="ax__who">This is the arrangement used by <b>' + M.who + '</b>.</p>';
-      return out;
+      return { line: line, pts: pts, who: M.who };
+    }
+
+    /* The whole account as a list of moments: the five narration beats at their own points in
+       the run, then the result, then the sentences to write down, one after the other once the
+       drawing has stopped moving. */
+    function script(M) {
+      var b = [], i;
+      for (i = 0; i < STEPS.length; i++) {
+        var txt = STEPS[i][1](M);
+        if (txt) b.push({ at: STEPS[i][0], text: txt, kind: 'step' });
+      }
+      var c = closing(M);
+      b.push({ at: 1, text: c.line, kind: 'res' });
+      for (i = 0; i < c.pts.length; i++) b.push({ at: 1, text: c.pts[i], kind: 'pt' });
+      if (c.who) b.push({ at: 1, text: 'This is the arrangement used by <b>' + c.who + '</b>.', kind: 'who' });
+      return b;
     }
 
     function run() {
       var M = model();
       if (S.t) { clearInterval(S.t); S.t = null; }
       paintKey(M);
-      why.innerHTML = '';
+      logEl.innerHTML = '';
+      var beats = script(M);
       var still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (still) { S.p = 1; capNow = ''; draw(M, 1); capt.textContent = ''; capt.hidden = true; why.innerHTML = verdict(M); return; }
+
+      function addLine(beat) {
+        var prev = logEl.lastChild;
+        if (prev) prev.className = prev.className.replace(' is-now', '');
+        var li = h('li', 'ax__logi is-' + beat.kind + ' is-now');
+        logEl.appendChild(li);
+        return typer(li, beat.text);
+      }
+
+      if (still) {
+        S.p = 1; draw(M, 1);
+        beats.forEach(function (bt) { addLine(bt).show(1e9); });
+        return;
+      }
+
       /* Five sentences in 4.6 seconds is under a second each — unreadable, and most of the
          class is reading in their second language. Nearly ten seconds gives about two seconds a
-         line, and the button re-runs it. */
-      var t0 = Date.now(), MS = 9600, shown = -1;
-      capt.hidden = false;
+         line; and now that the lines stay on the page, nobody has to keep up at all. */
+      var t0 = Date.now(), MS = 9600, next = 0, cur = null, curAt = 0, curDone = 0;
+      var CPS = 48;                      /* characters a second: alive, not a race */
       S.p = 0; draw(M, 0);
       S.t = setInterval(function () {
-        var p = Math.min(1, (Date.now() - t0) / MS);
-        S.p = p; draw(M, p);
-        for (var i = STEPS.length - 1; i >= 0; i--) {
-          if (p >= STEPS[i][0]) {
-            if (shown !== i) {
-              shown = i; capNow = STEPS[i][1](M);
-              /* on a narrow box the words go INSIDE the drawing, under it, so they are read at the
-                 same eye level as the thing they are describing instead of somewhere below it */
-              capt.textContent = narrow ? '' : capNow; capt.hidden = narrow;
-              if (narrow) draw(M, p);
-            }
-            break;
+        var now = Date.now(), p = Math.min(1, (now - t0) / MS);
+        if (S.p < 1) { S.p = p; draw(M, p); }
+        if (cur) cur.show(Math.ceil((now - curAt) / 1000 * CPS));
+
+        if (next < beats.length) {
+          var bt = beats[next], due;
+          /* The closing lines follow the drawing, one after another, each waiting for the one
+             before it to FINISH TYPING — a clock alone knows nothing about how long a sentence
+             is. curDone is when the current line finishes; measuring the remaining time against
+             `now` instead put the next line 300 ms into the future on every single tick, so it
+             was never due and the closing lines never appeared at all. */
+          due = bt.kind === 'step' ? t0 + bt.at * MS : Math.max(t0 + MS, curDone) + 320;
+          if (now >= due) {
+            if (cur) cur.show(1e9);
+            cur = addLine(bt); curAt = now; curDone = now + cur.total / CPS * 1000; next++;
           }
-        }
-        if (p >= 1) {
+        } else if (p >= 1 && now >= curDone) {
           clearInterval(S.t); S.t = null;
-          capt.textContent = ''; capt.hidden = true; capNow = ''; draw(M, 1);   /* the narration is done; the result speaks for itself */
-          why.innerHTML = verdict(M);
+          if (cur) cur.show(1e9);
+          var last = logEl.lastChild;
+          if (last) last.className = last.className.replace(' is-now', '');
+          draw(M, 1);
         }
       }, 40);
     }
