@@ -45,7 +45,8 @@
             'gamete', 'gametes', 'male gamete', 'female gamete', 'insect-pollinated', 'wind-pollinated'],
     grow:  ['tropism', 'tropisms', 'gravitropism', 'phototropism', 'auxin', 'auxins', 'shoot tip', 'shoot tips', 'cell elongation', 'elongation', 'stimulus', 'stimuli', 'adaptive feature', 'adaptive features',
             'apical meristem', 'apical meristems', 'meristem', 'meristems', 'coleoptile', 'coleoptiles',
-            'xerophyte', 'xerophytes', 'hydrophyte', 'hydrophytes', 'adaptation', 'adaptations', 'sensitivity'],
+            'xerophyte', 'xerophytes', 'hydrophyte', 'hydrophytes', 'adaptation', 'adaptations', 'sensitivity',
+            'succulent', 'succulents', 'marram grass', 'marram'],
     plain: ['diffusion', 'diffuse', 'diffuses', 'concentration gradient', 'partially permeable', 'cell membrane', 'cell wall', 'cell walls', 'vacuole', 'vacuoles', 'nucleus', 'nuclei', 'mitochondrion', 'mitochondria', 'surface area',
             'dry mass', 'organ', 'organs', 'tissue', 'tissues', 'dicotyledon', 'dicotyledons', 'monocotyledon', 'monocotyledons', 'species', 'population', 'populations', 'variation', 'variations', 'natural selection',
             'standard deviation', 'standard error', '95 % confidence interval', 'confidence interval']
@@ -92,7 +93,16 @@
     ['xerophyte', 'saguaro-desert-900.jpg', 'A <b>xerophyte</b>: a saguaro cactus. Leaves reduced to spines, a thick water-storing stem that does the photosynthesis, a waxy skin, and roots spread just under the surface.', 'From the 18.2 lesson slides'],
     ['xerophytes', 'marram-dunes-900.jpg', '<b>Xerophytes</b>: marram grass on a dune, where the sand holds almost no water. Its leaves roll into tubes with the stomata inside.', 'From the 18.2 lesson slides'],
     ['hydrophyte', 'water-lily-drawing-900.jpg', 'A <b>hydrophyte</b>: a water lily, with large flat leaves floating on the surface, long weak stems the water holds up, and roots in the mud.', 'From the 18.2 lesson slides'],
-    ['potometer', 'potometer-poster', 'A <b>potometer</b>: a cut shoot in a water-filled tube. As it transpires it draws water in, and an air bubble in the capillary tube moves along; the distance it moves in a set time is the measure.', 'From the 8.3 lesson folder']
+    ['potometer', 'potometer-poster', 'A <b>potometer</b>: a cut shoot in a water-filled tube. As it transpires it draws water in, and an air bubble in the capillary tube moves along; the distance it moves in a set time is the measure.', 'From the 8.3 lesson folder'],
+    ['variegated', 'variegated-leaves-900.jpg', '<b>Variegated</b> leaves: green in some places and white or cream in others, because the pale cells hold no chlorophyll. Any of these can be used for the starch test — only the parts that were green make starch.', 'From the starch practical slides'],
+    ['variegated leaf', 'variegated-leaves-900.jpg', 'A <b>variegated leaf</b> is green in some places and white in others: the pale cells have no chlorophyll, so they cannot photosynthesise. That is what makes one leaf its own controlled comparison.', 'From the starch practical slides'],
+    ['variegated leaves', 'variegated-leaves-900.jpg', '<b>Variegated leaves</b>, six patterns. The white or cream parts have no chlorophyll; the green parts do.', 'From the starch practical slides'],
+    ['succulent', 'succulents-900.jpg', 'A <b>succulent</b>: a plant with thick, fleshy stems or leaves that hold a store of water, which is how it lives through a dry season. Cacti are succulents, and so are these.', 'From the 18.2 lesson slides'],
+    ['succulents', 'succulents-900.jpg', '<b>Succulents</b>: thick, fleshy stems and leaves holding a store of water — a xerophyte\u2019s answer to a dry season.', 'From the 18.2 lesson slides'],
+    ['marram grass', 'marram-close-900.jpg', '<b>Marram grass</b> close to, growing on bare sand. Each leaf is rolled into a tube, which is why it can live where the wind is constant and the sand holds no water.', 'From the 18.2 lesson slides'],
+    ['marram', 'marram-close-900.jpg', '<b>Marram</b>: the grass that holds a sand dune together. Rolled leaves, a thick cuticle and stomata sunk in pits — the standard xerophyte in the exam.', 'From the 18.2 lesson slides'],
+    ['wind-pollinated', 'plantain-2-900.jpg', 'A <b>wind-pollinated</b> flower: ribwort plantain. No petals worth the name, no scent, no nectar — just anthers hung outside the flower on long filaments, where the wind can take the pollen away.', 'From the 16.3 lesson slides'],
+    ['insect-pollinated', 'bee-pollen-900.jpg', '<b>Insect pollination</b>, close to: the pollen grains caught all over this bee\u2019s head and hairs. Spiky grains hook into the hairs, and the next flower it visits gets them.', 'From the 16.3 lesson slides'],
   ].forEach(function (e) { PEEK[e[0]] = [e[1], e[2], e[3]]; });
 
   /* the same word, different station: a picture that is right in one place can be wrong in another */

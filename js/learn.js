@@ -934,6 +934,18 @@
                'pale: the chlorophyll is now in the ethanol',
                'softened again and spread flat, ready for the iodine', ''];
 
+    /* The drawing says what is happening; the photograph says what it looks like on the bench.
+       Three of Dr Mompel's class practical, shown in order as the steps are pressed — the leaves
+       before, the ethanol going green in the water bath, and the leaves with the colour gone. */
+    var SHOT = [
+      { img: 'starch-leaves', cap: 'the leaves before the test' },
+      { img: 'starch-leaves', cap: 'the leaves before the test' },
+      { img: 'starch-boil',   cap: 'the ethanol going green: that colour is the chlorophyll leaving the leaves' },
+      { img: 'starch-decolourised', cap: 'the same leaves with the colour gone' },
+      { img: 'starch-decolourised', cap: 'the same leaves with the colour gone' }
+    ];
+    var SHOT_CREDIT = 'From the starch practical slides';
+
     /* one leaf shape, drawn five times over; regions are cut out of it with a clip path so the
        margin of a variegated leaf and the strip under the foil are the same blade, not a
        second drawing laid on top */
@@ -1051,8 +1063,9 @@
     /* ---- the parts of the widget ---- */
     var pick = h('div', 'st__pick'), before = h('p', 'st__before'),
         wrap = h('div', 'st'), left = h('div', 'st__leaf'), figure = h('div', 'st__fig'),
-        cap = h('p', 'st__cap'), right = h('ol', 'st__steps'), res = h('div', 'st__res');
-    left.appendChild(figure); left.appendChild(cap);
+        cap = h('p', 'st__cap'), right = h('ol', 'st__steps'), res = h('div', 'st__res'),
+        shot = h('figure', 'st__shot');
+    left.appendChild(figure); left.appendChild(cap); left.appendChild(shot);
     wrap.appendChild(left); wrap.appendChild(right);
     res.hidden = true;
 
@@ -1082,6 +1095,10 @@
       before.innerHTML = '<b>Before the test:</b> ' + leaf.before;
       figure.innerHTML = draw(leaf.k, at);
       cap.textContent = at === 0 ? leaf.fresh : at === 4 ? leaf.out : CAP[at];
+      var sh = SHOT[at];
+      shot.innerHTML = '<picture><source srcset="assets/photos/' + sh.img + '-900.webp" type="image/webp">' +
+        '<img src="assets/photos/' + sh.img + '-900.jpg" alt="' + esc(sh.cap) + '" loading="lazy"></picture>' +
+        '<figcaption>' + esc(sh.cap) + ' · ' + esc(SHOT_CREDIT) + '</figcaption>';
       steps.forEach(function (s, i) { s.li.classList.toggle('is-done', i < at); s.why.hidden = i >= at; });
       res.hidden = at < STEPS.length;
       if (at === STEPS.length) res.innerHTML = '<b>' + esc(leaf.res) + '</b> ' + leaf.say;

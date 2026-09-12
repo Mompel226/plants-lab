@@ -24,12 +24,12 @@ Every base name below stands for four files: `-900.jpg`, `-900.webp`, `-1400.jpg
 | `bark-ring-*` | [AnnelageAnnélationGirdling (adjusted).jpg](https://commons.wikimedia.org/wiki/File:AnnelageAnn%C3%A9lationGirdling_(adjusted).jpg) — a complete ring of bark cut from a trunk, the pale wood left bare | Lamiot, adjusted by Eewilson | CC BY 3.0 |
 | `monocot-bundle-*` | [Monocot Stem Zea (35716063792).jpg](https://commons.wikimedia.org/wiki/File:Monocot_Stem_Zea_(35716063792).jpg) — one vascular bundle of a maize stem, cropped from the wider section | Berkshire Community College Bioscience Image Library | CC0 |
 | `stem-section-*` | [Herbaceous Dicot Stem Collateral Vascular Bundle in Young Helianthus (36834309183).jpg](https://commons.wikimedia.org/wiki/File:Herbaceous_Dicot_Stem_Collateral_Vascular_Bundle_in_Young_Helianthus_(36834309183).jpg) — one vascular bundle of a sunflower stem | Berkshire Community College Bioscience Image Library | CC0 |
+| `xylem-labelled-*`, `phloem-labelled-*` | 8.1 Xylem and phloem — the two halves of one ScienceFacts.net figure, cropped apart | 23 |
 | `leaf-section-*` | [Angiosperm Morphology Mesophyll Arrangement in Ligustrum (36198182664).jpg](https://commons.wikimedia.org/wiki/File:Angiosperm_Morphology_Mesophyll_Arrangement_in_Ligustrum_(36198182664).jpg) — a privet leaf cut across | Berkshire Community College Bioscience Image Library | CC0 |
 | `leaf-stoma-*` | [Angiosperm Morphology Abaxial Epidermis and Guard Cells in Ligustrum Leaf (37033388255).jpg](https://commons.wikimedia.org/wiki/File:Angiosperm_Morphology_Abaxial_Epidermis_and_Guard_Cells_in_Ligustrum_Leaf_(37033388255).jpg) — a stoma in the lower epidermis of a privet leaf | Berkshire Community College Bioscience Image Library | CC0 |
 
 ## From the lesson slides
 
-> `xylem-phloem-compare-*` carries a **ScienceFacts.net** watermark in the picture, so the
 > slide is not its origin. It is credited to ScienceFacts.net on the page, which the
 > watermark establishes.
 
@@ -54,7 +54,6 @@ The deck is the PowerPoint in `IGCSE Lessons/Y11/Plants/`, the slide is its numb
 | `stem-bundle-*` | 8.1 Xylem and phloem | 8 |
 | `tissues-map-*` | 8.1 Xylem and phloem | 18 |
 | `leaf-section-labelled-*` | 8.1 Xylem and phloem | 16 |
-| `xylem-phloem-compare-*` | 8.1 Xylem and phloem | 18 |
 | `xylem-vessel-*` | Topic 6–8 revision worksheet | 1 |
 | `sieve-tube-*` | 8.1 Xylem and phloem | 11 |
 | `sections-outline-*` | 8.1 Xylem and phloem | 19 |
@@ -77,7 +76,6 @@ The deck is the PowerPoint in `IGCSE Lessons/Y11/Plants/`, the slide is its numb
 | `limiting-graphs-*` | Topic 6 questions lesson | 2 |
 | `light-graph-*` | Topic 6–8 revision worksheet | 2 |
 | `elodea-lamp-*` | Topic 6–8 revision worksheet | 2 |
-| `variegated-diagram-*` | Starch practical | 4 |
 | `variegated-leaves-*` | Starch practical | 4 |
 | `starch-leaves-*` | Starch practical | 2 |
 | `starch-boil-*` | Starch practical | 2 |

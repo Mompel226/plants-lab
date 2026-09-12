@@ -1167,6 +1167,9 @@ picture{display:block;line-height:0}
 .st__leaf{background:#fff;border:1px solid var(--edge);border-radius:var(--r);padding:8px}
 .st__svg{width:100%;height:auto;display:block}
 .st__cap{font-size:12px;line-height:1.4;color:#5A5A5A;text-align:center;margin:7px 2px 1px}
+.st__shot{margin:10px 0 0;padding:8px 0 0;border-top:1px solid var(--edge)}
+.st__shot img{display:block;width:100%;height:auto;border-radius:6px}
+.st__shot figcaption{font-size:11px;line-height:1.35;color:#7A7468;margin-top:5px;text-align:center}
 .st__res{font-size:14px;line-height:1.55;color:#3C3C3C;background:var(--green-tint);border:1px solid #A9D6BA;border-radius:var(--r);padding:11px 13px;margin-top:14px}
 .st__res b{color:var(--green)}
 .st__steps{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px}
