@@ -1358,6 +1358,7 @@ picture{display:block;line-height:0}
 .fl__stage{background:#fff;border:1px solid var(--edge);border-radius:var(--r);padding:6px}
 .fl__photo{margin:0;background:#fff;border:1px solid var(--edge);border-radius:var(--r);padding:6px}
 .fl__photo img{display:block;width:100%;height:auto;border-radius:4px}
+.fl__psvg{display:block;width:100%;height:auto;font-family:var(--font)}
 .fl__photo figcaption{font-size:12px;line-height:1.45;color:var(--grey);margin-top:6px}
 .fl__svg{width:100%;height:auto;display:block;font-family:var(--font)}
 .fl__stalk{fill:#8FD48A;stroke:#2F7D46;stroke-width:1.6}

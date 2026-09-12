@@ -202,6 +202,16 @@
        #benchHost.hidden to decide whether its apparatus stands in the column or stays inside the
        widget, and coming back from Practise the bench is still hidden from when the simulation
        covered the column. Plate.showBench only unhides it — showStation would empty it. */
+    /* Tell the glossary which pictures this station is about to show, so a magnifier never
+       opens the photograph the reader is already looking at. */
+    if (window.Terms && window.Terms.setShown) {
+      var onPage = {};
+      ((st.learn && st.learn.interact) || []).forEach(function (w) {
+        var im = w.img || (w.photo && w.photo.img); if (im) onPage[/\./.test(im) ? im : im + '-900.jpg'] = 1;
+      });
+      (st.activities || []).forEach(function (a2) { if (a2.img) onPage[/\./.test(a2.img) ? a2.img : a2.img + '-900.jpg'] = 1; });
+      window.Terms.setShown(onPage);
+    }
     if (tab === 'learn' && st.plate && st.plate.bench && window.Plate && window.Plate.showBench) window.Plate.showBench(true);
     if (tab === 'learn') paintLearn(pane, st); else paintDo(pane, st);
     paintSim(st, pane);
