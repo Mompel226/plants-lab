@@ -1852,7 +1852,8 @@
     var key   = h('div', 'ax__key');
     var capt  = h('p', 'ax__cap');
     var why   = h('div', 'ax__why');
-    pack.appendChild(stage); pack.appendChild(key); pack.appendChild(capt); pack.appendChild(why);
+    var pins = h('ol', 'ax__pins');
+    pack.appendChild(stage); pack.appendChild(pins); pack.appendChild(key); pack.appendChild(capt); pack.appendChild(why);
     slot.appendChild(pack);
     wrap.appendChild(panel); wrap.appendChild(acts); wrap.appendChild(slot);
     box.appendChild(wrap);
@@ -2006,9 +2007,9 @@
        an integral of the heading keeps the base planted and stops the whole thing collapsing
        to a point as the curvature goes to zero, which is what wrecked the first attempt. */
     var GEO = {
-      shoot:     { W: 640, H: 400, BX: 300, BY: 330, phi0: 0,           LEN: 200, HW: 26, ELO: [92, 158], TIP: 166 },
-      shootSide: { W: 640, H: 400, BX: 138, BY: 206, phi0: Math.PI / 2, LEN: 200, HW: 26, ELO: [92, 158], TIP: 166 },
-      root:      { W: 640, H: 400, BX: 172, BY: 142, phi0: Math.PI / 2, LEN: 230, HW: 22, ELO: [110, 184], TIP: 196 }
+      shoot:     { W: 640, H: 400, BX: 300, BY: 330, phi0: 0,           LEN: 200, HW: 32, ELO: [92, 158], TIP: 166 },
+      shootSide: { W: 640, H: 400, BX: 138, BY: 210, phi0: Math.PI / 2, LEN: 200, HW: 32, ELO: [92, 158], TIP: 166 },
+      root:      { W: 640, H: 400, BX: 172, BY: 150, phi0: Math.PI / 2, LEN: 230, HW: 29, ELO: [110, 184], TIP: 196 }
     };
     function geoFor() {
       return S.organ === 'root' ? GEO.root : S.lay === 'side' ? GEO.shootSide : GEO.shoot;
@@ -2053,7 +2054,25 @@
       return out;
     }
 
+    /* Below about 470 px there is no room for a column of words beside the drawing: the
+       column falls outside the visible box and the words shrink to five pixels. So the labels
+       become numbered pins on the drawing and a numbered list under it — the same thing the
+       finder widget does, and the same thing a printed figure does when it runs out of margin. */
+    function pinLabels(g) {
+      if (!LAB.length) { pins.innerHTML = ''; return ''; }
+      var out = '', rows = '';
+      LAB.forEach(function (L, i) {
+        var n = i + 1;
+        out += '<circle cx="' + L.px.toFixed(1) + '" cy="' + L.py.toFixed(1) + '" r="10" fill="#FFFFFF" stroke="#5A5A5A" stroke-width="1.6"/>';
+        out += '<text class="ax__pin" x="' + L.px.toFixed(1) + '" y="' + (L.py + 4.2).toFixed(1) + '" text-anchor="middle">' + n + '</text>';
+        rows += '<li>' + L.text + '</li>';
+      });
+      pins.innerHTML = rows;
+      return out;
+    }
+
     function placeLabels(g, right) {
+      pins.innerHTML = '';
       if (!LAB.length) return '';
       var x = right ? g.W - 150 : 150, out = '';
       var rows = LAB.map(function (L) { return { px: L.px, py: L.py, lines: wrapText(L.text, 25) }; })
@@ -2082,6 +2101,9 @@
     }
 
     /* ----- the drawing ----- */
+    var narrow = false;
+    function gauge() { var w2 = stage.clientWidth || 0; if (w2) narrow = w2 < 470; }
+
     function draw(M, p) {
       var base = geoFor(), root = S.organ === 'root';
       LAB = [];
@@ -2116,7 +2138,8 @@
       var labRight = root ? true : S.light !== 'right', labU = labRight ? g.HW : -g.HW;
       var HW = g.HW, K = 9, CW = 11;
 
-      var s = '<svg viewBox="0 0 ' + g.W + ' ' + g.H + '" role="img" aria-label="' + verdictPlain(M) + '">';
+      /* with the words underneath, the column they used to occupy is dead space: crop it */
+      var s = '<svg viewBox="0 0 ' + (narrow ? 500 : g.W) + ' ' + g.H + '" role="img" aria-label="' + verdictPlain(M) + '">';
       s += '<defs><linearGradient id="axBody" x1="0" y1="0" x2="1" y2="0">' +
            '<stop offset="0" stop-color="' + (root ? '#C9B896' : '#3E8F46') + '"/>' +
            '<stop offset=".45" stop-color="' + (root ? '#E4D6B8' : '#54AC5C') + '"/>' +
@@ -2337,6 +2360,21 @@
         }
       }
 
+      /* The concentration, as depth of colour. Twenty-six dots in a narrow lumen cannot show a
+         two-to-one difference on their own — the eye reads two sparse clouds as one. A wash down
+         each flank, as deep as that flank's share, says at a glance where the auxin is. */
+      if (M.made > 0 && down > 0.02) {
+        [[-1, M.dL], [1, M.dR]].forEach(function (fk) {
+          var sg = fk[0], share = fk[1] / (M.made || 1);
+          if (share <= 0.02) return;
+          var lo = g.ZONE0 - 6, hi = Math.min(bodyTop, g.ZONE1 + 10), a = [], i2;
+          for (i2 = 0; i2 <= 8; i2++) a.push(at(lo + (hi - lo) * i2 / 8, sg * (HW - CW + 1)));
+          for (i2 = 8; i2 >= 0; i2--) a.push(at(lo + (hi - lo) * i2 / 8, sg * 1.5));
+          s += '<path d="M' + a.map(f1).join(' L') + ' Z" fill="#F5A623" opacity="' +
+               (share * 0.62 * down).toFixed(3) + '"/>';
+        });
+      }
+
       /* the auxin. Made evenly across the tip, spread sideways only if the tip has read a
          one-sided stimulus, then carried down. Nothing is destroyed on the way: the count
          of grains never changes, only where they end up, which is the point Briggs settled. */
@@ -2388,8 +2426,8 @@
           var s2 = sTop + (sEnd - sTop) * tt;
           var pg = at(Math.max(4, s2), u2);
           var opa = made;
-          s += '<circle cx="' + pg[0].toFixed(1) + '" cy="' + pg[1].toFixed(1) + '" r="3" fill="#F5A623" stroke="#B9761A" stroke-width=".8" opacity="' + opa.toFixed(2) + '"/>';
-          s += '<circle cx="' + (pg[0] - 0.9).toFixed(1) + '" cy="' + (pg[1] - 0.9).toFixed(1) + '" r="1" fill="#FFE7B5" opacity="' + opa.toFixed(2) + '"/>';
+          s += '<circle cx="' + pg[0].toFixed(1) + '" cy="' + pg[1].toFixed(1) + '" r="3.5" fill="#F5A623" stroke="#B9761A" stroke-width=".9" opacity="' + opa.toFixed(2) + '"/>';
+          s += '<circle cx="' + (pg[0] - 1).toFixed(1) + '" cy="' + (pg[1] - 1).toFixed(1) + '" r="1.2" fill="#FFE7B5" opacity="' + opa.toFixed(2) + '"/>';
         }
       }
 
@@ -2418,8 +2456,9 @@
           s += '<rect x="0" y="0" width="' + g.BX + '" height="' + g.H + '" fill="#E4D9C3"/>';
           s += '<line x1="' + g.BX + '" y1="0" x2="' + g.BX + '" y2="' + g.H + '" stroke="#B79E74" stroke-width="2"/>';
           s += '<text class="ax__s" x="' + (g.BX / 2) + '" y="22" text-anchor="middle">the pot, on its side</text>';
-          s += '<g opacity="' + (0.3 + 0.7 * detect).toFixed(2) + '"><line x1="560" y1="300" x2="560" y2="352" stroke="#7A7A7A" stroke-width="2.4"/>' +
-               '<path d="M560 358 l-6 -10 h12 Z" fill="#7A7A7A"/><text class="ax__s" x="560" y="290" text-anchor="middle">gravity</text></g>';
+          var gx = narrow ? 440 : 560;
+          s += '<g opacity="' + (0.3 + 0.7 * detect).toFixed(2) + '"><line x1="' + gx + '" y1="300" x2="' + gx + '" y2="352" stroke="#7A7A7A" stroke-width="2.4"/>' +
+               '<path d="M' + gx + ' 358 l-6 -10 h12 Z" fill="#7A7A7A"/><text class="ax__s" x="' + gx + '" y="290" text-anchor="middle">gravity</text></g>';
         } else {
           s += '<rect x="0" y="' + g.BY + '" width="' + g.W + '" height="' + (g.H - g.BY) + '" fill="#E4D9C3"/>';
           s += '<line x1="0" y1="' + g.BY + '" x2="' + g.W + '" y2="' + g.BY + '" stroke="#B79E74" stroke-width="2"/>';
@@ -2447,12 +2486,12 @@
             pts.push([cx + Math.cos(ph) * across, cy + Math.sin(ph) * across]);
           }
           s += '<path d="M' + pts.map(f1).join(' L') + '" fill="none" stroke="#9A8459" stroke-width="2.4" stroke-dasharray="5 4" opacity=".65"/>';
-          var wLab = pts[13];
+          var wLab = pts[narrow ? 8 : 13];   /* a pin must sit inside the cropped box */
           s += ruled(wLab[0], wLab[1], 0, 0, 'it overshoots and corrects, so the path waves');
         }
       }
 
-      s += placeLabels(g, labRight);
+      s += narrow ? pinLabels(g) : placeLabels(g, labRight);
       s += '</svg>';
       stage.innerHTML = s;
     }
@@ -2685,6 +2724,8 @@
       }
       if (!wide && staged !== null) { staged = null; if (global.Plate && global.Plate.stageSim) global.Plate.stageSim(false); }
       if (wide) { staged = null; look(); }
+      var was = narrow; gauge();
+      if (narrow !== was) run();          /* the label style changed, so the drawing must be remade */
     }
     box.__onMove = mount;
 
@@ -2704,7 +2745,11 @@
     }
     function onScroll() {
       if (tick) return;
-      tick = requestAnimationFrame(function () { tick = 0; look(); });
+      tick = requestAnimationFrame(function () {
+        tick = 0; look();
+        var was = narrow; gauge();
+        if (narrow !== was) run();
+      });
     }
     var scroller = null;
     function attach() {
@@ -2721,8 +2766,8 @@
     var onWide = function () { if (box.isConnected) mount(); else detach(); };
     wideQ.addEventListener('change', onWide);
 
-    buildPanel(); run();
-    requestAnimationFrame(function () { attach(); mount(); });
+    buildPanel();
+    requestAnimationFrame(function () { attach(); gauge(); mount(); run(); });
     box.appendChild(h('p', 'widget__note', 'The bend is not drawn on. Each flank of the elongation zone is drawn to the length its own auxin has earned it, and a column whose one side is longer than the other can only be a curve. Change the apparatus and the biology, not a stored answer, decides what happens.'));
     box.__onReset = function () { if (S.t) clearInterval(S.t); detach(); };
     return box;
