@@ -3146,18 +3146,22 @@
        able to write down. Everything here used to repeat a step almost word for word. */
     function closing(M) {
       var diff = Math.abs(M.gL - M.gR) > 0.04, pts = [];
-      var line = S.organ === 'root'
-        ? (diff ? 'The root bends <b>downwards</b> — it is <b>positively gravitropic</b>.'
-                : 'Both sides get the same, so the root grows <b>straight</b>.')
-        : M.made === 0 ? 'The shoot <b>does not grow and does not bend</b>.'
-        : M.thru === 0 ? 'The stump <b>does not grow and does not bend</b>: the auxin cannot get past the mica.'
+      /* The result is written as a CLAUSE, not a sentence, because it is not announced
+         separately: it finishes the last line of the account, in bold, in the same size as
+         everything else. A bigger line of its own underneath said again, one beat later, what
+         the drawing had just shown — and the account had to stop for it. */
+      var tail = S.organ === 'root'
+        ? (diff ? 'and the root bends downwards. It is positively gravitropic'
+                : 'and both sides get the same, so the root grows straight')
+        : M.made === 0 ? 'so the shoot does not grow and does not bend'
+        : M.thru === 0 ? 'and the stump neither grows nor bends'
         : S.lay === 'side'
-          ? (diff && M.bend < 0 ? 'The shoot turns <b>upwards</b> — <b>negative gravitropism</b>.'
-             : diff ? 'The shoot curves <b>downwards</b>.'
-             : 'Both flanks get the same, so the shoot goes on <b>lying where it was put</b>.')
-        : diff ? 'The shoot bends <b>' + (M.gL > M.gR ? 'to the right' : 'to the left') + '</b>' +
-                 (M.sees && M.offset === 0 ? ' — <b>towards the light</b>.' : '.')
-               : 'Both sides get the same, so the shoot grows <b>straight</b>.';
+          ? (diff && M.bend < 0 ? 'and the shoot turns upwards. This is negative gravitropism'
+             : diff ? 'so the shoot curves downwards'
+             : 'and both flanks get the same, so it goes on lying where it was put')
+        : diff ? 'so the shoot bends ' + (M.gL > M.gR ? 'to the right' : 'to the left') +
+                 (M.sees && M.offset === 0 ? ', towards the light' : '')
+               : 'and both sides get the same, so the shoot grows straight';
 
       if (S.organ === 'root') {
         if (M.sees) {
@@ -3197,7 +3201,7 @@
       }
       /* Four bullets after a five-line narration is a wall. The ones pushed first are the ones
          most particular to this arrangement, so the tail is what goes. */
-      return { line: line, pts: pts.slice(0, 2), who: M.who };
+      return { tail: tail, pts: pts.slice(0, 2), who: M.who };
     }
 
     /* The whole account as a list of moments: the five narration beats at their own points in
@@ -3210,7 +3214,14 @@
         if (txt) b.push({ at: STEPS[i][0], text: txt, kind: 'step' });
       }
       var c = closing(M);
-      b.push({ at: 1, text: c.line, kind: 'res' });
+      /* onto the end of the last thing said, not underneath it */
+      if (b.length) {
+        var last = b[b.length - 1];
+        last.text = last.text.replace(/[.!]$/, '') + ' — <b>' + c.tail + '</b>.';
+        last.kind = 'end';
+      } else {
+        b.push({ at: 1, text: c.tail.charAt(0).toUpperCase() + c.tail.slice(1) + '.', kind: 'end' });
+      }
       for (i = 0; i < c.pts.length; i++) b.push({ at: 1, text: c.pts[i], kind: 'pt' });
       if (c.who) b.push({ at: 1, text: 'This is the arrangement used by <b>' + c.who + '</b>.', kind: 'who' });
       return b;
