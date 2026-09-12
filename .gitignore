@@ -7,3 +7,7 @@ stations.master.js
 js/data/keys.enc.js
 *-Daniel Mompel Riera.*
 *[Cc]onflicted copy*
+
+# test harnesses: built in the repo so they can load the lab as same-origin, never shipped
+_*.html
+_*.js

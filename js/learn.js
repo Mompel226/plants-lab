@@ -2707,48 +2707,93 @@
        column from the start and only its VISIBILITY follows the scroll: the page geometry never
        changes, so nothing can flap. */
     var wideQ = window.matchMedia('(min-width: 1001px)');
+    /* below that the plant is a sticky strip across the top of the page rather than a column
+       beside it — the same place, just turned through ninety degrees */
+    var stripQ = window.matchMedia('(max-width: 1000px) and (min-height: 561px)');
     var staged = null, tick = 0;
 
     function host() { return document.getElementById('simHost'); }
     function owned() { var hs = host(); return !!(hs && hs.contains(box)); }   /* the Practise column has the lot */
 
+    /* Where the drawing lives: in the plant's column beside the text, in the sticky strip above
+       it, or inline in the text. In the column there is room for the words that read the drawing
+       to go with it; the strip is only about a third of a phone screen, so the drawing goes there
+       alone and its words stay in the text below, where there is room to read them. */
+    function mode() {
+      if (!spec.onStage || owned() || !host()) return 'flow';
+      if (wideQ.matches) return 'column';
+      if (stripQ.matches) return 'strip';
+      return 'flow';
+    }
+
     function mount() {
-      var hs = host(), wide = !!spec.onStage && wideQ.matches && !!hs && !owned();
-      var target = wide ? hs : slot;
-      if (pack.parentNode !== target) {
-        if (wide) hs.innerHTML = '';
-        target.appendChild(pack);
+      var hs = host(), m = mode();
+      if (m === 'column') {
+        if (pack.parentNode !== hs) { hs.innerHTML = ''; hs.appendChild(pack); }
+      } else {
+        if (pack.parentNode !== slot) slot.appendChild(pack);
+        if (m === 'strip') { if (stage.parentNode !== hs) { hs.innerHTML = ''; hs.appendChild(stage); } }
+        else if (stage.parentNode !== pack) pack.insertBefore(stage, pack.firstChild);
       }
-      box.classList.toggle('ax--split', !!wide);
-      /* On a phone the drawing is pinned above the controls instead, so it is in view while they
-         are changed. Either way the effect is seen as it happens and the button is not needed;
-         only the Practise column, where the questions push the drawing below the fold, keeps it. */
-      box.classList.toggle('ax--pinned', !wide && !owned() && !wideQ.matches);
-      if (pack.parentNode === slot) {
-        var first = !wide && !owned() && !wideQ.matches;
-        if (first && wrap.firstChild !== slot) wrap.insertBefore(slot, wrap.firstChild);
-        if (!first && wrap.firstChild === slot) wrap.appendChild(slot);
-      }
-      if (!wide && staged !== null) { staged = null; if (global.Plate && global.Plate.stageSim) global.Plate.stageSim(false); }
-      if (wide) { staged = null; look(); }
+      box.classList.toggle('ax--split', m === 'column');
+      box.classList.toggle('ax--strip', m === 'strip');
+      if (m === 'flow' && staged !== null) { staged = null; if (global.Plate && global.Plate.stageSim) global.Plate.stageSim(false); }
+      if (m !== 'flow') { staged = null; look(); }
+      watch();
       var was = narrow; gauge();
       if (narrow !== was) run();          /* the label style changed, so the drawing must be remade */
     }
     box.__onMove = mount;
 
-    function reading() {
-      var r = box.getBoundingClientRect(), p = box.closest && box.closest('.panel');
-      var t = p ? p.getBoundingClientRect().top : 0;
-      var b = p ? p.getBoundingClientRect().bottom : (window.innerHeight || 800);
-      return r.bottom > t + 60 && r.top < b - 60;
+    /* Which box actually scrolls changes with the layout: the notes column on a wide screen,
+       the whole stage on a phone. Naming one of them by class worked on the desktop and meant the
+       swap never fired on a phone, because the element being listened to never moved. */
+    function scrollerOf(el) {
+      var n = el && el.parentNode;
+      while (n && n.nodeType === 1) {
+        var st = window.getComputedStyle(n);
+        if (/(auto|scroll)/.test(st.overflowY) && n.scrollHeight > n.clientHeight + 4) return n;
+        n = n.parentNode;
+      }
+      return null;
     }
-    function look() {
-      if (!box.isConnected) { detach(); return; }
-      if (!spec.onStage || !wideQ.matches || owned()) return;
-      var v = reading();
+    function reading() {
+      var r = box.getBoundingClientRect(), sc = scrollerOf(box) || scroller;
+      var t = 0, b = window.innerHeight || 800;
+      if (sc) { var q = sc.getBoundingClientRect(); t = q.top; b = q.bottom; }
+      /* in the strip the drawing sits ABOVE the text, so the band that counts as "level with it"
+         has to start below the strip, not at the top of the scrolling box */
+      var hs = host(), lead = (mode() === 'strip' && hs) ? hs.getBoundingClientRect().height : 0;
+      return r.bottom > t + lead + 40 && r.top < b - 40;
+    }
+    function say(v) {
       if (v === staged) return;
       staged = v;
       if (global.Plate && global.Plate.stageSim) global.Plate.stageSim(v);
+    }
+    function look() {
+      if (!box.isConnected) { detach(); return; }
+      if (mode() === 'flow') return;
+      say(reading());
+    }
+
+    /* An observer rather than a scroll handler: it is told when the widget comes level with the
+       reader whatever box is doing the scrolling, and it is told at layout changes too, which a
+       scroll listener never hears. The band it watches starts BELOW the strip, because on a phone
+       the strip covers the top of the page and anything under it is not being read. */
+    var io = null;
+    function watch() {
+      if (io) { io.disconnect(); io = null; }
+      var m = mode(); if (m === 'flow' || !window.IntersectionObserver) return;
+      var col = document.querySelector('.platecol');
+      var lead = (m === 'strip' && col) ? Math.round(col.getBoundingClientRect().height) : 0;
+      try {
+        io = new IntersectionObserver(function (es) {
+          if (!es || !es.length) return;
+          say(!!es[es.length - 1].isIntersecting);
+        }, { root: scrollerOf(box) || null, rootMargin: (-lead - 30) + 'px 0px -30px 0px', threshold: 0 });
+        io.observe(box);
+      } catch (e) { io = null; }
     }
     function onScroll() {
       if (tick) return;
@@ -2759,19 +2804,26 @@
       });
     }
     var scroller = null;
+    /* Scroll events do not bubble, but they DO capture, so one listener at the document catches
+       whichever box is scrolling. Resolving the scroller once at startup was fragile: on a phone
+       the element that scrolls is not the one that scrolls on a desktop, and at the moment the
+       widget is built the layout may not have settled enough to tell which it is. */
     function attach() {
-      scroller = box.closest ? box.closest('.panel') : null;
-      (scroller || window).addEventListener('scroll', onScroll, { passive: true });
+      scroller = scrollerOf(box);
+      document.addEventListener('scroll', onScroll, { passive: true, capture: true });
       window.addEventListener('resize', onScroll, { passive: true });
     }
     function detach() {
+      if (io) { io.disconnect(); io = null; }
       if (tick) { cancelAnimationFrame(tick); tick = 0; }
-      (scroller || window).removeEventListener('scroll', onScroll);
+      document.removeEventListener('scroll', onScroll, true);
       window.removeEventListener('resize', onScroll);
       wideQ.removeEventListener('change', onWide);
+      stripQ.removeEventListener('change', onWide);
     }
     var onWide = function () { if (box.isConnected) mount(); else detach(); };
     wideQ.addEventListener('change', onWide);
+    stripQ.addEventListener('change', onWide);
 
     buildPanel();
     requestAnimationFrame(function () { attach(); gauge(); mount(); run(); });
