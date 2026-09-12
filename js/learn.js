@@ -159,7 +159,7 @@
   function limitgraph(spec) {
     var box = h('div', 'widget');
     box.appendChild(head(spec.title || 'Plot the curves yourself',
-      spec.ask || 'Choose what goes along the bottom, set the other two, and plot. Plot again with one of them changed, and compare the two curves. Where the curve does something worth noticing it is marked — work out why before you press it.',
+      spec.ask || 'Choose what goes along the bottom, set the other two, and plot. Plot again with one of them changed, and compare the two curves. Where the curve does something worth noticing it is marked — try to explain it before you press.',
       'Plot and compare'));
 
     /* the three responses, 0–1. Identical to the slider widget's, so the two never disagree. */
@@ -948,7 +948,7 @@
       if (sameWhat && sameWhere) return { ok: false, head: 'The two tubes are identical.',
         body: 'There is nothing to compare. A comparison needs exactly one thing to differ between them.' };
       if (!sameWhat && !sameWhere) return { ok: false, head: 'Two things differ at once.',
-        body: 'The tubes have different contents AND stand in different light. If the colours come out different you cannot say which of the two caused it. Change one thing only — that is what makes it a <b>fair test</b>.' };
+        body: 'The tubes have different contents AND stand in different light. If the colours are different you cannot say which of the two caused it. Change one thing only — that is what makes it a <b>fair test</b>.' };
       if (a.what === 'none' && b.what === 'none') return { ok: false, head: 'Neither tube has anything living in it.',
         body: 'Nothing can add or remove carbon dioxide, so neither tube can change. You need algae in at least one of them.' };
       if (sameWhere) {                                   /* plant against no plant */
@@ -3090,7 +3090,7 @@
         : S.lay === 'side'
           ? (diff && M.bend < 0 ? 'and the shoot turns upwards. This is negative gravitropism'
              : diff ? 'so the shoot curves downwards'
-             : 'and both flanks get the same, so it goes on lying where it was put')
+             : 'and both flanks get the same, so it stays lying where it was put')
         : diff ? 'so the shoot bends ' + (M.gL > M.gR ? 'to the right' : 'to the left') +
                  (M.sees && M.offset === 0 ? ', towards the light' : '')
                : 'and both sides get the same, so the shoot grows straight';
@@ -3123,7 +3123,7 @@
         if (M.offset !== 0 && S.top.indexOf('shift') === 0)
           pts.push(S.light === 'dark'
             ? 'Paál worked in <b>darkness</b>, so the position of the tip was the only thing that could act.'
-            : 'The <b>position</b> of the tip decides the distribution here, not the direction of the light.');
+            : 'Here it is the <b>position</b> of the tip that determines where the auxin goes, not the direction of the light.');
         if (S.cover === 'collar')
           pts.push('The collar covers the stem but not the tip. The tip is the detector, so the response still occurs.');
       }
@@ -3382,7 +3382,7 @@
 
     buildPanel();
     requestAnimationFrame(function () { attach(); gauge(); mount(); run(); });
-    box.appendChild(h('p', 'widget__note', 'Nothing here is a stored answer. Each time you run it, each side is drawn to the length its own auxin has earned it. In a shoot, more auxin earns a longer side. In a root, more auxin earns a shorter one. Either way, the bend follows from the two lengths. Write <b>two to one</b> for the auxin. That does not make one side twice as long: both sides had a length before either of them grew, so the auxin only adds to what was there. One side ends up about a fifth longer than the other, and a fifth is enough to bend it.'));
+    box.appendChild(h('p', 'widget__note', 'Nothing here is a stored answer. Each time you run it, each side is drawn to the length its own auxin gives it. In a shoot, more auxin makes a side longer. In a root, more auxin makes it shorter. Either way, the bend follows from the two lengths. Write <b>two to one</b> for the auxin. That does not make one side twice as long: both sides had a length before either of them grew, so the auxin only adds to what was already there. One side is about a fifth longer than the other, and a fifth is enough to bend it.'));
     box.__onReset = function () { if (S.t) clearInterval(S.t); detach(); };
     return box;
   }
