@@ -1638,7 +1638,16 @@ picture{display:block;line-height:0}
 .minifig{float:right;width:152px;margin:1px 0 6px 14px;padding:0;
   background:#FBFAF6;border:1px solid var(--edge);border-radius:var(--r);overflow:hidden}
 .minifig__svg{display:block;width:100%;height:auto}
-.exam-list li{overflow:hidden}          /* the row grows to contain its own float */
+/* The row has to grow to contain its own floated figure. overflow:hidden does that, but it also
+   CLIPS list markers, which are painted outside the principal box — so the numbers in front of
+   the four auxin facts silently disappeared. flow-root contains the float and clips nothing. It
+   is also scoped to the top-level bullet, not to every li inside it. */
+.exam-list > li{display:flow-root}
+/* A numbered run of facts under a sentence that has a figure was wrapping round the float for
+   its first three lines and then springing out to full width, which reads as a staircase with a
+   bite out of it. The picture belongs beside the sentence it illustrates; the list starts under
+   it, at one width. */
+.minifig ~ .exam-steps{clear:right}
 @media (max-width:560px){
   /* on a phone a 122 px float leaves a 3-word column beside it, which is worse than no
      picture at all: it goes full width and the text runs under it instead of round it */
