@@ -2138,8 +2138,17 @@
       var labRight = root ? true : S.light !== 'right', labU = labRight ? g.HW : -g.HW;
       var HW = g.HW, K = 9, CW = 11;
 
-      /* with the words underneath, the column they used to occupy is dead space: crop it */
-      var s = '<svg viewBox="0 0 ' + (narrow ? 500 : g.W) + ' ' + g.H + '" role="img" aria-label="' + verdictPlain(M) + '">';
+      /* With the words underneath, the column they used to occupy is dead space. Cropping it at
+         a fixed 500 still left the organ off to one side, because the geometry was laid out to
+         leave room for that column. So the window is centred on what is actually drawn, which
+         both centres the drawing and makes it bigger in the same move. */
+      var vx = 0, vw = g.W;
+      if (narrow) {
+        if (root) { vx = 80; vw = 450; }
+        else if (S.lay === 'side') { vx = 40; vw = 420; }
+        else { vw = 330; vx = g.BX - vw / 2; }
+      }
+      var s = '<svg viewBox="' + vx + ' 0 ' + vw + ' ' + g.H + '" role="img" aria-label="' + verdictPlain(M) + '">';
       s += '<defs><linearGradient id="axBody" x1="0" y1="0" x2="1" y2="0">' +
            '<stop offset="0" stop-color="' + (root ? '#C9B896' : '#3E8F46') + '"/>' +
            '<stop offset=".45" stop-color="' + (root ? '#E4D6B8' : '#54AC5C') + '"/>' +
@@ -2163,7 +2172,9 @@
       /* the light, and which flank of the organ it falls on */
       var lit = null;
       if (!root && S.light !== 'dark') {
-        var sx = S.light === 'left' ? 62 : S.light === 'right' ? g.W - 62 : (S.lay === 'side' ? 390 : g.BX),
+        var sx = S.light === 'left' ? (narrow ? vx + 46 : 62)
+               : S.light === 'right' ? (narrow ? vx + vw - 46 : g.W - 62)
+               : (S.lay === 'side' ? (narrow ? vx + vw - 70 : 390) : g.BX),
             sy = S.light === 'top' ? 48 : 104;
         for (var ry = 0; ry < 12; ry++) {
           var an = ry * 30 * Math.PI / 180;
@@ -2381,7 +2392,20 @@
       if (M.made > 0) {
         /* Many small grains rather than a few large ones. Nine against seventeen is a count
            you have to make; twenty-six against fifty is a density you simply see. */
-        var N = 76, nL = Math.round(N * M.fL);
+        var N = 130, nL = Math.round(N * M.fL);
+        /* A concentration is a GRADIENT across the tissue, not two separate groups with a gap
+           down the middle. Two bands read as two clumps, and they say something false: auxin is
+           everywhere in the shoot, just denser on one side. So each grain's position across the
+           organ is drawn from a density that leans towards the fuller flank — the inverse of a
+           linear distribution, which for a two-to-one split means twice as many grains arriving
+           at one edge as at the other, with every value in between filled. */
+        var lean = M.fR - M.fL, kk = Math.max(-0.85, Math.min(0.85, lean));
+        function across(u01) {
+          if (Math.abs(kk) < 0.02) return 2 * u01 - 1;
+          var disc = 0.25 - kk * (0.5 - kk / 4 - u01);
+          var x = (-0.5 + Math.sqrt(disc > 0 ? disc : 0)) / (kk / 2);
+          return x < -1 ? -1 : x > 1 ? 1 : x;
+        }
         var level = Math.abs(M.fR - M.fL) < 0.04;          /* nothing has pushed it to one side */
         var blockL = S.mica === 'left', blockR = S.mica === 'right';
         /* Auxin is made WHERE THE SOURCE IS, and the source is not always the organ's own tip:
@@ -2393,7 +2417,6 @@
         else if (S.organ === 'shoot' && S.top === 'cut') { srcLo = bodyTop - 14; srcHi = bodyTop - 2; }
         else { srcLo = g.TIP + 4; srcHi = g.LEN - 8; }     /* the tip region itself */
         for (var q = 0; q < N; q++) {
-          var side = q < nL ? -1 : 1;
           /* The R2 sequence — the plastic number's two reciprocals — which is built to spread
              points evenly in TWO dimensions. The golden ratio paired with something else is not:
              it laid the grains along visible diagonal chains, which read as structure that is not
@@ -2401,7 +2424,7 @@
           var a1 = frac(0.5 + q * 0.7548776662), b1 = frac(0.5 + q * 0.5698402910);
           /* spread THROUGH the source region, not along one line across it: born on a single
              height, twenty-six grains read as a bar rather than as auxin being made */
-          var sTop = srcLo + frac(b1 + a1 * 0.5) * (srcHi - srcLo);
+          var sTop = srcLo + frac(b1 * 1.7 + a1 * 0.5) * (srcHi - srcLo);
           /* A tip or a block set to one side makes its auxin on that side. Starting even and
              sliding across would show a redistribution that never happened. */
           var uEven = M.offset !== 0
@@ -2410,8 +2433,8 @@
           /* Evenly spread means one cloud across the whole width. Unequally distributed means two
              groups, each held out against its own flank, so the fuller one is plainly the fuller
              one. Sharing one central band made a 2:1 split look like no split at all. */
-          var uSide = level ? (b1 * 2 - 1) * HW * 0.56
-                            : side * HW * (0.12 + 0.44 * b1);
+          var uSide = across(b1) * HW * 0.58;
+          var side = uSide < 0 ? -1 : 1;
           var u2 = uEven + (uSide + ju - uEven) * lat;
           /* The plate does not empty a flank; it holds that flank back to what the other one is
              carrying. Stopping every grain on the plated side drew a shoot fed on one flank only
@@ -2434,7 +2457,7 @@
           var s2 = sTop + (sEnd - sTop) * tt;
           var pg = at(Math.max(4, s2), u2);
           var opa = made;
-          s += '<circle cx="' + pg[0].toFixed(1) + '" cy="' + pg[1].toFixed(1) + '" r="2" fill="#F0900E" opacity="' + opa.toFixed(2) + '"/>';
+          s += '<circle cx="' + pg[0].toFixed(1) + '" cy="' + pg[1].toFixed(1) + '" r="1.55" fill="#F0900E" opacity="' + opa.toFixed(2) + '"/>';
         }
       }
 
@@ -2463,7 +2486,7 @@
           s += '<rect x="0" y="0" width="' + g.BX + '" height="' + g.H + '" fill="#E4D9C3"/>';
           s += '<line x1="' + g.BX + '" y1="0" x2="' + g.BX + '" y2="' + g.H + '" stroke="#B79E74" stroke-width="2"/>';
           s += '<text class="ax__s" x="' + (g.BX / 2) + '" y="22" text-anchor="middle">the pot, on its side</text>';
-          var gx = narrow ? 440 : 560;
+          var gx = narrow ? vx + vw - 44 : 560;
           s += '<g opacity="' + (0.3 + 0.7 * detect).toFixed(2) + '"><line x1="' + gx + '" y1="300" x2="' + gx + '" y2="352" stroke="#7A7A7A" stroke-width="2.4"/>' +
                '<path d="M' + gx + ' 358 l-6 -10 h12 Z" fill="#7A7A7A"/><text class="ax__s" x="' + gx + '" y="290" text-anchor="middle">gravity</text></g>';
         } else {
@@ -2535,7 +2558,7 @@
         : M.made <= 0 ? 'There is no auxin here to move.'
         : S.top === 'cut' ? 'The auxin in the agar block passes into the side of the stump it is standing on.'
         : S.top !== 'intact' ? 'Auxin is made in the cut tip, which is sitting back on the stump.'
-        : 'Auxin is made in the shoot tip, evenly across it.'; }],
+        : 'Auxin is made in the shoot tip, evenly across it — in the light or in the dark.'; }],
       [0.18, function (M) { return S.organ === 'root'
         ? (M.sees ? 'Inside the root cap, heavy starch grains sink to the lower side. That is how the root detects gravity.'
                   : 'With the cap gone there is nothing to detect gravity.')
