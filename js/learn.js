@@ -2200,9 +2200,15 @@
       if (root) {
         bg = '#F3EDE0';
         s += '<path d="M0 96 H' + g.W + '" stroke="#D8CBB0" stroke-width="1.2" stroke-dasharray="5 5"/>';
-        s += '<text class="ax__s" x="10" y="90">soil surface</text>';
+        /* On a phone the window starts at vx, so words anchored near x=0 are cropped away
+           before they are read: both of these sat off the canvas in every root state. The soil
+           label moves to the free end of the line it names, and the shoot label to the open
+           side of the shoot. */
+        s += narrow ? '<text class="ax__s" x="' + (vx + vw - 8) + '" y="90" text-anchor="end">soil surface</text>'
+                    : '<text class="ax__s" x="10" y="90">soil surface</text>';
         s += '<path d="M150 122 q-34 -34 -30 -66" fill="none" stroke="#6FAE63" stroke-width="4.5" stroke-linecap="round"/>';
-        s += '<text class="ax__s" x="74" y="48">shoot, growing up</text>';
+        s += narrow ? '<text class="ax__s" x="158" y="48">shoot, growing up</text>'
+                    : '<text class="ax__s" x="74" y="48">shoot, growing up</text>';
         s += '<ellipse cx="150" cy="142" rx="33" ry="25" fill="#E8DCC0" stroke="#B79E74" stroke-width="1.8"/>';
         s += '<text class="ax__s" x="150" y="186" text-anchor="middle">seed</text>';
       }
@@ -2258,6 +2264,15 @@
       var cut = S.organ === 'shoot' && S.top !== 'intact';
       var flat = cut || (root && S.cap === 'cut');  /* a cut end is square; only an intact tip is domed */
       var bodyTop = cut ? g.TIP - 8 : root && S.cap === 'cut' ? g.TIP : g.LEN;
+      /* WHERE THE TIP ACTUALLY IS. A tip cut off and put back sits on the cut face, and a
+         shifted one sits off to one side of it. Everything that has to agree with that tip —
+         its cap, the collar below it, a plate slid in under it, and the auxin it makes — is
+         built from these numbers instead of from the organ's own apex. Built from the apex,
+         a cap hung in the air beside a shifted tip and left the tip bare, which is the one
+         thing Paal's experiment must not show. */
+      var putBack = !root && S.top !== 'intact' && S.top !== 'cut';
+      var tipOff  = S.top === 'shiftL' ? -13 : S.top === 'shiftR' ? 13 : 0;   /* across the stump */
+      var tipApex = bodyTop + 51;                  /* the crown of a tip that has been put back */
 
       var d = 'M' + f1(at(0, HW));
       for (var i4 = 1; i4 <= K; i4++) { var ss = bodyTop * i4 / K; d += ' L' + f1(at(ss, HW)); }
@@ -2333,14 +2348,13 @@
       }
 
       /* a detached tip, sitting back on the stump with something between it and the stump */
-      if (!root && S.top !== 'intact' && S.top !== 'cut') {
-        var off = S.top === 'shiftL' ? -13 : S.top === 'shiftR' ? 13 : 0;
+      if (putBack) {
         s += rider(bodyTop);
         s += '<rect x="' + (-HW) + '" y="-9" width="' + (HW * 2) + '" height="8" rx="2" fill="' +
              (S.layer === 'mica' ? '#B9BFC7' : '#F2E7C8') + '" stroke="' + (S.layer === 'mica' ? '#6C7681' : '#C9B77E') + '" stroke-width="1.5"/>';
-        s += '<path d="M' + (off - HW) + ' -9 v-26 q0 -16 ' + HW + ' -16 q' + HW + ' 0 ' + HW + ' 16 v26 Z" fill="#2F7D46" opacity=".72" stroke="#1F5A31" stroke-width="1.6"/>';
+        s += '<path d="M' + (tipOff - HW) + ' -9 v-26 q0 -16 ' + HW + ' -16 q' + HW + ' 0 ' + HW + ' 16 v26 Z" fill="#2F7D46" opacity=".72" stroke="#1F5A31" stroke-width="1.6"/>';
         s += '</g>';
-        var tA = at(bodyTop + 30, off), tB = at(bodyTop + 5, labU);
+        var tA = at(bodyTop + 30, tipOff), tB = at(bodyTop + 5, labU);
         s += ruled(tA[0], tA[1], 0, 0, 'the cut tip, put back');
         s += ruled(tB[0], tB[1], 0, 0, S.layer === 'mica' ? 'mica: nothing crosses' : 'gelatin: auxin crosses');
       }
@@ -2358,19 +2372,34 @@
         s += ruled(aA[0], aA[1], 0, 0, hasA ? 'agar block soaked in auxin' : 'plain agar block (the control)');
       }
 
+      /* Caps, collars and the plate are solid things wrapped round the outside of the organ,
+         so they are collected here and laid down AFTER the auxin. Drawn in place, the grains
+         inside a capped tip and the queue held up against the plate were painted over the top
+         of them, and an opaque cap you could see the auxin through says the opposite of what
+         an opaque cap is for. */
+      var sOver = '';
+
       /* caps and collars */
       if (!root && S.top !== 'cut' && S.cover !== 'none') {
         if (S.cover === 'collar') {
           /* below the tip, not across it: the point of Darwin's control is that the TIP is bare */
-          var sC = Math.max(24, g.TIP - 24);
-          s += rider(sC) + '<rect x="' + (-HW - 4) + '" y="-17" width="' + (HW * 2 + 8) + '" height="34" rx="3" fill="#4A4A4A" opacity=".85"/></g>';
+          var sC = Math.max(24, (putBack ? bodyTop : g.TIP) - 24);
+          sOver += rider(sC) + '<rect x="' + (-HW - 4) + '" y="-17" width="' + (HW * 2 + 8) + '" height="34" rx="3" fill="#4A4A4A" opacity=".95"/></g>';
           var cA = at(sC, labU < 0 ? -(HW + 4) : HW + 4);
-          s += ruled(cA[0], cA[1], 0, 0, 'opaque collar; the tip is still bare');
+          sOver += ruled(cA[0], cA[1], 0, 0, 'opaque collar; the tip is still bare');
         } else {
-          s += rider(g.LEN) + '<path d="M' + (-HW - 3) + ' 30 v-30 q0 -20 ' + (HW + 3) + ' -20 q' + (HW + 3) + ' 0 ' + (HW + 3) + ' 20 v30 Z" fill="' +
+          /* The cap goes over whatever tip is up there: the organ's own apex, or the cut tip
+             sitting on the stump — and it is deep enough to cover that tip and no deeper. On an
+             intact shoot that is the whole shaded tip region plus a little of the stem below it;
+             on a tip put back it stops flush with the joint, so the gelatin or the mica under it
+             stays in plain sight. Built from the shoot's own apex at a fixed depth, it hung in
+             the air beside a shifted tip and left the tip it was meant to blind uncovered. */
+          var kS = putBack ? tipApex : g.LEN, kU = putBack ? tipOff : 0;
+          var kD = putBack ? 42 : (g.LEN - g.TIP) + 5;
+          sOver += rider(kS) + '<path d="M' + (kU - HW - 3) + ' ' + kD + ' v-' + kD + ' q0 -20 ' + (HW + 3) + ' -20 q' + (HW + 3) + ' 0 ' + (HW + 3) + ' 20 v' + kD + ' Z" fill="' +
                (S.cover === 'opaque' ? '#3A3A3A' : '#BFD8E8') + '" opacity="' + (S.cover === 'opaque' ? '.9' : '.55') + '" stroke="' + (S.cover === 'opaque' ? '#222' : '#7FA8C4') + '" stroke-width="1.6"/></g>';
-          var kA = at(g.LEN + 8, labU < 0 ? -(HW + 3) : HW + 3);   /* on the cap's crown, clear of the tip's own leader */
-          s += ruled(kA[0], kA[1], 0, 0, S.cover === 'opaque' ? 'opaque cap: the tip is blind'
+          var kA = at(kS + 8, kU + (labU < 0 ? -(HW + 3) : HW + 3));   /* on the cap's crown, clear of the tip's own leader */
+          sOver += ruled(kA[0], kA[1], 0, 0, S.cover === 'opaque' ? 'opaque cap: the tip is blind'
             : M.lit ? 'clear cap: the tip still sees' : 'clear cap: it lets light through');
         }
       }
@@ -2380,11 +2409,11 @@
          halfway across. It blocks what comes down that half. Drawn as a vertical slice down
          the flank it was not his experiment and did not match what the model was doing. */
       if (!root && S.top !== 'cut' && S.mica !== 'none') {
-        var sgn = S.mica === 'left' ? -1 : 1, sM = Math.max(6, g.TIP - 4);   /* under the tip, above the zone */
+        var sgn = S.mica === 'left' ? -1 : 1, sM = Math.max(6, (putBack ? bodyTop : g.TIP) - 4);   /* under the tip */
         var m0 = at(sM, sgn * -2), m1 = at(sM, sgn * (HW + 16));
-        s += '<path d="M' + f1(m0) + ' L' + f1(m1) + '" stroke="#6C7681" stroke-width="5.5" stroke-linecap="round"/>';
+        sOver += '<path d="M' + f1(m0) + ' L' + f1(m1) + '" stroke="#6C7681" stroke-width="5.5" stroke-linecap="round"/>';
         var mid = at(sM, sgn * HW * 0.6);
-        s += ruled(mid[0], mid[1], 0, 0, 'mica plate under half the tip: it holds this half back');
+        sOver += ruled(mid[0], mid[1], 0, 0, 'mica plate under half the tip: it holds this half back');
       }
 
       /* the root cap and its statoliths — the detector, and the thing that does the detecting */
@@ -2457,6 +2486,10 @@
         var want = 0.5 + 0.4 * Math.min(1, Math.abs(lean) / 0.34);          /* 0.5 even, 0.9 leaning */
         var kSign = lean < 0 ? -1 : 1;
         var kExp = Math.abs(lean) < 0.02 ? 1 : Math.log(0.5) / Math.log(1 - want);
+        /* Declared BEFORE the surplus that reads them: below it, both were still undefined
+           when the queue was sized, so nQueue was always zero and the auxin waiting above the
+           plate — the whole point of the plate — was never drawn. */
+        var blockL = S.mica === 'left', blockR = S.mica === 'right';
         var surplus = blockL ? Math.max(0, M.fL * M.made - M.dL)
                     : blockR ? Math.max(0, M.fR * M.made - M.dR) : 0;
         var nQueue = Math.round(N * surplus / mk), queued = 0;
@@ -2464,13 +2497,12 @@
           var x = 2 * Math.pow(u01, kExp) - 1;
           return kSign * (x < -1 ? -1 : x > 1 ? 1 : x);
         }
-        var blockL = S.mica === 'left', blockR = S.mica === 'right';
         /* Auxin is made WHERE THE SOURCE IS, and the source is not always the organ's own tip:
            a replaced tip sits above the cut face, and an agar block sits on it. Starting every
            grain at the stump's own height put the auxin below the very thing that made it, and
            in the replaced-tip states it began life already inside the elongation zone. */
-        var srcLo, srcHi;
-        if (S.organ === 'shoot' && S.top !== 'intact' && S.top !== 'cut') { srcLo = bodyTop + 12; srcHi = bodyTop + 46; }
+        var srcLo, srcHi, srcU = 0;
+        if (putBack) { srcLo = bodyTop + 12; srcHi = bodyTop + 46; srcU = tipOff; }
         else if (S.organ === 'shoot' && S.top === 'cut') { srcLo = bodyTop - 14; srcHi = bodyTop - 2; }
         else { srcLo = g.TIP + 4; srcHi = g.LEN - 8; }     /* the tip region itself */
         for (var q = 0; q < N; q++) {
@@ -2484,8 +2516,12 @@
           var sTop = srcLo + frac(b1 * 1.7 + a1 * 0.5) * (srcHi - srcLo);
           /* A tip or a block set to one side makes its auxin on that side. Starting even and
              sliding across would show a redistribution that never happened. */
-          var uEven = M.offset !== 0
-            ? M.offset * HW * (0.18 + 0.34 * b1)
+          /* A block on half a stump makes its auxin in that half; a tip put back makes it
+             across the whole of ITSELF, which for a shifted tip is not the middle of the
+             stump. Reading only M.offset, a shifted tip made half its auxin in the air
+             beside it. */
+          var uEven = putBack ? srcU + (a1 * 2 - 1) * HW * 0.5
+            : M.offset !== 0 ? M.offset * HW * (0.18 + 0.34 * b1)
             : (a1 * 2 - 1) * HW * 0.54;
           /* A low-discrepancy pair packed this densely starts to look like a lattice, which reads
              as pattern rather than as scattered grains. A small fixed offset per grain breaks it
@@ -2493,7 +2529,9 @@
              line too early it was undefined on the first grain, which put that grain at NaN — and
              every grain after it silently borrowed its predecessor's offset. */
           var js = (frac(a1 * 43.7 + b1 * 17.3) - 0.5) * 5.5, ju = (frac(a1 * 11.9 + b1 * 31.1) - 0.5) * 3.4;
-          var uSide = across(b1) * HW * 0.58 + ju;
+          /* Where it ends up across the organ. With mica between tip and stump nothing gets
+             down, so it settles inside the TIP — which for a shifted tip is off to one side. */
+          var uSide = (M.thru === 0 ? srcU : 0) + across(b1) * HW * (M.thru === 0 ? 0.5 : 0.58) + ju;
           var side = uSide < 0 ? -1 : 1;
           /* The plate does not empty a flank; it holds that flank back to what the other one is
              carrying. The cloud already shows what ARRIVES, because the gradient is drawn from
@@ -2526,6 +2564,8 @@
         }
       }
 
+      s += sOver;                                  /* the apparatus, over the auxin it contains */
+
       /* the ruled labels for the parts that are always there */
       if (!root) {
         if (S.top === 'intact') {
@@ -2550,7 +2590,12 @@
         if (S.lay === 'side') {
           s += '<rect x="0" y="0" width="' + g.BX + '" height="' + g.H + '" fill="#E4D9C3"/>';
           s += '<line x1="' + g.BX + '" y1="0" x2="' + g.BX + '" y2="' + g.H + '" stroke="#B79E74" stroke-width="2"/>';
-          s += '<text class="ax__s" x="' + (g.BX / 2) + '" y="22" text-anchor="middle">the pot, on its side</text>';
+          /* On a phone the window is cropped to x >= vx, and these words were centred on a strip
+             of pot that is mostly outside it, so the label sat off the canvas in every sideways
+             state. The short form fits the piece of pot that is actually showing. */
+          var potX = narrow ? vx + (g.BX - vx) / 2 : g.BX / 2;
+          s += '<text class="ax__s" x="' + potX + '" y="22" text-anchor="middle">' +
+               (narrow ? 'the pot' : 'the pot, on its side') + '</text>';
           var gx = narrow ? vx + vw - 44 : 560;
           s += '<g opacity="' + (0.3 + 0.7 * detect).toFixed(2) + '"><line x1="' + gx + '" y1="300" x2="' + gx + '" y2="352" stroke="#7A7A7A" stroke-width="2.4"/>' +
                '<path d="M' + gx + ' 358 l-6 -10 h12 Z" fill="#7A7A7A"/><text class="ax__s" x="' + gx + '" y="290" text-anchor="middle">gravity</text></g>';
