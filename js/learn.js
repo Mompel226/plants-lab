@@ -2046,28 +2046,33 @@
          pale shaft sticking straight out of a round seed, which is not a silhouette to put in
          front of a class. Angled at 34 degrees below the horizontal it reads as a root from the
          first frame, and the gravitropic turn then has somewhere to go. */
-      root:      { W: 640, H: 400, BX: 196, BY: 140, phi0: Math.PI * 0.689, LEN: 230, HW: 19, ELO: [110, 184], TIP: 196 }
+      /* A radicle and the young shoot above it are about the SAME thickness, and the picture
+         has to show that. At a 10 px stem beside a 38 px root the seedling read as one solid
+         shape with a thin whisker on top. A stem that thick needs headroom, so the root's own
+         canvas is taller than the shoot's and the soil line sits lower down it. */
+      root:      { W: 640, H: 470, BX: 214, BY: 200, phi0: Math.PI * 0.689, LEN: 230, HW: 19, ELO: [110, 184], TIP: 196 }
     };
     /* The soil is fixed geometry, so it is built once and handed back on every frame after
        that. draw() runs sixty times a run behind 130 auxin grains; rebuilding and reparsing a
        hundred and fifty circles that never move is work for nothing. */
+    var SOIL_Y = 120;                    /* where the ground is, on the root's own canvas */
     var SOIL = '';
     function soilBody(g) {
       if (SOIL) return SOIL;
       var out = '<defs><linearGradient id="axSoil" x1="0" y1="0" x2="0" y2="1">' +
                 '<stop offset="0" stop-color="#EFE5D1"/><stop offset=".55" stop-color="#EFE5D1"/>' +
                 '<stop offset="1" stop-color="#F7F0E0"/></linearGradient></defs>';
-      out += '<rect x="-20" y="96" width="' + (g.W + 40) + '" height="' + (g.H - 76) + '" fill="url(#axSoil)"/>';
+      out += '<rect x="-20" y="' + SOIL_Y + '" width="' + (g.W + 40) + '" height="' + (g.H - SOIL_Y + 20) + '" fill="url(#axSoil)"/>';
       for (var sq = 0; sq < 150; sq++) {
         var fa = frac(0.37 + sq * 0.7548776662), fb = frac(0.11 + sq * 0.5698402910);
         var fr = frac(fa * 31.4 + fb * 13.7);
         /* they thin out with depth, so the empty soil a phone crop leaves below the root does
            not read as a slab of colour */
-        out += '<circle cx="' + (-10 + fa * (g.W + 20)).toFixed(1) + '" cy="' + (104 + fb * (g.H - 114)).toFixed(1) +
+        out += '<circle cx="' + (-10 + fa * (g.W + 20)).toFixed(1) + '" cy="' + (SOIL_Y + 8 + fb * (g.H - SOIL_Y - 18)).toFixed(1) +
                '" r="' + (0.7 + fr * 1.5).toFixed(1) + '" fill="' + (fr > 0.72 ? '#D6C6A0' : '#E5D9BC') +
                '" opacity="' + (0.82 - 0.6 * fb).toFixed(2) + '"/>';
       }
-      out += '<path d="M-20 96 H' + (g.W + 20) + '" stroke="#CCBC98" stroke-width="1.6"/>';
+      out += '<path d="M-20 ' + SOIL_Y + ' H' + (g.W + 20) + '" stroke="#CCBC98" stroke-width="1.6"/>';
       SOIL = out;
       return SOIL;
     }
@@ -2271,20 +2276,22 @@
            where the crop leaves a lot of empty soil below the root, the bottom half of the box
            is not a flat brown slab. */
         s += soilBody(g);
-        s += '<text class="ax__s" x="' + (narrow ? vx + 98 : 10) + '" y="88">soil surface</text>';
+        /* on a phone, clear of the stem — which is now as thick as the root and was standing
+           on the first half of these words */
+        s += '<text class="ax__s" x="' + (narrow ? vx + 156 : 10) + '" y="' + (SOIL_Y - 8) + '">soil surface</text>';
         /* The shoot was a 4.5 px whisker beside a root eight times its width, which is the first
            thing that made the picture unbelievable. It is now a stem with a thickness, a pair of
            seed leaves and a hook — small beside the root, as a young seedling's shoot is, but
            plainly the same plant. Placed off the root's own origin rather than at absolute page
            coordinates, so it follows if the root's geometry is ever moved again. */
-        var stX = g.BX - 8, stY = g.BY - 16;   /* beside the radicle: both come out at the hilum end */
-        var stem = 'M' + stX + ' ' + stY + ' C ' + (stX - 3) + ' ' + (stY - 32) + ' ' + (stX - 16) + ' ' + (stY - 60) + ' ' + (stX - 20) + ' ' + (stY - 86);
-        s += '<path d="' + stem + '" fill="none" stroke="#3F7F41" stroke-width="10" stroke-linecap="round"/>';
-        s += '<path d="' + stem + '" fill="none" stroke="url(#axStem)" stroke-width="7" stroke-linecap="round"/>';
-        s += '<g transform="translate(' + (stX - 20) + ',' + (stY - 86) + ')">' +
-             '<path d="M0 0 q2 -16 16 -20 q2 18 -12 23 Z" fill="#5FAE59" stroke="#3F7F41" stroke-width="1.6" stroke-linejoin="round"/>' +
-             '<path d="M1 10 q-16 -9 -15 -26 q17 8 17 25 Z" fill="#6FBC63" stroke="#3F7F41" stroke-width="1.6" stroke-linejoin="round"/></g>';
-        s += '<text class="ax__s" x="' + (stX + 10) + '" y="' + (stY - 78) + '">shoot, growing up</text>';
+        var stX = g.BX - 10, stY = g.BY - 24;  /* beside the radicle: both come out at the hilum end */
+        var stem = 'M' + stX + ' ' + stY + ' C ' + (stX - 4) + ' ' + (stY - 54) + ' ' + (stX - 26) + ' ' + (stY - 104) + ' ' + (stX - 34) + ' ' + (stY - 146);
+        s += '<path d="' + stem + '" fill="none" stroke="#3F7F41" stroke-width="' + (2 * HW - 2) + '" stroke-linecap="round"/>';
+        s += '<path d="' + stem + '" fill="none" stroke="url(#axStem)" stroke-width="' + (2 * HW - 8) + '" stroke-linecap="round"/>';
+        s += '<g transform="translate(' + (stX - 34) + ',' + (stY - 146) + ') scale(1.75)">' +
+             '<path d="M0 0 q2 -16 16 -20 q2 18 -12 23 Z" fill="#5FAE59" stroke="#3F7F41" stroke-width="1" stroke-linejoin="round"/>' +
+             '<path d="M1 10 q-16 -9 -15 -26 q17 8 17 25 Z" fill="#6FBC63" stroke="#3F7F41" stroke-width="1" stroke-linejoin="round"/></g>';
+        s += '<text class="ax__s" x="' + (stX + 22) + '" y="' + (stY - 120) + '">shoot, growing up</text>';
         /* The seed itself is drawn LAST, with the root cap, so that it covers the root's square
            base end instead of being butt-jointed to it — see below. */
       }
@@ -2330,9 +2337,9 @@
         }
       }
       if (root) {                                   /* the stimulus is gravity: show it as such */
-        var rgx = narrow ? vx + vw - 40 : 392;   /* clear of the shoot's own label */
-        s += '<g opacity="' + (0.3 + 0.7 * detect).toFixed(2) + '"><line x1="' + rgx + '" y1="52" x2="' + rgx + '" y2="102" stroke="#7A7A7A" stroke-width="2.4"/>' +
-             '<path d="M' + rgx + ' 108 l-6 -10 h12 Z" fill="#7A7A7A"/><text class="ax__s" x="' + rgx + '" y="42" text-anchor="middle">gravity</text></g>';
+        var rgx = narrow ? vx + vw - 40 : 448;   /* clear of the shoot's own label */
+        s += '<g opacity="' + (0.3 + 0.7 * detect).toFixed(2) + '"><line x1="' + rgx + '" y1="56" x2="' + rgx + '" y2="' + (SOIL_Y - 14) + '" stroke="#7A7A7A" stroke-width="2.4"/>' +
+             '<path d="M' + rgx + ' ' + (SOIL_Y - 8) + ' l-6 -10 h12 Z" fill="#7A7A7A"/><text class="ax__s" x="' + rgx + '" y="46" text-anchor="middle">gravity</text></g>';
       }
 
       /* the body */
@@ -2559,17 +2566,17 @@
            out of the other. At a seed barely wider than the root was thick, the two together
            made one shape rather than two, and it was the wrong shape. It is now about three
            times the root's thickness, which is roughly life. */
-        s += '<g transform="translate(' + (g.BX - 60) + ',' + (g.BY + 8) + ') rotate(-13) scale(1.42)">' +
+        s += '<g transform="translate(' + (g.BX - 72) + ',' + (g.BY + 24) + ') rotate(-13) scale(2)">' +
              '<path d="M52 -4 C51 12 34 24 11 27 C-15 30 -43 21 -50 5 C-56 -10 -42 -25 -17 -28 C11 -32 44 -21 52 -4 Z" ' +
              'fill="url(#axSeed)" stroke="#9C7F4E" stroke-width="1.7" stroke-linejoin="round"/>' +
              /* the seam between the two halves of the seed, and the scar where it was joined to
                 the pod: the two marks that say seed rather than pebble */
              '<path d="M-46 -4 C-30 -14 8 -16 40 -7" fill="none" stroke="#B89A63" stroke-width="1.2" opacity=".65"/>' +
              /* the hilum sits at the end the radicle and the plumule come out of, not away from it */
-             '<ellipse cx="41" cy="11" rx="10" ry="3.4" transform="rotate(64 41 11)" fill="#D8C193" stroke="#A98C59" stroke-width="1"/>' +
+             '<ellipse cx="33" cy="9" rx="9" ry="3.2" transform="rotate(58 33 9)" fill="#D8C193" stroke="#A98C59" stroke-width="1"/>' +
              '<path d="M-36 -14 C-28 -21 -14 -24 0 -22" fill="none" stroke="#FBF4E2" stroke-width="3" stroke-linecap="round" opacity=".4"/>' +
              '</g>';
-        s += '<text class="ax__s" x="' + (g.BX - 60) + '" y="' + (g.BY + 80) + '" text-anchor="middle">seed</text>';
+        s += '<text class="ax__s" x="' + (g.BX - 72) + '" y="' + (g.BY + 128) + '" text-anchor="middle">seed</text>';
       }
 
       /* the root cap and its statoliths — the detector, and the thing that does the detecting */
@@ -2757,7 +2764,14 @@
               var eA = lA * lA * (3 - 2 * lA);
               var eB = lB < 0.5 ? 2 * lB * lB : 1 - Math.pow(-2 * lB + 2, 2) / 2;
               s2 = lB <= 0 ? sTop + (viaS - sTop) * eA : viaS + (sEnd - viaS) * eB;
-              u2 = uEven + (uSide - uEven) * (lB * lB * (3 - 2 * lB));
+              /* The sideways move happens IN THE CAP and nowhere else: the columella cells at
+                 the tip send more of it out to the lower side, and what leaves the cap then
+                 travels back with the split already made (Ottenschlager et al. 2003 PNAS
+                 100:2987; Swarup et al. 2005 Nat Cell Biol 7:1057). Fanning it out gradually
+                 over the whole return showed the gradient forming all the way up the root,
+                 which is a different claim and not the one the cap experiment tests. */
+              var eU = clamp(lB * 3.2); eU = eU * eU * (3 - 2 * eU);
+              u2 = uEven + (uSide - uEven) * eU;
               var pgR = at(Math.max(4, s2), u2);
               s += '<circle cx="' + pgR[0].toFixed(1) + '" cy="' + pgR[1].toFixed(1) + '" r="1.55" fill="#F0900E" opacity="' +
                    Math.min(1, age * 7).toFixed(2) + '"/>';
@@ -2917,7 +2931,7 @@
     /* ----- what the student is told, built from the model and not from a table ----- */
     var STEPS = [
       [0.00, function (M) { return S.organ === 'root'
-        ? 'The root does not make it. Auxin comes down from the shoot above.'
+        ? 'Auxin comes down from the shoot above, through the middle of the root.'
         : M.made <= 0 ? 'There is no auxin here to move.'
         : S.top === 'cut' ? 'Auxin passes from the block into the side it stands on.'
         : S.top !== 'intact' ? 'Auxin is made in the cut tip, which is sitting back on the stump.'
@@ -2936,8 +2950,8 @@
                      : S.light === 'top' ? 'Light from straight above falls on both sides equally.'
                      : 'Nothing one-sided is detected.')); }],
       [0.36, function (M) { return M.made === 0 ? 'Nothing to move.'
-        : S.organ === 'root' ? (M.sees ? 'At the tip the cap turns it back, and sends more of it down the LOWER side.'
-                                       : 'At the tip it turns back. Nothing sends it to one side.')
+        : S.organ === 'root' ? (M.sees ? 'The cap turns it back — and sends more of it down the LOWER side.'
+                                       : 'The cap is gone. It turns back with no side favoured.')
         : M.thru === 0 ? 'It gathers in the tip. The mica is in its way.'
         : M.offset !== 0 ? 'The auxin can only enter the side it is sitting on.'
         : M.sees ? (S.organ === 'root' || S.lay === 'side' ? 'Auxin is carried across to the LOWER side. None is destroyed.'
@@ -3012,9 +3026,13 @@
 
       var pts = [];
       if (S.organ === 'root') {
-        pts.push('The auxin is <b>not made in the root</b>. It comes down from the shoot above, travels to the tip through the middle of the root, and is then carried back to the growing region through the outer layers.');
+        /* "The root does not make auxin" is the tidy version and it is not true: the root tip
+           is itself a significant site of synthesis (Ljung et al. 2005, Plant Cell 17:1090).
+           What IS true, and is what the cap experiment turns on, is the route: down the middle,
+           round at the tip, back up the outside. */
+        pts.push('Auxin reaches the root from the shoot above. It travels to the tip down the <b>middle</b> of the root, and is then carried back to the growing region along the <b>outside</b> — so everything the root uses has passed through the tip.');
         pts.push(M.sees ? 'The root cap detects gravity: starch grains sink to the lower side.'
-                        : 'With the cap gone, almost nothing is left to detect gravity, so the auxin stays even. The auxin still arrives and the root still grows — what has been taken off is the detector, not the supply.');
+                        : 'With the cap gone, almost nothing is left to detect gravity, so the auxin stays even. It still arrives and the root still grows — what has been cut off is the detector, not the supply.');
         if (M.sees) {
           pts.push('On the way back, more of it is carried down the <b>lower</b> side of the root.');
           pts.push('In a <b>root</b>, a high auxin concentration <b>inhibits</b> cell elongation — the opposite of its effect in a shoot.');
@@ -3273,7 +3291,7 @@
 
     buildPanel();
     requestAnimationFrame(function () { attach(); gauge(); mount(); run(); });
-    box.appendChild(h('p', 'widget__note', 'The bend is not drawn on. Each flank of the elongation zone is drawn to the length its own auxin has earned it, and the turn then follows on its own: the angle is the difference between the two flank lengths, divided by the width of the organ. Change the apparatus and the biology, not a stored answer, decides what happens. One thing is worth reading carefully. Two parts of auxin to one gives a flank twice the STRETCH, not twice the length, because both flanks already had a length before either of them stretched. On the root that leaves the upper flank about a fifth longer than the lower one — and a fifth is all a curve needs. So write two to one for the auxin, and do not expect to measure two to one on the drawing.'));
+    box.appendChild(h('p', 'widget__note', 'Nothing here is a stored answer. Each time you run it, each side is drawn to the length its own auxin has earned it. In a shoot, more auxin earns a longer side. In a root, more auxin earns a shorter one. Either way, the bend follows from the two lengths. Write <b>two to one</b> for the auxin. That does not make one side twice as long: both sides had a length before either of them grew, so the auxin only adds to what was there. One side ends up about a fifth longer than the other, and a fifth is enough to bend it.'));
     box.__onReset = function () { if (S.t) clearInterval(S.t); detach(); };
     return box;
   }
