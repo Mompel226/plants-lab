@@ -883,33 +883,167 @@
     return f;
   }
 
-  /* ---------- starchtest ---------- */
+  /* ---------- starchtest ----------
+     The test on its own proves nothing, so there are four leaves to choose between and each one
+     carries a different treatment. Every one of them spent 48 hours in the dark first — the step
+     students leave out of the answer — so the dark leaf is here as a leaf you can actually test
+     rather than as a sentence about a control. The four steps never change; only the leaf that
+     goes in and the pattern that comes out. */
   function starchtest(spec) {
     var box = h('div', 'widget');
-    box.appendChild(head(spec.title || 'The starch test', spec.ask, 'Press the steps'));
-    var STEPS = [
-      { t: 'Boil the leaf in water', why: 'Kills the leaf and stops its reactions, breaks the cell membranes so the iodine can get in later, and softens it.', leaf: 'limp' },
-      { t: 'Boil it in ethanol, in a water bath', why: 'Ethanol dissolves the chlorophyll out of the leaf, so the colour change can be seen. A water bath, because ethanol catches fire — never over a flame.', leaf: 'white' },
-      { t: 'Rinse in warm water', why: 'Ethanol makes the leaf brittle; warm water softens it so it can be spread flat.', leaf: 'white' },
-      { t: 'Add iodine solution', why: 'Iodine is orange-brown. Where there is starch it turns blue-black.', leaf: 'iodine' }
+    box.appendChild(head(spec.title || 'The starch test', spec.ask, 'Choose a leaf, then press the steps'));
+
+    var LEAVES = [
+      { k: 'dark', chip: 'Kept in the dark', sub: 'the control',
+        before: 'Every plant here stood in the dark for 48 hours first, so that its leaves used up the starch they already held. This one was then picked and tested straight away.',
+        fresh: 'a green leaf from the plant kept in the dark',
+        out: 'no blue-black anywhere: orange-brown all over',
+        res: 'No starch at all.',
+        say: 'The de-starching worked, and that is what makes the other three worth anything. It shows the leaves began with no starch, so any starch found in them afterwards was made during the experiment.' },
+
+      { k: 'foil', chip: 'Foil over part', sub: 'is light needed?',
+        before: 'De-starched in the dark, then a strip of aluminium foil was clipped across the middle of this leaf and the plant stood in the light for 48 hours. The foil is taken off just before the test.',
+        fresh: 'a green leaf with a strip of foil clipped across it',
+        out: 'blue-black, except a pale strip where the foil was',
+        res: 'Blue-black everywhere except the covered strip.',
+        say: 'Light is needed. Both parts are on the <b>same leaf</b>, so they had the same water, the same carbon dioxide, the same temperature and the same chlorophyll. Light is the only thing the covered strip did not get, so light is what it was missing.' },
+
+      { k: 'vari', chip: 'Variegated leaf', sub: 'is chlorophyll needed?',
+        before: 'A variegated leaf is green in the middle and white round the edge: the white cells hold no chlorophyll. De-starched in the dark, then 48 hours in the light. Draw the leaf before you start — the ethanol takes the colour out and you will not be able to tell the parts apart.',
+        fresh: 'a leaf with a green centre and a white margin',
+        out: 'the middle blue-black, the margin orange-brown',
+        res: 'Blue-black only where the leaf had been green.',
+        say: 'Chlorophyll is needed. Again both parts are on one leaf, so the light, the water, the carbon dioxide and the temperature were the same for both. Only the chlorophyll differed.' },
+
+      { k: 'co2', chip: 'Sealed with soda lime', sub: 'is carbon dioxide needed?',
+        before: 'De-starched in the dark. Then, still attached to the plant, this leaf was sealed inside a clear plastic bag holding <b>soda lime</b>, which absorbs carbon dioxide. Petroleum jelly round the neck of the bag seals it, and the plant stood in the light for 48 hours. Potassium hydroxide solution does the same job.',
+        fresh: 'a green leaf sealed in a bag with soda lime',
+        out: 'no blue-black anywhere: orange-brown all over',
+        res: 'No starch, although the leaf was in the light the whole time.',
+        say: 'Carbon dioxide is needed. This one needs a second leaf to go with it: another leaf on the same plant, bagged and sealed in exactly the same way but with <b>no soda lime</b> inside. That one turns blue-black. Without it you could argue it was the bag that stopped photosynthesis, not the missing carbon dioxide.' }
     ];
-    var wrap = h('div', 'st'), left = h('div', 'st__leaf'), right = h('ol', 'st__steps');
-    left.innerHTML = '<svg viewBox="0 0 200 160" class="st__svg" aria-hidden="true"><path class="st__blade" d="M20 140 C30 60 100 20 180 22 C180 90 120 145 20 140 Z"/><path class="st__vein" d="M22 138 C70 100 130 60 178 24"/><path class="st__vein" d="M60 110 C80 96 100 90 118 92 M80 96 C90 80 104 66 122 60 M108 78 C120 70 138 62 152 58" opacity=".7"/><text class="st__state" x="100" y="156" text-anchor="middle">a leaf, taken from a plant in the light</text></svg>';
-    var svg = left.firstChild, blade = svg.querySelector('.st__blade'), state = svg.querySelector('.st__state');
-    var at = 0, done = null;
+
+    var STEPS = [
+      { t: 'Boil the leaf in water', why: 'Kills the leaf and stops its reactions, breaks the cell membranes so the iodine can get in later, and softens it.' },
+      { t: 'Boil it in ethanol, in a water bath', why: 'Ethanol dissolves the chlorophyll out of the leaf, so the colour change can be seen. A water bath, because ethanol catches fire — never over a flame.' },
+      { t: 'Rinse in warm water', why: 'Ethanol makes the leaf brittle; warm water softens it so it can be spread flat.' },
+      { t: 'Add iodine solution', why: 'Iodine solution is orange-brown. Where there is starch it turns blue-black.' }
+    ];
+
+    var CAP = ['', 'soft and limp; the reactions have stopped',
+               'pale: the chlorophyll is now in the ethanol',
+               'softened again and spread flat, ready for the iodine', ''];
+
+    /* one leaf shape, drawn five times over; regions are cut out of it with a clip path so the
+       margin of a variegated leaf and the strip under the foil are the same blade, not a
+       second drawing laid on top */
+    var BLADE = 'M20 138 C30 58 100 18 180 20 C180 88 120 143 20 138 Z';
+    var RIB   = 'M22 136 C70 98 130 58 178 22';
+    var VEINS = 'M58 108 C78 94 98 88 116 90 M78 94 C88 78 102 64 120 58 M106 76 C118 68 136 60 150 56';
+    var CORE  = 'translate(100,79) scale(.68) translate(-100,-79)'; /* the green middle of a variegated leaf */
+    var STRIP = 'M9 -2 L49 -32 L191 160 L151 190 Z';                  /* the band of leaf the foil covered */
+
+    var GREEN = ['#5DBF6E', '#2A6B3B'], DULL = ['#8CBE95', '#4E7A55'],
+        PALE  = ['#F3F0E4', '#B9B29C'], WHITE = ['#F2EEDC', '#93A07B'],
+        DARK  = ['#1E2140', '#0E1030'], IOD   = ['#CE9A55', '#94622A'];
+
+    function look(k, st) {
+      /* [blade, region] where region is the variegated middle or the covered strip */
+      if (st === 0) return k === 'vari' ? [WHITE, GREEN] : [GREEN, null];
+      if (st === 1) return k === 'vari' ? [WHITE, DULL] : [DULL, null];
+      if (st === 2 || st === 3) return [PALE, null];
+      if (k === 'foil') return [DARK, IOD];
+      if (k === 'vari') return [IOD, DARK];
+      return [IOD, null];                      /* the dark leaf and the sealed one: no starch anywhere */
+    }
+
+    function draw(k, st) {
+      var pair = look(k, st), base = pair[0], reg = pair[1];
+      var ghost = (st === 2 || st === 3) && (k === 'vari' || k === 'foil');
+      var s = '<svg viewBox="0 0 200 156" class="st__svg" role="img" aria-label="' +
+        esc(st === 0 ? LEAVES.filter(function (l) { return l.k === k; })[0].fresh
+          : st === 4 ? LEAVES.filter(function (l) { return l.k === k; })[0].out : CAP[st]) + '">';
+      s += '<defs><clipPath id="stClip"><path d="' + BLADE + '"/></clipPath>' +
+           '<pattern id="stFoil" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(38)">' +
+           '<rect width="6" height="6" fill="#C9CCD1"/><line x1="0" y1="0" x2="0" y2="6" stroke="#AEB2B8" stroke-width="2"/></pattern></defs>';
+      s += '<path d="' + BLADE + '" fill="' + base[0] + '" stroke="' + base[1] + '" stroke-width="1.6" stroke-linejoin="round"/>';
+      if (reg) {
+        s += '<g clip-path="url(#stClip)">';
+        s += k === 'vari'
+          ? '<path d="' + BLADE + '" transform="' + CORE + '" fill="' + reg[0] + '" stroke="' + reg[1] + '" stroke-width="2.2"/>'
+          : '<path d="' + STRIP + '" fill="' + reg[0] + '"/>';
+        s += '</g>';
+      }
+      if (ghost) {
+        s += '<g clip-path="url(#stClip)" fill="none" stroke="#A79E86" stroke-width="1.5" stroke-dasharray="5 4">';
+        s += k === 'vari' ? '<path d="' + BLADE + '" transform="' + CORE + '"/>' : '<path d="' + STRIP + '"/>';
+        s += '</g>';
+      }
+      var vc = st >= 2 && st <= 3 ? '#CFC8B2' : st === 4 ? 'none' : base[1];
+      if (vc !== 'none') {
+        s += '<path d="' + RIB + '" fill="none" stroke="' + vc + '" stroke-width="1.3"/>';
+        s += '<path d="' + VEINS + '" fill="none" stroke="' + vc + '" stroke-width="1" opacity=".7"/>';
+      }
+      s += '<path d="M8 150 C12 146 16 142 21 138" fill="none" stroke="' +
+           (st >= 2 ? '#C9C2AA' : base[1]) + '" stroke-width="3.4" stroke-linecap="round"/>';
+      if (st === 0 && k === 'foil') {
+        s += '<g clip-path="url(#stClip)"><path d="' + STRIP + '" fill="url(#stFoil)" stroke="#8E939A" stroke-width="1.4"/></g>';
+      }
+      if (st === 0 && k === 'co2') {
+        s += '<rect x="12" y="9" width="180" height="138" rx="8" fill="#DCEAF2" fill-opacity=".3" stroke="#8FB6C8" stroke-width="1.6" stroke-dasharray="6 4"/>';
+        s += '<rect x="131" y="115" width="55" height="23" rx="4" fill="#E8E2CF" stroke="#A79A74" stroke-width="1.3"/>';
+        s += '<text x="158.5" y="130" font-size="8" fill="#6E6346" text-anchor="middle" font-family="ui-monospace,monospace">soda lime</text>';
+        s += '<ellipse cx="14" cy="145" rx="7" ry="4.4" transform="rotate(-42 14 145)" fill="#F2E7CD" stroke="#B6A472" stroke-width="1.2"/>';
+      }
+      if (st === 0 && k === 'dark') {
+        s += '<rect x="0" y="0" width="200" height="156" rx="6" fill="#2B3348" opacity=".22"/>';
+        s += '<rect x="130" y="8" width="58" height="20" rx="4" fill="#2B3348" opacity=".82"/>';
+        s += '<text x="159" y="21.5" font-size="8.5" fill="#EDEBE3" text-anchor="middle" font-family="ui-monospace,monospace">no light</text>';
+      }
+      return s + '</svg>';
+    }
+
+    /* ---- the parts of the widget ---- */
+    var pick = h('div', 'st__pick'), before = h('p', 'st__before'),
+        wrap = h('div', 'st'), left = h('div', 'st__leaf'), figure = h('div', 'st__fig'),
+        cap = h('p', 'st__cap'), right = h('ol', 'st__steps'), res = h('div', 'st__res');
+    left.appendChild(figure); left.appendChild(cap);
+    wrap.appendChild(left); wrap.appendChild(right);
+    res.hidden = true;
+
+    var leaf = LEAVES[0], at = 0, btns = [], steps = [];
+
+    LEAVES.forEach(function (l, i) {
+      var b = h('button', 'st__leafbtn', '<span>' + esc(l.chip) + '</span><small>' + esc(l.sub) + '</small>');
+      b.type = 'button';
+      b.addEventListener('click', function () { leaf = l; at = 0; paint(); });
+      btns.push(b); pick.appendChild(b);
+    });
+
     STEPS.forEach(function (s, i) {
-      var li = h('li', 'st__step'); var b = h('button', 'st__btn', '<span class="n">' + (i + 1) + '</span>' + esc(s.t)); b.type = 'button';
+      var li = h('li', 'st__step');
+      var b = h('button', 'st__btn', '<span class="n">' + (i + 1) + '</span>' + esc(s.t)); b.type = 'button';
       var why = h('small', 'st__why', esc(s.why)); why.hidden = true;
       b.addEventListener('click', function () {
         if (i !== at) { if (i < at) return; toast('Do step ' + (at + 1) + ' first.'); return; }
-        at = i + 1; li.classList.add('is-done'); why.hidden = false;
-        svg.setAttribute('data-leaf', s.leaf);
-        state.textContent = s.leaf === 'limp' ? 'soft and limp, reactions stopped' : s.leaf === 'white' && i === 1 ? 'pale: the chlorophyll is in the ethanol' : s.leaf === 'white' ? 'softened again, ready to spread out' : 'blue-black: starch was there, so it had been photosynthesising';
-        if (at === STEPS.length && !done) { done = h('p', 'widget__done', 'Blue-black means starch, and starch means the leaf was photosynthesising. Every "is it needed?" experiment ends with this test.'); box.appendChild(done); }
+        at = i + 1; paint();
       });
-      li.appendChild(b); li.appendChild(why); right.appendChild(li);
+      li.appendChild(b); li.appendChild(why);
+      steps.push({ li: li, why: why }); right.appendChild(li);
     });
-    wrap.appendChild(left); wrap.appendChild(right); box.appendChild(wrap);
+
+    function paint() {
+      btns.forEach(function (b, i) { b.classList.toggle('is-on', LEAVES[i] === leaf); });
+      before.innerHTML = '<b>Before the test:</b> ' + leaf.before;
+      figure.innerHTML = draw(leaf.k, at);
+      cap.textContent = at === 0 ? leaf.fresh : at === 4 ? leaf.out : CAP[at];
+      steps.forEach(function (s, i) { s.li.classList.toggle('is-done', i < at); s.why.hidden = i >= at; });
+      res.hidden = at < STEPS.length;
+      if (at === STEPS.length) res.innerHTML = '<b>' + esc(leaf.res) + '</b> ' + leaf.say;
+    }
+
+    box.appendChild(pick); box.appendChild(before); box.appendChild(wrap); box.appendChild(res);
+    paint();
     return box;
   }
   function toast(m) { var t = document.getElementById('toast'); if (!t) return; t.textContent = m; t.classList.add('show'); setTimeout(function () { t.classList.remove('show'); }, 2200); }
