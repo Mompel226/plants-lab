@@ -2137,7 +2137,7 @@
     }
 
     /* ----- the drawing ----- */
-    var narrow = false;
+    var narrow = false, capNow = '';
     function gauge() { var w2 = stage.clientWidth || 0; if (w2) narrow = w2 < 470; }
 
     function draw(M, p) {
@@ -2590,10 +2590,20 @@
          hold it. Measured before they were collected it was always zero, and the words landed on
          the drawing they were describing. */
       var band = narrow ? pinBand(vw) : 0;
-      var head = '<svg viewBox="' + vx + ' ' + (-band) + ' ' + vw + ' ' + (g.H + band) +
+      /* a fixed strip below the drawing for the narration: fixed, because a band that grew and
+         shrank with each sentence would resize the drawing five times a run */
+      var capH = (narrow && capNow) ? 46 : 0;
+      if (capH) {
+        var cw = Math.max(30, Math.floor((vw - 24) / 5.0));
+        wrapText(capNow, cw).slice(0, 3).forEach(function (ln, i) {
+          s += '<text class="ax__pintxt" x="' + (vx + 10) + '" y="' + (g.H + 15 + i * 13).toFixed(1) + '">' + ln + '</text>';
+        });
+        s += '<path d="M' + (vx + 6) + ' ' + (g.H + 3) + ' H' + (vx + vw - 6) + '" stroke="#E0DAC9" stroke-width="1"/>';
+      }
+      var head = '<svg viewBox="' + vx + ' ' + (-band) + ' ' + vw + ' ' + (g.H + band + capH) +
                  '" role="img" aria-label="' + verdictPlain(M) + '">' +
                  '<rect x="' + (vx - 4) + '" y="' + (-band - 4) + '" width="' + (vw + 8) +
-                 '" height="' + (g.H + band + 8) + '" fill="' + bg + '"/>';
+                 '" height="' + (g.H + band + capH + 8) + '" fill="' + bg + '"/>';
       stage.innerHTML = head + s + (narrow ? pinLabels(g, vx, vw, band) : placeLabels(g, labRight)) + '</svg>';
     }
 
@@ -2625,19 +2635,19 @@
     /* ----- what the student is told, built from the model and not from a table ----- */
     var STEPS = [
       [0.00, function (M) { return S.organ === 'root'
-        ? 'Auxin travels down from the shoot and gathers at the root tip.'
+        ? 'Auxin travels down and gathers at the root tip.'
         : M.made <= 0 ? 'There is no auxin here to move.'
-        : S.top === 'cut' ? 'The auxin in the agar block passes into the side of the stump it is standing on.'
+        : S.top === 'cut' ? 'Auxin passes from the block into the side it stands on.'
         : S.top !== 'intact' ? 'Auxin is made in the cut tip, which is sitting back on the stump.'
-        : 'Auxin is made in the shoot tip, evenly across it — in the light or in the dark.'; }],
+        : 'Auxin is made in the shoot tip — in the light or in the dark.'; }],
       [0.18, function (M) { return S.organ === 'root'
-        ? (M.sees ? 'Inside the root cap, heavy starch grains sink to the lower side. That is how the root detects gravity.'
+        ? (M.sees ? 'In the root cap, heavy starch grains sink. That is how the root feels gravity.'
                   : 'With the cap gone there is nothing to detect gravity.')
         : S.lay === 'side'
-          ? (M.made === 0 ? 'It is lying down, so gravity still acts across it — but with no tip there is no auxin for gravity to move.'
-             : M.lit ? 'It is lying down, so gravity acts across it — and the lamp overhead lights the upper flank. Both stimuli push the same way, so this run cannot tell you which did it.'
-             : S.light === 'dark' ? 'It is lying down and in the dark, so gravity is the only stimulus acting across it.'
-             : 'It is lying down. The cap keeps the light off the tip, so gravity is the only stimulus it can read.')
+          ? (M.made === 0 ? 'Lying down, so gravity acts. But with no tip there is no auxin for it to move.'
+             : M.lit ? 'Lying down, and lit from above. Gravity and light push the same way, so this run cannot tell you which did it.'
+             : S.light === 'dark' ? 'Lying down, in the dark. Gravity is the only stimulus.'
+             : 'The cap keeps light off the tip, so gravity is the only stimulus.')
         : (M.sees ? 'The tip detects light coming from one side.'
                   : (S.cover === 'opaque' ? 'The cap blocks the light, so the tip detects nothing.'
                      : S.light === 'dark' ? 'It is dark. There is nothing to detect.'
@@ -2645,23 +2655,23 @@
                      : 'Nothing one-sided is detected.')); }],
       [0.36, function (M) { return M.made === 0 ? 'Nothing to move.'
         : M.offset !== 0 ? 'The auxin can only enter the side it is sitting on.'
-        : M.sees ? (S.organ === 'root' || S.lay === 'side' ? 'Auxin is carried across to the LOWER side. None of it is destroyed — it is moved.'
-                    : 'Auxin is carried across to the shaded side. None of it is destroyed — it is moved.')
+        : M.sees ? (S.organ === 'root' || S.lay === 'side' ? 'Auxin is carried across to the LOWER side. None is destroyed.'
+                    : 'Auxin is carried across to the shaded side. None is destroyed.')
         : 'The auxin stays evenly spread.'; }],
       [0.58, function (M) { return M.made === 0 ? 'No auxin travels down.'
-        : M.note ? 'The mica sheet stops the auxin travelling down that side.'
-        : 'The auxin diffuses down into the zone of elongation.'; }],
+        : M.note ? 'The plate holds that side back.'
+        : 'The auxin travels down to the zone of elongation.'; }],
       [0.78, function (M) {
         var diff = Math.abs(M.gL - M.gR) > 0.04;
-        if (M.made === 0 && S.organ === 'shoot') return 'No auxin reaches the cells, so they do not elongate and the shoot stays put.';
+        if (M.made === 0 && S.organ === 'shoot') return 'No auxin reaches the cells, so nothing elongates.';
         if (!diff) return S.organ === 'root'
-          ? 'Both sides get the same, so both elongate the same and the root grows straight.'
-          : 'Both sides get the same, so both elongate the same and the shoot grows straight.';
+          ? 'Both sides get the same, so the root grows straight.'
+          : 'Both sides get the same, so the shoot grows straight.';
         var more = M.gL > M.gR ? 'left' : 'right';
-        if (S.organ === 'root') return 'The lower side has MORE auxin, and in a root that HOLDS CELLS BACK. The upper cells elongate more, so the root bends down.';
+        if (S.organ === 'root') return 'More auxin below. In a root that HOLDS CELLS BACK, so the upper side stretches and the root bends down.';
         if (S.lay === 'side') return M.bend < 0
-          ? 'The LOWER flank has more auxin, and in a shoot that makes cells elongate MORE. The lower cells stretch, so the shoot turns UPWARDS — away from gravity.'
-          : 'Both flanks get the same, so neither outgrows the other and it goes on lying where it is.';
+          ? 'More auxin below. In a shoot that means MORE elongation, so the lower side stretches and the shoot turns up.'
+          : 'Both flanks get the same, so it goes on lying where it is.';
         return 'The ' + (M.dL > M.dR ? 'left' : 'right') + ' side has more auxin, so those cells elongate more. That flank is now longer, so the shoot bends ' +
             (M.sees && M.offset === 0 ? 'towards the light.' : 'the other way, to the ' + (M.gL > M.gR ? 'right.' : 'left.')); }]
     ];
@@ -2758,19 +2768,31 @@
       paintKey(M);
       why.innerHTML = '';
       var still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (still) { S.p = 1; draw(M, 1); capt.textContent = ''; capt.hidden = true; why.innerHTML = verdict(M); return; }
-      var t0 = Date.now(), MS = 4600, shown = -1;
+      if (still) { S.p = 1; capNow = ''; draw(M, 1); capt.textContent = ''; capt.hidden = true; why.innerHTML = verdict(M); return; }
+      /* Five sentences in 4.6 seconds is under a second each — unreadable, and most of the
+         class is reading in their second language. Nearly ten seconds gives about two seconds a
+         line, and the button re-runs it. */
+      var t0 = Date.now(), MS = 9600, shown = -1;
       capt.hidden = false;
       S.p = 0; draw(M, 0);
       S.t = setInterval(function () {
         var p = Math.min(1, (Date.now() - t0) / MS);
         S.p = p; draw(M, p);
         for (var i = STEPS.length - 1; i >= 0; i--) {
-          if (p >= STEPS[i][0]) { if (shown !== i) { shown = i; capt.textContent = STEPS[i][1](M); } break; }
+          if (p >= STEPS[i][0]) {
+            if (shown !== i) {
+              shown = i; capNow = STEPS[i][1](M);
+              /* on a narrow box the words go INSIDE the drawing, under it, so they are read at the
+                 same eye level as the thing they are describing instead of somewhere below it */
+              capt.textContent = narrow ? '' : capNow; capt.hidden = narrow;
+              if (narrow) draw(M, p);
+            }
+            break;
+          }
         }
         if (p >= 1) {
           clearInterval(S.t); S.t = null;
-          capt.textContent = ''; capt.hidden = true;   /* the narration is done; the result speaks for itself */
+          capt.textContent = ''; capt.hidden = true; capNow = ''; draw(M, 1);   /* the narration is done; the result speaks for itself */
           why.innerHTML = verdict(M);
         }
       }, 40);
