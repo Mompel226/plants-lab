@@ -1664,3 +1664,6 @@ picture{display:block;line-height:0}
 .xp__cite{margin:14px 0 0;padding-top:10px;border-top:1px dashed var(--edge);
   font-size:12.5px;line-height:1.5;color:#6A6A6A}
 .xp__cite a{color:var(--k-grow)}
+.xp__warn{margin:0 0 14px;padding:9px 12px;border-radius:var(--r);
+  background:#FDECEC;border:1.5px solid #E4B4B4;border-left:4px solid #C0392B;
+  color:#9B2F22;font-size:13px;font-weight:700;line-height:1.45}

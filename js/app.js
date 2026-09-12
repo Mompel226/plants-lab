@@ -1114,7 +1114,12 @@
     card.className = 'xp__card';
     card.innerHTML = '<div class="xp__h"><b>' + esc(spec.title || 'Why') + '</b>' +
                      '<button type="button" class="xp__x" aria-label="Close">✕</button></div>' +
-                     '<div class="xp__b">' + spec.body + '</div>';
+                     /* Every one of these panels is off-syllabus, and the line saying so was the
+                        first sentence of the body — where a reader in a hurry goes straight past it
+                        and comes away thinking they have to learn it. It is a banner now, put here
+                        rather than in each panel so no panel can ever be written without one. */
+                     '<div class="xp__b"><p class="xp__warn">Not on the syllabus — here out of curiosity. ' +
+                     'You will not be asked to write any of this.</p>' + spec.body + '</div>';
     xpBox.appendChild(card);
     xpBox.addEventListener('click', function (e) { if (e.target === xpBox || e.target.closest('.xp__x')) closeExplain(); });
     document.body.appendChild(xpBox);
