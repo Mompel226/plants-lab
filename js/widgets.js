@@ -289,8 +289,35 @@
     return box;
   }
 
+  /* ---------- two pictures on one row: the drawing, and the thing itself ----------
+     A diagram says what the parts are called; a photograph says what they actually look like.
+     Side by side, a reader does not have to hold one of them in their head while looking at the
+     other. The cells are sized by aspect ratio so both pictures come out the same HEIGHT —
+     equal widths would make a tall close-up tower over a wide diagram. Below 620px there is no
+     room for two columns and they stack. Opt in with `beside`, so nothing else changes. */
+  function photoPair(spec) {
+    var f = h('figure', 'photo photo--pair'), row = h('div', 'photo__row'), credits = [];
+    [spec, spec.beside].forEach(function (s) {
+      var pic = picture(s); if (!pic) return;
+      var cell = h('div', 'photo__cell');
+      var wh = sizeOf(s.img + '-900.jpg') || sizeOf(s.img);
+      cell.style.flex = (wh && wh[1] ? (wh[0] / wh[1]).toFixed(3) : '1') + ' 1 0';
+      cell.appendChild(pic.pic);
+      pic.img.addEventListener('click', function () {
+        if (global.LabLightbox) global.LabLightbox(pic.img.currentSrc || pic.img.src, s.cap || '', s.kind || 'Photograph', pic.credit);
+      });
+      if (s.cap) cell.appendChild(h('figcaption', 'photo__sub', mk(s.cap)));
+      if (pic.credit && credits.indexOf(pic.credit) < 0) credits.push(pic.credit);
+      row.appendChild(cell);
+    });
+    f.appendChild(row);
+    f.appendChild(h('figcaption', null, (spec.pairCap ? mk(spec.pairCap) + ' · ' : '') + credits.join(' · ')));
+    return f;
+  }
+
   /* ---------- photo: a photograph with its credit, full size on a click ---------- */
   function photo(spec) {
+    if (spec.beside) return photoPair(spec);
     /* A portrait picture set full width leaves a column of empty paper beside it — worst on a
        tall, narrow diagram like a xylem vessel or a sieve tube. Those are marked so the page can
        stand them beside the prose instead. The shape is known before the file loads, from the

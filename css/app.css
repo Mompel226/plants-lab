@@ -936,6 +936,10 @@ picture{display:block;line-height:0}
 .photo.photo--small img{width:100%;height:auto}
 .photo img{width:100%;height:auto;display:block;border-radius:var(--r);cursor:zoom-in;background:#1B2226}
 .photo figcaption{font-size:12.5px;color:var(--grey);margin-top:6px;line-height:1.45}
+.photo--pair .photo__row{display:flex;gap:14px;align-items:flex-start}
+.photo--pair .photo__cell{min-width:0}
+.photo--pair .photo__sub{font-size:12px;color:var(--grey);margin-top:5px;line-height:1.4}
+@media (max-width:620px){ .photo--pair .photo__row{display:block} .photo--pair .photo__cell + .photo__cell{margin-top:12px} }
 .photo figcaption a{color:inherit}
 
 .gridq{overflow-x:auto;margin-bottom:4px}
