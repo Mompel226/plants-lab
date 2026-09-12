@@ -41,7 +41,7 @@ The deck is the PowerPoint in `IGCSE Lessons/Y11/Plants/`, the slide is its numb
 |---|---|---|
 | `seed-stages-*` | 16.3 Plant reproduction | 51 |
 | `seed-radicle-*` | 16.3 Seed germination | 4 |
-| `seed-structure-*` | 16.3 Seed germination | 4 |
+| `seed-structure-*` | 16.3 Seed germination | 4 | one label corrected: the drawing is a bean, whose food store is the cotyledon, and the slide said endosperm |
 | `seedlings-pot-*` | 16.3 Plant reproduction | 48 |
 | `seed-graph-line-*` | 16.3 Seed germination | 8 |
 | `seed-graph-bars-*` | 16.3 Seed germination | 10 |
