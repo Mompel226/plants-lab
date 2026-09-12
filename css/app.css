@@ -860,7 +860,7 @@ picture{display:block;line-height:0}
     margin:4px 20px 8px -26px;shape-margin:14px
   }
   .exam-list li .photo--portrait img{width:100%;height:auto}
-  .exam-list li .photo--portrait figcaption{font-size:11.5px;line-height:1.4}
+  .exam-list li .photo--portrait figcaption{font-size:10.5px;line-height:1.38}
   /* the sentence must be at least as tall as its picture, and nothing structural may ride up
      beside it: a widget, an activity or the next block starts below */
   .exam-list li:has(> .photo--portrait){min-height:1px}
