@@ -1634,3 +1634,4 @@ picture{display:block;line-height:0}
     border-radius:var(--r-pill);border:1px solid var(--edge);backdrop-filter:blur(2px)}
   .platecol.is-sim .sim{padding:0 8px 8px}
 }
+.ax__pintxt{font-size:10.5px;fill:#3C3C3C;font-family:var(--font)}
