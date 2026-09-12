@@ -2017,8 +2017,36 @@
     var GEO = {
       shoot:     { W: 640, H: 400, BX: 300, BY: 330, phi0: 0,           LEN: 200, HW: 32, ELO: [92, 158], TIP: 166 },
       shootSide: { W: 640, H: 400, BX: 138, BY: 210, phi0: Math.PI / 2, LEN: 200, HW: 32, ELO: [92, 158], TIP: 166 },
-      root:      { W: 640, H: 400, BX: 172, BY: 150, phi0: Math.PI / 2, LEN: 230, HW: 29, ELO: [110, 184], TIP: 196 }
+      /* The root is drawn THINNER than the shoot on purpose: a radicle is a fine thread beside
+         the seed it came out of, and at HW 29 against a 66 px seed the thing read as a sausage
+         with an egg stuck on the end. Everything inside it — the cells, the wash, the grains,
+         the cap — is written in terms of HW, so they all follow. */
+      root:      { W: 640, H: 400, BX: 172, BY: 150, phi0: Math.PI / 2, LEN: 230, HW: 19, ELO: [110, 184], TIP: 196 }
     };
+    /* The soil is fixed geometry, so it is built once and handed back on every frame after
+       that. draw() runs sixty times a run behind 130 auxin grains; rebuilding and reparsing a
+       hundred and fifty circles that never move is work for nothing. */
+    var SOIL = '';
+    function soilBody(g) {
+      if (SOIL) return SOIL;
+      var out = '<defs><linearGradient id="axSoil" x1="0" y1="0" x2="0" y2="1">' +
+                '<stop offset="0" stop-color="#EFE5D1"/><stop offset=".55" stop-color="#EFE5D1"/>' +
+                '<stop offset="1" stop-color="#F7F0E0"/></linearGradient></defs>';
+      out += '<rect x="-20" y="96" width="' + (g.W + 40) + '" height="' + (g.H - 76) + '" fill="url(#axSoil)"/>';
+      for (var sq = 0; sq < 150; sq++) {
+        var fa = frac(0.37 + sq * 0.7548776662), fb = frac(0.11 + sq * 0.5698402910);
+        var fr = frac(fa * 31.4 + fb * 13.7);
+        /* they thin out with depth, so the empty soil a phone crop leaves below the root does
+           not read as a slab of colour */
+        out += '<circle cx="' + (-10 + fa * (g.W + 20)).toFixed(1) + '" cy="' + (104 + fb * (g.H - 114)).toFixed(1) +
+               '" r="' + (0.7 + fr * 1.5).toFixed(1) + '" fill="' + (fr > 0.72 ? '#D6C6A0' : '#E5D9BC') +
+               '" opacity="' + (0.82 - 0.6 * fb).toFixed(2) + '"/>';
+      }
+      out += '<path d="M-20 96 H' + (g.W + 20) + '" stroke="#CCBC98" stroke-width="1.6"/>';
+      SOIL = out;
+      return SOIL;
+    }
+
     function geoFor() {
       return S.organ === 'root' ? GEO.root : S.lay === 'side' ? GEO.shootSide : GEO.shoot;
     }
@@ -2113,7 +2141,7 @@
       pins.innerHTML = '';
       if (!LAB.length) return '';
       var x = right ? g.W - 150 : 150, out = '';
-      var rows = LAB.map(function (L) { return { px: L.px, py: L.py, lines: wrapText(L.text, 25) }; })
+      var rows = LAB.map(function (L) { return { px: L.px, py: L.py, lines: wrapText(L.text, 22) }; })
                     .sort(function (a, b) { return a.py - b.py; });
       var y = 30;
       rows.forEach(function (r) {
@@ -2178,7 +2206,10 @@
          clear of the drawing before it turns for the words. */
       var labRight = root ? true : S.light !== 'right';
       var labU = (root || S.lay === 'side') ? -g.HW : (labRight ? g.HW : -g.HW);
-      var HW = g.HW, K = 9, CW = 11;
+      /* the depth of the cell boxes on each flank. On the narrower root they are a little
+         shallower, so the lumen left between them still holds the grain cloud (which spreads
+         to 0.58 HW) instead of the grains lying on top of the cells. */
+      var HW = g.HW, K = 9, CW = root ? 7 : 11;
 
       /* With the words underneath, the column they used to occupy is dead space. Cropping it at
          a fixed 500 still left the organ off to one side, because the geometry was laid out to
@@ -2191,28 +2222,46 @@
         else { vw = 330; vx = g.BX - vw / 2; }
       }
       var s = '';
-      s += '<defs><linearGradient id="axBody" x1="0" y1="0" x2="1" y2="0">' +
-           '<stop offset="0" stop-color="' + (root ? '#C9B896' : '#3E8F46') + '"/>' +
-           '<stop offset=".45" stop-color="' + (root ? '#E4D6B8' : '#54AC5C') + '"/>' +
-           '<stop offset="1" stop-color="' + (root ? '#C9B896' : '#3E8F46') + '"/></linearGradient>' +
+      /* The body gradient must run ACROSS the organ, which is what makes a flat band read as a
+         cylinder. Written once for a shoot standing up it ran left to right, and on a root —
+         which lies along the page — that shaded the base and the tip dark and the middle pale,
+         like a bone. So the root takes the same gradient turned through a right angle. */
+      s += '<defs><linearGradient id="axBody" x1="0" y1="0" x2="' + (root ? '0' : '1') + '" y2="' + (root ? '1' : '0') + '">' +
+           '<stop offset="0" stop-color="' + (root ? '#DFD1B3' : '#3E8F46') + '"/>' +
+           '<stop offset=".45" stop-color="' + (root ? '#F8F2E2' : '#54AC5C') + '"/>' +
+           '<stop offset="1" stop-color="' + (root ? '#DFD1B3' : '#3E8F46') + '"/></linearGradient>' +
+           '<radialGradient id="axSeed" cx=".36" cy=".3" r=".78"><stop offset="0" stop-color="#F3E7CB"/><stop offset=".55" stop-color="#E2CFA4"/><stop offset="1" stop-color="#C8AE7C"/></radialGradient>' +
+           '<linearGradient id="axStem" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#4E9B4F"/><stop offset=".45" stop-color="#7CC06E"/><stop offset="1" stop-color="#4E9B4F"/></linearGradient>' +
            '<radialGradient id="axSun" cx=".42" cy=".38" r=".62"><stop offset="0" stop-color="#FFE07A"/><stop offset="1" stop-color="#F3AC16"/></radialGradient></defs>';
       var bg = '#FBFAF6';
 
       /* soil, or the bench the seedling lies on */
       if (root) {
-        bg = '#F3EDE0';
-        s += '<path d="M0 96 H' + g.W + '" stroke="#D8CBB0" stroke-width="1.2" stroke-dasharray="5 5"/>';
-        /* On a phone the window starts at vx, so words anchored near x=0 are cropped away
-           before they are read: both of these sat off the canvas in every root state. The soil
-           label moves to the free end of the line it names, and the shoot label to the open
-           side of the shoot. */
-        s += narrow ? '<text class="ax__s" x="' + (vx + vw - 8) + '" y="90" text-anchor="end">soil surface</text>'
-                    : '<text class="ax__s" x="10" y="90">soil surface</text>';
-        s += '<path d="M150 122 q-34 -34 -30 -66" fill="none" stroke="#6FAE63" stroke-width="4.5" stroke-linecap="round"/>';
-        s += narrow ? '<text class="ax__s" x="158" y="48">shoot, growing up</text>'
-                    : '<text class="ax__s" x="74" y="48">shoot, growing up</text>';
-        s += '<ellipse cx="150" cy="142" rx="33" ry="25" fill="#E8DCC0" stroke="#B79E74" stroke-width="1.8"/>';
-        s += '<text class="ax__s" x="150" y="186" text-anchor="middle">seed</text>';
+        bg = '#FAF5E9';                               /* the air above the soil */
+        /* Soil as a body with grains in it rather than a dashed line with nothing under it: it
+           says where the seedling is, and it gives the root hairs something to be among. The
+           grains are fixed, so they are built once and kept — draw() runs every frame, and
+           rebuilding and reparsing 150 circles behind 130 auxin grains, sixty times a run, is
+           work for a picture that never changes. It fades out downwards so that on a phone,
+           where the crop leaves a lot of empty soil below the root, the bottom half of the box
+           is not a flat brown slab. */
+        s += soilBody(g);
+        s += '<text class="ax__s" x="' + (narrow ? vx + 98 : 10) + '" y="88">soil surface</text>';
+        /* The shoot was a 4.5 px whisker beside a root eight times its width, which is the first
+           thing that made the picture unbelievable. It is now a stem with a thickness, a pair of
+           seed leaves and a hook — small beside the root, as a young seedling's shoot is, but
+           plainly the same plant. Placed off the root's own origin rather than at absolute page
+           coordinates, so it follows if the root's geometry is ever moved again. */
+        var stX = g.BX - 33, stY = g.BY - 28;
+        var stem = 'M' + stX + ' ' + stY + ' C ' + (stX - 5) + ' ' + (stY - 30) + ' ' + (stX - 12) + ' ' + (stY - 56) + ' ' + (stX - 15) + ' ' + (stY - 84);
+        s += '<path d="' + stem + '" fill="none" stroke="#3F7F41" stroke-width="10" stroke-linecap="round"/>';
+        s += '<path d="' + stem + '" fill="none" stroke="url(#axStem)" stroke-width="7" stroke-linecap="round"/>';
+        s += '<g transform="translate(' + (stX - 15) + ',' + (stY - 84) + ')">' +
+             '<path d="M0 0 q2 -16 16 -20 q2 18 -12 23 Z" fill="#5FAE59" stroke="#3F7F41" stroke-width="1.6" stroke-linejoin="round"/>' +
+             '<path d="M1 10 q-16 -9 -15 -26 q17 8 17 25 Z" fill="#6FBC63" stroke="#3F7F41" stroke-width="1.6" stroke-linejoin="round"/></g>';
+        s += '<text class="ax__s" x="' + (stX + 13) + '" y="' + (stY - 76) + '">shoot, growing up</text>';
+        /* The seed itself is drawn LAST, with the root cap, so that it covers the root's square
+           base end instead of being butt-jointed to it — see below. */
       }
 
       /* the beam first: the light needs to know where the flank it is lighting actually is */
@@ -2319,8 +2368,10 @@
              showed none. */
           var grew = inZone && (s1 - s0) > CELL + 0.6;
           var p1 = at(s0, sign * HW), p2 = at(s1, sign * HW), p3 = at(s1, sign * (HW - CW)), p4 = at(s0, sign * (HW - CW));
-          var fill = !inZone ? (root ? '#EFE6D0' : '#C6E2AC')
-                   : root ? (grew ? '#CFE8C4' : '#E9DCC0')
+          /* On the root the not-yet-elongating cell was so near white that the one box between
+             the zone and the cap read as a gap in the drawing rather than as a cell. */
+          var fill = !inZone ? (root ? '#F0E7D2' : '#C6E2AC')
+                   : root ? (grew ? '#D3EAC8' : '#EADEBE')
                           : (grew ? '#A8D98C' : '#D9E9CC');
           out += '<path d="M' + f1(p1) + ' L' + f1(p2) + ' L' + f1(p3) + ' L' + f1(p4) + ' Z" fill="' + fill +
                  '" stroke="' + (root ? '#9A8459' : '#2C6E36') + '" stroke-width="1.3"/>';
@@ -2335,6 +2386,44 @@
         return out;
       }
       s += chain(1) + chain(-1);
+
+      /* ROOT HAIRS. They are what tells you at a glance that this is a root and not a pale
+         shoot, and WHERE they are is itself the lesson the root station teaches: a hair is an
+         outgrowth of an epidermal cell that has finished elongating, so they cover the mature
+         zone BEHIND the elongation zone and stop dead before it. None on the cap, none on the
+         elongating cells — which is also why the tip can be pushed through soil at all.
+         Drawn in the organ's own frame, so they stay seated on the flank however it bends, and
+         bounded by ZONE0 rather than by a number, so the growing zone never overruns them. */
+      if (root) {
+        var hS0 = 34, hS1 = g.ZONE0 - 9;              /* clear of the seed; short of the zone */
+        if (hS1 - hS0 > 16) {
+          var hN = Math.max(4, Math.round((hS1 - hS0) / 3.2));
+          for (var hf = 0; hf < 2; hf++) {
+            var hSg = hf ? 1 : -1;
+            for (var hi = 0; hi <= hN; hi++) {
+              /* a half-step stagger between the flanks, so the two rows do not read as rungs */
+              var ht = (hi + hf * 0.5) / hN;
+              if (ht > 1) continue;
+              var hs = hS0 + (hS1 - hS0) * ht;
+              var hj = frac(hi * 0.7548776662 + hf * 0.31), hk = frac(hi * 0.5698402910 + hf * 0.67);
+              /* The band is graded, not a rectangle of bristles: the youngest hairs, nearest the
+                 elongation zone, are barely out; they are at their longest a third of the way
+                 back; and the oldest, nearest the seed, are shorter again, because root hairs
+                 live a few days and the oldest are being shed. */
+              var hL = (3.5 + 12 * Math.pow(Math.sin(Math.PI * (0.28 + 0.62 * ht)), 1.3)) * (0.74 + 0.46 * hj);
+              /* Every hair the same length and the same lean is a comb, not a root; every hair
+                 leaning its own way is straw. They stand out from the flank, most of them tipped
+                 a little back towards the seed, and each keeps its own lean. */
+              var hSw = -0.06 + 0.5 * hk;                 /* how far back it leans, in hair-lengths */
+              var hP0 = at(hs, hSg * (HW - 1.4));
+              var hPc = at(hs - hL * hSw * 0.3, hSg * (HW + hL * 0.55));
+              var hP1 = at(hs - hL * hSw, hSg * (HW + hL));
+              s += '<path d="M' + f1(hP0) + ' Q' + f1(hPc) + ' ' + f1(hP1) + '" fill="none" stroke="#A98B55" stroke-width="' +
+                   (1 + 0.3 * hj).toFixed(2) + '" stroke-linecap="round" opacity="' + (0.78 + 0.22 * hj).toFixed(2) + '"/>';
+            }
+          }
+        }
+      }
 
       /* the tip: the part that makes the auxin and reads the light, drawn as its own region
          because "the shoot" bending is never the answer — it is the TIP that detects */
@@ -2418,28 +2507,77 @@
         sOver += ruled(mid[0], mid[1], 0, 0, 'mica plate under half the tip: it holds this half back');
       }
 
+      /* THE SEED, and it is drawn HERE rather than with the soil so that it covers the root's
+         square base end. Drawn first, the root was laid over it and the two met at a butt joint
+         that read as a root with an egg parked beside it; drawn last, the root comes out from
+         under the seed coat, which is what actually happens at the micropyle. */
+      if (root) {
+        /* A bean, not an egg: broad and round at the far end, drawn in a little where the root
+           comes out, with the hilum — the scar where it was joined to the pod — on the flat
+           edge beside it. An ellipse read as a balloon tied to the root. */
+        s += '<g transform="translate(' + (g.BX - 26) + ',' + (g.BY + 5) + ') rotate(-9)">' +
+             '<path d="M52 -4 C51 12 34 24 11 27 C-15 30 -43 21 -50 5 C-56 -10 -42 -25 -17 -28 C11 -32 44 -21 52 -4 Z" ' +
+             'fill="url(#axSeed)" stroke="#9C7F4E" stroke-width="2.2" stroke-linejoin="round"/>' +
+             /* the seam between the two halves of the seed, and the scar where it was joined to
+                the pod: the two marks that say seed rather than pebble */
+             '<path d="M-46 -4 C-30 -14 8 -16 40 -7" fill="none" stroke="#B89A63" stroke-width="1.5" opacity=".65"/>' +
+             '<ellipse cx="4" cy="24" rx="11" ry="3.6" transform="rotate(-7 4 24)" fill="#D8C193" stroke="#A98C59" stroke-width="1.3"/>' +
+             '<path d="M-36 -14 C-28 -21 -14 -24 0 -22" fill="none" stroke="#FBF4E2" stroke-width="4" stroke-linecap="round" opacity=".4"/>' +
+             '</g>';
+        s += '<text class="ax__s" x="' + (g.BX - 24) + '" y="' + (g.BY + 62) + '" text-anchor="middle">seed</text>';
+      }
+
       /* the root cap and its statoliths — the detector, and the thing that does the detecting */
       if (root) {
         if (S.cap === 'intact') {
           /* A root cap is blunt. A quadratic stretched far enough to cover the body's own tip
              came to a point instead, so it is a cubic: two controls out beyond the apex hold the
              curve wide, and the cap covers the root end without turning into a wedge. */
-          var c1 = at(g.LEN + 30, HW * 0.85), c2 = at(g.LEN + 30, -HW * 0.85);
-          s += '<path d="M' + f1(at(g.TIP, HW)) + ' C' + f1(c1) + ' ' + f1(c2) + ' ' + f1(at(g.TIP, -HW)) +
-               ' Z" fill="#B59B6A" stroke="#8A7346" stroke-width="1.8"/>';
+          /* It also has to be WIDER than the root, not narrower. Sprung straight from the flank
+             at the junction, the curve fell inside the body at once and the root's own outline
+             and domed end stuck out around it in a kite of stray lines. A cap is a thimble: it
+             runs parallel to the flank, a whisker proud of it, and only then turns over the end. */
+          /* The shoulder sits a little BEHIND g.TIP and the flanks are drawn in to meet the
+             root's own width there. Squared off exactly at g.TIP and a full 1.6 proud all the
+             way, the cap ended in a butt joint with a sliver of bare body showing on each
+             flank between the last cell box and the brown, and it read as a thumb pushed onto
+             the end rather than as a sheath over it. */
+          var cHW = HW + 1.2, cSh = g.LEN - 16, cSh0 = g.TIP - 5;
+          var c1 = at(g.LEN + 30, cHW * 0.9), c2 = at(g.LEN + 30, -cHW * 0.9);
+          s += '<path d="M' + f1(at(cSh0, HW - 0.5)) + ' L' + f1(at(cSh0 + 9, cHW)) + ' L' + f1(at(cSh, cHW)) +
+               ' C' + f1(c1) + ' ' + f1(c2) + ' ' + f1(at(cSh, -cHW)) +
+               ' L' + f1(at(cSh0 + 9, -cHW)) + ' L' + f1(at(cSh0, -(HW - 0.5))) +
+               ' Z" fill="#BFA478" stroke="#8A7346" stroke-width="1.8" stroke-linejoin="round"/>';
+          /* the shoulder where the cap ends and the root proper begins, and one arc inside it:
+             a cap is layers of cells that slough off as the tip is pushed through the soil */
+          s += '<path d="M' + f1(at(cSh0, HW - 0.5)) + ' L' + f1(at(cSh0, -(HW - 0.5))) + '" stroke="#8A7346" stroke-width="1.4" opacity=".5"/>';
+          s += '<path d="M' + f1(at(g.TIP + 6, cHW * 0.96)) + ' C' + f1(at(g.LEN + 18, cHW * 0.72)) + ' ' + f1(at(g.LEN + 18, -cHW * 0.72)) +
+               ' ' + f1(at(g.TIP + 6, -cHW * 0.96)) + '" fill="none" stroke="#9C8455" stroke-width="1.2" opacity=".5"/>';
           for (var q3 = 0; q3 < 7; q3++) {
-            var sss = g.TIP + 8 + Math.floor(q3 / 4) * 9;
+            var sss = g.TIP + 7 + (q3 % 4) * 8 + Math.floor(q3 / 4) * 4;
             /* They must finish on the LOWER side — that is the whole observation. A fixed offset
                could not carry the grain that starts highest past the axis, so two of the seven
                settled above the centre line and the cap appeared to detect nothing. */
             var uFrom = -HW * 0.55 + (q3 % 4) * HW * 0.34;
-            var uTo = HW * (0.26 + 0.14 * ((q3 % 4) / 3));
+            /* Landed in one narrow band they piled into a single blob and the cap looked like it
+               held two grains, not seven. They settle ALONG the floor of the cap, spread down it
+               and stacked two deep, which is what a heap of sunk grains looks like. */
+            var uTo = HW * (0.86 - 0.3 * Math.floor(q3 / 4));
             var ps = at(sss, uFrom + (uTo - uFrom) * detect);
             s += '<circle cx="' + ps[0].toFixed(1) + '" cy="' + ps[1].toFixed(1) + '" r="3" fill="#6B5A33" opacity=".9"/>';
           }
           s += ruled(at(g.LEN - 12, 0)[0], at(g.LEN - 12, 0)[1], 396, 300, 'root cap: starch grains sink to the lower side', true);
         } else {
-          s += '<path d="M' + f1(at(g.TIP, HW)) + ' L' + f1(at(g.TIP, -HW)) + '" stroke="#8A7346" stroke-width="2" stroke-dasharray="4 3"/>';
+          /* Dashing the body's own square end put a second 2 px brown line on top of the first
+             and the reader saw an ordinary blunt root, 40 px shorter than the intact one — the
+             comparison came out as a difference in SIZE. The outline of what was taken off is
+             the clearest way to say it was taken off, and it keeps the two states the same
+             length so the comparison is about the cap. */
+          var k1 = at(g.LEN + 30, (HW + 1.2) * 0.9), k2 = at(g.LEN + 30, -(HW + 1.2) * 0.9);
+          s += '<path d="M' + f1(at(g.TIP, HW)) + ' L' + f1(at(g.LEN - 16, HW + 1.2)) + ' C' + f1(k1) + ' ' + f1(k2) +
+               ' ' + f1(at(g.LEN - 16, -(HW + 1.2))) + ' L' + f1(at(g.TIP, -HW)) +
+               '" fill="none" stroke="#8A7346" stroke-width="1.6" stroke-dasharray="4 3" opacity=".45"/>';
+          s += '<path d="M' + f1(at(g.TIP, HW)) + ' L' + f1(at(g.TIP, -HW)) + '" stroke="#8A7346" stroke-width="2.2"/>';
           s += ruled(at(g.TIP, 0)[0], at(g.TIP, 0)[1], 396, 300, 'root cap cut off: the main gravity detector is gone', true);
         }
       }
@@ -2623,6 +2761,11 @@
       } else {
         var pr = at((g.ZONE0 + g.ZONE1) / 2, labU);
         s += ruled(pr[0], pr[1], 0, 0, 'zone of elongation');
+        /* named where they are, because where they are is the point: behind the growing tip */
+        /* at the FAR end of the hair band, not its middle: anchored halfway along, the leader
+           for the label that says "behind the tip, not on it" was drawn across the tip. */
+        var phr = at(g.ZONE0 - 14, -(HW + 8));
+        s += ruled(phr[0], phr[1], 0, 0, 'root hair cells: behind the tip, not on it');
         /* Correcting towards the vertical overshoots, and the tip is knocked aside by stones.
            Both are real, and together they are why a root in soil follows a wavy path. */
         if (grow > 0.85 && M.sees) {
@@ -2630,20 +2773,27 @@
              rather than inside it. Built in screen coordinates with a fixed downward step it left
              the root at 26 degrees off its own heading, out of the middle of the cap. */
           var e0 = at(g.LEN, 0), ph0 = e0[2], DOWN = Math.PI;
-          var off0 = HW * 1.7;                /* start beyond the cap, not inside it */
+          var off0 = HW * 1.05;               /* ON the cap's own crown: a track leaves the tip, it does not float near it */
           var cx = e0[0] + Math.sin(ph0) * off0, cy = e0[1] - Math.cos(ph0) * off0;
           var pts = [[cx, cy]];
           /* It goes on turning towards the vertical, which is what a correcting root does — and
              it keeps the path in the empty soil below rather than running it out to the right
              through the words. */
           for (var wv = 1; wv <= 22; wv++) {
-            var ph = ph0 + (DOWN - ph0) * Math.min(1, wv / 22 * 2.2);
+            /* The turn towards the vertical PASSES it and comes back, damping — which is what
+               "it overshoots and corrects" means. Before, the heading turned monotonically and
+               was clamped at the vertical, so nothing overshot anything; the waving was a plain
+               sideways displacement laid on a straight line, and the words described a picture
+               that was not there. One mechanism, drawn once. */
+            var ph = ph0 + (DOWN - ph0) * Math.min(1, wv / 22 * 2.2)
+                   + 0.5 * Math.exp(-wv / 14) * Math.sin(wv / 2.3);
             cx += Math.sin(ph) * 5; cy -= Math.cos(ph) * 5;
-            var across = Math.sin(wv / 2.8) * 9;
-            pts.push([cx + Math.cos(ph) * across, cy + Math.sin(ph) * across]);
+            pts.push([cx, cy]);
           }
           s += '<path d="M' + pts.map(f1).join(' L') + '" fill="none" stroke="#9A8459" stroke-width="2.4" stroke-dasharray="5 4" opacity=".65"/>';
-          var wLab = pts[narrow ? 8 : 13];   /* a pin must sit inside the cropped box */
+          var wLab = pts[narrow ? 8 : 4];    /* early, on the LEFT of the path: anchored at 13 the
+                                                dot landed on the words themselves and the leader
+                                                ran backwards to reach them */
           s += ruled(wLab[0], wLab[1], 0, 0, 'it overshoots and corrects, so the path waves');
         }
       }
@@ -2761,6 +2911,8 @@
                'this cell is elongating — the longer the arrow, the more it has stretched']);
       if (S.organ === 'root' && S.cap === 'intact')
         it.push([sw('<circle cx="8" cy="8" r="4.4" fill="#6B5A33"/>'), 'starch grain (statolith)']);
+      if (S.organ === 'root' && S.cap === 'intact')
+        it.push([sw('<path d="M3 14 C7 8 9 8 13 2" fill="none" stroke="#9A8459" stroke-width="2.2" stroke-dasharray="4 3"/>'), 'dashed line: the path it takes through the soil']);
       if (S.organ === 'shoot' && S.mica !== 'none')
         it.push([sw('<rect x="1" y="6.5" width="14" height="3.4" rx="1.7" fill="#6C7681"/>'), 'mica — nothing crosses it']);
       if (S.organ === 'shoot' && S.top !== 'intact' && S.top !== 'cut')
