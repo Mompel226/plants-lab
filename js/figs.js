@@ -152,11 +152,40 @@
       'A shoot growing upwards with the sun at the top left. Auxin grains are gathered along the shaded right-hand flank. The cell divisions show that flank is longer, and the shoot is curving to the left, towards the light.');
   })();
 
-  /* "Auxin is made in the shoot tip." A drawing of that is worth nothing; this is a photograph
-     of real seedlings with their growing tips at the top of each shoot, and the pin is on one. */
-  F['auxin-chain'] = photo('seedlings-pot',
-    'Young sunflower seedlings in a pot, their shoots hooked over as they push up out of the soil, with the growing tip at the top of each shoot.',
-    [[47, 25, 1]]);
+  /* "Auxin is made in the shoot tip." There is no photograph of a shoot tip in this lab, and the
+     nearest one showed a seed coat rather than a growing point — so it is drawn, in the same
+     language as the simulation: the tip is its own region above a dashed line, the auxin is made
+     inside it, and an arrow carries it down into the stem below. */
+  F['auxin-chain'] = (function () {
+    var b = band([60, 96], [60, 62], [60, 30], 15), s = '', i;
+    s += '<defs><linearGradient id="fgA1" x1="0" y1="0" x2="1" y2="0">' +
+         '<stop offset="0" stop-color="#3E8F46"/><stop offset=".45" stop-color="#54AC5C"/>' +
+         '<stop offset="1" stop-color="#3E8F46"/></linearGradient></defs>';
+    s += '<path d="M4 96 H116" stroke="' + SD + '" stroke-width="1.4" opacity=".45"/>';
+    s += b.body('url(#fgA1)') + b.flanks(4, 5, SHC, 0) + b.tip();
+    /* the tip region: the part that makes it, marked off as the simulation marks it */
+    var tl = b.pt(0.62, -15), tr = b.pt(0.62, 15);
+    s += '<path d="M' + tl[0].toFixed(1) + ' ' + tl[1].toFixed(1) + ' L' + tr[0].toFixed(1) + ' ' + tr[1].toFixed(1) +
+         ' L' + tr[0].toFixed(1) + ' 28 L' + tl[0].toFixed(1) + ' 28 Z" fill="#2F7D46" opacity=".5"/>';
+    s += '<path d="M' + tl[0].toFixed(1) + ' ' + tl[1].toFixed(1) + ' L' + tr[0].toFixed(1) + ' ' + tr[1].toFixed(1) +
+         '" stroke="#1F5A31" stroke-width="1.8" stroke-dasharray="4 3"/>';
+    /* auxin being made, inside the tip */
+    for (i = 0; i < 9; i++) {
+      var q = b.pt(0.70 + (i % 3) * 0.085, (i % 3 - 1) * 7 + (i < 5 ? -3 : 3));
+      s += '<circle cx="' + q[0].toFixed(1) + '" cy="' + q[1].toFixed(1) + '" r="1.9" fill="#F0900E"/>';
+    }
+    /* and travelling down into the stem */
+    for (i = 0; i < 8; i++) {
+      var r = b.pt(0.12 + i * 0.06, ((i % 3) - 1) * 5);
+      s += '<circle cx="' + r[0].toFixed(1) + '" cy="' + r[1].toFixed(1) + '" r="1.9" fill="#F0900E" opacity=".85"/>';
+    }
+    var aTop = b.pt(0.6, 0), aBot = b.pt(0.16, 0);
+    s += arr(aTop[0], aTop[1] + 3, aBot[0], aBot[1], AD, 2.6);
+    var p1 = b.pt(0.82, 28), p2 = b.pt(0.34, 27);
+    s += pin(p1[0], p1[1], 1) + pin(p2[0], p2[1], 2);
+    return svg('0 0 120 100', s,
+      'A shoot standing upright. Its tip is shaded as its own region above a dashed line, with auxin grains being made inside it, and an arrow carries the auxin down the middle of the shoot into the stem below.');
+  })();
 
   /* THE SENTENCE: "In a root auxin INHIBITS cell elongation: those cells elongate LESS. So when
      a root lies on its side, auxin collects along the lower side, the cells there elongate less
