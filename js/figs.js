@@ -262,7 +262,7 @@
     '<ellipse cx="66" cy="13" rx="22" ry="4" fill="#D5E6F2" stroke="' + SD + '" stroke-width="1.2"/>' +
     /* water rising the whole way up and out */
     arr(60, 89, 60, 8, W, 3.6) +
-    pin(22, 46, 1) + pin(70, 64, 2) + pin(60, 33, 3),
+    
     'A xylem vessel drawn as a cut-open pipe. Its thick walls are banded with rings of lignin. Only broken stumps are left where the end walls between the cells used to be, so the pipe is one continuous open tube, empty of any living contents, with water rising straight up it.');
 
   /* ---------------- 2. phloem sieve tube ---------------- */
@@ -299,41 +299,8 @@
     '<ellipse cx="84" cy="41.6" rx="3.2" ry="2.5" fill="#AE92C4"/>' +
     /* the strands that join the companion cell to the sieve tube */
     '<g stroke="#7A5C8E" stroke-width="2.6" stroke-linecap="round"><path d="M66 33 H70 M66 44 H70 M66 66 H70"/></g>' +
-    pin(11, 52, 1) + pin(87, 66, 2) + pin(57, 78, 3),
+    
     'A phloem sieve tube: two living sieve tube elements end to end with only a thin lining of cytoplasm and no nucleus, a sieve plate with pores across the join between them, sucrose moving along the tube through those pores, and a companion cell beside it packed with cytoplasm and holding a nucleus.');
-
-  /* ---------------- 3. root hair cell ---------------- */
-  F['root-hair'] = svg('0 0 120 100',
-    '<defs>' +
-    '<radialGradient id="rhP" cx=".36" cy=".28" r=".85">' +
-    '<stop offset="0" stop-color="#F4EAD3"/><stop offset="1" stop-color="#BCA778"/></radialGradient>' +
-    '<linearGradient id="rhV" x1="0" x2="1" y1="0" y2="1">' +
-    '<stop offset="0" stop-color="#D9EAF4"/><stop offset="1" stop-color="#9BC3DE"/></linearGradient>' +
-    '</defs>' +
-    '<rect x="0" y="0" width="120" height="100" fill="#D5C6A1"/>' +
-    /* films of water in the gaps, and the soil particles the hair threads between */
-    '<g fill="#A2C8E2"><path d="M103 38 q10 8 6 17 q-13 -5 -6 -17 Z"/><path d="M82 58 q9 7 8 17 q-14 -5 -8 -17 Z"/>' +
-    '<path d="M60 24 q9 5 9 13 q-13 -2 -9 -13 Z"/></g>' +
-    '<g fill="url(#rhP)" stroke="#6B5526" stroke-width="1.5">' +
-    '<circle cx="88" cy="10" r="16"/><circle cx="46" cy="8" r="12"/><circle cx="116" cy="25" r="12"/>' +
-    '<circle cx="102" cy="66" r="15"/><circle cx="62" cy="89" r="18"/><circle cx="112" cy="94" r="14"/></g>' +
-    /* one epidermal cell: wall, a thin layer of cytoplasm, a big vacuole, a nucleus */
-    '<path d="M50 44.5 V29 a5 5 0 0 0 -5 -5 H9 a5 5 0 0 0 -5 5 V75 a5 5 0 0 0 5 5 H45 a5 5 0 0 0 5 -5 V54.5" ' +
-    'fill="#EFE2C4" stroke="#6B5526" stroke-width="2.5" stroke-linejoin="round"/>' +
-    '<path d="M45.5 45.5 V32 a3.5 3.5 0 0 0 -3.5 -3.5 H12 a3.5 3.5 0 0 0 -3.5 3.5 V72 a3.5 3.5 0 0 0 3.5 3.5 H42 a3.5 3.5 0 0 0 3.5 -3.5 V53.5" ' +
-    'fill="#FCF8EE" stroke="#CBB78A" stroke-width="1.1"/>' +
-    '<ellipse cx="26" cy="47" rx="16.5" ry="14" fill="url(#rhV)" stroke="#6E9DBE" stroke-width="1.3"/>' +
-    /* the hair: the same cell wall, drawn out into one long fine thread */
-    '<path d="M50 49.4 C62 47.7 71 38.2 86 36 S104 44 114 39" fill="none" stroke="#6B5526" stroke-width="9" stroke-linecap="round"/>' +
-    '<path d="M44 50 C59 48.1 70.5 38.2 86 36 S104 44 114 39" fill="none" stroke="#EFE2C4" stroke-width="6.2" stroke-linecap="round"/>' +
-    '<path d="M44 50 C59 48.1 70.5 38.2 86 36 S103 43.7 112 39.3" fill="none" stroke="#FCF8EE" stroke-width="3.2" stroke-linecap="round"/>' +
-    '<ellipse cx="34" cy="68.5" rx="7.6" ry="6.2" fill="#9A7A38" stroke="#5E4B1C" stroke-width="1.3"/>' +
-    '<ellipse cx="31.6" cy="66.6" rx="2.5" ry="2" fill="#D8C48C"/>' +
-    /* water entering all along the hair */
-    arr(56, 68, 58, 56, W, 2.3) + arr(74, 64, 73, 49, W, 2.3) +
-    arr(82, 18, 84, 28, W, 2.3) + arr(108, 58, 106, 49, W, 2.3) +
-    pin(66, 33, 1) + pin(22, 44, 2) + pin(74, 74, 3),
-    'A single root hair cell: one epidermal cell of the root with a cell wall, a thin layer of cytoplasm, a large vacuole and a nucleus, drawn out at one side into a long fine hair that threads between the soil particles. Short arrows show water entering all along the hair.');
 
   /* ---------- 2. transpiration: the large internal surface ---------- */
   F['transpiration'] = svg('0 0 120 100',
@@ -477,7 +444,7 @@
     /* the store: sucrose is used or kept here */
     '<path d="M60 74 c20 0 30 5 30 12 s-14 12 -30 12 s-30 -5 -30 -12 s10 -12 30 -12 Z" fill="url(#ssT)" stroke="' + SD + '" stroke-width="1.9"/>' +
     dots([[52, 84], [66, 82], [74, 88], [60, 91], [44, 87]], AD) +
-    pin(26, 21, 1) + pin(38, 88, 2) + pin(39, 52, 3),
+    
     'A plant with its leaves at the top and a swollen store below the soil. The stem is cut open to show two tissues side by side: sucrose made in the leaves travels down the phloem to the store, while water travels up the xylem beside it.');
 
   /* ---------- 4. germination: the order ---------- */
