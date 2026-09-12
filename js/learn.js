@@ -3635,23 +3635,23 @@
       '<path data-part="nectary" class="fl__nectary" d="M228 288 a6 6 0 1 0 -12 0 a6 6 0 1 0 12 0 M284 288 a6 6 0 1 0 -12 0 a6 6 0 1 0 12 0"/>';
     var labels = '';
     if (labelled) {
-      /* two columns, each ordered by the height of what it names, so no two lines cross:
-         the parts on the flower's axis and its right side read to the right, the petal and
-         the sepal to the left */
-      var R = [[250, 86, 'stigma'], [335, 140, 'anther'], [252, 150, 'style'], [294, 220, 'filament'], [288, 242, 'ovary'], [267, 236, 'ovule'], [282, 288, 'nectary', true]];
+      /* Every leader is RULED HORIZONTALLY, out to the label at its own part's height. Two
+         horizontal lines at different heights cannot cross, which is the whole point: a crossed
+         leader is marked wrong in Paper 6, so a lab that draws one is teaching the mistake. The
+         work is therefore in the anchors — each sits on its own part, and no two are closer than
+         about 25 units, so the words do not collide. */
+      var R = [[250, 86, 'stigma'], [335, 130, 'anther'], [252, 165, 'style'], [304, 200, 'filament'],
+               [267, 230, 'ovule'], [284, 255, 'ovary'], [282, 288, 'nectary', true]];
       var Lf = [[110, 120, 'petal'], [196, 308, 'sepal']];
-      var ysR = [44, 82, 120, 158, 196, 234, 272], ysL = [110, 306];
-      R.forEach(function (l, i) {
-        var y = ysR[i], x2 = 452;
-        labels += '<line class="fl__lead' + (l[3] ? ' fl__lead--extra' : '') + '" x1="' + l[0] + '" y1="' + l[1] + '" x2="' + (x2 - 6) + '" y2="' + y + '"/>' +
+      R.forEach(function (l) {
+        labels += '<line class="fl__lead' + (l[3] ? ' fl__lead--extra' : '') + '" x1="' + l[0] + '" y1="' + l[1] + '" x2="446" y2="' + l[1] + '"/>' +
           '<circle class="fl__dot" cx="' + l[0] + '" cy="' + l[1] + '" r="2.2"/>' +
-          '<text class="fl__lab' + (l[3] ? ' fl__lab--extra' : '') + '" x="' + x2 + '" y="' + (y + 4) + '">' + l[2] + '</text>';
+          '<text class="fl__lab' + (l[3] ? ' fl__lab--extra' : '') + '" x="452" y="' + (l[1] + 4) + '">' + l[2] + '</text>';
       });
-      Lf.forEach(function (l, i) {
-        var y = ysL[i], x2 = 48;
-        labels += '<line class="fl__lead" x1="' + l[0] + '" y1="' + l[1] + '" x2="' + (x2 + 6) + '" y2="' + y + '"/>' +
+      Lf.forEach(function (l) {
+        labels += '<line class="fl__lead" x1="' + l[0] + '" y1="' + l[1] + '" x2="54" y2="' + l[1] + '"/>' +
           '<circle class="fl__dot" cx="' + l[0] + '" cy="' + l[1] + '" r="2.2"/>' +
-          '<text class="fl__lab" x="' + x2 + '" y="' + (y + 4) + '" text-anchor="end">' + l[2] + '</text>';
+          '<text class="fl__lab" x="48" y="' + (l[1] + 4) + '" text-anchor="end">' + l[2] + '</text>';
       });
       labels += '<text class="fl__title" x="8" y="332">An insect-pollinated flower, cut in half</text>';
     }
@@ -3817,9 +3817,29 @@
     var shot = null;
     if (spec.photo) {
       shot = h('figure', 'fl__photo');
-      shot.innerHTML = '<picture><source srcset="assets/photos/' + spec.photo.img + '-900.webp" type="image/webp">' +
-        '<img src="assets/photos/' + spec.photo.img + '-900.jpg" alt="' + esc(spec.photo.alt || '') + '" loading="lazy"></picture>' +
-        '<figcaption>' + mk(spec.photo.cap || '') + ' · ' + esc(spec.photo.credit || '') + '</figcaption>';
+      var pins = spec.photo.pins || [], pic;
+      if (pins.length) {
+        /* The photograph is labelled the same way the drawing is: leaders RULED HORIZONTALLY out
+           to a column, so no two can cross. The picture sits in the middle of a wider viewBox and
+           the words go in the margins, because there is no plain ground inside the frame to write
+           on. Positions are given as percentages of the picture, so the margins follow its shape. */
+        var wh = (global.PHOTO_SIZE || {})[spec.photo.img + '-900.jpg'] || [274, 284];
+        var IW = wh[0], IH = wh[1], PAD = Math.round(IW * 0.32), VW = IW + PAD * 2;
+        var s = '<svg viewBox="0 0 ' + VW + ' ' + IH + '" class="fl__psvg" role="img" aria-label="' + esc(spec.photo.alt || '') + '">' +
+          '<image href="assets/photos/' + spec.photo.img + '-900.jpg" x="' + PAD + '" y="0" width="' + IW + '" height="' + IH + '"/>';
+        pins.forEach(function (q) {
+          var x = PAD + q[0] / 100 * IW, y = q[1] / 100 * IH, right = q[3] !== 'left';
+          var end = right ? PAD + IW + 4 : PAD - 4, tx = right ? PAD + IW + 10 : PAD - 10;
+          s += '<line class="fl__lead" x1="' + x.toFixed(1) + '" y1="' + y.toFixed(1) + '" x2="' + end + '" y2="' + y.toFixed(1) + '"/>' +
+               '<circle class="fl__dot" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="2.4"/>' +
+               '<text class="fl__lab" x="' + tx + '" y="' + (y + 4).toFixed(1) + '"' + (right ? '' : ' text-anchor="end"') + '>' + esc(q[2]) + '</text>';
+        });
+        pic = s + '</svg>';
+      } else {
+        pic = '<picture><source srcset="assets/photos/' + spec.photo.img + '-900.webp" type="image/webp">' +
+              '<img src="assets/photos/' + spec.photo.img + '-900.jpg" alt="' + esc(spec.photo.alt || '') + '" loading="lazy"></picture>';
+      }
+      shot.innerHTML = pic + '<figcaption>' + mk(spec.photo.cap || '') + ' · ' + esc(spec.photo.credit || '') + '</figcaption>';
       shot.hidden = true;
       left.appendChild(shot);
       var sw = h('div', 'fl__switch');

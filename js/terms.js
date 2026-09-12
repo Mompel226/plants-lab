@@ -68,7 +68,7 @@
     ['xylem vessels', 'xylem-vessel-900.jpg', '<b>Xylem vessels</b>: continuous tubes of dead, lignified cells with no cross walls, carrying water and mineral ions up.', 'From the Topic 6–8 revision slides'],
     ['pollen grains', 'pollen-spiky-900.jpg', 'A <b>pollen grain</b> under the electron microscope. The spikes are for hooking into an insect’s hairs; the grains of a wind-pollinated flower are smooth and far smaller.', 'From the 16.3 lesson slides'],
     ['pollen grain', 'pollen-spiky-900.jpg', 'A <b>pollen grain</b>, magnified thousands of times: spiky, so it hooks into a visiting insect. It carries the male gamete.', 'From the 16.3 lesson slides'],
-    ['pollen', 'lily-anthers-900.jpg', '<b>Pollen</b>: the dark dust on these lily anthers. Each grain carries a male gamete, and the anther holds them up where an insect must brush past.', 'From the 16.3 lesson slides'],
+    ['pollen', 'pollen-mixed-900.jpg', '<b>Pollen</b>, as close as an electron microscope gets: the dust on an anther is thousands of grains like these, and every species has its own shape. Each grain carries a male gamete.', 'From the 16.3 lesson slides'],
     ['anthers', 'lily-anthers-900.jpg', '<b>Anthers</b>: the dark, pollen-covered tips of these lily stamens, each on its long filament.', 'From the 16.3 lesson slides'],
     ['ovules', 'ovary-ovules-900.jpg', '<b>Ovules</b>: the pale beads inside this ovary, cut open. Each holds a female gamete, and each becomes a seed after fertilisation.', 'From the 16.3 lesson slides'],
     ['ovule', 'ovary-ovules-900.jpg', 'An <b>ovule</b>, one of the pale beads inside this cut-open ovary: it holds the female gamete and becomes a seed after fertilisation.', 'From the 16.3 lesson slides'],
@@ -174,6 +174,13 @@
    'adaptive feature', 'adaptive features', 'xerophyte', 'hydrophyte'].forEach(function (w) { GOES_THERE[w] = true; });
 
   var here = null, seen = null, quiet = false, wentTo = null;
+  /* The pictures this station is about to put on the page. A magnifier that opens one of
+     them shows the reader what is already in front of them — worst where the caption of a
+     picture uses the very word, so the word beside the dark dust opens the dark dust. Where
+     that would happen the word takes its definition instead, which is the next thing it has
+     to give. */
+  var SHOWN = {};
+  function setShown(m) { SHOWN = m || {}; }
   function setStation(id) { here = id; seen = Object.create(null); quiet = false; wentTo = Object.create(null); }
   /* a widget built afresh (its reset) marks its words as it did the first time: forget what it introduced */
   function unsee(words, jumps) { if (seen) (words || []).forEach(function (w) { delete seen[String(w).toLowerCase()]; }); if (wentTo) (jumps || []).forEach(function (j) { delete wentTo[j]; }); }
@@ -236,8 +243,9 @@
       if (!first) return m;
       var ctx = (CONTEXT[here] || {})[low];
       var def = defined(low);
-      if (ctx || PEEK[low]) {
-        var pk = ctx || PEEK[low];
+      var pk0 = ctx || PEEK[low];
+      if (pk0 && !SHOWN[pk0[0]]) {
+        var pk = pk0;
         act = ' data-peek="' + pk[0] + '" data-note="' + esc(pk[1]) + '"' + (pk[2] ? ' data-credit="' + esc(pk[2]) + '"' : '') + ' tabindex="0" role="button"';
         cls = ' is-peek';
       } else if (JUMP[low] === here) {
@@ -268,7 +276,7 @@
   }
 
   global.Terms = { setKnown: setKnown, isKnown: isKnown, forgetAll: forgetAll, knownCount: knownCount, mark: mark, legend: legend, unsee: unsee,
-                   CATS: CATS, setStation: setStation, setQuiet: setQuiet, PEEK: PEEK, JUMP: JUMP };
+                   CATS: CATS, setStation: setStation, setQuiet: setQuiet, setShown: setShown, PEEK: PEEK, JUMP: JUMP };
 })(window);
 
 /* A number never parts from its unit at a line break — 20 °C, 5 min, 48 mm, 60 %, 4 marks, pH 2 — wherever the page
