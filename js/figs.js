@@ -306,42 +306,116 @@
     pin(66, 33, 1) + pin(22, 44, 2) + pin(74, 74, 3),
     'A single root hair cell: one epidermal cell of the root with a cell wall, a thin layer of cytoplasm, a large vacuole and a nucleus, drawn out at one side into a long fine hair that threads between the soil particles. Short arrows show water entering all along the hair.');
 
-  /* evaporation inside the leaf, then diffusion out through a stoma */
+  /* ---------- 2. transpiration: the large internal surface ---------- */
   F['transpiration'] = svg('0 0 120 100',
-    '<rect x="8" y="16" width="104" height="54" rx="5" fill="#EDF6E6" stroke="' + G + '" stroke-width="2"/>' +
-    '<g fill="' + GP + '" stroke="' + G + '" stroke-width="1.2">' +
-    '<rect x="14" y="22" width="13" height="22" rx="2"/><rect x="30" y="22" width="13" height="22" rx="2"/>' +
-    '<rect x="46" y="22" width="13" height="22" rx="2"/><rect x="62" y="22" width="13" height="22" rx="2"/>' +
-    '<rect x="78" y="22" width="13" height="22" rx="2"/><rect x="94" y="22" width="12" height="22" rx="2"/></g>' +
-    '<g fill="' + GL + '" opacity=".8"><circle cx="22" cy="56" r="6"/><circle cx="44" cy="58" r="7"/>' +
-    '<circle cx="70" cy="55" r="6"/><circle cx="94" cy="58" r="6"/></g>' +
-    '<g fill="' + WL + '"><circle cx="33" cy="54" r="2.4"/><circle cx="57" cy="57" r="2.4"/><circle cx="82" cy="54" r="2.4"/></g>' +
-    '<path d="M8 70 H50 M70 70 H112" stroke="' + G + '" stroke-width="3"/>' +
-    '<path d="M50 70 q5 8 10 0 M70 70 q-5 8 -10 0" fill="' + GL + '" stroke="' + G + '" stroke-width="2"/>' +
-    arr(60, 82, 60, 94, W, 2.2) + arr(45, 62, 56, 74, W, 1.6),
-    'A slice through a leaf: a row of palisade cells at the top, rounded spongy cells with air spaces below, water evaporating into those spaces, and an arrow carrying water vapour out through a stoma between two guard cells.');
+    '<defs>' +
+    '<linearGradient id="trPal" x1="0" y1="0" x2="0" y2="1">' +
+    '<stop offset="0" stop-color="#E2F1CE"/><stop offset="1" stop-color="#A6D28B"/></linearGradient>' +
+    '<radialGradient id="trCell" cx=".36" cy=".3" r=".82">' +
+    '<stop offset="0" stop-color="#95D083"/><stop offset="1" stop-color="#4F9E53"/></radialGradient>' +
+    '<linearGradient id="trGdL" x1="0" y1="0" x2="1" y2="0">' +
+    '<stop offset="0" stop-color="#6FBF72"/><stop offset="1" stop-color="#2F7A38"/></linearGradient>' +
+    '<linearGradient id="trGdR" x1="1" y1="0" x2="0" y2="0">' +
+    '<stop offset="0" stop-color="#6FBF72"/><stop offset="1" stop-color="#2F7A38"/></linearGradient>' +
+    '<linearGradient id="trAir" x1="0" y1="0" x2="0" y2="1">' +
+    '<stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#EFF7F1"/></linearGradient>' +
+    '<linearGradient id="trPlume" x1="0" y1="0" x2="0" y2="1">' +
+    '<stop offset="0" stop-color="#FFFFFF" stop-opacity=".95"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></linearGradient>' +
+    '</defs>' +
+    '<rect x="0" y="0" width="120" height="100" fill="#E8EEF1"/>' +
+    '<rect x="2" y="3" width="116" height="77" fill="url(#trAir)"/>' +
+    '<rect x="2" y="3" width="116" height="6" fill="#F4FAEE" stroke="' + G + '" stroke-width="1.1"/>' +
+    '<g fill="url(#trPal)" stroke="' + G + '" stroke-width="1"><rect x="3" y="9" width="13.6" height="13" rx="2"/>' +
+    '<rect x="17.4" y="9" width="13.6" height="13" rx="2"/><rect x="31.8" y="9" width="13.6" height="13" rx="2"/>' +
+    '<rect x="46.2" y="9" width="13.6" height="13" rx="2"/><rect x="60.6" y="9" width="13.6" height="13" rx="2"/>' +
+    '<rect x="75" y="9" width="13.6" height="13" rx="2"/><rect x="89.4" y="9" width="13.6" height="13" rx="2"/>' +
+    '<rect x="103.8" y="9" width="13.2" height="13" rx="2"/></g>' +
+    /* every cell wears a film of water: all that wet outline IS the internal surface */
+    '<g fill="none" stroke="' + W + '" stroke-width="4.6" opacity=".28">' +
+    '<circle cx="11" cy="33" r="6.5"/><circle cx="28" cy="33" r="6"/><circle cx="45" cy="33" r="6.5"/>' +
+    '<circle cx="62" cy="33" r="6"/><circle cx="79" cy="33" r="6.5"/><circle cx="96" cy="33" r="6"/>' +
+    '<circle cx="112" cy="33" r="5.5"/>' +
+    '<circle cx="12" cy="58" r="6.5"/><circle cx="29" cy="58" r="6"/><circle cx="45" cy="58" r="6"/>' +
+    '<circle cx="75" cy="58" r="6"/><circle cx="92" cy="58" r="6"/><circle cx="108" cy="58" r="6"/></g>' +
+    '<g fill="url(#trCell)" stroke="' + W + '" stroke-width="1.8">' +
+    '<circle cx="11" cy="33" r="6.5"/><circle cx="28" cy="33" r="6"/><circle cx="45" cy="33" r="6.5"/>' +
+    '<circle cx="62" cy="33" r="6"/><circle cx="79" cy="33" r="6.5"/><circle cx="96" cy="33" r="6"/>' +
+    '<circle cx="112" cy="33" r="5.5"/>' +
+    '<circle cx="12" cy="58" r="6.5"/><circle cx="29" cy="58" r="6"/><circle cx="45" cy="58" r="6"/>' +
+    '<circle cx="75" cy="58" r="6"/><circle cx="92" cy="58" r="6"/><circle cx="108" cy="58" r="6"/></g>' +
+    /* water evaporating off those wet surfaces into the air spaces */
+    arr(92, 52, 92, 40, W, 2.3) + arr(33, 51, 35, 41, W, 1.8) +
+    arr(45, 51, 49, 42, W, 1.8) + arr(79, 40, 76, 50, W, 1.8) +
+    /* the lower surface with one open pore, and the air spreading out of it */
+    '<path d="M52 78 L68 78 L86 100 L34 100 Z" fill="url(#trPlume)"/>' +
+    '<rect x="2" y="68" width="27" height="12" fill="#F4FAEE" stroke="' + G + '" stroke-width="1.2"/>' +
+    '<rect x="91" y="68" width="27" height="12" fill="#F4FAEE" stroke="' + G + '" stroke-width="1.2"/>' +
+    '<path d="M29 67 C41 67 51 69.5 51 74 C51 78.5 41 81 29 81 C23 78 23 70 29 67 Z" fill="url(#trGdL)" stroke="' + G + '" stroke-width="1.5"/>' +
+    '<path d="M91 67 C79 67 69 69.5 69 74 C69 78.5 79 81 91 81 C97 78 97 70 91 67 Z" fill="url(#trGdR)" stroke="' + G + '" stroke-width="1.5"/>' +
+    arr(60, 46, 60, 96, W, 2.8) +
+    pin(20, 45, 1) + pin(103, 46, 2) + pin(30, 74, 3),
+    'A slice through the inside of a leaf: many rounded cells, each wearing a film of water, with connected air spaces between them, water evaporating from those wet surfaces and the vapour travelling down through the air spaces and out through a pore.');
 
-  /* the four layers of a leaf */
+  /* ---------- 1. leaf-layers: the compromise ---------- */
   F['leaf-layers'] = svg('0 0 120 100',
-    '<rect x="6" y="14" width="108" height="6" fill="#E7E0C9" stroke="' + SD + '" stroke-width="1"/>' +
-    '<rect x="6" y="20" width="108" height="12" fill="#EDF6E6" stroke="' + G + '" stroke-width="1.2"/>' +
-    '<g fill="' + GP + '" stroke="' + G + '" stroke-width="1.1">' +
-    '<rect x="9" y="33" width="14" height="24" rx="2"/><rect x="25" y="33" width="14" height="24" rx="2"/>' +
-    '<rect x="41" y="33" width="14" height="24" rx="2"/><rect x="57" y="33" width="14" height="24" rx="2"/>' +
-    '<rect x="73" y="33" width="14" height="24" rx="2"/><rect x="89" y="33" width="22" height="24" rx="2"/></g>' +
-    '<g fill="' + GL + '" opacity=".75"><circle cx="18" cy="68" r="6"/><circle cx="38" cy="70" r="7"/>' +
-    '<circle cx="60" cy="67" r="6"/><circle cx="82" cy="70" r="7"/><circle cx="102" cy="67" r="6"/></g>' +
-    '<rect x="6" y="80" width="108" height="10" fill="#EDF6E6" stroke="' + G + '" stroke-width="1.2"/>' +
-    '<path d="M52 80 q5 8 10 0" fill="' + GL + '" stroke="' + G + '" stroke-width="1.6"/>',
-    'A slice down through a leaf showing, from the top: a waxy cuticle, the upper epidermis, a row of tall palisade cells, rounded spongy cells with air spaces, and the lower epidermis with a stoma in it.');
+    '<defs>' +
+    '<linearGradient id="clPal" x1="0" y1="0" x2="0" y2="1">' +
+    '<stop offset="0" stop-color="#E2F1CE"/><stop offset="1" stop-color="#9CCD81"/></linearGradient>' +
+    '<radialGradient id="clSpg" cx=".36" cy=".3" r=".82">' +
+    '<stop offset="0" stop-color="#92CE80"/><stop offset="1" stop-color="#4F9E53"/></radialGradient>' +
+    '<linearGradient id="clGdL" x1="0" y1="0" x2="1" y2="0">' +
+    '<stop offset="0" stop-color="#6FBF72"/><stop offset="1" stop-color="#2F7A38"/></linearGradient>' +
+    '<linearGradient id="clGdR" x1="1" y1="0" x2="0" y2="0">' +
+    '<stop offset="0" stop-color="#6FBF72"/><stop offset="1" stop-color="#2F7A38"/></linearGradient>' +
+    '<linearGradient id="clAir" x1="0" y1="0" x2="0" y2="1">' +
+    '<stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#EFF7F1"/></linearGradient>' +
+    '<linearGradient id="clPlume" x1="0" y1="0" x2="0" y2="1">' +
+    '<stop offset="0" stop-color="#FFFFFF" stop-opacity=".95"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></linearGradient>' +
+    '</defs>' +
+    /* the air outside, so the leaf reads as a slab and the pore as a hole through it */
+    '<rect x="0" y="0" width="120" height="100" fill="#E8EEF1"/>' +
+    '<rect x="3" y="4" width="114" height="66" fill="url(#clAir)"/>' +
+    '<rect x="3" y="4" width="114" height="4.5" fill="#EFE7CF" stroke="' + SD + '" stroke-width="1.1"/>' +
+    '<rect x="3" y="8.5" width="114" height="7" fill="#F4FAEE" stroke="' + G + '" stroke-width="1.2"/>' +
+    /* palisade: tall, packed, at the top */
+    '<g fill="url(#clPal)" stroke="' + G + '" stroke-width="1.1">' +
+    '<rect x="4" y="15.5" width="13.3" height="21" rx="2.4"/><rect x="18.1" y="15.5" width="13.3" height="21" rx="2.4"/>' +
+    '<rect x="32.2" y="15.5" width="13.3" height="21" rx="2.4"/><rect x="46.3" y="15.5" width="13.3" height="21" rx="2.4"/>' +
+    '<rect x="60.4" y="15.5" width="13.3" height="21" rx="2.4"/><rect x="74.5" y="15.5" width="13.3" height="21" rx="2.4"/>' +
+    '<rect x="88.6" y="15.5" width="13.3" height="21" rx="2.4"/><rect x="102.7" y="15.5" width="13.3" height="21" rx="2.4"/></g>' +
+    /* spongy cells, rounded, air all round them and a clear space over the pore */
+    '<g fill="url(#clSpg)" stroke="' + G + '" stroke-width="1.2">' +
+    '<circle cx="11" cy="47" r="6"/><circle cx="26" cy="46" r="5.5"/><circle cx="41" cy="48" r="6"/>' +
+    '<circle cx="79" cy="47" r="6"/><circle cx="94" cy="46" r="5.5"/><circle cx="109" cy="48" r="6"/></g>' +
+    /* air spreading out of the open pore, so the pore reads as a hole */
+    '<path d="M50 68 L70 68 L88 100 L32 100 Z" fill="url(#clPlume)"/>' +
+    /* the lower surface, stopping either side of that one open pore */
+    '<rect x="3" y="58" width="25" height="12" fill="#F4FAEE" stroke="' + G + '" stroke-width="1.2"/>' +
+    '<rect x="92" y="58" width="25" height="12" fill="#F4FAEE" stroke="' + G + '" stroke-width="1.2"/>' +
+    '<path d="M28 57 C40 57 50 59.5 50 64 C50 68.5 40 71 28 71 C22 68 22 60 28 57 Z" fill="url(#clGdL)" stroke="' + G + '" stroke-width="1.5"/>' +
+    '<path d="M92 57 C80 57 70 59.5 70 64 C70 68.5 80 71 92 71 C98 68 98 60 92 57 Z" fill="url(#clGdR)" stroke="' + G + '" stroke-width="1.5"/>' +
+    /* the whole point: in one way and out the other, through the same hole */
+    arr(55, 94, 55, 42, AD, 2.8) + arr(65, 42, 65, 94, W, 2.8) +
+    pin(42, 87, 1) + pin(24, 64, 2) + pin(78, 87, 3),
+    'A slice through a leaf. Carbon dioxide moves in through the one open pore in the lower surface while water vapour moves out through the same pore, with the air spaces between the rounded cells leading down to it.');
 
-  /* a rate curve that rises then flattens: something else has become limiting */
+  /* ---------- 3. limiting-factor: rise, then plateau ---------- */
   F['limiting-factor'] = svg('0 0 120 100',
-    '<path d="M18 84 H110 M18 84 V10" stroke="#8A8A8A" stroke-width="2" fill="none"/>' +
-    '<path d="M18 84 C42 84 52 40 74 34 C88 31 98 31 108 31" fill="none" stroke="' + G + '" stroke-width="3.2" stroke-linecap="round"/>' +
-    '<path d="M74 34 H108" stroke="' + A + '" stroke-width="2" stroke-dasharray="4 3"/>' +
-    '<circle cx="74" cy="34" r="4" fill="' + A + '" stroke="' + AD + '" stroke-width="1.4"/>',
-    'A graph of rate against one factor: the line rises steeply, then levels off at a plateau marked with a dot, where a different factor has become the limiting one.');
+    '<defs>' +
+    '<linearGradient id="lmZa" x1="0" y1="0" x2="0" y2="1">' +
+    '<stop offset="0" stop-color="#CFE9B6" stop-opacity=".18"/><stop offset="1" stop-color="#9CCD81" stop-opacity=".62"/></linearGradient>' +
+    '<linearGradient id="lmZb" x1="0" y1="0" x2="0" y2="1">' +
+    '<stop offset="0" stop-color="#D8D8D2" stop-opacity=".18"/><stop offset="1" stop-color="#B4B4AC" stop-opacity=".58"/></linearGradient>' +
+    '</defs>' +
+    '<rect x="17" y="14" width="53" height="72" fill="url(#lmZa)"/>' +
+    '<rect x="70" y="14" width="42" height="72" fill="url(#lmZb)"/>' +
+    arr(17, 86, 114, 86, '#A6A6A6', 1.8) + arr(17, 86, 17, 10, '#A6A6A6', 1.8) +
+    '<path d="M17 86 C30 68 40 48 52 38 C58 33 63 30 70 30" fill="none" stroke="' + G + '" stroke-width="3.6" stroke-linecap="round"/>' +
+    '<path d="M70 30 H110" fill="none" stroke="#6E6E6E" stroke-width="3.6" stroke-linecap="round"/>' +
+    '<path d="M70 35 V85" stroke="' + AD + '" stroke-width="1.6" stroke-dasharray="3.5 3" fill="none"/>' +
+    '<circle cx="70" cy="30" r="4.6" fill="' + A + '" stroke="' + AD + '" stroke-width="1.6"/>' +
+    pin(44, 63, 1) + pin(94, 17, 2),
+    'A graph of rate against one factor. The line climbs steeply while that factor is in short supply, then stops climbing at a marked point and runs flat, because a different factor has become the limit.');
 
   /* ---------------- 4. source and sink ---------------- */
   F['source-sink'] = svg('0 0 120 100',
@@ -377,19 +451,53 @@
     pin(26, 21, 1) + pin(38, 88, 2) + pin(39, 52, 3),
     'A plant with its leaves at the top and a swollen store below the soil. The stem is cut open to show two tissues side by side: sucrose made in the leaves travels down the phloem to the store, while water travels up the xylem beside it.');
 
-  /* germination: the radicle first, then the plumule */
+  /* ---------- 4. germination: the order ---------- */
   F['germination'] = svg('0 0 120 100',
-    '<rect x="0" y="40" width="120" height="60" fill="' + SOIL + '"/>' +
-    '<path d="M0 40 H120" stroke="' + SD + '" stroke-width="1.4" opacity=".6"/>' +
-    '<ellipse cx="34" cy="60" rx="16" ry="12" fill="' + S + '" stroke="' + SD + '" stroke-width="1.8"/>' +
-    '<path d="M34 72 C34 82 38 88 44 94" fill="none" stroke="#EFE4C9" stroke-width="5" stroke-linecap="round"/>' +
-    '<path d="M34 72 C34 82 38 88 44 94" fill="none" stroke="' + SD + '" stroke-width="6" stroke-linecap="round" opacity=".3"/>' +
-    '<ellipse cx="86" cy="62" rx="14" ry="11" fill="' + S + '" stroke="' + SD + '" stroke-width="1.8"/>' +
-    '<path d="M86 73 C86 84 90 90 96 96" fill="none" stroke="#EFE4C9" stroke-width="5" stroke-linecap="round"/>' +
-    '<path d="M86 51 C86 38 82 30 78 22" fill="none" stroke="' + GL + '" stroke-width="5" stroke-linecap="round"/>' +
-    '<path d="M78 22 q-2 -8 5 -10 q3 9 -3 11 Z" fill="' + GL + '" stroke="' + G + '" stroke-width="1.2"/>' +
-    arr(56, 30, 68, 30, GREY, 1.8),
-    'Two stages side by side. On the left a seed under the soil with only its root growing downwards. On the right the same seed later, its shoot now growing upwards and out of the ground.');
+    '<defs>' +
+    '<linearGradient id="gmSoil" x1="0" y1="0" x2="0" y2="1">' +
+    '<stop offset="0" stop-color="#EBE2CF"/><stop offset="1" stop-color="#CEBD9A"/></linearGradient>' +
+    '<radialGradient id="gmSeed" cx=".34" cy=".28" r=".85">' +
+    '<stop offset="0" stop-color="#E7DAB9"/><stop offset="1" stop-color="#AD9769"/></radialGradient>' +
+    '<linearGradient id="gmLeaf" x1="0" y1="1" x2="1" y2="0">' +
+    '<stop offset="0" stop-color="#5CB565"/><stop offset="1" stop-color="#B6DE9C"/></linearGradient>' +
+    '<linearGradient id="gmRoot" x1="0" y1="0" x2="1" y2="0">' +
+    '<stop offset="0" stop-color="#FBF5E6"/><stop offset="1" stop-color="#D5C49E"/></linearGradient>' +
+    '</defs>' +
+    '<rect x="0" y="48" width="120" height="52" fill="url(#gmSoil)"/>' +
+    '<g fill="#B9A57C" opacity=".3"><circle cx="9" cy="86" r="4"/><circle cx="40" cy="70" r="3.4"/>' +
+    '<circle cx="47" cy="93" r="4.4"/><circle cx="78" cy="60" r="3.2"/><circle cx="84" cy="76" r="4"/>' +
+    '<circle cx="115" cy="88" r="3.6"/><circle cx="27" cy="95" r="3"/></g>' +
+    '<path d="M0 48 H120" stroke="' + SD + '" stroke-width="1.6" opacity=".8"/>' +
+    /* (a) water soaks in, the seed swells, the coat cracks open */
+    '<ellipse cx="18" cy="62" rx="12.5" ry="11" fill="url(#gmSeed)" stroke="' + SD + '" stroke-width="1.8"/>' +
+    '<path d="M8 56 C13 52.5 23 52.5 28 56" fill="none" stroke="#FBF4E4" stroke-width="1.4" opacity=".8"/>' +
+    '<path d="M20 73 L17.5 66 L22.5 61 L19.5 53" fill="none" stroke="#FBF4E4" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>' +
+    '<path d="M18 73 L15.5 66 L20.5 61 L17.5 53" fill="none" stroke="#5E4C29" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
+    arr(1, 52, 8, 57, W, 1.8) + arr(1, 76, 8, 70, W, 1.8) + arr(35, 52, 28, 57, W, 1.8) +
+    /* (b) the radicle out through that split and heading down, nothing above ground */
+    '<ellipse cx="58" cy="62" rx="12.5" ry="11" fill="url(#gmSeed)" stroke="' + SD + '" stroke-width="1.8"/>' +
+    '<path d="M48 56 C53 52.5 63 52.5 68 56" fill="none" stroke="#FBF4E4" stroke-width="1.4" opacity=".8"/>' +
+    '<path d="M57 70 C57 77 59 81 60 85" fill="none" stroke="#967D50" stroke-width="8" stroke-linecap="round" opacity=".38"/>' +
+    '<path d="M60 84 C60 89 59 92 59 95" fill="none" stroke="#967D50" stroke-width="6" stroke-linecap="round" opacity=".38"/>' +
+    '<path d="M57 70 C57 77 59 81 60 85" fill="none" stroke="url(#gmRoot)" stroke-width="6.2" stroke-linecap="round"/>' +
+    '<path d="M60 84 C60 89 59 92 59 95" fill="none" stroke="url(#gmRoot)" stroke-width="4.4" stroke-linecap="round"/>' +
+    '<g stroke="#BFAC85" stroke-width="1.4" stroke-linecap="round"><path d="M54 79 l-5 -2 M63 84 l5 -1 M56 90 l-5 2"/></g>' +
+    arr(77, 90, 68, 87, W, 1.8) +
+    /* (c) the plumule up through the surface, first leaves open */
+    '<ellipse cx="98" cy="63" rx="11.5" ry="10" fill="url(#gmSeed)" stroke="' + SD + '" stroke-width="1.8"/>' +
+    '<path d="M97 71 C97 78 99 82 100 86" fill="none" stroke="#967D50" stroke-width="8" stroke-linecap="round" opacity=".38"/>' +
+    '<path d="M100 85 C100 90 99 93 99 96" fill="none" stroke="#967D50" stroke-width="6" stroke-linecap="round" opacity=".38"/>' +
+    '<path d="M97 71 C97 78 99 82 100 86" fill="none" stroke="url(#gmRoot)" stroke-width="6.2" stroke-linecap="round"/>' +
+    '<path d="M100 85 C100 90 99 93 99 96" fill="none" stroke="url(#gmRoot)" stroke-width="4.4" stroke-linecap="round"/>' +
+    '<path d="M100 83 q8 3 10 11" fill="none" stroke="#D5C49E" stroke-width="3.2" stroke-linecap="round"/>' +
+    '<path d="M98 55 C97 46 95 38 96 31" fill="none" stroke="' + G + '" stroke-width="7" stroke-linecap="round" opacity=".28"/>' +
+    '<path d="M98 55 C97 46 95 38 96 31" fill="none" stroke="' + GL + '" stroke-width="5.2" stroke-linecap="round"/>' +
+    '<path d="M96 31 q-11 -4 -15 -10 q11 -2 15 8 Z" fill="url(#gmLeaf)" stroke="' + G + '" stroke-width="1.2"/>' +
+    '<path d="M96 31 q11 -5 15 -10 q-10 -3 -15 7 Z" fill="url(#gmLeaf)" stroke="' + G + '" stroke-width="1.2"/>' +
+    /* the order, read left to right */
+    arr(30, 10, 44, 10, GREY, 1.8) + arr(70, 10, 84, 10, GREY, 1.8) +
+    pin(18, 10, 1) + pin(58, 10, 2) + pin(98, 10, 3),
+    'Three stages of a germinating seed side by side. First the seed takes in water and its coat cracks open, then the root grows downwards with nothing above ground, then the shoot grows up through the soil surface and opens its first leaves.');
 
   global.FIGS = F;
 })(window);
