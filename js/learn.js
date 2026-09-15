@@ -1941,10 +1941,15 @@
         if (numeric && sr.pts.length > 1) s += '<polyline class="po__line" style="stroke:' + c + '" points="' + sr.pts.map(function (p) { return xOf(p).toFixed(1) + ',' + Y(p.mean).toFixed(1); }).join(' ') + '"/>';
         sr.pts.forEach(function (p) {
           var x = xOf(p);
-          if (!numeric) s += '<rect class="po__gbar" style="fill:' + c + '" x="' + (x - bw / 2).toFixed(1) + '" y="' + Y(p.mean).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + (H - B - Y(p.mean)).toFixed(1) + '"/>';
+          /* On a categorical axis the bar carries the colour, so an error bar in that same
+             colour disappears into it. The bar keeps its hue as a light fill with a solid
+             outline — identity intact — and the error bar is drawn in ink over the top. On a
+             line chart the whisker still wears its series colour: there the line is the
+             identity and the whisker belongs to it. */
+          if (!numeric) s += '<rect class="po__gbar" style="fill:' + c + ';stroke:' + c + '" x="' + (x - bw / 2).toFixed(1) + '" y="' + Y(p.mean).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + (H - B - Y(p.mean)).toFixed(1) + '"/>';
           if (p.err != null) {
-            if (errK === 'ci' && !numeric) s += '<rect class="po__band" style="fill:' + c + '" x="' + (x - bw * .7).toFixed(1) + '" y="' + Y(p.mean + p.err).toFixed(1) + '" width="' + (bw * 1.4).toFixed(1) + '" height="' + (Y(p.mean - p.err) - Y(p.mean + p.err)).toFixed(1) + '"/>';
-            if (errK !== 'ci') s += '<path class="po__whisker" style="stroke:' + c + '" d="M' + x.toFixed(1) + ' ' + Y(p.mean + p.err).toFixed(1) + ' V' + Y(p.mean - p.err).toFixed(1) + ' M' + (x - 6).toFixed(1) + ' ' + Y(p.mean + p.err).toFixed(1) + ' h12 M' + (x - 6).toFixed(1) + ' ' + Y(p.mean - p.err).toFixed(1) + ' h12"/>';
+            if (errK === 'ci' && !numeric) s += '<rect class="po__band po__band--onbar" x="' + (x - bw * .7).toFixed(1) + '" y="' + Y(p.mean + p.err).toFixed(1) + '" width="' + (bw * 1.4).toFixed(1) + '" height="' + (Y(p.mean - p.err) - Y(p.mean + p.err)).toFixed(1) + '"/>';
+            if (errK !== 'ci') s += '<path class="po__whisker' + (numeric ? '' : ' po__whisker--onbar') + '" style="' + (numeric ? 'stroke:' + c : '') + '" d="M' + x.toFixed(1) + ' ' + Y(p.mean + p.err).toFixed(1) + ' V' + Y(p.mean - p.err).toFixed(1) + ' M' + (x - 6).toFixed(1) + ' ' + Y(p.mean + p.err).toFixed(1) + ' h12 M' + (x - 6).toFixed(1) + ' ' + Y(p.mean - p.err).toFixed(1) + ' h12"/>';
           }
           /* the red ones go on LAST: with one trial in a row the mean dot sits exactly on the
              trial dot, and whichever is painted second is the one you see */
