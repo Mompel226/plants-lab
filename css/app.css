@@ -1322,13 +1322,19 @@ picture{display:block;line-height:0}
 .po__errbar__b:hover{border-color:var(--green)}
 .po__errbar__b[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:#fff}
 .po__band{fill:#BFE0F5;opacity:.55;stroke:none}
+/* the confidence box drawn ON a bar of the same hue: no fill, a ruled edge in its colour,
+   with a pale halo under it so the edge reads whatever the bar is filled with */
+.po__band--onbar{fill:none;opacity:1;stroke:var(--ink);stroke-width:1.6;paint-order:stroke;stroke-linejoin:round;
+  filter:drop-shadow(0 0 1.5px rgba(255,255,255,.95)) drop-shadow(0 0 1.5px rgba(255,255,255,.95))}
 .po__whisker{fill:none;stroke:#2F6F8E;stroke-width:1.4}
+.po__whisker--onbar{stroke:var(--ink);stroke-width:1.7;
+  filter:drop-shadow(0 0 1.6px rgba(255,255,255,.95)) drop-shadow(0 0 1.6px rgba(255,255,255,.95))}
 .po__chart{margin-top:12px}
 .po__gsvg{width:100%;height:auto;display:block;background:#fff;border:1px solid var(--edge);border-radius:var(--r)}
 .po__grid{stroke:#EEE9DD;stroke-width:1} .po__axis{stroke:#7B8790;stroke-width:1.2}
 .po__gt{font-size:12.5px;fill:#5A5A5A;font-family:var(--font)} .po__gl{font-size:13px;fill:#3C3C3C;font-family:var(--font);font-weight:600}
 .po__line{fill:none;stroke:var(--k-water);stroke-width:2}
-.po__gbar{fill:#BFE0F5;stroke:#7F94A2;stroke-width:1}
+.po__gbar{fill:#BFE0F5;fill-opacity:.3;stroke:#7F94A2;stroke-width:1.6}
 .po__dot{fill:var(--k-water)} .po__dot--rep{fill:#fff;stroke:var(--k-water);stroke-width:1.4}
 .po__dot--bad{fill:#C0392B!important;stroke:#7E241A!important;stroke-width:1.4}
 .po__dotmean{fill:var(--k-water)}
