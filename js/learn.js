@@ -1273,7 +1273,7 @@
      two thirds or so on bean, sunflower and geranium, almost none on marram, whose stomata line the inside of the rolled leaf), plus a little loss through the cuticle */
   function poGreaseF(sp, g) { var lower = sp.lower == null ? .95 : sp.lower, cut = .05; return g === 'upper' ? cut + (1 - cut) * lower : g === 'lower' ? cut + (1 - cut) * (1 - lower) : g === 'both' ? cut : 1; }
   var PO_MM = 4.2, PO_X0 = 108, PO_STEM = 574, PO_BORE_R = 0.5;   /* the scale's 0 mark, and the shoot's stem, in the drawing's units */
-  var PO_STATE = { runs: [], pos: 0, set: null, shoot: 1, shootF: 1, unlocked: false, line: 0, lineNames: [], hidden: [], dots: true };
+  var PO_STATE = { runs: [], pos: 0, set: null, shoot: 1, shootF: 1, unlocked: false, line: 0, lineNames: [], hidden: [], dots: true, style: 'igcse' };
   try { if (sessionStorage.getItem('plants-lab.potometer.unlocked') === '1') PO_STATE.unlocked = true; } catch (e) {}
   /* the bench, the table and the shoot survive a reload (the tab's own storage; closing the tab clears it) */
   function poSpecies(id) { return PO_SPECIES.filter(function (q) { return q.id === id; })[0]; }
@@ -1287,7 +1287,7 @@
     }
   } catch (e) {}
   function poPersist() {
-    try { sessionStorage.setItem('plants-lab.potometer', JSON.stringify({ runs: PO_STATE.runs, pos: PO_STATE.pos, set: PO_STATE.set, shoot: PO_STATE.shoot, shootF: PO_STATE.shootF, err: PO_STATE.err, line: PO_STATE.line, lineNames: PO_STATE.lineNames, hidden: PO_STATE.hidden, dots: PO_STATE.dots })); } catch (e) {}
+    try { sessionStorage.setItem('plants-lab.potometer', JSON.stringify({ runs: PO_STATE.runs, pos: PO_STATE.pos, set: PO_STATE.set, shoot: PO_STATE.shoot, shootF: PO_STATE.shootF, err: PO_STATE.err, line: PO_STATE.line, lineNames: PO_STATE.lineNames, hidden: PO_STATE.hidden, dots: PO_STATE.dots, style: PO_STATE.style })); } catch (e) {}
   }
   function sha256hex(text) {
     return crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)).then(function (buf) { return Array.prototype.map.call(new Uint8Array(buf), function (b) { return ('0' + b.toString(16)).slice(-2); }).join(''); });
@@ -1790,6 +1790,24 @@
     var bDots = h('button', 'po__errbar__b po__dots', '· every trial'); bDots.type = 'button'; bDots.setAttribute('data-k', 'dots'); bDots.setAttribute('aria-pressed', PO_STATE.dots ? 'true' : 'false'); bDots.title = 'Show or hide the single trials behind each mean';
     bDots.addEventListener('click', function () { PO_STATE.dots = !PO_STATE.dots; bDots.setAttribute('aria-pressed', PO_STATE.dots ? 'true' : 'false'); poPersist(); paintData(); });
     errBar.appendChild(h('span', 'po__errbar__l po__errbar__l2', 'Points')); errBar.appendChild(bDots);
+    /* The same results, laid out the two ways a student will be asked for them. 0610 wants one
+       ruled table with the repeats and the mean together; the IB wants the raw data and the
+       processed data in separate, separately titled tables. Showing the difference beats
+       describing it. */
+    errBar.appendChild(h('span', 'po__errbar__l po__errbar__l2', 'Table style'));
+    [['igcse', 'IGCSE'], ['ib', 'IB']].forEach(function (o) {
+      var b = h('button', 'po__errbar__b po__style', esc(o[1])); b.type = 'button'; b.setAttribute('data-s', o[0]);
+      b.setAttribute('aria-pressed', PO_STATE.style === o[0] ? 'true' : 'false');
+      b.setAttribute('title', o[0] === 'ib'
+        ? 'Table 1 the raw data, Table 2 the processed data, each titled above it and each heading carrying its unit and uncertainty'
+        : 'One ruled table: the conditions, the repeats and the mean, with the unit in every heading');
+      b.addEventListener('click', function () {
+        PO_STATE.style = o[0];
+        errBar.querySelectorAll('.po__style').forEach(function (x) { x.setAttribute('aria-pressed', x.getAttribute('data-s') === o[0] ? 'true' : 'false'); });
+        poPersist(); paintData();
+      });
+      errBar.appendChild(b);
+    });
     var bCopy = h('button', 'wbtn wbtn--quiet', 'Copy the table'), bClear = h('button', 'wbtn wbtn--quiet', 'Clear the table');
     [bCopy, bClear].forEach(function (b) { b.type = 'button'; tools.appendChild(b); });
     tableBox.appendChild(errBar); tableBox.appendChild(tabsEl); tableBox.appendChild(tableWrap); tableBox.appendChild(pop); tableBox.appendChild(chart); tableBox.appendChild(tools);
@@ -1823,27 +1841,77 @@
       say.textContent = poLineName(next) + ' started, in ' + PO_LINE_WORD[next % PO_LINE_WORD.length] + '. The runs you record now go on it. Change the one thing you want to compare — another plant, the fan on, the dark — keep the rest the same, and run.';
     });
     bCopy.addEventListener('click', function () {
-      var head = ['Line', 'Conditions'].concat([1, 2, 3, 4, 5].map(function (i) { return 'Trial ' + i + ' / mm min⁻¹'; })).concat(['Mean', 'SD', 'SE', '95 % CI']);
-      var lines = [head.join('\t')].concat(groups().map(function (g) {
-        var vals = g.trials.map(function (t) { return t.r.rate; }), st = stats(vals), cells = [poLineName(g.line), condText(g.s).replace(/<[^>]+>/g, '')];
-        for (var i = 0; i < MAX_TRIALS; i++) cells.push(vals[i] != null ? vals[i].toFixed(2) : '');
-        cells.push(st.mean.toFixed(2), st.sd != null ? st.sd.toFixed(2) : '', st.se != null ? st.se.toFixed(2) : '', st.ci != null ? '±' + st.ci.toFixed(2) : '');
-        return cells.join('\t');
-      }));
+      /* what is copied is what is on the screen: one table, or the two the IB asks for */
+      var lines;
+      if (PO_STATE.style === 'ib') {
+        var raw = ['Table 1  Raw data: distance moved by the air bubble', ''];
+        raw.push(['Line', 'Conditions'].concat([1, 2, 3, 4, 5].map(function (i) { return 'Trial ' + i + ' / mm (± 0.5)'; })).join('\t'));
+        groups().forEach(function (g) {
+          var cells = [poLineName(g.line), condText(g.s).replace(/<[^>]+>/g, '')];
+          for (var i = 0; i < MAX_TRIALS; i++) cells.push(g.trials[i] ? String(g.trials[i].r.distance) : '');
+          raw.push(cells.join('\t'));
+        });
+        var proc = ['', 'Table 2  Processed data: mean rate of water uptake', ''];
+        proc.push(['Line', 'Conditions', 'n', 'Mean rate / mm min⁻¹', 'SD', 'SE', '95 % CI'].join('\t'));
+        groups().forEach(function (g) {
+          var vals = g.trials.map(function (t) { return t.r.rate; }), st = stats(vals);
+          proc.push([poLineName(g.line), condText(g.s).replace(/<[^>]+>/g, ''), g.trials.length, st.mean.toFixed(2),
+                     st.sd != null ? st.sd.toFixed(2) : '', st.se != null ? st.se.toFixed(2) : '',
+                     st.ci != null ? '±' + st.ci.toFixed(2) : ''].join('\t'));
+        });
+        lines = raw.concat(proc);
+      } else {
+        var head = ['Line', 'Conditions'].concat([1, 2, 3, 4, 5].map(function (i) { return 'Trial ' + i + ' / mm min⁻¹'; })).concat(['Mean', 'SD', 'SE', '95 % CI']);
+        lines = ['Table 1  Rate of water uptake by a leafy shoot', ''].concat([head.join('\t')]).concat(groups().map(function (g) {
+          var vals = g.trials.map(function (t) { return t.r.rate; }), st = stats(vals), cells = [poLineName(g.line), condText(g.s).replace(/<[^>]+>/g, '')];
+          for (var i = 0; i < MAX_TRIALS; i++) cells.push(vals[i] != null ? vals[i].toFixed(2) : '');
+          cells.push(st.mean.toFixed(2), st.sd != null ? st.sd.toFixed(2) : '', st.se != null ? st.se.toFixed(2) : '', st.ci != null ? '±' + st.ci.toFixed(2) : '');
+          return cells.join('\t');
+        }));
+      }
       var tsv = lines.join('\n');
       var done = function () { bCopy.textContent = 'Copied — paste into a spreadsheet'; setTimeout(function () { bCopy.textContent = 'Copy the table'; }, 2200); };
       if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(tsv).then(done, function () { fallback(); });
       else fallback();
       function fallback() { var ta = document.createElement('textarea'); ta.value = tsv; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); done(); } catch (e) {} document.body.removeChild(ta); }
     });
-    function rowHtml(g) {
+    /* One table or two, and that is the difference worth teaching.
+       IGCSE (0610 Paper 6) wants ONE ruled table: the conditions, the repeats, and the mean
+       worked out beside them. Headings carry the quantity and its unit.
+       IB wants the raw data and the processed data kept APART. Table 1 is what the instrument
+       read — here the distance the bubble moved, in whole millimetres, with the uncertainty of
+       reading a millimetre scale in the heading. Table 2 is what was done with it: the mean rate
+       and the spread. Both tables are titled ABOVE, and numbered, which is where a table title
+       goes; a figure's caption goes BELOW it. */
+    function delBtn(t) {
+      return '<button type="button" class="po__del" data-i="' + t.i + '" aria-label="Delete this trial">✕</button>';
+    }
+    function trialCls(r) {
+      return 'po__trial' + (r.leak ? ' po__trial--leak' : '') + (r.notZero ? ' po__trial--nozero' : '');
+    }
+    function rowHtml(g) {                      /* IGCSE: repeats and the mean in one row */
       var vals = g.trials.map(function (t) { return t.r.rate; }), st = stats(vals), cells = '';
       for (var i = 0; i < MAX_TRIALS; i++) {
         var t = g.trials[i];
-        cells += t ? '<td class="po__trial' + (t.r.leak ? ' po__trial--leak' : '') + (t.r.notZero ? ' po__trial--nozero' : '') + '"' + (t.r.notZero ? ' title="The bubble did not start from 0, so this rate is too high. Press the cross to drop it."' : '') + '>' + t.r.rate.toFixed(2) + '<small title="' + t.r.distance + ' mm on shoot ' + String.fromCharCode(64 + (t.r.s.shoot || 1)) + '">' + t.r.distance + ' mm · ' + String.fromCharCode(64 + (t.r.s.shoot || 1)) + '</small><button type="button" class="po__del" data-i="' + t.i + '" aria-label="Delete this trial">✕</button></td>' : '<td class="po__trial po__trial--empty">—</td>';
+        cells += t ? '<td class="' + trialCls(t.r) + '"' + (t.r.notZero ? ' title="The bubble did not start from 0, so this rate is too high. Press the cross to drop it."' : '') + '>' + t.r.rate.toFixed(2) + '<small title="' + t.r.distance + ' mm on shoot ' + String.fromCharCode(64 + (t.r.s.shoot || 1)) + '">' + t.r.distance + ' mm · ' + String.fromCharCode(64 + (t.r.s.shoot || 1)) + '</small>' + delBtn(t) + '</td>' : '<td class="po__trial po__trial--empty">—</td>';
       }
       return '<tr><td class="po__cond">' + condText(g.s) + '</td>' + cells +
         '<td class="po__statcell"><b>' + st.mean.toFixed(2) + '</b></td>' + (errK === 'none' ? '' : '<td class="po__statcell">' + (st[errK] != null ? (errK === 'ci' ? '± ' : '') + st[errK].toFixed(2) : '—') + '</td>') + '</tr>';
+    }
+    function rawRowHtml(g) {                   /* IB table 1: only what was read off the scale */
+      var cells = '';
+      for (var i = 0; i < MAX_TRIALS; i++) {
+        var t = g.trials[i];
+        cells += t ? '<td class="' + trialCls(t.r) + '"' + (t.r.notZero ? ' title="The bubble did not start from 0, so this distance is too long. Press the cross to drop it."' : '') + '>' + t.r.distance + '<small>shoot ' + String.fromCharCode(64 + (t.r.s.shoot || 1)) + '</small>' + delBtn(t) + '</td>' : '<td class="po__trial po__trial--empty">—</td>';
+      }
+      return '<tr><td class="po__cond">' + condText(g.s) + '</td>' + cells + '</tr>';
+    }
+    function procRowHtml(g) {                  /* IB table 2: only what was worked out from it */
+      var vals = g.trials.map(function (t) { return t.r.rate; }), st = stats(vals);
+      return '<tr><td class="po__cond">' + condText(g.s) + '</td>' +
+        '<td class="po__statcell">' + g.trials.length + '</td>' +
+        '<td class="po__statcell"><b>' + st.mean.toFixed(2) + '</b></td>' +
+        (errK === 'none' ? '' : '<td class="po__statcell">' + (st[errK] != null ? (errK === 'ci' ? '± ' : '') + st[errK].toFixed(2) : '—') + '</td>') + '</tr>';
     }
     /* the tabs above the table are the lines of the graph, one table each; the tab you are on is where runs are recorded */
     function paintData() {
@@ -1861,10 +1929,33 @@
         return '<button type="button" class="po__linetab" data-line="' + ln + '" data-rows="' + rows.length + '" data-n="' + n + '" aria-pressed="' + (ln === PO_STATE.line ? 'true' : 'false') + '" style="--lc:' + poLineColour(ln) + '" title="' + esc(poLineName(ln)) + ': ' + n + (n === 1 ? ' run' : ' runs') + '"><span class="po__swatch"></span>' + (ln + 1) + '<small>' + esc(poLineName(ln)) + '</small></button>';
       }).join('');
       var cur = PO_STATE.line, rows = G.filter(function (g) { return g.line === cur; });
-      var headRow = '<thead><tr><th>Conditions</th>' + [1, 2, 3, 4, 5].map(function (i) { return '<th>Trial ' + i + '<small>mm/min</small></th>'; }).join('') +
-        ['mean'].concat(errK === 'none' ? [] : [errK]).map(function (t) { return '<th><button type="button" class="po__term" data-term="' + t + '" title="What this is, and how it was worked out">' + (t === 'mean' ? 'Mean' : t === 'sd' ? 'SD' : t === 'se' ? 'SE' : '95 % CI') + ' <i>?</i></button></th>'; }).join('') + '</tr></thead>';
-      tableWrap.innerHTML = '<div class="po__linehead" style="--lc:' + poLineColour(cur) + '"><span class="po__swatch"></span><input class="po__linename" value="' + esc(PO_STATE.lineNames[cur] || '') + '" placeholder="' + esc(poLineName(cur)) + ' — name it: privet, fan on, dark…" aria-label="Name of this line"><small>' + (rows.length ? 'the runs you record now go on this line' : 'no runs yet — record one and it appears here') + '</small>' + (rows.length && lines.length > 1 ? '<button type="button" class="wbtn wbtn--quiet po__delline">Delete this line</button>' : '') + '</div>' +
-        (rows.length ? '<table class="po__table">' + headRow + '<tbody>' + rows.map(rowHtml).join('') + '</tbody></table>' : '');
+      var ibStyle = PO_STATE.style === 'ib';
+      var errName = errK === 'sd' ? 'SD' : errK === 'se' ? 'SE' : '95 % CI';
+      var errHead = errK === 'none' ? '' : '<th><button type="button" class="po__term" data-term="' + errK + '" title="What this is, and how it was worked out">' + errName + '</button></th>';
+      var meanHead = '<th><button type="button" class="po__term" data-term="mean" title="What this is, and how it was worked out">Mean</button>' +
+                     (ibStyle ? '<small>rate / mm min⁻¹</small>' : '') + '</th>';
+      var trialHeads = function (unit) { return [1, 2, 3, 4, 5].map(function (i) { return '<th>Trial ' + i + '<small>' + unit + '</small></th>'; }).join(''); };
+
+      var lineHead = '<div class="po__linehead" style="--lc:' + poLineColour(cur) + '"><span class="po__swatch"></span><input class="po__linename" value="' + esc(PO_STATE.lineNames[cur] || '') + '" placeholder="' + esc(poLineName(cur)) + ' — name it: privet, fan on, dark…"><span class="po__linenote">the runs you record now go on this line</span>' + (lines.length > 1 ? '<button type="button" class="wbtn wbtn--quiet po__delline">Delete this line</button>' : '') + '</div>';
+
+      var tables = '';
+      if (rows.length && ibStyle) {
+        tables =
+          '<table class="po__table"><caption class="po__cap"><b>Table 1</b> Raw data: the distance the air bubble moved along the millimetre scale in each trial.</caption>' +
+          '<thead><tr><th>Conditions</th>' + trialHeads('distance / mm (± 0.5)') + '</tr></thead>' +
+          '<tbody>' + rows.map(rawRowHtml).join('') + '</tbody></table>' +
+          '<table class="po__table po__table--proc"><caption class="po__cap"><b>Table 2</b> Processed data: mean rate of water uptake, and how far the trials spread around it.</caption>' +
+          '<thead><tr><th>Conditions</th><th><i>n</i><small>trials</small></th>' + meanHead + errHead + '</tr></thead>' +
+          '<tbody>' + rows.map(procRowHtml).join('') + '</tbody></table>' +
+          '<p class="po__stylenote">Rate = distance ÷ time, worked out for each trial and then averaged. IB keeps the two apart: <b>what the instrument read</b> in one table, <b>what you did with it</b> in the next, and five trials is the usual minimum for a standard deviation to mean anything.</p>';
+      } else if (rows.length) {
+        tables =
+          '<table class="po__table"><caption class="po__cap"><b>Table 1</b> Rate of water uptake by a leafy shoot, measured with a potometer.</caption>' +
+          '<thead><tr><th>Conditions</th>' + trialHeads('rate / mm min⁻¹') + meanHead + errHead + '</tr></thead>' +
+          '<tbody>' + rows.map(rowHtml).join('') + '</tbody></table>' +
+          '<p class="po__stylenote">One ruled table, the repeats and the mean together, every heading carrying its unit — which is what 0610 Paper 6 asks for.</p>';
+      }
+      tableWrap.innerHTML = lineHead + tables;
       tabsEl.querySelectorAll('.po__linetab').forEach(function (b) { b.addEventListener('click', function () { PO_STATE.line = +b.getAttribute('data-line'); remember(); paintData(); say.textContent = 'On ' + poLineName(PO_STATE.line) + ': the runs you record now go on it.'; }); });
       var nameIn = tableWrap.querySelector('.po__linename');
       nameIn.addEventListener('change', function () { PO_STATE.lineNames[cur] = nameIn.value.trim(); poPersist(); paintData(); });
@@ -1929,6 +2020,7 @@
       for (var v = 0; v <= ymax; v += ystep) s += '<line class="po__grid" x1="' + L + '" y1="' + Y(v).toFixed(1) + '" x2="' + (W - R) + '" y2="' + Y(v).toFixed(1) + '"/><text class="po__gt" x="' + (L - 6) + '" y="' + (Y(v) + 3.5).toFixed(1) + '" text-anchor="end">' + (ystep < 1 ? v.toFixed(2) : v) + '</text>';
       s += '<line class="po__axis" x1="' + L + '" y1="' + T + '" x2="' + L + '" y2="' + (H - B) + '"/><line class="po__axis" x1="' + L + '" y1="' + (H - B) + '" x2="' + (W - R) + '" y2="' + (H - B) + '"/>';
       s += '<text class="po__gl" transform="rotate(-90)" x="' + (-(T + H - B) / 2) + '" y="14" text-anchor="middle">Rate / mm min⁻¹</text><text class="po__gl" x="' + ((L + W - R) / 2) + '" y="' + (H - 8) + '" text-anchor="middle">' + esc(xlab) + '</text>';
+      function cap1(s2) { return s2.charAt(0).toUpperCase() + s2.slice(1); }
       var nS = series.length, withErrAny = false;
       series.forEach(function (sr, k) {
         var c = sr.colour, bw = numeric ? 0 : Math.min(28, slot * .8 / nS);
@@ -1967,7 +2059,7 @@
       var every = ticks.length > 8 ? Math.ceil(ticks.length / 8) : 1;
       ticks.forEach(function (tv, i2) { if (i2 % every === 0 || i2 === ticks.length - 1) s += '<text class="po__gt" x="' + (numeric ? XN(tv) : L + slot * (i2 + .5)).toFixed(1) + '" y="' + (H - B + 14) + '" text-anchor="middle">' + esc(String(tv)) + '</text>'; });
       var errNote = errK === 'none' ? '' : errK === 'ci' ? ' The band is the 95 % confidence interval of each mean; where two bands do not overlap, the difference is statistically significant; where they overlap, nothing is proved either way.' : ' The whiskers are one ' + (errK === 'sd' ? 'standard deviation' : 'standard error') + ' either side of each mean.';
-      s += '</svg>' + legend + '<small class="po__gnote">' + esc(note + (withErrAny ? errNote : '')) + '</small>';
+      s += '</svg>' + legend + '<small class="po__gnote"><b>Figure 1</b> ' + esc(cap1(note) + (withErrAny ? errNote : '')) + '</small>';
       return s;
     }
 

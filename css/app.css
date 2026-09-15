@@ -1296,6 +1296,11 @@ picture{display:block;line-height:0}
 .po__cond b{color:#A64B2A}
 .po__trial{position:relative;padding-right:18px!important}
 .po__trial small{display:block;font-size:10px;color:var(--grey)}
+/* a table's title goes ABOVE it, a figure's caption BELOW — the convention both boards use */
+.po__cap{caption-side:top;text-align:left;font-size:12.5px;line-height:1.45;color:#3C3C3C;padding:0 0 6px}
+.po__cap b{color:var(--green)}
+.po__table--proc{margin-top:16px}
+.po__stylenote{font-size:12.5px;line-height:1.5;color:var(--grey);margin:8px 0 0}
 .po__trial--leak{background:#FFF1EA}
 /* a trial whose bubble did not start from 0: kept, so the spread shows what it costs, but
    marked everywhere it appears so it can be found again and dropped */
