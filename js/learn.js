@@ -1679,18 +1679,18 @@
       ctl.classList.remove('is-locked'); ctl.querySelectorAll('input,select').forEach(function (e) { e.disabled = false; });
       bStart.textContent = '▶ Start the clock';
       var distance = r.notReset ? end : end - start, mins = r.s.time, rate = distance / mins, vol = Math.PI * PO_BORE_R * PO_BORE_R * +rate.toFixed(2);   /* from the rate as printed, so checking the line gives the same number */   /* without the tap the scale is read from 0 */
-      lastRun = { s: r.s, distance: distance, rate: rate, leak: r.leak };
+      lastRun = { s: r.s, distance: distance, rate: rate, leak: r.leak, notZero: !!r.notReset };
       result.hidden = false;
       result.innerHTML = '<div class="po__stat"><span>Distance moved</span><b>' + distance + ' mm</b><small>' + (r.notReset ? 'read from 0 to ' + end + ' on the scale — but the bubble started at ' + start : 'from ' + start + ' to ' + end + ' on the scale, read to the nearest mm (± 0.5)') + '</small></div>' +
         '<div class="po__stat"><span>Rate of uptake</span><b>' + rate.toFixed(2) + ' mm/min</b><small>' + distance + ' mm ÷ ' + mins + ' min</small></div>' +
         '<div class="po__stat"><span>Volume taken up</span><b>' + vol.toFixed(2) + ' mm³/min</b><small>π × 0.5² × ' + rate.toFixed(2) + ', for a 1 mm bore</small></div>' +
-        (r.notReset ? '<p class="po__warn">The scale was read from 0, but the bubble started at ' + start + ' mm, so this distance is ' + start + ' mm too long and the rate is wrong. A reading is where the bubble ended minus where it started: ' + end + ' − ' + start + ' = ' + (end - start) + ' mm. This bench reads from 0, so open the tap before every run — then run again.</p>' : '') +
+        (r.notReset ? '<p class="po__warn">The bubble started at ' + start + ' mm, not 0, and this bench reads the scale from 0 — so the distance is ' + start + ' mm too long and the rate too high. The reading you want is where the bubble ended minus where it started: ' + end + ' − ' + start + ' = ' + (end - start) + ' mm. You can still record it: it goes in the table marked in red, and you will see what one bad trial does to the spread. Open the tap before the next run.</p>' : '') +
         (r.capped ? '<p class="po__warn">The bubble reached the end of the scale before the time was up, so this reading is too small. Open the tap, and measure for less time or slow the shoot down.</p>' : '') +
         (r.leak ? '<p class="po__warn">The joint at the bung was not sealed. Air was drawn in there instead of water from the tube, so the bubble moved less than the shoot took up' + (r.stuck ? ' — and stuck for part of the run' : '') + '. Every leaking reading is too small (a systematic error) and by a different amount each time (a random one on top). Seal the joint with petroleum jelly.</p>' : '');
       var full = trialsFor(r.s) >= MAX_TRIALS;
-      bRecord.disabled = !!r.capped || !!r.notReset || full;
+      bRecord.disabled = !!r.capped || full;
       remember();
-      say.textContent = r.notReset ? 'Not recorded: the run did not start from 0. Open the tap, then run again.' : r.capped ? 'Not a fair reading — the bubble ran out of scale.' : full ? 'Five trials for these conditions already: change something for the next row.' : r.leak ? 'You can record it — a leaking reading in the table is worth seeing next to a sealed one.' : 'Read the scale, then record the run as a trial. Repeat it for a mean, or change one factor for a new row.';
+      say.textContent = r.notReset ? 'The bubble did not start from 0. Record it if you like — it will be marked in red — then open the tap and run again.' : r.capped ? 'Not a fair reading — the bubble ran out of scale.' : full ? 'Five trials for these conditions already: change something for the next row.' : r.leak ? 'You can record it — a leaking reading in the table is worth seeing next to a sealed one.' : 'Read the scale, then record the run as a trial. Repeat it for a mean, or change one factor for a new row.';
     }
     function resetBubble() {
       if (run) return;
@@ -1840,7 +1840,7 @@
       var vals = g.trials.map(function (t) { return t.r.rate; }), st = stats(vals), cells = '';
       for (var i = 0; i < MAX_TRIALS; i++) {
         var t = g.trials[i];
-        cells += t ? '<td class="po__trial' + (t.r.leak ? ' po__trial--leak' : '') + '">' + t.r.rate.toFixed(2) + '<small title="' + t.r.distance + ' mm on shoot ' + String.fromCharCode(64 + (t.r.s.shoot || 1)) + '">' + t.r.distance + ' mm · ' + String.fromCharCode(64 + (t.r.s.shoot || 1)) + '</small><button type="button" class="po__del" data-i="' + t.i + '" aria-label="Delete this trial">✕</button></td>' : '<td class="po__trial po__trial--empty">—</td>';
+        cells += t ? '<td class="po__trial' + (t.r.leak ? ' po__trial--leak' : '') + (t.r.notZero ? ' po__trial--nozero' : '') + '"' + (t.r.notZero ? ' title="The bubble did not start from 0, so this rate is too high. Press the cross to drop it."' : '') + '>' + t.r.rate.toFixed(2) + '<small title="' + t.r.distance + ' mm on shoot ' + String.fromCharCode(64 + (t.r.s.shoot || 1)) + '">' + t.r.distance + ' mm · ' + String.fromCharCode(64 + (t.r.s.shoot || 1)) + '</small><button type="button" class="po__del" data-i="' + t.i + '" aria-label="Delete this trial">✕</button></td>' : '<td class="po__trial po__trial--empty">—</td>';
       }
       return '<tr><td class="po__cond">' + condText(g.s) + '</td>' + cells +
         '<td class="po__statcell"><b>' + st.mean.toFixed(2) + '</b></td>' + (errK === 'none' ? '' : '<td class="po__statcell">' + (st[errK] != null ? (errK === 'ci' ? '± ' : '') + st[errK].toFixed(2) : '—') + '</td>') + '</tr>';
@@ -1901,13 +1901,13 @@
       var F = bestKey ? FACT.filter(function (x) { return x[0] === bestKey; })[0] : null;
       var mode = F && byLine.every(function (l) { var v = varyOf(l.rows); return v.length === 0 || (v.length === 1 && v[0][0] === F[0]); }) ? 'factor' : (!multi && varyOf(GS).length === 0 ? 'trials' : 'row');
       var W = 560, H = 240, L = 54, R = 16, T = 18, B = 54;
-      var mk = function (g, x) { var vals = g.trials.map(function (t) { return t.r.rate; }), st = stats(vals); var e = errK === 'sd' ? st.sd : errK === 'se' ? st.se : errK === 'ci' ? st.ci : null; return { x: x, mean: st.mean, all: vals, err: e == null || isNaN(e) ? null : e }; };
+      var mk = function (g, x) { var vals = g.trials.map(function (t) { return t.r.rate; }), st = stats(vals); var e = errK === 'sd' ? st.sd : errK === 'se' ? st.se : errK === 'ci' ? st.ci : null; return { x: x, mean: st.mean, all: vals, allBad: g.trials.map(function (t) { return !!t.r.notZero; }), err: e == null || isNaN(e) ? null : e }; };
       var numeric = mode === 'factor' ? !!F[2] : false;
       var ORDER = mode === 'factor' ? ({ wind: PO_WIND, sp: PO_SPECIES.map(function (q) { return q.name; }), grease: PO_GREASE.map(function (q) { return q[0]; }), joint: ['sealed', 'not sealed'] })[F[0]] : null;
       var series = byLine.map(function (l) {
         var pts;
         if (mode === 'factor') { pts = l.rows.map(function (g) { return mk(g, numeric ? +fval(g.s, F[0]) : fval(g.s, F[0])); }); pts.sort(function (a, b) { return numeric ? a.x - b.x : ORDER.indexOf(a.x) - ORDER.indexOf(b.x); }); }
-        else if (mode === 'trials') pts = l.rows[0].trials.map(function (t, i) { return { x: i + 1, mean: t.r.rate, all: [t.r.rate], err: null }; });
+        else if (mode === 'trials') pts = l.rows[0].trials.map(function (t, i) { return { x: i + 1, mean: t.r.rate, all: [t.r.rate], allBad: [!!t.r.notZero], err: null }; });
         else pts = l.rows.map(function (g, i) { return mk(g, i + 1); });
         return { ln: l.ln, colour: poLineColour(l.ln), name: poLineName(l.ln), pts: pts };
       });
@@ -1946,8 +1946,16 @@
             if (errK === 'ci' && !numeric) s += '<rect class="po__band" style="fill:' + c + '" x="' + (x - bw * .7).toFixed(1) + '" y="' + Y(p.mean + p.err).toFixed(1) + '" width="' + (bw * 1.4).toFixed(1) + '" height="' + (Y(p.mean - p.err) - Y(p.mean + p.err)).toFixed(1) + '"/>';
             if (errK !== 'ci') s += '<path class="po__whisker" style="stroke:' + c + '" d="M' + x.toFixed(1) + ' ' + Y(p.mean + p.err).toFixed(1) + ' V' + Y(p.mean - p.err).toFixed(1) + ' M' + (x - 6).toFixed(1) + ' ' + Y(p.mean + p.err).toFixed(1) + ' h12 M' + (x - 6).toFixed(1) + ' ' + Y(p.mean - p.err).toFixed(1) + ' h12"/>';
           }
-          if (PO_STATE.dots) p.all.forEach(function (v2) { s += '<circle class="po__dot' + (p.all.length > 1 ? ' po__dot--rep' : '') + '" style="fill:' + c + '" cx="' + x.toFixed(1) + '" cy="' + Y(v2).toFixed(1) + '" r="3"/>'; });
+          /* the red ones go on LAST: with one trial in a row the mean dot sits exactly on the
+             trial dot, and whichever is painted second is the one you see */
+          var badDots = '';
+          if (PO_STATE.dots) p.all.forEach(function (v2, i3) {
+            var isBad = !!(p.allBad && p.allBad[i3]);
+            var c1 = '<circle class="po__dot' + (p.all.length > 1 ? ' po__dot--rep' : '') + (isBad ? ' po__dot--bad' : '') + '" style="fill:' + c + '" cx="' + x.toFixed(1) + '" cy="' + Y(v2).toFixed(1) + '" r="3"/>';
+            if (isBad) badDots += c1; else s += c1;
+          });
           s += '<circle class="po__dotmean" style="fill:' + c + '" cx="' + x.toFixed(1) + '" cy="' + Y(p.mean).toFixed(1) + '" r="' + (p.all.length > 1 ? 4.5 : 3.5) + '"/>';   /* every row keeps its mean marker; the trials behind it can be hidden */
+          s += badDots;
         });
       });
       var ticks = numeric ? allPts.map(function (p) { return p.x; }).filter(function (v2, i2, a) { return a.indexOf(v2) === i2; }).sort(function (a, b) { return a - b; }) : cats;
