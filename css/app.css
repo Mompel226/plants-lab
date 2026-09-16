@@ -1740,17 +1740,26 @@ picture{display:block;line-height:0}
   color:#9B2F22;font-size:13px;font-weight:700;line-height:1.45}
 
 /* ----- which bench: the four factors, or the whole apparatus -----
-   A radio group styled as a segmented control: both names stay readable, so the student can see
-   what the other position is before choosing it. Never colour alone — the chosen half also
-   carries a tick, and a sentence underneath says what the bench holds. */
-.po__mode{border:1px solid var(--edge);border-radius:var(--r);padding:8px 11px 9px;margin:0 0 12px;background:var(--card-2,#F7F5EF)}
-.po__mode legend{font-size:11.5px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.04em;padding:0 5px}
-.po__mode__seg{display:inline-flex;border:1px solid var(--edge);border-radius:8px;overflow:hidden;background:#fff}
-.po__mode__b{display:inline-flex;align-items:center;gap:6px;padding:6px 13px;font-size:13px;cursor:pointer;color:#3C3C3C;user-select:none}
+   A radio group styled as a segmented control. Each bench keeps its own colour AND its own
+   glyph, at rest and when chosen, so the two are told apart by shape as well as by hue — and
+   a sentence underneath says what the chosen bench holds. */
+.po__mode{border:1px solid var(--edge);border-radius:var(--r);padding:8px 11px 9px;margin:0 0 12px;background:var(--card-2)}
+.po__mode legend{font-size:11.5px;font-weight:700;color:var(--grey);text-transform:uppercase;letter-spacing:.05em;padding:0 5px}
+.po__mode__seg{display:inline-flex;border:1px solid var(--edge);border-radius:9px;overflow:hidden;background:var(--card);box-shadow:var(--shadow)}
+.po__mode__b{display:inline-flex;align-items:center;gap:7px;padding:7px 14px;font-size:13.5px;cursor:pointer;
+  color:var(--grey);user-select:none;transition:background .13s,color .13s}
 .po__mode__b + .po__mode__b{border-left:1px solid var(--edge)}
 .po__mode__b input{position:absolute;opacity:0;width:0;height:0}
-.po__mode__b span::before{content:'';display:inline-block;width:0;overflow:hidden;transition:width .12s}
-.po__mode__b.is-on{background:var(--green);color:#fff;font-weight:600}
-.po__mode__b.is-on span::before{content:'✓';width:auto;margin-right:5px}
-.po__mode__b input:focus-visible + span{outline:2px solid var(--green);outline-offset:3px;border-radius:3px}
-.po__mode__say{font-size:12.2px;line-height:1.45;color:#4A4A4A;margin:7px 0 0}
+.po__mode__i{display:inline-grid;place-items:center;line-height:0}
+/* at rest the glyph carries the bench's colour, so each half is identifiable before it is chosen */
+.po__mode__b--igcse .po__mode__i{color:var(--green-2)}
+.po__mode__b--full  .po__mode__i{color:var(--teal)}
+.po__mode__b:hover{background:var(--card-2);color:var(--ink)}
+.po__mode__b.is-on{font-weight:700;color:#fff}
+.po__mode__b.is-on .po__mode__i{color:#fff}
+.po__mode__b--igcse.is-on{background:var(--green)}
+.po__mode__b--full.is-on{background:var(--teal)}
+.po__mode__b input:focus-visible ~ .po__mode__t{outline:2px solid var(--ink);outline-offset:3px;border-radius:3px}
+.po__mode__say{font-size:12.4px;line-height:1.45;color:#4A4A4A;margin:7px 0 0;padding-left:3px;border-left:3px solid var(--edge);padding-left:9px}
+.po__mode:has(.po__mode__b--igcse.is-on) .po__mode__say{border-left-color:var(--green-2)}
+.po__mode:has(.po__mode__b--full.is-on)  .po__mode__say{border-left-color:var(--teal)}
