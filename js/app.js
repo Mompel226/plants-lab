@@ -499,7 +499,10 @@
     if (st.learn && st.learn.golden) {
       var g = document.createElement('div');
       g.className = 'golden';
-      g.innerHTML = '<div class="golden__h">⬤ Check yourself — the mistake students make here</div><p>' + M(st.learn.golden) + '</p>';
+      /* one mistake is a string; a station with more than one gives a list, one paragraph each */
+      var gs = [].concat(st.learn.golden);
+      g.innerHTML = '<div class="golden__h">⬤ Check yourself — ' + (gs.length > 1 ? 'the mistakes students make here' : 'the mistake students make here') + '</div>' +
+        gs.map(function (para) { return '<p>' + M(para) + '</p>'; }).join('');
       card.appendChild(g);
     }
     if ((st.learn.examFocus || []).length) {
