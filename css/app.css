@@ -1294,6 +1294,9 @@ picture{display:block;line-height:0}
 .po__table th small{display:block;font-weight:500;font-size:10px;letter-spacing:0;text-transform:none;color:var(--grey)}
 .po__cond{white-space:normal!important;min-width:200px;font-size:12px;line-height:1.35;color:#3C3C3C}
 .po__cond b{color:#A64B2A}
+/* the independent variable's value: the reading the row is about, not a warning */
+.po__ivval{font-size:14px;font-weight:700;color:var(--ink)}
+.po__cond:has(.po__ivval){min-width:0;white-space:nowrap!important}
 .po__trial{position:relative;padding-right:18px!important}
 .po__trial small{display:block;font-size:10px;color:var(--grey)}
 /* a table's title goes ABOVE it, a figure's caption BELOW — the convention both boards use */
@@ -1301,6 +1304,17 @@ picture{display:block;line-height:0}
 .po__cap b{color:var(--green)}
 .po__table--proc{margin-top:16px}
 .po__stylenote{font-size:12.5px;line-height:1.5;color:var(--grey);margin:8px 0 0}
+/* the controlled variables belong under the table, once — not repeated down a column */
+.po__ctrlvars{font-size:12.5px;line-height:1.5;color:#4A4A4A;background:var(--card-2,#F7F5EF);border-left:3px solid var(--edge);
+  border-radius:0 var(--r) var(--r) 0;padding:7px 11px;margin:8px 0 0}
+.po__ctrlvars b{color:var(--green)}
+/* the one thing you change, and the ones you have stopped being able to change */
+.po__row--iv select{font-weight:600}
+.po__row--iv span small{display:block;font-weight:400;font-size:11.5px;color:var(--grey)}
+.po__row--set{border-bottom:1px solid var(--edge);padding-bottom:10px;margin-bottom:4px}
+.po__row--frozen{opacity:.5}
+.po__row--frozen span::after{content:' · held constant';font-size:11px;color:var(--grey);font-weight:500}
+.po__row--isiv span::after{content:' · the one you change';font-size:11px;color:var(--green);font-weight:700}
 .po__trial--leak{background:#FFF1EA}
 /* a trial whose bubble did not start from 0: kept, so the spread shows what it costs, but
    marked everywhere it appears so it can be found again and dropped */

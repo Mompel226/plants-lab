@@ -1273,7 +1273,7 @@
      two thirds or so on bean, sunflower and geranium, almost none on marram, whose stomata line the inside of the rolled leaf), plus a little loss through the cuticle */
   function poGreaseF(sp, g) { var lower = sp.lower == null ? .95 : sp.lower, cut = .05; return g === 'upper' ? cut + (1 - cut) * lower : g === 'lower' ? cut + (1 - cut) * (1 - lower) : g === 'both' ? cut : 1; }
   var PO_MM = 4.2, PO_X0 = 108, PO_STEM = 574, PO_BORE_R = 0.5;   /* the scale's 0 mark, and the shoot's stem, in the drawing's units */
-  var PO_STATE = { runs: [], pos: 0, set: null, shoot: 1, shootF: 1, unlocked: false, line: 0, lineNames: [], hidden: [], dots: true, style: 'igcse' };
+  var PO_STATE = { runs: [], pos: 0, set: null, shoot: 1, shootF: 1, unlocked: false, line: 0, lineNames: [], hidden: [], dots: true, style: 'igcse', iv: null };
   try { if (sessionStorage.getItem('plants-lab.potometer.unlocked') === '1') PO_STATE.unlocked = true; } catch (e) {}
   /* the bench, the table and the shoot survive a reload (the tab's own storage; closing the tab clears it) */
   function poSpecies(id) { return PO_SPECIES.filter(function (q) { return q.id === id; })[0]; }
@@ -1287,7 +1287,7 @@
     }
   } catch (e) {}
   function poPersist() {
-    try { sessionStorage.setItem('plants-lab.potometer', JSON.stringify({ runs: PO_STATE.runs, pos: PO_STATE.pos, set: PO_STATE.set, shoot: PO_STATE.shoot, shootF: PO_STATE.shootF, err: PO_STATE.err, line: PO_STATE.line, lineNames: PO_STATE.lineNames, hidden: PO_STATE.hidden, dots: PO_STATE.dots, style: PO_STATE.style })); } catch (e) {}
+    try { sessionStorage.setItem('plants-lab.potometer', JSON.stringify({ runs: PO_STATE.runs, pos: PO_STATE.pos, set: PO_STATE.set, shoot: PO_STATE.shoot, shootF: PO_STATE.shootF, err: PO_STATE.err, line: PO_STATE.line, lineNames: PO_STATE.lineNames, hidden: PO_STATE.hidden, dots: PO_STATE.dots, style: PO_STATE.style, iv: PO_STATE.iv })); } catch (e) {}
   }
   function sha256hex(text) {
     return crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)).then(function (buf) { return Array.prototype.map.call(new Uint8Array(buf), function (b) { return ('0' + b.toString(16)).slice(-2); }).join(''); });
@@ -1319,6 +1319,30 @@
     return { n: n, mean: mean, sd: sd, se: se, t: t, ci: t * se };
   }
   function poKeyOf(s) { return [s.sp.id, s.leaves, s.light, s.temp, s.hum, s.wind, s.grease, s.joint, s.time].join('|'); }
+  /* What goes in the first column of a results table is the INDEPENDENT VARIABLE. The
+     controlled variables are the ones that did not change, so repeating them down every row
+     says nothing; they are stated once, under the title. */
+  var PO_FACTS = [['sp', 'Plant', false], ['leaves', 'Leaves on the shoot', true], ['light', 'Light / %', true],
+                  ['temp', 'Temperature / °C', true], ['hum', 'Humidity / %', true], ['wind', 'Wind', false],
+                  ['grease', 'Petroleum jelly', false], ['joint', 'Joint at the bung', false], ['time', 'Time / min', true]];
+  var PO_IVCTL = { sp: 'species', leaves: 'leaves', light: 'light', temp: 'temp', hum: 'hum', wind: 'wind', grease: 'grease', joint: 'joint', time: 'time' };
+  function poFact(k) { for (var i = 0; i < PO_FACTS.length; i++) if (PO_FACTS[i][0] === k) return PO_FACTS[i]; return null; }
+  function poIvValue(s, k) {
+    return k === 'sp' ? esc(s.sp.name)
+      : k === 'wind' ? esc(PO_WIND[s.wind])
+      : k === 'grease' ? esc(s.grease === 'none' ? 'none' : s.grease === 'both' ? 'both surfaces' : s.grease + ' surface')
+      : k === 'joint' ? (s.joint === 'open' ? 'not sealed' : 'sealed')
+      : k === 'light' || k === 'hum' ? s[k] + ' %'
+      : k === 'temp' ? s.temp + ' °C'
+      : k === 'time' ? s.time + ' min'
+      : String(s[k]);
+  }
+  /* every setting EXCEPT the one being changed: the controlled variables, written out once */
+  function poControlledText(s, iv) {
+    return PO_FACTS.filter(function (F) { return F[0] !== iv; })
+      .map(function (F) { return F[1].replace(/ \/ .*/, '').toLowerCase() + ' ' + poIvValue(s, F[0]); })
+      .join(' · ');
+  }
   function poCondText(s) {
     return esc(s.sp.name) + ' · ' + s.leaves + ' leaves · light ' + s.light + ' % · ' + s.temp + ' °C · humidity ' + s.hum + ' % · ' + esc(PO_WIND[s.wind]) +
       (s.grease === 'none' ? '' : ' · grease on the ' + esc(s.grease === 'both' ? 'two surfaces' : s.grease + ' surface')) + (s.joint === 'open' ? ' · <b>joint leaking</b>' : '') + ' · ' + s.time + ' min';
@@ -1424,6 +1448,17 @@
       lab.appendChild(r); ctl.appendChild(lab);
       return { inp: r, val: lab.querySelector('b'), unit: unit };
     }
+    /* The one thing you change. Choosing it FREEZES everything else, which is what makes the
+       others controlled variables rather than things you happened not to touch — and it is why
+       the table can carry the independent variable alone in its first column. Changing it means
+       starting again: the frozen settings would differ between the old rows and the new. */
+    var ivRow = h('label', 'po__row po__row--iv', '<span>Independent variable <small>the one thing you change</small></span>');
+    var ivSel = document.createElement('select'); ivSel.setAttribute('data-k', 'iv');
+    [['', '— choose one, and the rest are held constant —']].concat(PO_FACTS.map(function (F) { return [F[0], F[1].replace(/ \/ .*/, '')]; }))
+      .forEach(function (o) { var op = document.createElement('option'); op.value = o[0]; op.textContent = o[1]; ivSel.appendChild(op); });
+    ivSel.value = PO_STATE.iv || '';
+    ivRow.appendChild(ivSel); ctl.appendChild(ivRow);
+
     var species = sel('Plant', 'species', PO_SPECIES.map(function (s) { return [s.id, s.name]; }), 'bean');
     var speciesNote = h('small', 'po__snote'); ctl.appendChild(speciesNote);
     var leaves = range('Leaves on the shoot', 'leaves', 1, 6, 5, '');
@@ -1614,8 +1649,22 @@
     global.PoModel = { rateOf: rateOf, species: PO_SPECIES, wind: PO_WIND };   /* for the audits: the curve each factor gives */
     var pos = 0, run = null, raf = null, lastRun = null;
     function remember() { PO_STATE.set = settings(); PO_STATE.pos = pos; PO_STATE.runs = runs; poPersist(); }   /* the shoot and its factor already live in PO_STATE */
+    /* Everything but the independent variable is disabled, and says so. */
+    function freezeControls() {
+      var iv = PO_STATE.iv, live = iv ? PO_IVCTL[iv] : null;
+      ctl.querySelectorAll('.po__row').forEach(function (row) {
+        if (row === ivRow) return;
+        var inp = row.querySelector('input,select'); if (!inp) return;
+        var frozen = !!iv && inp.getAttribute('data-k') !== live;
+        if (!run) inp.disabled = frozen;          /* a run locks the lot; this owns the rest of the time */
+        row.classList.toggle('po__row--frozen', frozen);
+        row.classList.toggle('po__row--isiv', !!iv && !frozen);
+      });
+      ivRow.classList.toggle('po__row--set', !!iv);
+    }
     function paintConditions() {
       var s = settings();
+      freezeControls();
       speciesNote.textContent = s.sp.note; growLeaves(s.sp);
       leaves.val.textContent = s.leaves; light.val.textContent = s.light + ' %'; temp.val.textContent = s.temp + ' °C'; hum.val.textContent = s.hum + ' %'; wind.val.textContent = PO_WIND[s.wind];
       clockOf.textContent = s.time + ' min';
@@ -1676,7 +1725,7 @@
       var start = Math.round(r.from), end = Math.round(r.from + r.d);
       setBubble(end); clockB.textContent = fmt(r.s.time * 60);
       svg.classList.remove('is-running');
-      ctl.classList.remove('is-locked'); ctl.querySelectorAll('input,select').forEach(function (e) { e.disabled = false; });
+      ctl.classList.remove('is-locked'); ctl.querySelectorAll('input,select').forEach(function (e) { e.disabled = false; }); freezeControls();
       bStart.textContent = '▶ Start the clock';
       var distance = r.notReset ? end : end - start, mins = r.s.time, rate = distance / mins, vol = Math.PI * PO_BORE_R * PO_BORE_R * +rate.toFixed(2);   /* from the rate as printed, so checking the line gives the same number */   /* without the tap the scale is read from 0 */
       lastRun = { s: r.s, distance: distance, rate: rate, leak: r.leak, notZero: !!r.notReset };
@@ -1718,7 +1767,7 @@
     function resetAll() {
       if (raf) cancelAnimationFrame(raf); raf = null; run = null; lastRun = null;
       svg.classList.remove('is-running'); svg.classList.remove('is-tapping');
-      ctl.classList.remove('is-locked'); ctl.querySelectorAll('input,select').forEach(function (e) { e.disabled = false; });
+      ctl.classList.remove('is-locked'); ctl.querySelectorAll('input,select').forEach(function (e) { e.disabled = false; }); freezeControls();
       bStart.textContent = '▶ Start the clock';
       species.value = 'bean'; leaves.inp.value = 5; light.inp.value = 60; temp.inp.value = 20; hum.inp.value = 50; wind.inp.value = 0; grease.value = 'none'; joint.value = 'sealed'; time.value = '5';
       PO_STATE.shoot = 1; PO_STATE.shootF = 1;
@@ -1840,6 +1889,26 @@
       PO_STATE.line = next; remember(); paintData();
       say.textContent = poLineName(next) + ' started, in ' + PO_LINE_WORD[next % PO_LINE_WORD.length] + '. The runs you record now go on it. Change the one thing you want to compare — another plant, the fan on, the dark — keep the rest the same, and run.';
     });
+    /* Changing the independent variable is starting a new experiment, not editing this one:
+       the settings that were held constant would differ between the rows already taken and the
+       rows to come, and a table like that proves nothing. So it asks, and then clears. */
+    var ivWas = PO_STATE.iv || '';
+    ivSel.addEventListener('change', function () {
+      var want = ivSel.value;
+      if (want === ivWas) return;
+      if (runs.length) {
+        var ok = window.confirm('Changing the independent variable starts the experiment again, because everything else has to be held constant from the first run.\n\nThe ' +
+                                runs.length + ' run' + (runs.length === 1 ? '' : 's') + ' already recorded will be cleared. Go ahead?');
+        if (!ok) { ivSel.value = ivWas; return; }
+        runs.length = 0; PO_STATE.line = 0; PO_STATE.lineNames = []; PO_STATE.hidden = [];
+      }
+      ivWas = want; PO_STATE.iv = want || null;
+      poPersist(); paintConditions(); paintData();
+      say.textContent = want
+        ? poFact(want)[1].replace(/ \/ .*/, '') + ' is the independent variable. Everything else is now held constant — change it, run, record, and repeat.'
+        : 'No independent variable chosen: every setting is free, and the table lists the conditions in full.';
+    });
+
     bCopy.addEventListener('click', function () {
       /* what is copied is what is on the screen: one table, or the two the IB asks for */
       var lines;
@@ -1883,6 +1952,12 @@
        reading a millimetre scale in the heading. Table 2 is what was done with it: the mean rate
        and the spread. Both tables are titled ABOVE, and numbered, which is where a table title
        goes; a figure's caption goes BELOW it. */
+    function firstCell(s) { return PO_STATE.iv ? '<span class="po__ivval">' + poIvValue(s, PO_STATE.iv) + '</span>' : condText(s); }
+    function firstHead() { var F = PO_STATE.iv && poFact(PO_STATE.iv); return F ? esc(F[1]) : 'Conditions'; }
+    function controlledLine(rows) {
+      if (!PO_STATE.iv || !rows.length) return '';
+      return '<p class="po__ctrlvars"><b>Controlled variables</b> (the same for every row): ' + poControlledText(rows[0].s, PO_STATE.iv) + '.</p>';
+    }
     function delBtn(t) {
       return '<button type="button" class="po__del" data-i="' + t.i + '" aria-label="Delete this trial">✕</button>';
     }
@@ -1895,7 +1970,7 @@
         var t = g.trials[i];
         cells += t ? '<td class="' + trialCls(t.r) + '"' + (t.r.notZero ? ' title="The bubble did not start from 0, so this rate is too high. Press the cross to drop it."' : '') + '>' + t.r.rate.toFixed(2) + '<small title="' + t.r.distance + ' mm on shoot ' + String.fromCharCode(64 + (t.r.s.shoot || 1)) + '">' + t.r.distance + ' mm · ' + String.fromCharCode(64 + (t.r.s.shoot || 1)) + '</small>' + delBtn(t) + '</td>' : '<td class="po__trial po__trial--empty">—</td>';
       }
-      return '<tr><td class="po__cond">' + condText(g.s) + '</td>' + cells +
+      return '<tr><td class="po__cond">' + firstCell(g.s) + '</td>' + cells +
         '<td class="po__statcell"><b>' + st.mean.toFixed(2) + '</b></td>' + (errK === 'none' ? '' : '<td class="po__statcell">' + (st[errK] != null ? (errK === 'ci' ? '± ' : '') + st[errK].toFixed(2) : '—') + '</td>') + '</tr>';
     }
     function rawRowHtml(g) {                   /* IB table 1: only what was read off the scale */
@@ -1904,11 +1979,11 @@
         var t = g.trials[i];
         cells += t ? '<td class="' + trialCls(t.r) + '"' + (t.r.notZero ? ' title="The bubble did not start from 0, so this distance is too long. Press the cross to drop it."' : '') + '>' + t.r.distance + '<small>shoot ' + String.fromCharCode(64 + (t.r.s.shoot || 1)) + '</small>' + delBtn(t) + '</td>' : '<td class="po__trial po__trial--empty">—</td>';
       }
-      return '<tr><td class="po__cond">' + condText(g.s) + '</td>' + cells + '</tr>';
+      return '<tr><td class="po__cond">' + firstCell(g.s) + '</td>' + cells + '</tr>';
     }
     function procRowHtml(g) {                  /* IB table 2: only what was worked out from it */
       var vals = g.trials.map(function (t) { return t.r.rate; }), st = stats(vals);
-      return '<tr><td class="po__cond">' + condText(g.s) + '</td>' +
+      return '<tr><td class="po__cond">' + firstCell(g.s) + '</td>' +
         '<td class="po__statcell">' + g.trials.length + '</td>' +
         '<td class="po__statcell"><b>' + st.mean.toFixed(2) + '</b></td>' +
         (errK === 'none' ? '' : '<td class="po__statcell">' + (st[errK] != null ? (errK === 'ci' ? '± ' : '') + st[errK].toFixed(2) : '—') + '</td>') + '</tr>';
@@ -1942,18 +2017,19 @@
       if (rows.length && ibStyle) {
         tables =
           '<table class="po__table"><caption class="po__cap"><b>Table 1</b> Raw data: the distance the air bubble moved along the millimetre scale in each trial.</caption>' +
-          '<thead><tr><th>Conditions</th>' + trialHeads('distance / mm (± 0.5)') + '</tr></thead>' +
-          '<tbody>' + rows.map(rawRowHtml).join('') + '</tbody></table>' +
+          '<thead><tr><th>' + firstHead() + '</th>' + trialHeads('distance / mm (± 0.5)') + '</tr></thead>' +
+          '<tbody>' + rows.map(rawRowHtml).join('') + '</tbody></table>' + controlledLine(rows) +
           '<table class="po__table po__table--proc"><caption class="po__cap"><b>Table 2</b> Processed data: mean rate of water uptake, and how far the trials spread around it.</caption>' +
-          '<thead><tr><th>Conditions</th><th><i>n</i><small>trials</small></th>' + meanHead + errHead + '</tr></thead>' +
+          '<thead><tr><th>' + firstHead() + '</th><th><i>n</i><small>trials</small></th>' + meanHead + errHead + '</tr></thead>' +
           '<tbody>' + rows.map(procRowHtml).join('') + '</tbody></table>' +
           '<p class="po__stylenote">Rate = distance ÷ time, worked out for each trial and then averaged. IB keeps the two apart: <b>what the instrument read</b> in one table, <b>what you did with it</b> in the next, and five trials is the usual minimum for a standard deviation to mean anything.</p>';
       } else if (rows.length) {
         tables =
           '<table class="po__table"><caption class="po__cap"><b>Table 1</b> Rate of water uptake by a leafy shoot, measured with a potometer.</caption>' +
-          '<thead><tr><th>Conditions</th>' + trialHeads('rate / mm min⁻¹') + meanHead + errHead + '</tr></thead>' +
-          '<tbody>' + rows.map(rowHtml).join('') + '</tbody></table>' +
-          '<p class="po__stylenote">One ruled table, the repeats and the mean together, every heading carrying its unit — which is what 0610 Paper 6 asks for.</p>';
+          '<thead><tr><th>' + firstHead() + '</th>' + trialHeads('rate / mm min⁻¹') + meanHead + errHead + '</tr></thead>' +
+          '<tbody>' + rows.map(rowHtml).join('') + '</tbody></table>' + controlledLine(rows) +
+          '<p class="po__stylenote">One ruled table, the repeats and the mean together, every heading carrying its unit — which is what 0610 Paper 6 asks for.' +
+          (PO_STATE.iv ? '' : ' <b>Choose an independent variable</b> above and the first column becomes that one thing, with the rest held constant and listed underneath — which is how a results table is set out.') + '</p>';
       }
       tableWrap.innerHTML = lineHead + tables;
       tabsEl.querySelectorAll('.po__linetab').forEach(function (b) { b.addEventListener('click', function () { PO_STATE.line = +b.getAttribute('data-line'); remember(); paintData(); say.textContent = 'On ' + poLineName(PO_STATE.line) + ': the runs you record now go on it.'; }); });
