@@ -1999,7 +1999,6 @@
     /* the standing question, next to the button it is about, and OUTSIDE the table the teacher's
        word gates — the student is collecting data long before that word is given */
     var bWhy = h('button', 'wbtn wbtn--quiet po__whybtn', '? Why repeat? Why a new shoot?');
-    bWhy.setAttribute('data-tip', 'What a repeat on the same shoot tells you, what a new shoot tells you, and which words belong to which — in your own numbers.');
     bWhy.setAttribute('aria-expanded', 'false');
     [bNew, bWhy, bLine, bAll].forEach(function (b) { b.type = 'button'; rowB.appendChild(b); });
     btns.appendChild(rowA); btns.appendChild(rowB);
