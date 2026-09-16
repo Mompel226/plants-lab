@@ -1360,6 +1360,17 @@
      two things that can be done on purpose or go wrong. The mode decides which APPARATUS exists — never
      which statistics do, because those follow the data. */
   var PO_FULL_ONLY = { grease: 1, joint: 1 }, PO_UID = 0;
+  /* one glyph each, so the two benches are told apart by shape as well as by colour:
+     a conical flask for the lab you are examined on, and this lab's own apparatus —
+     a bubble in a capillary above its scale — for the fuller one */
+  var PO_ICON_FLASK = '<svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">'
+    + '<path d="M6.2 1.9v4.3L2.8 12.3a1.6 1.6 0 0 0 1.4 2.4h7.6a1.6 1.6 0 0 0 1.4-2.4L9.8 6.2V1.9"/>'
+    + '<path d="M5.1 1.9h5.8"/><path d="M4.35 10.6h7.3"/></svg>';
+  var PO_ICON_TUBE = '<svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">'
+    + '<rect x="1.4" y="3.5" width="13.2" height="5.2" rx="2.6"/>'
+    + '<circle cx="5.9" cy="6.1" r="1.5" fill="currentColor" stroke="none"/>'
+    + '<path d="M1.9 11.6h12.2M4 11.6v1.9M8 11.6v1.9M12 11.6v1.9"/></svg>';
+  var PO_BENCH = [['igcse', 'IGCSE lab', PO_ICON_FLASK], ['full', 'More realistic', PO_ICON_TUBE]];
   function poFactsFor(mode) {
     if ((mode || PO_STATE.mode) === 'full') return PO_FACTS;
     return PO_FACTS.filter(function (F) { return !PO_FULL_ONLY[F[0]]; });
@@ -1563,8 +1574,9 @@
     var modeBox = h('fieldset', 'po__mode');
     modeBox.innerHTML = '<legend>Which bench are you using?</legend>' +
       '<div class="po__mode__seg">' +
-      [['igcse', 'IGCSE lab'], ['full', 'More realistic']].map(function (o) {
-        return '<label class="po__mode__b"><input type="radio" name="' + modeName + '" value="' + o[0] + '"><span>' + o[1] + '</span></label>';
+      PO_BENCH.map(function (o) {
+        return '<label class="po__mode__b po__mode__b--' + o[0] + '"><input type="radio" name="' + modeName + '" value="' + o[0] + '">' +
+          '<span class="po__mode__i" aria-hidden="true">' + o[2] + '</span><span class="po__mode__t">' + o[1] + '</span></label>';
       }).join('') + '</div><p class="po__mode__say"></p>';
     var modeSay = modeBox.querySelector('.po__mode__say');
     var greaseRow = grease.parentNode, jointRow = joint.parentNode;
