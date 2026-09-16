@@ -1446,6 +1446,14 @@ picture{display:block;line-height:0}
   border:1.5px solid var(--k-repro);border-radius:var(--r-pill);background:var(--k-repro);color:#fff}
 .pt__play:hover{filter:brightness(1.08)}
 .pt__play.is-playing{background:#fff;color:var(--k-repro)}
+/* a step has finished and is waiting: the button says so, twice, and then stays still */
+.pt__play.is-next{animation:pt-next 1.5s ease-out 2}
+@keyframes pt-next{0%{box-shadow:0 0 0 0 rgba(163,53,105,.5)}100%{box-shadow:0 0 0 11px rgba(163,53,105,0)}}
+@media (prefers-reduced-motion:reduce){.pt__play.is-next{animation:none}}
+.pt__all{font:inherit;font-size:12.5px;font-weight:600;display:inline-flex;align-items:center;gap:6px;padding:6px 12px;cursor:pointer;
+  border:1.5px solid var(--edge);border-radius:var(--r-pill);background:#fff;color:#5A5A5A}
+.pt__all:hover{border-color:var(--k-repro);color:var(--k-repro)}
+.pt__all .pt__ico{font-size:9px;letter-spacing:-1px}
 .pt__ico{font-size:11px;line-height:1}
 .pt__prog{flex:1 1 160px;min-width:120px;display:flex;gap:3px;height:9px;cursor:pointer}
 .pt__seg{position:relative;flex:1 1 0;background:var(--edge-2);border-radius:var(--r-pill);overflow:hidden}
