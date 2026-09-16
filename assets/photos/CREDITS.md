@@ -212,7 +212,8 @@ bench, not measured here. What it is scaled to:
 
 | File | Source | Author | Licence |
 |---|---|---|---|
-| `seedling-*` | [Cucumber Seedling.jpg](https://commons.wikimedia.org/wiki/File:Cucumber_Seedling.jpg) — the picture behind the word *seedling* | Peter Chastain | Public domain |
+| `seedling-*` | [Cucumber Seedling.jpg](https://commons.wikimedia.org/wiki/File:Cucumber_Seedling.jpg) — was the picture behind the word *seedling* until 17 September 2026, when the side view of sunflower seedlings from the 16.3 slides replaced it; the file is kept but no longer shown | Peter Chastain | Public domain |
+| `dogstail-anthers-*` | [Anthers and stamen.jpg](https://commons.wikimedia.org/wiki/File:Anthers_and_stamen.jpg) — crested dog's-tail, a grass, magnified: the picture behind the word *wind-pollinated*. Resized from 1024 × 768 to 900 × 675, not cropped | Blokenearexeter | Public domain (released by the author) |
 
 They are not copied into the repository, because they are not ours to copy — the eight local files
 are Daniel's own lesson videos. Two things make the embed as light as it can be. The player is
