@@ -4955,8 +4955,54 @@
     return box;
   }
 
+  /* ---------- labelphoto: a real photograph, labelled the way a drawing is ----------
+     Labels sit in the margins at their part's own height, each on a leader RULED HORIZONTALLY, so no
+     two leaders can cross. Parts can be ringed, and neighbouring labels can be bracketed into the
+     structure they make up (anther + filament = stamen). Positions are percentages of the picture;
+     ring sizes are in the picture's own pixels, so a rotated ring keeps its shape. The leaders and
+     rings carry a halo, because a photograph is dark in one place and pale in the next. */
+  function labelphoto(spec) {
+    var f = h('figure', 'photo lp');
+    var wh = (global.PHOTO_SIZE || {})[spec.img + '-900.jpg'] || [400, 400];
+    var IW = wh[0], IH = wh[1], PAD = Math.round(IW * 0.40), VW = IW + PAD * 2;
+    var pins = spec.pins || [], at = {};
+    var s = '<svg viewBox="0 0 ' + VW + ' ' + IH + '" class="lp__svg" role="img" aria-label="' + esc(spec.alt || '') + '">' +
+      '<image href="assets/photos/' + spec.img + '-900.jpg" x="' + PAD + '" y="0" width="' + IW + '" height="' + IH + '"/>';
+    (spec.rings || []).forEach(function (r) {
+      var cx = PAD + r[0] / 100 * IW, cy = r[1] / 100 * IH, tr = r[4] ? ' transform="rotate(' + r[4] + ' ' + cx.toFixed(1) + ' ' + cy.toFixed(1) + ')"' : '';
+      var e = ' cx="' + cx.toFixed(1) + '" cy="' + cy.toFixed(1) + '" rx="' + r[2] + '" ry="' + r[3] + '"' + tr;
+      s += '<ellipse class="lp__ringhalo"' + e + '/><ellipse class="lp__ring"' + e + '/>';
+    });
+    function textW(t) { return t.length * 7.4; }
+    pins.forEach(function (q) {
+      var x = PAD + q[0] / 100 * IW, y = q[1] / 100 * IH, right = q[3] !== 'left';
+      var end = right ? PAD + IW + 5 : PAD - 5, tx = right ? PAD + IW + 11 : PAD - 11;
+      at[q[2]] = { y: y, right: right, w: textW(q[2]) };
+      var ln = ' x1="' + x.toFixed(1) + '" y1="' + y.toFixed(1) + '" x2="' + end + '" y2="' + y.toFixed(1) + '"';
+      s += '<line class="lp__leadhalo"' + ln + '/><line class="lp__lead"' + ln + '/>' +
+           '<circle class="lp__dot" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="3"/>' +
+           '<text class="lp__lab" x="' + tx + '" y="' + (y + 4.5).toFixed(1) + '"' + (right ? '' : ' text-anchor="end"') + '>' + esc(q[2]) + '</text>';
+    });
+    /* a bracket joins two labels that sit next to each other on the same side, and names what they make up */
+    (spec.groups || []).forEach(function (g) {
+      var a = at[g[1]], b = at[g[2]]; if (!a || !b) return;
+      var y1 = Math.min(a.y, b.y) - 8, y2 = Math.max(a.y, b.y) + 8, w = Math.max(a.w, b.w), mid = (y1 + y2) / 2;
+      if (a.right) {
+        var xb = PAD + IW + 11 + w + 9;
+        s += '<path class="lp__brace" d="M' + (xb - 6).toFixed(1) + ' ' + y1.toFixed(1) + 'H' + xb.toFixed(1) + 'V' + y2.toFixed(1) + 'H' + (xb - 6).toFixed(1) + '"/>' +
+             '<text class="lp__group" x="' + (xb + 8).toFixed(1) + '" y="' + (mid + 4.5).toFixed(1) + '">' + esc(g[3]) + '</text>';
+      } else {
+        var xl = PAD - 11 - w - 9;
+        s += '<path class="lp__brace" d="M' + (xl + 6).toFixed(1) + ' ' + y1.toFixed(1) + 'H' + xl.toFixed(1) + 'V' + y2.toFixed(1) + 'H' + (xl + 6).toFixed(1) + '"/>' +
+             '<text class="lp__group" x="' + (xl - 8).toFixed(1) + '" y="' + (mid + 4.5).toFixed(1) + '" text-anchor="end">' + esc(g[3]) + '</text>';
+      }
+    });
+    f.innerHTML = s + '</svg><figcaption>' + (spec.cap ? mk(spec.cap) + ' · ' : '') + esc(spec.credit || '') + '</figcaption>';
+    return f;
+  }
+
   [['video', video], ['germinate', germinate], ['equation', equation], ['limitgraph', limitgraph], ['watch', watch], ['pondweed', pondweed], ['starchtest', starchtest], ['indicator', indicator],
-   ['potometer', potometer], ['sourcesink', sourcesink], ['auxin', auxin], ['diagram', diagram], ['pollentube', pollentube], ['adapt', adapt]]
+   ['potometer', potometer], ['sourcesink', sourcesink], ['auxin', auxin], ['diagram', diagram], ['labelphoto', labelphoto], ['pollentube', pollentube], ['adapt', adapt]]
     .forEach(function (m) { W.register(m[0], m[1]); });
 
   global.Learn = { widget: W.widget, reap: W.reap, svgFor: svgFor, DIAGRAMS: DIAGRAMS, PART_INFO: PART_INFO };

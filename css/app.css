@@ -1833,3 +1833,16 @@ picture{display:block;line-height:0}
 .po__noiv{font-size:12.8px;line-height:1.5;color:#3C3C3C;background:var(--amber-tint);border-left:3px solid var(--amber);
   border-radius:0 var(--r) var(--r) 0;padding:8px 12px;margin:0 0 10px}
 .po__noiv b{color:var(--amber)}
+
+/* ----- labelphoto: a photograph labelled the way a drawing is ----- */
+.lp{margin:14px 0;background:#fff;border:1px solid var(--edge);border-radius:var(--r);padding:8px 6px 6px}
+.lp__svg{display:block;width:100%;height:auto;font-family:var(--font)}
+.lp__ringhalo{fill:none;stroke:rgba(0,0,0,.45);stroke-width:4.2}
+.lp__ring{fill:none;stroke:#FFF1A8;stroke-width:2;stroke-dasharray:6 3.5}
+.lp__leadhalo{stroke:#fff;stroke-width:3.4;opacity:.9}
+.lp__lead{stroke:#14572B;stroke-width:1.3}
+.lp__dot{fill:#14572B;stroke:#fff;stroke-width:1.6}
+.lp__lab{font-size:13px;fill:#14572B;font-weight:700}
+.lp__brace{fill:none;stroke:#3C3C3C;stroke-width:1.5}
+.lp__group{font-size:13px;fill:#3C3C3C;font-weight:700;font-style:italic}
+.lp figcaption{font-size:12.5px;line-height:1.5;color:var(--grey);margin:6px 6px 0}
