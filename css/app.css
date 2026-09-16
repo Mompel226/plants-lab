@@ -1439,27 +1439,59 @@ picture{display:block;line-height:0}
 @media (max-width:620px){ .fl{grid-template-columns:1fr} }
 
 /* the pollen tube */
-.pt{display:grid;grid-template-columns:minmax(0,1fr) minmax(200px,1.2fr);gap:14px;align-items:start}
-.pt__svg{width:100%;max-width:300px;height:auto;display:block;border:1px solid var(--edge);border-radius:var(--r);background:#F7F4EC}
-.pt__ovary{fill:#C7E3A6;stroke:#2F7D46;stroke-width:1.6}
-.pt__ovule{fill:#fff;stroke:#2F7D46;stroke-width:1.4}
-.pt__egg{fill:#F5A3C3;stroke:#B85C86;stroke-width:1.2;transition:fill .4s}
-.pt__egg.is-fused{fill:#7B4FA6;stroke:#5B3FA0}
-.pt__style{fill:#B9DB94;stroke:#2F7D46;stroke-width:1.4}
-.pt__stigma{fill:#7AA35A;stroke:#2F7D46;stroke-width:1.4}
-.pt__grain{fill:#F3C844;stroke:#8A5A0E;stroke-width:1.4}
-.pt__tube{fill:none;stroke:#F2A93B;stroke-width:5;stroke-linecap:round}
-.pt__nucleus{fill:#8A5A0E}
-.pt__nucleus.is-fused{fill:#5B3FA0}
-.pt__t{font-size:10px;fill:#3C3C3C;font-family:var(--font)}
-.pt__steps{margin:0;padding:0;list-style:none;counter-reset:pt;display:flex;flex-direction:column;gap:6px}
-.pt__step{counter-increment:pt;font-size:13.5px;line-height:1.4;padding:7px 10px 7px 34px;position:relative;border:1.5px solid var(--edge);border-radius:var(--r);background:#fff;color:#4A4A4A}
-.pt__step::before{content:counter(pt);position:absolute;left:8px;top:7px;width:20px;height:20px;border-radius:50%;background:var(--edge-2);color:var(--grey);font-size:11px;font-weight:700;display:grid;place-items:center}
-.pt__step.is-on{border-color:var(--k-repro);background:#FBEAF1;color:var(--ink)}
-.pt__step.is-on::before{background:var(--k-repro);color:#fff}
-.pt__step.is-done{border-color:#A9D6BA;background:var(--green-tint)}
-.pt__step.is-done::before{background:var(--green-2);color:#fff}
-@media (max-width:620px){ .pt{grid-template-columns:1fr} }
+/* pollentube: the controls above; the drawing and the steps below. Only the step on screen is
+   open, so the steps column stays about as tall as the drawing beside it. */
+.pt__bar{display:flex;align-items:center;gap:12px;margin:10px 0 12px;flex-wrap:wrap}
+.pt__play{font:inherit;font-size:13.5px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:7px;min-width:122px;padding:7px 16px 7px 13px;cursor:pointer;
+  border:1.5px solid var(--k-repro);border-radius:var(--r-pill);background:var(--k-repro);color:#fff}
+.pt__play:hover{filter:brightness(1.08)}
+.pt__play.is-playing{background:#fff;color:var(--k-repro)}
+.pt__ico{font-size:11px;line-height:1}
+.pt__prog{flex:1 1 160px;min-width:120px;display:flex;gap:3px;height:9px;cursor:pointer}
+.pt__seg{position:relative;flex:1 1 0;background:var(--edge-2);border-radius:var(--r-pill);overflow:hidden}
+.pt__seg i{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--k-repro);border-radius:inherit}
+.pt__count{font-size:12.5px;font-weight:600;color:var(--grey);min-width:80px;text-align:right;font-variant-numeric:tabular-nums}
+.pt{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(200px,1fr);gap:16px;align-items:start}
+.pt.pt--stack{grid-template-columns:minmax(0,1fr)}
+.pt__fig{margin:0;position:relative}
+.pt__svg{width:100%;max-width:440px;height:auto;display:block;margin:0 auto}
+.pt__view{fill:#F5F0E3}
+.pt__viewline{fill:none;stroke:#E1D7C3;stroke-width:1}
+.pt__lab{fill:#232323;font-family:var(--font);font-weight:600}
+.pt__lead{fill:none;stroke:#474747;stroke-width:.9;stroke-linejoin:round}
+.pt__leadhalo{fill:none;stroke:#FFFFFF;stroke-opacity:.85;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.pt__pin{fill:#333333;stroke:#FFFFFF;stroke-width:.8}
+.pt__now{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;margin:0}
+.pt__steps{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:5px}
+.pt__stepb{font:inherit;display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;cursor:pointer;padding:7px 11px;
+  border:1.5px solid var(--edge);border-radius:var(--r);background:#fff;color:#4A4A4A;transition:border-color .2s,background-color .2s}
+.pt__stepb:hover{border-color:#D9A9C0}
+.pt__num{flex:none;width:21px;height:21px;border-radius:50%;background:var(--edge-2);color:var(--grey);font-size:11.5px;font-weight:700;display:grid;place-items:center;margin-top:1px}
+.pt__txt{display:block;font-size:13.5px;line-height:1.42;padding-top:1px}
+.pt__txt b{color:var(--ink);font-weight:700}
+.pt__tag{font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--grey);background:var(--edge-2);border-radius:var(--r-pill);padding:1px 7px;vertical-align:1px;white-space:nowrap}
+.pt__p,.pt__stepib{display:none}
+.pt__step.is-on .pt__p{display:block;margin-top:3px}
+.pt.is-ib .pt__step.is-on .pt__stepib{display:block;margin-top:6px;padding-top:6px;border-top:1px dashed #D3C2EA;color:#4B3A6E;font-size:13px}
+.pt__step.is-on .pt__stepb{border-color:var(--k-repro);background:#FBEAF1;color:var(--ink)}
+.pt__step.is-on .pt__num{background:var(--k-repro);color:#fff}
+.pt__step.is-done .pt__stepb{border-color:#A9D6BA;background:var(--green-tint)}
+.pt__step.is-done .pt__num{background:var(--green-2);color:#fff}
+.pt__ibchip{display:inline-block;font-size:9.5px;font-weight:800;letter-spacing:.08em;color:#5A3D8A;background:#EFE8F8;border:1px solid #CDB9E8;border-radius:var(--r-pill);padding:0 6px;vertical-align:1px}
+.pt__more{font:inherit;font-size:13.5px;font-weight:600;width:100%;margin-top:12px;text-align:left;cursor:pointer;padding:9px 13px;line-height:1.4;
+  border:1.5px dashed #CDB9E8;border-radius:var(--r);background:#FAF7FD;color:#4B3A6E}
+.pt__more:hover{border-style:solid;background:#F3ECFB}
+.pt__more[aria-expanded="true"]{border-style:solid}
+.pt__moreq{font-weight:800;color:#5A3D8A}
+.pt__ib{margin-top:8px;padding:13px 16px;border:1px solid #DCCDEF;border-radius:var(--r);background:#FCFAFE;font-size:13.5px;line-height:1.52;color:#333}
+.pt__ib p{margin:0 0 8px}
+.pt__ib ul{margin:0 0 8px;padding-left:20px}
+.pt__ib li{margin:2px 0}
+.pt__ib b{color:#4B3A6E}
+.pt__ibbanner{background:#EFE8F8;color:#4B3A6E;border-radius:var(--r-sm);padding:6px 9px;font-size:12.5px}
+.pt__beyond{margin:10px 0 8px;padding:8px 10px;border-left:3px solid var(--red);background:var(--red-tint);border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:13px}
+.pt__beyond b{color:var(--red)}
+.pt__src{font-size:11.5px;color:#6B6B63;margin:0!important;line-height:1.45}
 
 /* two plants built for hard places */
 .ad{display:grid;grid-template-columns:1fr 1fr;gap:12px}

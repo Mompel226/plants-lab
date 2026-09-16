@@ -13,7 +13,7 @@
      sourcesink   the same plant in two seasons, every part labelled source or sink
      auxin        move the light and watch the auxin, then the shoot, move
      diagram      the lab's own labelled drawings, part by part (the half-flower)
-     pollentube   the pollen tube growing down the style to the ovule
+     pollentube   pollination to fruit: the tube, fertilisation, seeds (with an IB layer)
      adapt        two plants built for hard places, feature by feature
    Also exported for the questions: svgFor (the drawings), so a hotspot can use one.
    ============================================================ */
@@ -4871,48 +4871,715 @@
     return box;
   }
 
-  /* ---------- pollentube ---------- */
+  /* ---------- pollentube ----------
+     From pollination to fruit, in a longitudinal section of one carpel with three ovules.
+
+     Everything drawn is a pure function of the time t. Play, Pause, a click on a step and reduced
+     motion all come down to render(t), and a headless check can seek to any frame.
+
+     The camera moves, because no single view can show both ends of the story. A pollen nucleus is
+     a few micrometres across and a style is millimetres long, so the nucleus was a dot in the old
+     300 px drawing. The labels live in the two side margins and never on the drawing. Every leader
+     is ruled horizontally, and labels on one side keep the order of their parts, so no two cross.
+
+     The biology it animates, checked against the sources in the IB panel:
+       · the nuclei travel near the tip WHILE the tube grows (the old version grew the whole tube
+         first and sent the nucleus down afterwards, which is not what happens);
+       · each ovule receives its own tube, which enters through the micropyle;
+       · after fertilisation the ovules and the ovary grow TOGETHER, so steps 5 and 6 overlap in the
+         drawing as they do in a real flower;
+       · the IB layer (D3.1.8, "production of gametes inside … pollen grains"): a tube cell and a
+         generative cell; the generative cell divides by mitosis inside the tube, as in two-celled
+         pollen, about 70% of species (Brewbaker 1967, Am J Bot 54: 1069); one male gamete fuses
+         with the egg cell and the other with the central cell, which is beyond IB. */
+  var PT_UID = 0;
   function pollentube(spec) {
+    var uid = ++PT_UID;
     var box = h('div', 'widget');
-    box.appendChild(head(spec.title || 'Grow the pollen tube', spec.ask, 'Press play'));
-    var wrap = h('div', 'pt');
-    wrap.innerHTML = '<svg viewBox="0 0 300 300" class="pt__svg" aria-label="A carpel: pollen grain on the stigma, the pollen tube growing down the style into the ovule">' +
-      '<rect x="0" y="0" width="300" height="300" fill="#F7F4EC"/>' +
-      '<ellipse class="pt__ovary" cx="150" cy="230" rx="60" ry="56"/><circle class="pt__ovule" cx="150" cy="236" r="26"/><circle class="pt__egg" cx="150" cy="240" r="7"/>' +
-      '<path class="pt__style" d="M138 176 C138 130 140 90 142 52 H158 C160 90 162 130 162 176 Z"/><ellipse class="pt__stigma" cx="150" cy="44" rx="26" ry="12"/>' +
-      '<circle class="pt__grain" cx="150" cy="36" r="8"/>' +
-      '<path class="pt__tube" d="M150 44 C148 90 152 140 150 176 C149 200 150 216 150 230"/>' +
-      '<circle class="pt__nucleus" cx="150" cy="36" r="4"/>' +
-      '<text class="pt__t" x="8" y="292"></text></svg>';
-    var svg = wrap.firstChild, tube = svg.querySelector('.pt__tube'), nuc = svg.querySelector('.pt__nucleus'), egg = svg.querySelector('.pt__egg'), txt = svg.querySelector('.pt__t');
-    var steps = h('ol', 'pt__steps');
-    var STEPS = ['A pollen grain lands on the stigma — pollination.', 'It grows a pollen tube down through the style.', 'The tube grows into the ovary and enters an ovule.', 'The pollen nucleus travels down the tube and fuses with the nucleus of the female gamete — fertilisation.'];
-    STEPS.forEach(function (s, i) { steps.appendChild(h('li', 'pt__step', esc(s))); });
-    var len = 0; try { len = tube.getTotalLength(); } catch (e) { len = 200; }
-    var play = h('button', 'wbtn', 'Play'); play.type = 'button';
-    var raf = null, t0 = null;
-    function setStep(i) { steps.querySelectorAll('li').forEach(function (li, k) { li.classList.toggle('is-on', k === i); li.classList.toggle('is-done', k < i); }); txt.textContent = STEPS[i] ? STEPS[i].replace(/ — .*/, '') : ''; }
-    function frame(now) {
-      if (t0 == null) t0 = now;
-      var k = Math.min(1, (now - t0) / 5200);
-      var grow = Math.min(1, k / .55), travel = Math.max(0, (k - .6) / .4);
-      tube.style.strokeDasharray = len; tube.style.strokeDashoffset = len * (1 - grow);
-      if (k < .1) setStep(0); else if (k < .55) setStep(1); else if (k < .6) setStep(2); else setStep(3);
-      if (travel > 0) {
-        var p = tube.getPointAtLength(len * travel); nuc.setAttribute('cx', p.x); nuc.setAttribute('cy', p.y);
-        if (travel >= 1) { egg.classList.add('is-fused'); nuc.classList.add('is-fused'); txt.textContent = 'Fertilisation: the two nuclei have fused.'; }
+    box.appendChild(head(spec.title || 'From pollen grain to fruit', spec.ask, 'Press play'));
+
+    /* ----- the frame: two label margins and the viewport between them ----- */
+    var W = 420, H = 450, GUT = 106, VX = GUT, VY = 8, VW = 208, VH = 434;
+
+    function clamp01(k) { return k < 0 ? 0 : k > 1 ? 1 : k; }
+    function seg(t, a, b) { return clamp01((t - a) / (b - a)); }
+    function ease(k) { k = clamp01(k); return k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2; }
+    function lerp(a, b, k) { return a + (b - a) * k; }
+    function hex(c) {
+      if (c.charAt(0) !== '#') return c.replace(/[^\d,]/g, '').split(',').map(Number);
+      return [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)];
+    }
+    function mixc(a, b, k) {
+      k = clamp01(k); if (k === 0) return a; if (k === 1) return b;
+      var x = hex(a), y = hex(b);
+      return 'rgb(' + Math.round(lerp(x[0], y[0], k)) + ',' + Math.round(lerp(x[1], y[1], k)) + ',' + Math.round(lerp(x[2], y[2], k)) + ')';
+    }
+    function n2(v) { return Math.round(v * 100) / 100; }
+
+    /* ----- the paths the three tubes grow along (world units; x = 104 is the axis) -----
+       Grain 0 is the one the camera follows. The order across the style is the order across the
+       ovary, so no tube crosses another: the left grain's tube leaves the column first, for the top
+       ovule; the right grain's goes to the right-hand ovule; the middle grain's goes on to the
+       bottom. Centripetal Catmull–Rom, so a tight bend never loops. */
+    function spline(P) {
+      var pts = [], i, k, n = P.length;
+      var E0 = [2 * P[0][0] - P[1][0], 2 * P[0][1] - P[1][1]], E1 = [2 * P[n - 1][0] - P[n - 2][0], 2 * P[n - 1][1] - P[n - 2][1]];
+      function tj(ti, a, b) { return ti + Math.max(1e-4, Math.pow(Math.hypot(b[0] - a[0], b[1] - a[1]), .5)); }
+      for (i = 0; i < n - 1; i++) {
+        var p0 = i ? P[i - 1] : E0, p1 = P[i], p2 = P[i + 1], p3 = i + 2 < n ? P[i + 2] : E1;
+        var t0 = 0, t1 = tj(t0, p0, p1), t2 = tj(t1, p1, p2), t3 = tj(t2, p2, p3);
+        for (k = 0; k < 14; k++) {
+          var t = lerp(t1, t2, k / 14), q = [0, 1].map(function (d) {
+            var a1 = (t1 - t) / (t1 - t0) * p0[d] + (t - t0) / (t1 - t0) * p1[d];
+            var a2 = (t2 - t) / (t2 - t1) * p1[d] + (t - t1) / (t2 - t1) * p2[d];
+            var a3 = (t3 - t) / (t3 - t2) * p2[d] + (t - t2) / (t3 - t2) * p3[d];
+            var b1 = (t2 - t) / (t2 - t0) * a1 + (t - t0) / (t2 - t0) * a2;
+            var b2 = (t3 - t) / (t3 - t1) * a2 + (t - t1) / (t3 - t1) * a3;
+            return (t2 - t) / (t2 - t1) * b1 + (t - t1) / (t2 - t1) * b2;
+          });
+          pts.push(q);
+        }
       }
-      if (k < 1 && wrap.isConnected) raf = requestAnimationFrame(frame); else { raf = null; play.textContent = 'Play again'; }
+      pts.push(P[n - 1].slice());
+      var len = [0];
+      for (i = 1; i < pts.length; i++) len.push(len[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+      return { pts: pts, len: len, total: len[len.length - 1] };
+    }
+    function at(path, L) {
+      var pts = path.pts, len = path.len, last = pts.length - 1;
+      if (L <= 0) return { x: pts[0][0], y: pts[0][1], a: Math.atan2(pts[1][1] - pts[0][1], pts[1][0] - pts[0][0]), i: 0 };
+      if (L >= path.total) return { x: pts[last][0], y: pts[last][1], a: Math.atan2(pts[last][1] - pts[last - 1][1], pts[last][0] - pts[last - 1][0]), i: last - 1 };
+      var lo = 0, hi = last;
+      while (hi - lo > 1) { var mid = (lo + hi) >> 1; if (len[mid] < L) lo = mid; else hi = mid; }
+      var u = (L - len[lo]) / ((len[hi] - len[lo]) || 1);
+      return { x: lerp(pts[lo][0], pts[hi][0], u), y: lerp(pts[lo][1], pts[hi][1], u), a: Math.atan2(pts[hi][1] - pts[lo][1], pts[hi][0] - pts[lo][0]), i: lo };
+    }
+    function upto(path, L) {
+      if (L <= .01) return '';
+      var e = at(path, L), d = 'M' + n2(path.pts[0][0]) + ' ' + n2(path.pts[0][1]);
+      for (var i = 1; i <= e.i; i++) d += 'L' + n2(path.pts[i][0]) + ' ' + n2(path.pts[i][1]);
+      return d + 'L' + n2(e.x) + ' ' + n2(e.y);
+    }
+
+    var GRAINS = [
+      { x: 122, y: 43.5, drop: .5, land: 2.9, sway: 5 },
+      { x: 104, y: 39, drop: .15, land: 2.5, sway: -4 },
+      { x: 86, y: 43.5, drop: .75, land: 3.15, sway: 4 }
+    ];
+    var OVULES = [                                   /* dir: which way the micropyle faces */
+      { cx: 78, cy: 250, dir: 1 },
+      { cx: 130, cy: 292, dir: -1 },
+      { cx: 78, cy: 334, dir: 1 }
+    ];
+    var TUBES = [
+      { g: 0, o: 1, t0: 5.6, t1: 15.8, pts: [[122, 43.5], [121, 51], [116, 62], [108.6, 73], [107.6, 90], [107.5, 140], [107.5, 196], [107.6, 250], [107.8, 276], [109.5, 286.5], [113.5, 291.3], [119.5, 292]] },
+      { g: 1, o: 2, t0: 5.3, t1: 15.5, pts: [[104, 39], [104, 50], [104, 62], [104, 90], [104, 140], [104, 196], [104, 260], [104, 312], [103.3, 325], [100, 331.8], [95, 333.8], [89, 334]] },
+      { g: 2, o: 0, t0: 5.5, t1: 14.4, pts: [[86, 43.5], [87.5, 51], [92.5, 62], [99.6, 73], [100.5, 90], [100.5, 140], [100.5, 196], [100.5, 228], [100.3, 239], [98.4, 246.5], [94.6, 249.7], [89, 250]] }
+    ];
+    TUBES.forEach(function (tb) { tb.path = spline(tb.pts); });
+
+    /* slow start (the grain germinates), steady growth, slow finish in the micropyle */
+    function prog(u) {
+      var a = .1, b = .06, v = 1 / (1 - a / 2 - b / 2), r;
+      u = clamp01(u);
+      if (u < a) return v * u * u / (2 * a);
+      if (u > 1 - b) { r = 1 - u; return 1 - v * r * r / (2 * b); }
+      return v * (u - a / 2);
+    }
+    function tubeLen(tb, t) { return tb.path.total * prog((t - tb.t0) / (tb.t1 - tb.t0)); }
+    function whenLen(tb, L) {                        /* the time the tube reaches length L */
+      var lo = tb.t0, hi = tb.t1;
+      for (var i = 0; i < 40; i++) { var mid = (lo + hi) / 2; if (tubeLen(tb, mid) < L) lo = mid; else hi = mid; }
+      return hi;
+    }
+    function lenAtY(tb, y) { for (var i = 0; i < tb.path.pts.length; i++) if (tb.path.pts[i][1] >= y) return tb.path.len[i]; return tb.path.total; }
+    TUBES.forEach(function (tb) {
+      tb.burst = tb.t1 + .45;
+      tb.move0 = tb.burst + .25; tb.move1 = tb.move0 + 1.3;
+      tb.fuse0 = tb.move1; tb.fuse1 = tb.fuse0 + .75;
+      tb.div = whenLen(tb, tb.path.total * .42);     /* IB: the generative cell divides */
+    });
+    var A = TUBES[0];
+    var T_STYLE = whenLen(A, lenAtY(A, 196));       /* A's tip leaves the style */
+    var T4 = A.t1, T5 = A.fuse1 + 1.65, T6 = T5 + 5.6, END = T6 + 6.2;
+
+    var STEPS = [
+      { t: 0, h: 'Pollination', p: 'Pollen grains land on the sticky stigma. The animation follows one grain.',
+        ib: 'Each grain contains two cells: a tube cell, with the tube nucleus, and a small generative cell.' },
+      { t: A.t0, h: 'The pollen tube grows', p: 'The grain grows a pollen tube down through the style. The pollen nucleus moves down the tube, near its tip. In most plants this takes hours, or a few days.',
+        ib: 'The tube nucleus moves near the tip. The generative cell divides by mitosis into two male gametes.' },
+      { t: T_STYLE, h: 'Into an ovule', p: 'The tube enters the ovary. Then it enters an ovule through a small opening, the micropyle.' },
+      { t: T4, h: 'Fertilisation', p: 'The pollen nucleus fuses with the nucleus of the female gamete. The new cell is a zygote.',
+        ib: 'One male gamete fuses with the egg cell. The second fuses with the central cell of the ovule: double fertilisation, which is beyond IB.' },
+      { t: T5, h: 'The ovule becomes a seed', tag: 'after fertilisation', p: 'The zygote develops into an embryo, and the outside of the ovule becomes the seed coat. Each fertilised ovule becomes one seed.' },
+      { t: T6, h: 'The ovary becomes the fruit', tag: 'after fertilisation', p: 'Over several weeks the ovary develops into the fruit, with the seeds inside. The style and stigma wither.' }
+    ];
+    function stepAt(t) { var k = 0; for (var i = 0; i < STEPS.length; i++) if (t >= STEPS[i].t) k = i; return k; }
+    function stepEnd(i) { return i + 1 < STEPS.length ? STEPS[i + 1].t : END; }
+
+    /* ----- colours: [flower, then fruit] where a part changes ----- */
+    var C = {
+      stig: ['#C6D862', '#8F714A'], stigLine: ['#62842A', '#6B5032'], pap: ['#DCE98A', '#A0825A'],
+      style: ['#CFE4A0', '#A68A60'], styleDark: ['#A9CB78', '#8A6C46'], styleLine: ['#648F33', '#6B5032'],
+      wall: ['#9ACA66', '#E4733B'], wallDark: ['#74A948', '#B84A26'], wallLine: ['#4C7C2C', '#8C3418'],
+      loc: ['#F2F8E4', '#FBD7B8'], col: ['#E0EDC0', '#F4BF96'], tract: '#F1F7DD',
+      ovBody: ['#EDF5D8', '#F5E6C2'], integ: ['#88B055', '#94622F'], integIn: ['#BDD598', '#C99B63'],
+      sac: '#FFFCF0', egg: '#F7D3E3', eggLine: '#C06F97', eggN: '#AE3F77',
+      male: '#2C63AE', maleRim: '#DCE7F7', tubeN: '#B8A68C', gen: '#DCE6F5', polar: '#D588B1',
+      zyg: '#6A48A5', endo: '#9A7CC6', glow: '#F4E3F7',
+      grainA: '#F8D766', grainB: '#E2A522', grainLine: '#A36F12', spike: '#D5961B',
+      tubeWall: '#CF9C3E', tubeIn: '#FFF3CE',
+      embryo: '#EEE0A0', embryoLine: '#AD9448',
+      sepal: '#6CA443', sepalLine: '#477728', stalk: '#7CB04F', stalkLine: '#4F7F2F'
+    };
+
+    /* ----- the drawing ----- */
+    var id = function (k) { return 'pt' + k + uid; };
+    var spikes = '';
+    for (var s = 0; s < 16; s++) {
+      var a0 = s / 16 * Math.PI * 2, a1 = a0 + .11, a2 = a0 - .11;
+      spikes += 'M' + n2(6.6 * Math.cos(a2)) + ' ' + n2(6.6 * Math.sin(a2)) + 'L' + n2(8.9 * Math.cos(a0)) + ' ' + n2(8.9 * Math.sin(a0)) + 'L' + n2(6.6 * Math.cos(a1)) + ' ' + n2(6.6 * Math.sin(a1)) + 'Z';
+    }
+    var PAP = [[76.5, 56], [79.5, 51.5], [83.5, 49], [88, 49], [92, 51], [96.5, 47.8], [100.2, 45], [104, 44], [107.8, 45], [111.5, 47.8], [116, 51], [120, 49], [124.5, 49], [128.5, 51.5], [131.5, 56]];
+    var svgHtml =
+      '<svg viewBox="0 0 ' + W + ' ' + H + '" class="pt__svg" role="img" aria-label="A carpel cut in half. Pollen grains land on the stigma, a pollen tube grows down the style into an ovule, the pollen nucleus fuses with the nucleus of the female gamete, and then the ovules become seeds and the ovary becomes a fruit.">' +
+      '<defs>' +
+        '<clipPath id="' + id('v') + '"><rect x="' + VX + '" y="' + VY + '" width="' + VW + '" height="' + VH + '" rx="14"/></clipPath>' +
+        '<clipPath id="' + id('s') + '"><rect data-r="styleclip" x="-50" y="-100" width="300" height="300"/></clipPath>' +
+        '<linearGradient id="' + id('gs') + '" x1="0" x2="1" y1="0" y2="0"><stop offset="0" data-r="gs0"/><stop offset=".45" data-r="gs1"/><stop offset="1" data-r="gs2"/></linearGradient>' +
+        '<radialGradient id="' + id('go') + '" cx=".36" cy=".3" r=".8"><stop offset="0" data-r="go0"/><stop offset="1" data-r="go1"/></radialGradient>' +
+        '<radialGradient id="' + id('gg') + '" cx=".35" cy=".3" r=".75"><stop offset="0" stop-color="' + C.grainA + '"/><stop offset="1" stop-color="' + C.grainB + '"/></radialGradient>' +
+        '<radialGradient id="' + id('gl') + '"><stop offset="0" stop-color="#E9D8FF" stop-opacity="1"/><stop offset=".55" stop-color="#C7A6F0" stop-opacity=".55"/><stop offset="1" stop-color="#C7A6F0" stop-opacity="0"/></radialGradient>' +
+      '</defs>' +
+      '<rect class="pt__view" x="' + VX + '" y="' + VY + '" width="' + VW + '" height="' + VH + '" rx="14"/>' +
+      '<g clip-path="url(#' + id('v') + ')"><g data-r="cam">' +
+        '<path data-r="stalk" fill="' + C.stalk + '" stroke="' + C.stalkLine + '" stroke-width=".9"/>' +
+        '<path data-r="sepals" fill="' + C.sepal + '" stroke="' + C.sepalLine + '" stroke-width=".9"/>' +
+        '<ellipse data-r="recep" fill="' + C.stalk + '" stroke="' + C.stalkLine + '" stroke-width=".9"/>' +
+        '<path data-r="wall" fill="url(#' + id('go') + ')" stroke-width="1.2"/>' +
+        '<path data-r="hl" fill="none" stroke="#FFFFFF" stroke-linecap="round" stroke-width="3"/>' +
+        '<g data-r="style">' +
+          '<path data-r="stylefill" fill="url(#' + id('gs') + ')"/>' +
+          '<path data-r="stract" stroke="none"/>' +
+          '<path data-r="styleedge" fill="none" stroke-width="1.1" clip-path="url(#' + id('s') + ')"/>' +
+        '</g>' +
+        '<path data-r="locule" stroke-width=".6"/>' +
+        '<path data-r="tract" stroke="none"/>' +
+        OVULES.map(function (o, i) {
+          return '<path data-r="fun' + i + '" fill="none" stroke-linecap="round"/><path data-r="funin' + i + '" fill="none" stroke-linecap="round"/>' +
+            '<g data-r="ov' + i + '">' +
+              '<ellipse data-r="body' + i + '" rx="16.4" ry="11.4"/>' +
+              '<rect data-r="canal' + i + '" x="12.6" y="-1.8" width="6" height="3.6"/>' +
+              '<path data-r="integ' + i + '" fill="none" stroke-linecap="round"/>' +
+              '<path data-r="integin' + i + '" fill="none" stroke-width=".7" stroke-linecap="round"/>' +
+              '<ellipse data-r="sac' + i + '" cx="1" rx="10.5" ry="6.2" fill="' + C.sac + '" stroke="#D8C9A2" stroke-width=".5"/>' +
+              '<g data-r="emb' + i + '"><ellipse data-r="cot' + i + '" fill="' + C.embryo + '" stroke="' + C.embryoLine + '" stroke-width=".6"/>' +
+                '<path data-r="split' + i + '" fill="none" stroke="' + C.embryoLine + '" stroke-width=".6"/>' +
+                '<ellipse data-r="rad' + i + '" rx="2.4" ry="1.5" fill="#E4D48E" stroke="' + C.embryoLine + '" stroke-width=".5"/></g>' +
+              '<circle data-r="egg' + i + '" cx="7.2" r="3.1" fill="' + C.egg + '" stroke="' + C.eggLine + '" stroke-width=".5"/>' +
+              '<circle data-r="glow' + i + '" cx="7.2" fill="url(#' + id('gl') + ')"/>' +
+              '<circle data-r="ring' + i + '" cx="7.2" fill="none" stroke="' + C.zyg + '"/>' +
+              '<circle data-r="eggn' + i + '" cx="7.2" r="1.45"/>' +
+              '<circle data-r="pol' + i + 'a" cx="-1.5" cy="-1.3" r="1.05" fill="' + C.polar + '"/><circle data-r="pol' + i + 'b" cx="-1.5" cy="1.3" r="1.05" fill="' + C.polar + '"/>' +
+              '<circle data-r="endo' + i + '" cx="-1.5" fill="' + C.endo + '"/>' +
+            '</g>';
+        }).join('') +
+        '<g data-r="stigma">' +
+          PAP.map(function (p) { return '<circle data-r="pap" cx="' + p[0] + '" cy="' + p[1] + '" r="2"/>'; }).join('') +
+          '<path data-r="stigpath" stroke-width="1.1" d="M95 74C88 72 74 70 74 60C74 52 80 48 86 49C90 49 93 51 94.5 52.5C96 46 100 44 104 44C108 44 112 46 113.5 52.5C115 51 118 49 122 49C128 48 134 52 134 60C134 70 120 72 113 74Z"/>' +
+          '<path d="M80 55C83 51.5 87 51 90 52M99 48C101.5 46.5 104.5 46.2 107 47" fill="none" stroke="#FFFFFF" stroke-opacity=".55" stroke-width="1.2" stroke-linecap="round"/>' +
+        '</g>' +
+        '<g data-r="tubes">' + TUBES.map(function (tb, i) {
+          return '<path data-r="tw' + i + '" fill="none" stroke="' + C.tubeWall + '" stroke-width="3.1" stroke-linecap="round" stroke-linejoin="round"/>' +
+                 '<path data-r="ti' + i + '" fill="none" stroke="' + C.tubeIn + '" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>' +
+                 '<circle data-r="pop' + i + '" fill="' + C.tubeIn + '" stroke="' + C.tubeWall + '" stroke-width=".5"/>';
+        }).join('') + '</g>' +
+        '<g data-r="grains">' + GRAINS.map(function (g, i) {
+          return '<g data-r="gr' + i + '"><path d="' + spikes + '" fill="' + C.spike + '"/><circle r="7" fill="url(#' + id('gg') + ')" stroke="' + C.grainLine + '" stroke-width=".8"/>' +
+                 '</g>';
+        }).join('') + '</g>' +
+        '<g data-r="nuclei">' + TUBES.map(function (tb, i) {
+          return '<ellipse data-r="pn' + i + '" fill="' + C.male + '" stroke="' + C.maleRim + '" stroke-width=".45"/>' +
+                 '<ellipse data-r="tn' + i + '" fill="' + C.tubeN + '" stroke="#6E5E4B" stroke-width=".4"/>' +
+                 '<path data-r="gc' + i + '" fill="' + C.gen + '" stroke="#7F9FD0" stroke-width=".4"/>' +
+                 '<ellipse data-r="gn' + i + 'a" fill="' + C.male + '"/><ellipse data-r="gn' + i + 'b" fill="' + C.male + '"/>' +
+                 '<ellipse data-r="m' + i + 'a" fill="' + C.male + '" stroke="' + C.maleRim + '" stroke-width=".45"/>' +
+                 '<ellipse data-r="m' + i + 'b" fill="' + C.male + '" stroke="' + C.maleRim + '" stroke-width=".45"/>';
+        }).join('') + '</g>' +
+      '</g></g>' +
+      '<rect class="pt__viewline" x="' + VX + '" y="' + VY + '" width="' + VW + '" height="' + VH + '" rx="14"/>' +
+      '<g data-r="labels" class="pt__labs"></g>' +
+      '</svg>';
+
+    var fig = h('div', 'pt__fig', svgHtml);
+    var svg = fig.firstChild, R = {};
+    Array.prototype.forEach.call(svg.querySelectorAll('[data-r]'), function (el) {
+      var k = el.getAttribute('data-r');
+      if (k === 'pap') (R.pap = R.pap || []).push(el); else R[k] = el;
+    });
+    function set(el, attrs) { for (var k in attrs) el.setAttribute(k, attrs[k]); }
+    function show(el, op) { el.setAttribute('opacity', n2(clamp01(op))); el.style.display = op > .004 ? '' : 'none'; }
+
+    /* ----- the camera: [centre x, centre y, zoom] ----- */
+    var CAM_FULL = [104, 222, 1], CAM_STIGMA = [105, 58, 3.3], CAM_OVULE = [123, 292, 4.2], CAM_SEEDS = [104, 292, 1.48], CAM_FRUIT = [104, 236, .98];
+    function mixCam(p, q, k) {
+      k = clamp01(k);
+      var sc = p[2] * Math.pow(q[2] / p[2], k);
+      /* move the centre as fast as the view narrows, so the thing zoomed into stays in view */
+      var kc = Math.abs(q[2] - p[2]) < 1e-6 ? k : (1 / p[2] - 1 / sc) / (1 / p[2] - 1 / q[2]);
+      return [lerp(p[0], q[0], kc), lerp(p[1], q[1], kc), sc];
+    }
+    function tipOf(tb, t) { return at(tb.path, tubeLen(tb, t)); }
+    function camAt(t) {
+      if (t <= 3) return CAM_FULL;
+      if (t <= 5) return mixCam(CAM_FULL, CAM_STIGMA, ease(seg(t, 3, 5)));
+      if (t <= 6) return CAM_STIGMA;
+      var c;
+      if (t < T5) {
+        var tip = tipOf(A, Math.min(t, A.t1));
+        var zoom = lerp(lerp(3.3, 2.7, ease(seg(t, 6, 7.6))), 1.6, ease(seg(t, T_STYLE - .5, T_STYLE + 1.6)));
+        var lead = lerp(30, 50, ease(seg(t, T_STYLE - .5, T_STYLE + 1.6)));
+        var follow = [lerp(104, tip.x, .25), tip.y + lead, zoom];
+        c = mixCam(CAM_STIGMA, follow, ease(seg(t, 6, 7)));
+        c = mixCam(c, CAM_OVULE, ease(seg(t, A.t1 - 2.5, A.t1 + .3)));
+        return c;
+      }
+      if (t < T6) return mixCam(CAM_OVULE, CAM_SEEDS, ease(seg(t, T5, T5 + 1.6)));
+      return mixCam(CAM_SEEDS, CAM_FRUIT, ease(seg(t, T6, T6 + 1.7)));
+    }
+
+    /* ----- the state at time t ----- */
+    function grainAt(i, t) {
+      var G = GRAINS[i], u = seg(t, G.drop, G.land);
+      var x = G.x + G.sway * Math.sin(u * Math.PI * 2.2) * (1 - u);
+      var y = lerp(-42, G.y, .5 - .5 * Math.cos(Math.PI * u));
+      var rot = 110 * (1 - ease(u));
+      var squash = t > G.land ? 1 - .08 * Math.sin(Math.PI * seg(t, G.land, G.land + .3)) : 1;
+      var swell = 1 + .1 * ease(seg(t, 4.6, 5.6));
+      return { x: x, y: y, rot: rot, sx: swell / Math.sqrt(squash), sy: swell * squash, s: swell, on: u > 0 };
+    }
+    function inGrain(gp, dx, dy) {                   /* a point inside a grain, turning with it */
+      var r = gp.rot * Math.PI / 180;
+      return { x: gp.x + (dx * Math.cos(r) - dy * Math.sin(r)) * gp.s, y: gp.y + (dx * Math.sin(r) + dy * Math.cos(r)) * gp.s };
+    }
+    function ovaryAt(t) {
+      var g = lerp(0, .3, ease(seg(t, T5 + .9, T5 + 5.2))) + .7 * ease(seg(t, T6 + .5, T6 + 5.4));
+      var rx = 62 + 26 * g, ry = 98 + 22 * g, wall = 10 + 6 * g;
+      return { g: g, rx: rx, ry: ry, wall: wall, cy: 390 - ry, top: 390 - 2 * ry, ripe: ease(seg(t, T6 + 2, T6 + 5.8)) };
+    }
+    function ovuleAt(i, t, ov) {                     /* where an ovule (or seed) is, and how big */
+      var O = OVULES[i];
+      var sg = lerp(0, .4, ease(seg(t, T5 + .9, T5 + 5.2))) + .6 * ease(seg(t, T6 + .5, T6 + 5.4));
+      return { x: 104 + (O.cx - 104) * ov.rx / 62, y: ov.cy + (O.cy - 292) * ov.ry / 98, s: 1 + .45 * sg, dir: O.dir };
+    }
+    function toWorld(op, u, v) { return { x: op.x + op.dir * u * op.s, y: op.y + v * op.s }; }
+    function elli(cx, cy, rx, ry) { return 'M' + n2(cx - rx) + ' ' + n2(cy) + 'A' + n2(rx) + ' ' + n2(ry) + ' 0 1 0 ' + n2(cx + rx) + ' ' + n2(cy) + 'A' + n2(rx) + ' ' + n2(ry) + ' 0 1 0 ' + n2(cx - rx) + ' ' + n2(cy) + 'Z'; }
+    function nuc(el, x, y, rx, ry, deg, op) {
+      show(el, op);
+      if (op > .004) set(el, { rx: n2(Math.max(.05, rx)), ry: n2(Math.max(.05, ry)), transform: 'translate(' + n2(x) + ' ' + n2(y) + ') rotate(' + n2(deg) + ')' });
+    }
+    function lens(el, x, y, rx, ry, deg, op) {        /* a spindle-shaped cell */
+      show(el, op);
+      if (op > .004) set(el, { d: 'M0 ' + n2(-ry) + 'Q' + n2(rx * 2) + ' 0 0 ' + n2(ry) + 'Q' + n2(-rx * 2) + ' 0 0 ' + n2(-ry) + 'Z', transform: 'translate(' + n2(x) + ' ' + n2(y) + ') rotate(' + n2(deg) + ')' });
+    }
+
+    var ib = false, S = {};                          /* S: the frame just drawn, for the labels */
+    function render(t) {
+      var cam = camAt(t), ov = ovaryAt(t), g = ov.g, ripe = ov.ripe;
+      var wither = ease(seg(t, T6 + .3, T6 + 3.6));
+      S = { t: t, cam: cam, ov: ov, ovules: [], grains: [], nuc: [], wither: wither };
+      set(R.cam, { transform: 'matrix(' + n2(cam[2]) + ' 0 0 ' + n2(cam[2]) + ' ' + n2(VX + VW / 2 - cam[2] * cam[0]) + ' ' + n2(VY + VH / 2 - cam[2] * cam[1]) + ')' });
+
+      /* stalk, sepals, receptacle */
+      var rw = 30 + 6 * g;
+      set(R.stalk, { d: 'M' + n2(104 - 6 - g) + ' 392C' + n2(104 - 5.5 - g) + ' 420 ' + n2(104 - 5.5) + ' 440 ' + n2(104 - 5.5) + ' 470L' + n2(104 + 5.5) + ' 470C' + n2(104 + 5.5) + ' 440 ' + n2(104 + 5.5 + g) + ' 420 ' + n2(104 + 6 + g) + ' 392Z' });
+      set(R.sepals, { d: 'M' + n2(104 - rw + 6) + ' 396C' + n2(80 - 10 * g) + ' 392 60 380 ' + n2(40 - 8 * g) + ' ' + n2(368 - 6 * g) + 'C' + n2(58 - 6 * g) + ' 386 80 400 ' + n2(104 - rw + 12) + ' 400Z' +
+                         'M' + n2(104 + rw - 6) + ' 396C' + n2(128 + 10 * g) + ' 392 148 380 ' + n2(168 + 8 * g) + ' ' + n2(368 - 6 * g) + 'C' + n2(150 + 6 * g) + ' 386 128 400 ' + n2(104 + rw - 12) + ' 400Z' });
+      set(R.recep, { cx: 104, cy: 393, rx: n2(rw), ry: n2(9 + g) });
+
+      /* the ovary wall, becoming the fruit wall */
+      set(R.wall, { d: elli(104, ov.cy, ov.rx, ov.ry), stroke: mixc(C.wallLine[0], C.wallLine[1], ripe) });
+      R.go0.setAttribute('stop-color', mixc(C.wall[0], C.wall[1], ripe));
+      R.go1.setAttribute('stop-color', mixc(C.wallDark[0], C.wallDark[1], ripe));
+      var hr = ov.rx * .78, hy = ov.cy - ov.ry * .55;
+      set(R.hl, { d: 'M' + n2(104 - hr * .9) + ' ' + n2(hy + ov.ry * .25) + 'Q' + n2(104 - hr) + ' ' + n2(hy - ov.ry * .12) + ' ' + n2(104 - hr * .55) + ' ' + n2(hy - ov.ry * .3), 'stroke-opacity': n2(.12 + .3 * ripe) });
+
+      /* style and stigma: fixed until the fruit forms, then they wither to a stub */
+      var sLen = 124 * (1 - .8 * wither), sw = 1 - .45 * wither, base = ov.top + 2, top = base - sLen, ht = 8 * sw, hb = 11 * sw;
+      var yb = ov.top + 14;
+      set(R.stylefill, { d: 'M' + n2(104 - ht) + ' ' + n2(top - 2) + 'C' + n2(104 - ht) + ' ' + n2(lerp(top, yb, .55)) + ' ' + n2(104 - hb * .9) + ' ' + n2(yb - 16) + ' ' + n2(104 - hb - 4) + ' ' + n2(yb) +
+                              'L' + n2(104 + hb + 4) + ' ' + n2(yb) + 'C' + n2(104 + hb * .9) + ' ' + n2(yb - 16) + ' ' + n2(104 + ht) + ' ' + n2(lerp(top, yb, .55)) + ' ' + n2(104 + ht) + ' ' + n2(top - 2) + 'Z' });
+      set(R.styleedge, { d: 'M' + n2(104 - ht) + ' ' + n2(top - 2) + 'C' + n2(104 - ht) + ' ' + n2(lerp(top, yb, .55)) + ' ' + n2(104 - hb * .9) + ' ' + n2(yb - 16) + ' ' + n2(104 - hb - 4) + ' ' + n2(yb) +
+                              'M' + n2(104 + ht) + ' ' + n2(top - 2) + 'C' + n2(104 + ht) + ' ' + n2(lerp(top, yb, .55)) + ' ' + n2(104 + hb * .9) + ' ' + n2(yb - 16) + ' ' + n2(104 + hb + 4) + ' ' + n2(yb),
+                         stroke: mixc(C.styleLine[0], C.styleLine[1], wither) });
+      set(R.styleclip, { y: n2(top - 40), height: n2(ov.top + 3 - (top - 40)) });
+      R.gs0.setAttribute('stop-color', mixc(C.styleDark[0], C.styleDark[1], wither));
+      R.gs1.setAttribute('stop-color', mixc(C.style[0], C.style[1], wither));
+      R.gs2.setAttribute('stop-color', mixc(C.styleDark[0], C.styleDark[1], wither));
+      var lean = -7 * wither;
+      R.style.setAttribute('transform', 'rotate(' + n2(lean) + ' 104 ' + n2(base) + ')');
+      var ss = 1 - .55 * wither, sb = [104 + (top - base) * Math.sin(lean * Math.PI / 180) * -1, base + (top - base) * Math.cos(lean * Math.PI / 180)];
+      set(R.stigma, { transform: 'translate(' + n2(sb[0]) + ' ' + n2(sb[1] + 2 * ss) + ') rotate(' + n2(lean) + ') scale(' + n2(ss) + ') translate(-104 -74)' });
+      set(R.stigpath, { fill: mixc(C.stig[0], C.stig[1], wither), stroke: mixc(C.stigLine[0], C.stigLine[1], wither) });
+      R.pap.forEach(function (p) { set(p, { fill: mixc(C.pap[0], C.pap[1], wither), stroke: mixc(C.stigLine[0], C.stigLine[1], wither), 'stroke-width': '.5' }); });
+
+      /* inside the ovary */
+      var lrx = ov.rx - ov.wall, lry = ov.ry - ov.wall, locTop = ov.cy - lry, locBot = ov.cy + lry, cw = 6 + g;
+      set(R.locule, { d: elli(104, ov.cy, lrx, lry), fill: mixc(C.loc[0], C.loc[1], ripe), stroke: mixc('#BFD79A', '#E9A77D', ripe) });
+      var tw = 5.4 * sw;
+      set(R.stract, { d: 'M' + n2(104 - tw * .85) + ' ' + n2(top + 3) + 'L' + n2(104 + tw * .85) + ' ' + n2(top + 3) + 'L' + n2(104 + tw) + ' ' + n2(yb) + 'L' + n2(104 - tw) + ' ' + n2(yb) + 'Z',
+                      fill: mixc(C.tract, C.style[1], wither) });
+      set(R.tract, { d: 'M' + n2(104 - cw) + ' ' + n2(locTop - 1) + 'L' + n2(104 + cw) + ' ' + n2(locTop - 1) + 'L' + n2(104 + cw) + ' ' + n2(locBot - 6) +
+                             'Q104 ' + n2(locBot + 2) + ' ' + n2(104 - cw) + ' ' + n2(locBot - 6) + 'Z',
+                     fill: mixc(C.col[0], C.col[1], ripe) });
+
+      var coat = ease(seg(t, T5 + .9, T5 + 4.6)), coat2 = ease(seg(t, T6 + 1, T6 + 5));
+      var emb = seg(t, T5 + .9, T5 + 4.8);
+      OVULES.forEach(function (O, i) {
+        var op = ovuleAt(i, t, ov); S.ovules.push(op);
+        var tb = TUBES.filter(function (x) { return x.o === i; })[0];
+        R['ov' + i].setAttribute('transform', 'translate(' + n2(op.x) + ' ' + n2(op.y) + ') scale(' + n2(op.s * op.dir) + ' ' + n2(op.s) + ')');
+        var colX = 104 - op.dir * (cw - 1.5), at1 = toWorld(op, 9, 9.5);
+        var fd = 'M' + n2(colX) + ' ' + n2(op.y + 11.5 * op.s) + 'Q' + n2(op.x + op.dir * 15 * op.s) + ' ' + n2(op.y + 12 * op.s) + ' ' + n2(at1.x) + ' ' + n2(at1.y);
+        set(R['fun' + i], { d: fd, stroke: mixc('#9DC174', '#DE9A6E', ripe), 'stroke-width': n2(5 * op.s) });
+        set(R['funin' + i], { d: fd, stroke: mixc(C.col[0], C.col[1], ripe), 'stroke-width': n2(3.6 * op.s) });
+        R['body' + i].setAttribute('fill', mixc(C.ovBody[0], C.ovBody[1], coat));
+        R['canal' + i].setAttribute('fill', mixc(C.loc[0], C.loc[1], ripe));
+        var gapA = lerp(16, 5, coat) * Math.PI / 180;
+        function arc(rx, ry) { var x = n2(rx * Math.cos(gapA)), y = n2(ry * Math.sin(gapA)); return 'M' + x + ' ' + y + 'A' + rx + ' ' + ry + ' 0 1 1 ' + x + ' ' + (-y); }
+        set(R['integ' + i], { d: arc(17, 12), stroke: mixc(mixc(C.integ[0], C.integ[1], coat), '#7A4A22', coat2), 'stroke-width': n2(2.1 + 1 * coat) });
+        set(R['integin' + i], { d: arc(13.8, 9.2), stroke: mixc(C.integIn[0], C.integIn[1], coat) });
+        R['canal' + i].setAttribute('height', n2(lerp(3.6, 1.4, coat))); R['canal' + i].setAttribute('y', n2(-lerp(3.6, 1.4, coat) / 2));
+        show(R['integin' + i], 1 - .75 * coat);
+        show(R['sac' + i], 1 - seg(emb, .1, .6));
+
+        /* fertilisation, in the ovule's own coordinates */
+        var f = ease(seg(t, tb.fuse0, tb.fuse1)), f2 = ease(seg(t, tb.fuse0 + .25, tb.fuse1 + .25));
+        var gone = seg(emb, 0, .35);
+        show(R['egg' + i], 1 - gone);
+        set(R['eggn' + i], { r: n2(lerp(1.45, 1.95, f)), fill: mixc(C.eggN, C.zyg, f) });
+        show(R['eggn' + i], 1 - gone);
+        var pulse = seg(t, tb.fuse0, tb.fuse1 + .5), ring = seg(t, tb.fuse1 - .2, tb.fuse1 + 1.1);
+        set(R['glow' + i], { r: n2(4.5 + 2.5 * ease(pulse)) });
+        show(R['glow' + i], pulse > 0 && pulse < 1 ? Math.sin(Math.PI * pulse) : 0);
+        set(R['ring' + i], { r: n2(2.2 + 9 * ease(ring)), 'stroke-width': n2(.9 * (1 - ring) + .15) });
+        show(R['ring' + i], ring > 0 && ring < 1 ? .85 * (1 - ring) : 0);
+        show(R['pol' + i + 'a'], ib ? 1 - f2 : 0); show(R['pol' + i + 'b'], ib ? 1 - f2 : 0);
+        R['pol' + i + 'a'].setAttribute('cy', n2(-1.3 * (1 - f2))); R['pol' + i + 'b'].setAttribute('cy', n2(1.3 * (1 - f2)));
+        set(R['endo' + i], { r: n2(lerp(1, 1.7, f2)) });
+        show(R['endo' + i], ib ? f2 * (1 - seg(t, T5 + 1.2, T5 + 3.2)) : 0);
+
+        /* the zygote develops into an embryo: two cotyledons and the root end at the micropyle */
+        var E = ease(emb), ecx = lerp(7.2, -.8, E), erx = lerp(2.4, 12.3, E), ery = lerp(2.4, 7.4, E);
+        show(R['emb' + i], seg(emb, .12, .4));
+        set(R['cot' + i], { cx: n2(ecx), rx: n2(erx), ry: n2(ery) });
+        set(R['split' + i], { d: 'M' + n2(ecx - erx * .92) + ' 0L' + n2(ecx + erx * .7) + ' 0', opacity: n2(seg(emb, .45, .8)) });
+        set(R['rad' + i], { cx: n2(Math.min(ecx + erx * .78, 10.6)), cy: n2(ery * .32), opacity: n2(seg(emb, .5, .85)) });
+      });
+
+      /* the pollen grains */
+      GRAINS.forEach(function (G, i) {
+        var gp = grainAt(i, t); S.grains.push(gp);
+        var gel = R['gr' + i];
+        show(gel, gp.on ? 1 - seg(t, T6, T6 + .8) : 0);
+        gel.setAttribute('transform', 'translate(' + n2(gp.x) + ' ' + n2(gp.y) + ') rotate(' + n2(gp.rot) + ') scale(' + n2(gp.sx) + ' ' + n2(gp.sy) + ')');
+      });
+
+      /* the tubes and what travels in them */
+      var tubesOp = 1 - seg(t, T5 + .1, T5 + 1.2);
+      TUBES.forEach(function (tb, i) {
+        var L = tubeLen(tb, t), tip = at(tb.path, L), d = upto(tb.path, L), gp = S.grains[tb.g];
+        set(R['tw' + i], { d: d }); set(R['ti' + i], { d: d });
+        show(R['tw' + i], d ? tubesOp : 0); show(R['ti' + i], d ? tubesOp : 0);
+        var pop = seg(t, tb.burst, tb.burst + .9);
+        set(R['pop' + i], { cx: n2(tip.x - Math.cos(tip.a) * .5), cy: n2(tip.y - Math.sin(tip.a) * .5), r: n2(1.4 + 2.4 * ease(pop)) });
+        show(R['pop' + i], pop > 0 && pop < 1 ? (1 - pop) * .9 : 0);
+        var deg = tip.a * 180 / Math.PI - 90;
+        function behind(back, gx, gy, k0, k1) {      /* in the grain, then just behind the tip */
+          var inG = inGrain(gp, gx, gy), p = at(tb.path, Math.max(0, L - back)), k = seg(L, k0, k1);
+          return { x: lerp(inG.x, p.x, k), y: lerp(inG.y, p.y, k), k: k, deg: p.a * 180 / Math.PI - 90 };
+        }
+        var eggW = toWorld(S.ovules[tb.o], 7.2, 0), cenW = toWorld(S.ovules[tb.o], -1.5, 0);
+        var mv = ease(seg(t, tb.move0, tb.move1)), mv2 = ease(seg(t, tb.move0 + .25, tb.move1 + .25));
+        var f = ease(seg(t, tb.fuse0, tb.fuse1)), f2 = ease(seg(t, tb.fuse0 + .25, tb.fuse1 + .25));
+        if (!ib) {
+          var p = behind(5.5, .5, 1.9, 4, 14);
+          var x = lerp(p.x, eggW.x, mv), y = lerp(p.y, eggW.y, mv);
+          var rx = lerp(lerp(2.2, 1.15, p.k), 1.5, mv) * (1 - f), ry = lerp(lerp(1.8, 2.6, p.k), 1.5, mv) * (1 - f);
+          nuc(R['pn' + i], x, y, rx, ry, lerp(p.deg, 0, mv), gp.on && f < 1 ? 1 : 0);
+          S.nuc.push({ x: x, y: y, on: gp.on && f < 1 });
+          [R['tn' + i], R['gc' + i], R['gn' + i + 'a'], R['gn' + i + 'b'], R['m' + i + 'a'], R['m' + i + 'b']].forEach(function (el) { show(el, 0); });
+        } else {
+          show(R['pn' + i], 0);
+          var tn = behind(3.2, -1.6, 1.2, 3, 11);
+          nuc(R['tn' + i], tn.x, tn.y, lerp(2.5, 1.25, tn.k), lerp(2.1, 3, tn.k), lerp(gp.rot + 20, tn.deg, tn.k), gp.on ? 1 - seg(t, tb.burst, tb.burst + .8) : 0);
+          var dv = seg(t, tb.div, tb.div + .9), sep = 1.8 * ease(seg(dv, .35, 1));
+          var gc = behind(8.8, 3.3, -.6, 8, 18);
+          var inGdeg = gp.rot - 15;
+          lens(R['gc' + i], gc.x, gc.y, lerp(.9, 1.1, gc.k), lerp(3.4, 3.6, gc.k) + 1.8 * ease(dv), lerp(inGdeg, gc.deg, gc.k), gp.on ? 1 - seg(dv, .7, 1) : 0);
+          [['a', 1], ['b', -1]].forEach(function (q) {
+            var el = R['gn' + i + q[0]], gdeg = lerp(inGdeg, gc.deg, gc.k), ga = gdeg * Math.PI / 180 + Math.PI / 2;
+            nuc(el, gc.x + Math.cos(ga) * sep * q[1], gc.y + Math.sin(ga) * sep * q[1], .6, 1.35, gdeg,
+                gp.on ? (q[0] === 'a' ? 1 : seg(dv, .3, .4)) * (1 - seg(dv, .7, 1)) : 0);
+          });
+          var ma = behind(7, 2, -1.4, 8, 18), mb = behind(10.6, 2, -1.4, 8, 18);
+          var ax = lerp(ma.x, eggW.x, mv), ay = lerp(ma.y, eggW.y, mv), bx = lerp(mb.x, cenW.x, mv2), by = lerp(mb.y, cenW.y, mv2);
+          nuc(R['m' + i + 'a'], ax, ay, lerp(1.05, 1.4, mv) * (1 - f), lerp(2, 1.4, mv) * (1 - f), lerp(ma.deg, 0, mv), gp.on && f < 1 ? seg(dv, .7, 1) : 0);
+          nuc(R['m' + i + 'b'], bx, by, lerp(1.05, 1.2, mv2) * (1 - f2), lerp(2, 1.2, mv2) * (1 - f2), lerp(mb.deg, 0, mv2), gp.on && f2 < 1 ? seg(dv, .7, 1) : 0);
+          S.nuc.push({ tn: tn, gc: gc, ma: { x: ax, y: ay }, mb: { x: bx, y: by }, div: dv, on: gp.on });
+        }
+      });
+      drawLabels(t);
+    }
+
+    /* ----- labels: in the margins, ruled horizontally, one side at a time ----- */
+    var FONT = 13, FAMILY = 'Calibri, Carlito, "Segoe UI", system-ui, -apple-system, "Helvetica Neue", sans-serif', ctx = null, widths = {};
+    function textW(s) {
+      var key = FONT + '|' + s;
+      if (widths[key] == null) {
+        try { ctx = ctx || document.createElement('canvas').getContext('2d'); ctx.font = '600 ' + FONT + 'px ' + FAMILY; widths[key] = ctx.measureText(s).width; }
+        catch (e) { widths[key] = s.length * FONT * .53; }
+      }
+      return widths[key];
+    }
+    function wrap(text, room) {
+      var words = text.split(' '), lines = [], cur = '';
+      words.forEach(function (w) { if (!cur) cur = w; else if (textW(cur + ' ' + w) <= room) cur += ' ' + w; else { lines.push(cur); cur = w; } });
+      if (cur) lines.push(cur);
+      return lines;
+    }
+    function ovaryEdge(side) { var ov = S.ov, y = S.cam[1], dy = (y - ov.cy) / ov.ry, hw = ov.rx * Math.sqrt(Math.max(0, 1 - dy * dy)); return { x: side === 'L' ? 104 - hw + 5 : 104 + hw - 5, y: y }; }
+    function styleEdge(side) { var y = S.cam[1]; return { x: side === 'L' ? 104 - 8.6 - (y - 72) * .012 : 104 + 8.6 + (y - 72) * .012, y: y }; }
+    function ovW(i, u, v) { return toWorld(S.ovules[i], u, v); }
+    var LABELS = [
+      /* the carpel, before anything happens */
+      { tx: 'stigma', side: 'L', t0: -1, t1: 1.1, at: function () { return { x: 79, y: 62 }; } },
+      { tx: 'style', side: 'R', t0: -1, t1: 1.1, at: function () { return { x: 112.2, y: 132 }; } },
+      { tx: 'ovary', side: 'L', t0: -1, t1: 1.1, at: function () { return { x: 46, y: 292 }; } },
+      { tx: 'ovule', side: 'R', t0: -1, t1: 1.1, at: function () { return ovW(1, -14, -6.8); } },
+      /* 1 pollination */
+      { tx: 'stigma', side: 'L', t0: 3.4, t1: 9, at: function () { return { x: 79, y: 62 }; } },
+      { tx: 'pollen grain', side: 'R', t0: 3.2, t1: 7.4, layer: 'core', at: function () { var g = S.grains[0]; return { x: g.x + 7.6 * g.s, y: g.y }; } },
+      { tx: 'pollen grain', side: 'R', t0: 3.2, t1: 4.7, layer: 'ib', at: function () { var g = S.grains[0]; return { x: g.x + 7.6 * g.s, y: g.y }; } },
+      { tx: 'tube nucleus', side: 'R', t0: 4.9, t1: A.t1 - 1.2, layer: 'ib', dot: C.tubeN, at: function () { var n = S.nuc[0].tn; return { x: n.x - 1.2, y: n.y }; } },
+      { tx: 'generative cell', side: 'R', t0: 4.9, t1: A.div + .5, layer: 'ib', dot: C.male, at: function () { var n = S.nuc[0].gc; return { x: n.x + 1.4, y: n.y }; } },
+      /* 2 the tube grows */
+      { tx: 'style', side: 'L', t0: 7.6, t1: T_STYLE + .4, at: function () { return styleEdge('L'); } },
+      { tx: 'pollen tube', side: 'R', t0: 6.9, t1: A.t1 - 1.1, at: function () { var L = tubeLen(A, S.t), p = at(A.path, Math.max(8, L - 40)); return { x: p.x + 1.6, y: p.y }; } },
+      { tx: 'pollen nucleus', side: 'R', t0: 7.6, t1: A.t1 - 1.3, layer: 'core', dot: C.male, at: function () { var n = S.nuc[0]; return { x: n.x + 1.4, y: n.y }; } },
+      { tx: 'two male gametes', side: 'R', t0: A.div + .8, t1: A.t1 - 1.3, layer: 'ib', dot: C.male, at: function () { var n = S.nuc[0]; return { x: (n.ma.x + n.mb.x) / 2 + 1.4, y: (n.ma.y + n.mb.y) / 2 }; } },
+      /* 3 into an ovule */
+      { tx: 'ovary', side: 'L', t0: T_STYLE + .3, t1: A.t1 - 1.2, at: function () { return ovaryEdge('L'); } },
+      { tx: 'ovule', side: 'R', t0: T_STYLE + 1.6, t1: A.t1 + .1, at: function () { return ovW(1, -14, -6.8); } },
+      { tx: 'micropyle', side: 'L', t0: A.t1 - 1.5, t1: A.burst + .9, at: function () { return ovW(1, 17.2, 2.4); } },
+      /* 4 fertilisation */
+      { tx: 'pollen nucleus', side: 'L', t0: A.t1 + .7, t1: A.fuse0 + .35, layer: 'core', dot: C.male, at: function () { var n = S.nuc[0]; return { x: n.x - 1.4, y: n.y + 1.2 }; } },
+      { tx: 'male gamete', side: 'L', t0: A.t1 + .7, t1: A.fuse0 + .35, layer: 'ib', dot: C.male, at: function () { var n = S.nuc[0].ma; return { x: n.x - 1.4, y: n.y + 1.2 }; } },
+      { tx: 'nucleus of the female gamete', side: 'R', t0: A.t1 + .2, t1: A.fuse1 - .2, dot: C.eggN, at: function () { return ovW(1, 7.2, -1.2); } },
+      { tx: 'zygote', side: 'R', t0: A.fuse1 - .2, t1: T5 + 1.2, at: function () { return ovW(1, 7.2, -3.1); } },
+      { tx: 'endosperm nucleus', side: 'R', t0: A.fuse1 + .25, t1: T5 + .9, layer: 'ib', dot: C.endo, at: function () { return ovW(1, -1.5, 1.6); } },
+      /* 5 the ovule becomes a seed */
+      { tx: 'seed coat', side: 'L', t0: T5 + 2.2, t1: T6 + .6, at: function () { return ovW(0, -16.8, 1.5); } },
+      { tx: 'seed', side: 'R', t0: T5 + 1.8, t1: T6 + .6, at: function () { return ovW(1, -15.5, -5); } },
+      { tx: 'embryo', side: 'L', t0: T5 + 3, t1: T6 + .6, at: function () { var o = S.ovules[2]; return toWorld(o, -7, 2); } },
+      /* 6 the ovary becomes the fruit */
+      { tx: 'withered stigma and style', side: 'R', t0: T6 + 2.6, t1: END + 9, at: function () { var ov = S.ov; return { x: 104 + 5, y: ov.top - 14 * (1 - .8 * S.wither) - 4 }; } },
+      { tx: 'fruit', side: 'L', t0: T6 + 2, t1: END + 9, at: function () { var ov = S.ov; return { x: 104 - ov.rx * .96, y: ov.cy + ov.ry * .28 }; } },
+      { tx: 'seeds', side: 'R', t0: T6 + 2.4, t1: END + 9, at: function () { return ovW(1, -13, -8); } }
+    ];
+    function drawLabels(t) {
+      var cam = S.cam, list = [], lh = FONT * 1.16, gap = 5;
+      LABELS.forEach(function (lb) {
+        if (lb.layer === 'core' && ib) return;
+        if (lb.layer === 'ib' && !ib) return;
+        var op = Math.min(seg(t, lb.t0, lb.t0 + .35), 1 - seg(t, lb.t1 - .35, lb.t1));
+        if (op <= .01) return;
+        var w = lb.at(), sx = VX + VW / 2 + cam[2] * (w.x - cam[0]), sy = VY + VH / 2 + cam[2] * (w.y - cam[1]);
+        var inX = Math.min(sx - VX, VX + VW - sx), inY = Math.min(sy - VY, VY + VH - sy);
+        if (inX < 2 || inY < 2) return;
+        op *= Math.min(1, inX / 12, inY / 12);
+        var lines = wrap(lb.tx, GUT - (lb.dot ? 22 : 12) - 4);
+        list.push({ side: lb.side, sx: sx, sy: sy, ly: sy, op: op, lines: lines, h: lines.length * lh, dot: lb.dot });
+      });
+      var out = '';
+      ['L', 'R'].forEach(function (side) {
+        var it = list.filter(function (x) { return x.side === side; }).sort(function (a, b) { return a.sy - b.sy; }), i;
+        if (it.length && it[0].ly < 3 + it[0].h / 2) it[0].ly = 3 + it[0].h / 2;
+        for (i = 1; i < it.length; i++) { var lo = it[i - 1].ly + it[i - 1].h / 2 + gap + it[i].h / 2; if (it[i].ly < lo) it[i].ly = lo; }
+        for (i = it.length - 1; i >= 0; i--) {
+          var hi = i === it.length - 1 ? H - 4 - it[i].h / 2 : it[i + 1].ly - it[i + 1].h / 2 - gap - it[i].h / 2;
+          if (it[i].ly > hi) it[i].ly = hi;
+        }
+        it.forEach(function (x) {
+          var ex = side === 'L' ? VX : VX + VW, dir = side === 'L' ? -1 : 1;
+          var bend = Math.abs(x.ly - x.sy) > .5;
+          var d = 'M' + n2(x.sx) + ' ' + n2(x.sy) + 'L' + n2(ex + dir * 2) + ' ' + n2(x.sy) + (bend ? 'L' + n2(ex + dir * 7) + ' ' + n2(x.ly) : '') + 'L' + n2(ex + dir * 9) + ' ' + n2(x.ly);
+          var tx = ex + dir * (x.dot ? 20 : 12), anchor = side === 'L' ? 'end' : 'start';
+          var y0 = x.ly - x.h / 2 + FONT * .82;
+          out += '<g opacity="' + n2(x.op) + '">' +
+            '<path class="pt__leadhalo" d="' + d + '"/><path class="pt__lead" d="' + d + '"/>' +
+            '<circle class="pt__pin" cx="' + n2(x.sx) + '" cy="' + n2(x.sy) + '" r="1.7"/>' +
+            (x.dot ? '<circle cx="' + n2(ex + dir * 14) + '" cy="' + n2(x.ly) + '" r="3.6" fill="' + x.dot + '" stroke="#FFFFFF" stroke-width="1"/>' : '') +
+            '<text class="pt__lab" x="' + n2(tx) + '" y="' + n2(y0) + '" text-anchor="' + anchor + '" style="font-size:' + FONT + 'px">' +
+            x.lines.map(function (ln, k) { return '<tspan x="' + n2(tx) + '" dy="' + (k ? n2(lh) : 0) + '">' + esc(ln) + '</tspan>'; }).join('') + '</text></g>';
+        });
+      });
+      R.labels.innerHTML = out;
+    }
+
+    /* ----- the controls: above the drawing and the steps ----- */
+    var bar = h('div', 'pt__bar');
+    var play = h('button', 'pt__play'); play.type = 'button';
+    var progBar = h('div', 'pt__prog');
+    progBar.setAttribute('aria-hidden', 'true');
+    STEPS.forEach(function (st, i) {
+      var sgm = h('span', 'pt__seg', '<i></i>');
+      sgm.style.flexGrow = (stepEnd(i) - st.t).toFixed(2);
+      sgm.addEventListener('click', function () { goStep(i); });
+      progBar.appendChild(sgm);
+    });
+    var count = h('span', 'pt__count');
+    bar.appendChild(play); bar.appendChild(progBar); bar.appendChild(count);
+    box.appendChild(bar);
+
+    var wrap2 = h('div', 'pt');
+    var now = h('p', 'pt__now'); now.setAttribute('aria-live', 'polite');
+    fig.appendChild(now);
+    var side = h('div', 'pt__side');
+    var steps = h('ol', 'pt__steps');
+    STEPS.forEach(function (st, i) {
+      var li = h('li', 'pt__step');
+      var b = h('button', 'pt__stepb',
+        '<span class="pt__num">' + (i + 1) + '</span><span class="pt__txt"><b>' + esc(st.h) + '</b>' +
+        (st.tag ? ' <span class="pt__tag">' + esc(st.tag) + '</span>' : '') +
+        '<span class="pt__p">' + esc(st.p) + '</span>' +
+        (st.ib ? '<span class="pt__stepib"><span class="pt__ibchip">IB</span> ' + esc(st.ib) + '</span>' : '') + '</span>');
+      b.type = 'button';
+      b.addEventListener('click', function () { goStep(i); });
+      li.appendChild(b); steps.appendChild(li);
+    });
+    side.appendChild(steps);
+
+    var more = h('button', 'pt__more'); more.type = 'button'; more.setAttribute('aria-expanded', 'false');
+    var panel = h('div', 'pt__ib');
+    panel.hidden = true;
+    panel.innerHTML =
+      '<p class="pt__ibbanner"><b>IB Biology, D3.1.8</b> — how gametes are made inside a pollen grain. Not asked in IGCSE 0610.</p>' +
+      '<p>The anther makes pollen grains by <b>meiosis</b>, so every nucleus in a grain is haploid. Inside the young grain, the nucleus then divides by <b>mitosis</b>. This makes two cells:</p>' +
+      '<ul><li>a large <b>tube cell</b>, with the <b>tube nucleus</b>. This cell grows the pollen tube;</li>' +
+      '<li>a small <b>generative cell</b> inside it. The generative cell divides by mitosis again, to make <b>two male gametes</b>.</li></ul>' +
+      '<p>The tube nucleus and the male gametes move down near the tip of the growing tube. In most flowering plants the generative cell divides inside the tube, as in the animation. In grasses it divides before the pollen is released from the anther.</p>' +
+      '<p>In the ovule, <b>one male gamete fuses with the egg cell</b>, which is the female gamete. This is the fertilisation that makes the zygote.</p>' +
+      '<div class="pt__beyond"><b>Beyond IB.</b> The second male gamete fuses with the <b>central cell</b> of the ovule, which usually has two nuclei. This starts the <b>endosperm</b>, a food store for the embryo. Two fusions in one ovule are called <b>double fertilisation</b>. Only flowering plants make their food store this way. Neither IGCSE nor IB asks for it.</div>' +
+      '<p class="pt__src">Sources: IB Biology guide (first assessment 2025), D3.1.8 · Clegg, Davis and Talbot, <i>Biology for the IB Diploma</i>, 3rd edition (Hodder, 2023), chapter D3.1 · Brewbaker (1967), <i>American Journal of Botany</i> 54: 1069–1083 — about 70% of the 2,000 species studied release pollen with two cells.</p>';
+    function paintMore() {
+      more.setAttribute('aria-expanded', ib ? 'true' : 'false');
+      more.innerHTML = ib ? '<span class="pt__ibchip">IB</span> Hide the detail inside the pollen grain'
+                          : '<span class="pt__ibchip">IB</span> <span class="pt__moreq">Want to know more?</span> A pollen grain has more than one nucleus';
+      panel.hidden = !ib;
+      wrap2.classList.toggle('is-ib', ib);
+    }
+    more.addEventListener('click', function () { ib = !ib; paintMore(); render(T); });
+    wrap2.appendChild(fig); wrap2.appendChild(side);
+    box.appendChild(wrap2);
+    /* under both columns, so the explanation reads at a comfortable width */
+    box.appendChild(more); box.appendChild(panel);
+
+    /* ----- playing ----- */
+    var T = 0, playing = false, raf = null, last = null, timer = null, started = false;
+    function still() { return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
+    function paint(t) {
+      render(t);
+      var k = stepAt(t), done = t >= END - 1e-6;
+      Array.prototype.forEach.call(steps.children, function (li, i) {
+        li.classList.toggle('is-on', started && i === k);
+        li.classList.toggle('is-done', started && (i < k || (done && i === k)));
+      });
+      Array.prototype.forEach.call(progBar.children, function (sg, i) {
+        var a = STEPS[i].t, b = stepEnd(i);
+        sg.firstChild.style.width = (started ? clamp01((t - a) / (b - a)) * 100 : 0).toFixed(1) + '%';
+        sg.classList.toggle('is-on', started && i === k);
+      });
+      count.textContent = started ? 'Step ' + (k + 1) + ' of ' + STEPS.length : STEPS.length + ' steps';
+      var nowText = started ? 'Step ' + (k + 1) + ': ' + STEPS[k].h + '. ' + STEPS[k].p + (ib && STEPS[k].ib ? ' ' + STEPS[k].ib : '') : '';
+      if (now.textContent !== nowText) now.textContent = nowText;
+      syncPlay();
+    }
+    function syncPlay() {
+      var ended = T >= END - 1e-6;
+      play.innerHTML = playing ? '<span class="pt__ico" aria-hidden="true">❚❚</span> Pause'
+        : ended ? '<span class="pt__ico" aria-hidden="true">↻</span> Play again'
+        : started ? '<span class="pt__ico" aria-hidden="true">▶</span> Resume'
+        : '<span class="pt__ico" aria-hidden="true">▶</span> Play';
+      play.classList.toggle('is-playing', playing);
+    }
+    function stop() {
+      playing = false;
+      if (raf) cancelAnimationFrame(raf); raf = null;
+      if (timer) clearTimeout(timer); timer = null;
+    }
+    function frame(ts) {
+      if (!box.isConnected) { stop(); return; }
+      if (last == null) last = ts;
+      T = Math.min(END, T + Math.min(.1, (ts - last) / 1000)); last = ts;
+      if (T >= END) { playing = false; raf = null; paint(T); return; }
+      paint(T);
+      raf = requestAnimationFrame(frame);
+    }
+    function start() {
+      stop(); started = true; playing = true; watchSize();
+      if (still()) { stillStep(stepAt(T)); return; }
+      last = null; raf = requestAnimationFrame(frame); syncPlay();
+    }
+    /* With reduced motion there is no camera move and no growth to watch: each step is shown as a
+       still of how it ends, and Play moves to the next still every few seconds. */
+    function stillStep(i) {
+      T = Math.max(STEPS[i].t, stepEnd(i) - .05); paint(T);
+      if (!playing) return;
+      if (i + 1 < STEPS.length) timer = setTimeout(function () { if (box.isConnected && playing) stillStep(i + 1); else stop(); }, 4500);
+      else { playing = false; T = END; paint(T); }
+    }
+    function goStep(i) {
+      stop(); started = true; watchSize();
+      if (still()) { playing = true; stillStep(i); return; }
+      T = STEPS[i].t; playing = true; last = null; paint(T); raf = requestAnimationFrame(frame);
     }
     play.addEventListener('click', function () {
-      if (raf) cancelAnimationFrame(raf); t0 = null;
-      egg.classList.remove('is-fused'); nuc.classList.remove('is-fused'); nuc.setAttribute('cx', 150); nuc.setAttribute('cy', 36);
-      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { tube.style.strokeDashoffset = 0; nuc.setAttribute('cy', 236); egg.classList.add('is-fused'); setStep(3); txt.textContent = 'Fertilisation: the two nuclei have fused.'; return; }
-      tube.style.strokeDasharray = len; tube.style.strokeDashoffset = len; raf = requestAnimationFrame(frame);
+      if (playing) { stop(); paint(T); return; }
+      if (T >= END - 1e-6) T = 0;
+      start();
     });
-    tube.style.strokeDasharray = len; tube.style.strokeDashoffset = len; setStep(0); txt.textContent = 'A pollen grain on the stigma';
-    wrap.appendChild(steps);
-    box.appendChild(wrap); box.appendChild(play);
+
+    /* the drawing gets smaller on a phone, so its labels get relatively bigger */
+    function fit() {
+      var wpx = svg.getBoundingClientRect ? svg.getBoundingClientRect().width : 0;
+      var ww = wrap2.getBoundingClientRect ? wrap2.getBoundingClientRect().width : 0;
+      if (ww) wrap2.classList.toggle('pt--stack', ww < 560);
+      if (!wpx) return;
+      var k = wpx / W, font = Math.round(Math.max(13, Math.min(17, 11.5 / k)) * 2) / 2;
+      try { var fam = getComputedStyle(document.documentElement).getPropertyValue('--font').trim(); if (fam) FAMILY = fam; } catch (e) {}
+      if (font !== FONT) { FONT = font; render(T); }
+    }
+    /* a removed node reports a size of zero once: let go of it then, and look again on Play */
+    var ro = null;
+    function watchSize() {
+      if (ro || !window.ResizeObserver) return;
+      ro = new ResizeObserver(function () { if (!box.isConnected) { ro.disconnect(); ro = null; return; } fit(); });
+      ro.observe(wrap2);
+    }
+    if (window.ResizeObserver) watchSize(); else window.addEventListener('resize', fit);
+
+    box.__onReset = function () { stop(); if (ro) { ro.disconnect(); ro = null; } };
+    /* for the headless check (_pt.html): jump straight to a frame, with or without the IB layer */
+    box.__seek = function (t, withIb) {
+      stop();
+      if (withIb != null && !!withIb !== ib) { ib = !!withIb; paintMore(); }
+      started = t > 0; T = Math.max(0, Math.min(END, t)); paint(T);
+      return { steps: STEPS.map(function (st) { return Math.round(st.t * 100) / 100; }), end: END };
+    };
+
+    paintMore();
+    paint(0);
     return box;
   }
 
