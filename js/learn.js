@@ -1341,6 +1341,28 @@
     var u = { light: ' %', hum: ' %', temp: ' °C', time: ' min' }[k] || '';
     return poIvValue(s, k) + u;
   }
+  /* The statistic on show is part of what a table or a figure IS, so it belongs in the title —
+     and the reader can switch it, so the title has to switch with it. One place for the words,
+     so the table title, the second table's title and the figure caption can never disagree. */
+  function poStatSaid(k) {
+    return k === 'sd' ? 'the standard deviation of the trials'
+         : k === 'se' ? 'the standard error of the mean'
+         : k === 'ci' ? 'the 95 % confidence interval of the mean' : null;
+  }
+  /* A column heading and a sentence want different words for the same variable: the heading is
+     "Plant", the sentence is "the effect of SPECIES on…". Two phrasings, one per job. */
+  var PO_IVPHRASE = { sp: ['species', 'for each species'], leaves: ['the number of leaves', 'at each number of leaves'],
+                      light: ['light intensity', 'at each light intensity'], temp: ['temperature', 'at each temperature'],
+                      hum: ['humidity', 'at each humidity'], wind: ['wind speed', 'at each wind speed'],
+                      grease: ['greasing the leaf surfaces', 'for each surface greased'],
+                      joint: ['the seal at the bung', 'with the joint sealed and unsealed'],
+                      time: ['the time the run lasted', 'at each length of run'] };
+  function poIvPhrase(k, which) { var e = PO_IVPHRASE[k]; return e ? e[which || 0] : null; }
+  function poErrBarsSaid(k) {
+    return k === 'sd' ? 'error bars show one standard deviation either side of each mean'
+         : k === 'se' ? 'error bars show one standard error either side of each mean'
+         : k === 'ci' ? 'the band shows the 95 % confidence interval of each mean' : null;
+  }
   /* every setting EXCEPT the one being changed: the controlled variables, written out once */
   function poControlledText(s, iv) {
     return PO_FACTS.filter(function (F) { return F[0] !== iv; })
@@ -2021,19 +2043,25 @@
 
       /* A title tells a reader what the table is of without their having to look at it: the
          dependent variable, the independent variable, and the organism. */
+      /* when the species IS the variable, naming one of them in the title contradicts it */
       var sp = rows.length ? rows[0].s.sp.name : 'a leafy shoot';
-      var ivWord = PO_STATE.iv ? poFact(PO_STATE.iv)[1].replace(/ \(.*\)$/, '').toLowerCase() : null;
+      var ofShoot = PO_STATE.iv === 'sp' ? '' : ' of a ' + esc(sp) + ' shoot';
+      var forShoot = PO_STATE.iv === 'sp' ? '' : ', for a ' + esc(sp) + ' shoot';
+      var ivWord = PO_STATE.iv ? poIvPhrase(PO_STATE.iv, 0) : null;
+      var ivEach = PO_STATE.iv ? poIvPhrase(PO_STATE.iv, 1) : null;
 
-      var titleIGCSE = ivWord
-        ? 'The effect of ' + ivWord + ' on the rate of water uptake of a ' + esc(sp) + ' shoot, measured with a bubble potometer.'
-        : 'Rate of water uptake of a ' + esc(sp) + ' shoot under a range of conditions, measured with a bubble potometer.';
+      var statSaid = poStatSaid(errK);
+      var tail = ' Each row gives the trials and their mean' + (statSaid ? ', with ' + statSaid : '') + '.';
+      var titleIGCSE = (ivWord
+        ? 'The effect of ' + ivWord + ' on the rate of water uptake' + ofShoot + ', measured with a bubble potometer.'
+        : 'Rate of water uptake of a ' + esc(sp) + ' shoot under a range of conditions, measured with a bubble potometer.') + tail;
       var titleRAW = ivWord
-        ? 'Raw data: the distance moved by the air bubble in a bubble potometer, at each ' + ivWord + ', for a ' + esc(sp) + ' shoot.'
+        ? 'Raw data: the distance moved by the air bubble in a bubble potometer, ' + ivEach + forShoot + '.'
         : 'Raw data: the distance moved by the air bubble in a bubble potometer, for a ' + esc(sp) + ' shoot.';
-      var titlePROC = ivWord
-        ? 'Processed data: the effect of ' + ivWord + ' on the mean rate of water uptake of a ' + esc(sp) + ' shoot, with the ' +
-          (errK === 'none' ? 'trials it was averaged from' : errName === 'SD' ? 'standard deviation of its trials' : errName === 'SE' ? 'standard error of the mean' : '95 % confidence interval of the mean') + '.'
-        : 'Processed data: the mean rate of water uptake of a ' + esc(sp) + ' shoot, and the spread of its trials.';
+      var titlePROC = 'Processed data: ' + (ivWord
+        ? 'the effect of ' + ivWord + ' on the mean rate of water uptake' + ofShoot
+        : 'the mean rate of water uptake of a ' + esc(sp) + ' shoot') +
+        (statSaid ? ', with ' + statSaid : ', from the trials in Table 1') + '.';
 
       var lineHead = '<div class="po__linehead" style="--lc:' + poLineColour(cur) + '"><span class="po__swatch"></span><input class="po__linename" value="' + esc(PO_STATE.lineNames[cur] || '') + '" placeholder="' + esc(poLineName(cur)) + ' — name it: privet, fan on, dark…"><span class="po__linenote">the runs you record now go on this line</span>' + (lines.length > 1 ? '<button type="button" class="wbtn wbtn--quiet po__delline">Delete this line</button>' : '') + '</div>';
 
@@ -2185,8 +2213,21 @@
       var ticks = numeric ? allPts.map(function (p) { return p.x; }).filter(function (v2, i2, a) { return a.indexOf(v2) === i2; }).sort(function (a, b) { return a - b; }) : cats;
       var every = ticks.length > 8 ? Math.ceil(ticks.length / 8) : 1;
       ticks.forEach(function (tv, i2) { if (i2 % every === 0 || i2 === ticks.length - 1) s += '<text class="po__gt" x="' + (numeric ? XN(tv) : L + slot * (i2 + .5)).toFixed(1) + '" y="' + (H - B + 14) + '" text-anchor="middle">' + esc(String(tv)) + '</text>'; });
-      var errNote = errK === 'none' ? '' : errK === 'ci' ? ' The band is the 95 % confidence interval of each mean; where two bands do not overlap, the difference is statistically significant; where they overlap, nothing is proved either way.' : ' The whiskers are one ' + (errK === 'sd' ? 'standard deviation' : 'standard error') + ' either side of each mean.';
-      s += '</svg>' + legend + '<small class="po__gnote"><b>Figure 1</b> ' + esc(cap1(note) + (withErrAny ? errNote : '')) + '</small>';
+      /* A figure's caption is built like a table's title: what is plotted, of what, and what the
+         error bars are — and the last of those is a switch, so the caption follows it. The
+         sentence about overlapping intervals stays: it is the one thing a reader most often gets
+         wrong, and it belongs with the figure it is about. */
+      var gSp = GS.length ? GS[0].s.sp.name : 'a leafy shoot';
+      var gIv = mode === 'factor' ? (poIvPhrase(F[0], 0) || F[1].toLowerCase().replace(/ \(.*\)$/, '')) : null;
+      var bars = withErrAny ? poErrBarsSaid(errK) : null;
+      var figTitle = gIv
+        ? 'The effect of ' + gIv + ' on the mean rate of water uptake' + (F[0] === 'sp' ? ' of a leafy shoot' : ' of a ' + gSp + ' shoot') + '.' +
+          (multi ? ' One line for each table, each in its own colour.' : '') +
+          ' Each point is the mean of its trials' + (bars ? '; ' + bars : '') + '.'
+        : cap1(note) + (bars ? ' ' + cap1(bars) + '.' : '');
+      var ciNote = (withErrAny && errK === 'ci')
+        ? ' Where two bands do not overlap the difference is statistically significant; where they overlap, nothing is proved either way.' : '';
+      s += '</svg>' + legend + '<small class="po__gnote"><b>Figure 1.</b> ' + esc(figTitle + ciNote) + '</small>';
       return s;
     }
 
