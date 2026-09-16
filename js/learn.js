@@ -1606,9 +1606,9 @@
 
   var PO_TERMS = {
     mean: { name: 'Mean', ib: false, what: 'Add the trials up and divide by how many there are. It is your best single answer for that set of conditions — the number to plot.' },
-    sd:   { name: 'Standard deviation (SD)', ib: true, what: 'How spread out the trials are around their mean. A small SD means the repeats agree with one another — good precision. It has the same unit as the trials.' },
-    se:   { name: 'Standard error (SE)', ib: true, what: 'How well you know the mean itself, not how spread the trials are. More trials make it smaller, because a mean of many repeats settles down even when the repeats themselves do not.' },
-    ci:   { name: '95 % confidence interval', ib: true, what: 'The range the true mean is likely to be in, given your trials. Few trials give a wide interval; more trials narrow it. If the intervals for two sets of conditions do not overlap, the difference between them is statistically significant — very unlikely to be chance alone; intervals that overlap do not prove there is no difference. It is the interval for the mean of that row: if the row mixes shoots, it takes in the difference between plants too. On the graph it is drawn as a band round the mean.' }
+    sd:   { name: 'Standard deviation (SD)', ib: true, what: 'How spread out a set of values is around its mean. Which values matters: the trials on ONE shoot show how steady your method is, and the SHOOT MEANS show how much the plants differ. It has the same unit as the values.' },
+    se:   { name: 'Standard error (SE)', ib: true, what: 'How well you know the mean itself, not how spread the values are. In this table it is always worked out between SHOOTS — so more shoots make it smaller, and more trials on one shoot barely move it.' },
+    ci:   { name: '95 % confidence interval', ib: true, what: 'The range the true mean is likely to be in, given what you measured. Few values give a wide interval; more narrow it. Do not judge a difference by whether two intervals overlap — that rule is for separate groups, and here the same shoots are measured at every setting.' }
   };
   /* the formulae, set as a mathematician would set them */
   var PO_FM = {
@@ -1624,23 +1624,24 @@
     ci: '<i>x̄</i> the mean · SE the standard error · <i>t</i> a number from a table: 12.71 for 2 trials, 4.30 for 3, 3.18 for 4, 2.78 for 5'
   };
   /* the working, one step a line, with these trials */
-  function poSteps(term, st, vals) {
+  function poSteps(term, st, vals, word, unitWord) {
+    word = word || 'trials'; unitWord = unitWord || 'trials';
     var f2 = function (v) { return v.toFixed(2); }, f3 = function (v) { return v.toFixed(3); }, n = st.n, sum = vals.reduce(function (a, b) { return a + b; }, 0), steps = [], table = '';
     if (term === 'mean') {
-      steps.push('Add the trials up: ' + vals.map(f2).join(' + ') + ' = ' + f2(sum));
+      steps.push('Add the ' + word + ' up: ' + vals.map(f2).join(' + ') + ' = ' + f2(sum));
       steps.push('Divide by how many there are, ' + n + ': ' + f2(sum) + ' ÷ ' + n + ' = <b>' + f2(st.mean) + ' mm/min</b>');
     } else if (term === 'sd') {
       var sq = vals.map(function (v) { return (v - st.mean) * (v - st.mean); }), ssq = sq.reduce(function (a, b) { return a + b; }, 0), v1 = ssq / (n - 1);
       table = '<table class="po__pop__tbl"><thead><tr><th>Trial<br><i>x</i></th><th>Distance from the mean<br><i>x</i> − <i>x̄</i></th><th>Squared<br>(<i>x</i> − <i>x̄</i>)²</th></tr></thead><tbody>' +
         vals.map(function (v, k) { var d = v - st.mean; return '<tr><td>' + f2(v) + '</td><td>' + (d < 0 ? '−' : '+') + f2(Math.abs(d)) + '</td><td>' + f3(sq[k]) + '</td></tr>'; }).join('') + '</tbody></table>';
-      steps.push('The mean of the trials: <i>x̄</i> = ' + f2(st.mean) + ' mm/min');
-      steps.push('Each trial\'s distance from the mean, then that distance squared — the table');
+      steps.push('The mean of the ' + word + ': <i>x̄</i> = ' + f2(st.mean) + ' mm/min');
+      steps.push('Each value\'s distance from the mean, then that distance squared — the table');
       steps.push('Add the squares up: Σ (<i>x</i> − <i>x̄</i>)² = ' + f3(ssq));
-      steps.push('Divide by one less than the number of trials: ' + f3(ssq) + ' ÷ ' + (n - 1) + ' = ' + f3(v1));
+      steps.push('Divide by one less than the number of ' + unitWord + ': ' + f3(ssq) + ' ÷ ' + (n - 1) + ' = ' + f3(v1));
       steps.push('Take the square root: √' + f3(v1) + ' = <b>' + f2(st.sd) + ' mm/min</b>');
     } else if (term === 'se') {
-      steps.push('The standard deviation of the trials: <i>s</i> = ' + f2(st.sd) + ' mm/min');
-      steps.push('The square root of the number of trials: √' + n + ' = ' + f2(Math.sqrt(n)));
+      steps.push('The standard deviation of the ' + word + ': <i>s</i> = ' + f2(st.sd) + ' mm/min');
+      steps.push('The square root of the number of ' + unitWord + ': √' + n + ' = ' + f2(Math.sqrt(n)));
       steps.push('Divide: ' + f2(st.sd) + ' ÷ ' + f2(Math.sqrt(n)) + ' = <b>' + f2(st.se) + ' mm/min</b>');
     } else {
       steps.push('The standard error of the mean: SE = ' + f3(st.se) + ' mm/min');
@@ -1651,16 +1652,19 @@
     return table + '<ol class="po__pop__steps">' + steps.map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ol>';
   }
   var PO_EXAMPLE = [2.1, 2.4, 2.0, 2.3, 2.2];
-  function poPopHTML(term, runs) {
+  function poPopHTML(term, runs, level) {
     var T = PO_TERMS[term]; if (!T) return '';
-    var ex = poGroups(runs || []).filter(function (g) { return g.trials.length >= 2; })[0], worked;
+    /* the between-shoot column's own pop-up must not work its example on trials: that is the
+       pseudo-replication the table exists to keep apart, printed two centimetres from the right figure */
+    var shootLvl = level === 'shoot', word = shootLvl ? 'shoot means' : 'trials', unitWord = shootLvl ? 'shoots' : 'trials';
+    var ex = poGroups(runs || []).filter(function (g) { return shootLvl ? poShootStats(g).k >= 2 : g.trials.length >= 2; })[0], worked;
     if (ex) {
-      var vals = ex.trials.map(function (t) { return t.r.rate; }), st = poStats(vals);
-      worked = '<div class="po__pop__how"><p><b>Worked out for your first row with repeats</b> (' + poCondText(ex.s) + '): ' + st.n + ' trials, ' + vals.map(function (v) { return v.toFixed(2); }).join(', ') + ' mm/min; mean ' + st.mean.toFixed(2) + '.</p>' + poSteps(term, st, vals) + '</div>';
+      var vals = shootLvl ? poShootStats(ex).means : ex.trials.map(function (t) { return t.r.rate; }), st = poStats(vals);
+      worked = '<div class="po__pop__how"><p><b>Worked out for your first row with repeats</b> (' + poCondText(ex.s) + '): ' + st.n + ' ' + word + ', ' + vals.map(function (v) { return v.toFixed(2); }).join(', ') + ' mm/min; mean ' + st.mean.toFixed(2) + '.</p>' + poSteps(term, st, vals, word, unitWord) + '</div>';
       if (term !== 'mean' && st.sd === 0) worked += '<p class="po__pop__note">Your trials are identical to the millimetre, so their spread is 0. The scale reads to 1 mm, and a difference smaller than that is hidden by it — measure for longer, and the trials will show their spread.</p>';   /* resolution, seen */
     } else {
       var st2 = poStats(PO_EXAMPLE);
-      worked = '<div class="po__pop__how"><p><b>Worked example</b> — five trials on one shoot at 20 °C in still air: ' + PO_EXAMPLE.map(function (v) { return v.toFixed(2); }).join(', ') + ' mm/min; mean 2.20.</p>' + poSteps(term, st2, PO_EXAMPLE) + '</div>' +
+      worked = '<div class="po__pop__how"><p><b>Worked example</b> — five trials on one shoot at 20 °C in still air: ' + PO_EXAMPLE.map(function (v) { return v.toFixed(2); }).join(', ') + ' mm/min; mean 2.20.</p>' + poSteps(term, st2, PO_EXAMPLE, 'trials', 'trials') + '</div>' +
                '<p class="po__pop__note">Record two trials of your own under the same conditions and the working is done with your numbers instead.</p>';
     }
     return '<div class="po__pop__h"><span>' + esc(T.name) + (T.ib ? ' <span class="po__pop__ib">IB content · not asked at IGCSE</span>' : '') + '</span><button type="button" class="po__pop__x" aria-label="Close">✕</button></div>' +
@@ -2158,7 +2162,7 @@
         else { gateSay.textContent = 'Not that word.'; gateIn.select(); }
       });
     });
-    var tableWrap = h('div', 'po__tablewrap'), tabsEl = h('div', 'po__linetabs'), pop = h('div', 'po__pop'), chart = h('div', 'po__chart'), popTerm = null;
+    var tableWrap = h('div', 'po__tablewrap'), tabsEl = h('div', 'po__linetabs'), pop = h('div', 'po__pop'), chart = h('div', 'po__chart'), popTerm = null, popLevel = '';
     pop.hidden = true;
     var tools = h('div', 'po__tools');
     var errK = PO_STATE.err || 'none', kNow = 0;   /* kNow: shoots on the current line, set by paintData — the gate on SE and CI */
@@ -2222,10 +2226,10 @@
     }
     var stats = poStats;
     var TERMS = PO_TERMS;
-    function showTerm(term) {
+    function showTerm(term, level) {
       if (!PO_TERMS[term]) return;
-      popTerm = term;
-      pop.innerHTML = poPopHTML(term, runs);
+      popTerm = term; popLevel = level || '';
+      pop.innerHTML = poPopHTML(term, runs, level);
       pop.hidden = false;
       pop.querySelector('.po__pop__x').addEventListener('click', function () { pop.hidden = true; popTerm = null; });
     }
@@ -2412,7 +2416,7 @@
       var cur = PO_STATE.line, rows = G.filter(function (g) { return g.line === cur; });
       var ibStyle = PO_STATE.style === 'ib';
       var errName = errK === 'sd' ? 'SD' : errK === 'se' ? 'SE' : '95 % CI';
-      var term = function (k, label) { return '<button type="button" class="po__term" data-term="' + k + '" title="What this is, and how it was worked out">' + label + '</button>'; };
+      var term = function (k, label, level) { return '<button type="button" class="po__term" data-term="' + k + '"' + (level ? ' data-level="' + level + '"' : '') + ' title="What this is, and how it was worked out">' + label + '</button>'; };
 
       /* A results table has TWO header rows when several columns are the same quantity. The unit
          is written once, at the top, over all of them; the row beneath only says which trial.
@@ -2453,7 +2457,7 @@
       var trialCells2 = ''; for (var ti = 1; ti <= m; ti++) trialCells2 += '<th>Trial ' + ti + '</th>';
       var errLong = errK === 'sd' ? 'Standard deviation' : errK === 'se' ? 'Standard error' : '95 % confidence interval';
       var withinH = '<th>' + term('sd', 'Standard deviation of the trials') + '</th>';
-      var betweenH = '<th>' + term(errK, errLong + ' of the shoot means') + '</th>';
+      var betweenH = '<th>' + term(errK, errLong + ' of the shoot means', 'shoot') + '</th>';
       var paired = poPairedStats(rows, PO_STATE.iv);
 
       /* A title names the species, the independent variable and the dependent variable, states the
@@ -2493,7 +2497,7 @@
           ? '<thead><tr><th rowspan="2">' + IVH + '</th><th colspan="' + order.length + '">Mean rate of water uptake for each shoot (mm min⁻¹)</th>' +
             '<th colspan="' + (errK === 'none' ? 1 : 2) + '">Across the ' + kMax + ' shoots (mm min⁻¹)</th></tr>' +
             '<tr>' + order.map(function (sh, i) { return '<th>Shoot ' + poLetter(i) + '</th>'; }).join('') +
-            '<th>' + term('mean', 'Mean') + '</th>' + (errK === 'none' ? '' : '<th>' + term(errK, errLong) + '</th>') + '</tr></thead>'
+            '<th>' + term('mean', 'Mean', 'shoot') + '</th>' + (errK === 'none' ? '' : '<th>' + term(errK, errLong, 'shoot') + '</th>') + '</tr></thead>'
           : '<thead><tr><th rowspan="2">' + IVH + '</th><th rowspan="2"><i>n</i></th>' +
             '<th colspan="' + (errK === 'none' ? 1 : 2) + '">Rate of water uptake (mm min⁻¹)</th></tr>' +
             '<tr><th>' + term('mean', 'Mean') + '</th>' + (errK === 'none' ? '' : '<th>' + term(errK, errName) + '</th>') + '</tr></thead>';
@@ -2530,7 +2534,7 @@
       var nameIn = tableWrap.querySelector('.po__linename');
       nameIn.addEventListener('change', function () { PO_STATE.lineNames[cur] = nameIn.value.trim(); poPersist(); paintData(); });
       tableWrap.querySelectorAll('.po__del').forEach(function (b) { b.addEventListener('click', function () { runs.splice(+b.getAttribute('data-i'), 1); paintData(); }); });
-      tableWrap.querySelectorAll('.po__term').forEach(function (b) { b.addEventListener('click', function () { showTerm(b.getAttribute('data-term')); }); });
+      tableWrap.querySelectorAll('.po__term').forEach(function (b) { b.addEventListener('click', function () { showTerm(b.getAttribute('data-term'), b.getAttribute('data-level')); }); });
       var del = tableWrap.querySelector('.po__delline');
       if (del) armed(del, 'Sure? Press again to delete', function () { return true; }, function () {
         for (var k = runs.length - 1; k >= 0; k--) if ((runs[k].line || 0) === cur) runs.splice(k, 1);
@@ -2542,7 +2546,7 @@
       chart.innerHTML = graph(G);
       wireLegend();
       function wireLegend() { chart.querySelectorAll('.po__legend__b').forEach(function (b) { b.addEventListener('click', function () { var ln = +b.getAttribute('data-line'), at = PO_STATE.hidden.indexOf(ln); if (at < 0) PO_STATE.hidden.push(ln); else PO_STATE.hidden.splice(at, 1); poPersist(); chart.innerHTML = graph(G); wireLegend(); }); }); }
-      if (popTerm && (popTerm === 'mean' || popTerm === errK)) showTerm(popTerm); else { pop.hidden = true; popTerm = null; }   /* the pop-up is re-worked from the table as it now is */
+      if (popTerm && (popTerm === 'mean' || popTerm === errK)) showTerm(popTerm, popLevel); else { pop.hidden = true; popTerm = null; popLevel = ''; }   /* the pop-up is re-worked from the table as it now is */
     }
     /* the graph plots one point per row of the table — its mean — and picks its x-axis: the one factor that changed */
     var FACT_ALL = [['leaves', 'Leaves on the shoot', true], ['light', 'Light (%)', true], ['temp', 'Temperature (°C)', true], ['hum', 'Humidity (%)', true], ['wind', 'Wind', false], ['time', 'Time (min)', true], ['sp', 'Plant', false], ['grease', 'Grease', false], ['joint', 'Joint at the bung', false]];
