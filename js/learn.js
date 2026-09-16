@@ -4915,6 +4915,11 @@
       return 'rgb(' + Math.round(lerp(x[0], y[0], k)) + ',' + Math.round(lerp(x[1], y[1], k)) + ',' + Math.round(lerp(x[2], y[2], k)) + ')';
     }
     function n2(v) { return Math.round(v * 100) / 100; }
+    /* Anything that moves or scales gets four decimals, not two. With the zoom rounded to 0.01 and
+       the pan exact, a part 300 units down the drawing was drawn up to 1.5 units from where it
+       belonged, and on the other side on the next frame: the whole drawing shook during every zoom,
+       by as much as 6 px between frames. */
+    function n4(v) { return Math.round(v * 10000) / 10000; }
 
     /* ----- the paths the three tubes grow along (world units; x = 104 is the axis) -----
        Grain 0 is the one the camera follows. The order across the style is the order across the
@@ -4958,7 +4963,7 @@
       if (L <= .01) return '';
       var e = at(path, L), d = 'M' + n2(path.pts[0][0]) + ' ' + n2(path.pts[0][1]);
       for (var i = 1; i <= e.i; i++) d += 'L' + n2(path.pts[i][0]) + ' ' + n2(path.pts[i][1]);
-      return d + 'L' + n2(e.x) + ' ' + n2(e.y);
+      return d + 'L' + n4(e.x) + ' ' + n4(e.y);
     }
 
     var GRAINS = [
@@ -5173,14 +5178,14 @@
       return { x: 104 + (O.cx - 104) * ov.rx / 62, y: ov.cy + (O.cy - 292) * ov.ry / 98, s: 1 + .45 * sg, dir: O.dir };
     }
     function toWorld(op, u, v) { return { x: op.x + op.dir * u * op.s, y: op.y + v * op.s }; }
-    function elli(cx, cy, rx, ry) { return 'M' + n2(cx - rx) + ' ' + n2(cy) + 'A' + n2(rx) + ' ' + n2(ry) + ' 0 1 0 ' + n2(cx + rx) + ' ' + n2(cy) + 'A' + n2(rx) + ' ' + n2(ry) + ' 0 1 0 ' + n2(cx - rx) + ' ' + n2(cy) + 'Z'; }
+    function elli(cx, cy, rx, ry) { return 'M' + n4(cx - rx) + ' ' + n4(cy) + 'A' + n4(rx) + ' ' + n4(ry) + ' 0 1 0 ' + n4(cx + rx) + ' ' + n4(cy) + 'A' + n4(rx) + ' ' + n4(ry) + ' 0 1 0 ' + n4(cx - rx) + ' ' + n4(cy) + 'Z'; }
     function nuc(el, x, y, rx, ry, deg, op) {
       show(el, op);
-      if (op > .004) set(el, { rx: n2(Math.max(.05, rx)), ry: n2(Math.max(.05, ry)), transform: 'translate(' + n2(x) + ' ' + n2(y) + ') rotate(' + n2(deg) + ')' });
+      if (op > .004) set(el, { rx: n4(Math.max(.05, rx)), ry: n4(Math.max(.05, ry)), transform: 'translate(' + n4(x) + ' ' + n4(y) + ') rotate(' + n4(deg) + ')' });
     }
     function lens(el, x, y, rx, ry, deg, op) {        /* a spindle-shaped cell */
       show(el, op);
-      if (op > .004) set(el, { d: 'M0 ' + n2(-ry) + 'Q' + n2(rx * 2) + ' 0 0 ' + n2(ry) + 'Q' + n2(-rx * 2) + ' 0 0 ' + n2(-ry) + 'Z', transform: 'translate(' + n2(x) + ' ' + n2(y) + ') rotate(' + n2(deg) + ')' });
+      if (op > .004) set(el, { d: 'M0 ' + n4(-ry) + 'Q' + n4(rx * 2) + ' 0 0 ' + n4(ry) + 'Q' + n4(-rx * 2) + ' 0 0 ' + n4(-ry) + 'Z', transform: 'translate(' + n4(x) + ' ' + n4(y) + ') rotate(' + n4(deg) + ')' });
     }
 
     var ib = false, S = {};                          /* S: the frame just drawn, for the labels */
@@ -5188,7 +5193,7 @@
       var cam = camAt(t), ov = ovaryAt(t), g = ov.g, ripe = ov.ripe;
       var wither = ease(seg(t, T6 + .3, T6 + 3.6));
       S = { t: t, cam: cam, ov: ov, ovules: [], grains: [], nuc: [], wither: wither };
-      set(R.cam, { transform: 'matrix(' + n2(cam[2]) + ' 0 0 ' + n2(cam[2]) + ' ' + n2(VX + VW / 2 - cam[2] * cam[0]) + ' ' + n2(VY + VH / 2 - cam[2] * cam[1]) + ')' });
+      set(R.cam, { transform: 'matrix(' + n4(cam[2]) + ' 0 0 ' + n4(cam[2]) + ' ' + n4(VX + VW / 2 - cam[2] * cam[0]) + ' ' + n4(VY + VH / 2 - cam[2] * cam[1]) + ')' });
 
       /* stalk, sepals, receptacle */
       var rw = 30 + 6 * g;
@@ -5217,9 +5222,9 @@
       R.gs1.setAttribute('stop-color', mixc(C.style[0], C.style[1], wither));
       R.gs2.setAttribute('stop-color', mixc(C.styleDark[0], C.styleDark[1], wither));
       var lean = -7 * wither;
-      R.style.setAttribute('transform', 'rotate(' + n2(lean) + ' 104 ' + n2(base) + ')');
+      R.style.setAttribute('transform', 'rotate(' + n4(lean) + ' 104 ' + n4(base) + ')');
       var ss = 1 - .55 * wither, sb = [104 + (top - base) * Math.sin(lean * Math.PI / 180) * -1, base + (top - base) * Math.cos(lean * Math.PI / 180)];
-      set(R.stigma, { transform: 'translate(' + n2(sb[0]) + ' ' + n2(sb[1] + 2 * ss) + ') rotate(' + n2(lean) + ') scale(' + n2(ss) + ') translate(-104 -74)' });
+      set(R.stigma, { transform: 'translate(' + n4(sb[0]) + ' ' + n4(sb[1] + 2 * ss) + ') rotate(' + n4(lean) + ') scale(' + n4(ss) + ') translate(-104 -74)' });
       set(R.stigpath, { fill: mixc(C.stig[0], C.stig[1], wither), stroke: mixc(C.stigLine[0], C.stigLine[1], wither) });
       R.pap.forEach(function (p) { set(p, { fill: mixc(C.pap[0], C.pap[1], wither), stroke: mixc(C.stigLine[0], C.stigLine[1], wither), 'stroke-width': '.5' }); });
 
@@ -5238,7 +5243,7 @@
       OVULES.forEach(function (O, i) {
         var op = ovuleAt(i, t, ov); S.ovules.push(op);
         var tb = TUBES.filter(function (x) { return x.o === i; })[0];
-        R['ov' + i].setAttribute('transform', 'translate(' + n2(op.x) + ' ' + n2(op.y) + ') scale(' + n2(op.s * op.dir) + ' ' + n2(op.s) + ')');
+        R['ov' + i].setAttribute('transform', 'translate(' + n4(op.x) + ' ' + n4(op.y) + ') scale(' + n4(op.s * op.dir) + ' ' + n4(op.s) + ')');
         var colX = 104 - op.dir * (cw - 1.5), at1 = toWorld(op, 9, 9.5);
         var fd = 'M' + n2(colX) + ' ' + n2(op.y + 11.5 * op.s) + 'Q' + n2(op.x + op.dir * 15 * op.s) + ' ' + n2(op.y + 12 * op.s) + ' ' + n2(at1.x) + ' ' + n2(at1.y);
         set(R['fun' + i], { d: fd, stroke: mixc('#9DC174', '#DE9A6E', ripe), 'stroke-width': n2(5 * op.s) });
@@ -5282,7 +5287,7 @@
         var gp = grainAt(i, t); S.grains.push(gp);
         var gel = R['gr' + i];
         show(gel, gp.on ? 1 - seg(t, T6, T6 + .8) : 0);
-        gel.setAttribute('transform', 'translate(' + n2(gp.x) + ' ' + n2(gp.y) + ') rotate(' + n2(gp.rot) + ') scale(' + n2(gp.sx) + ' ' + n2(gp.sy) + ')');
+        gel.setAttribute('transform', 'translate(' + n4(gp.x) + ' ' + n4(gp.y) + ') rotate(' + n4(gp.rot) + ') scale(' + n4(gp.sx) + ' ' + n4(gp.sy) + ')');
       });
 
       /* the tubes and what travels in them */
@@ -5405,10 +5410,14 @@
       var out = '';
       ['L', 'R'].forEach(function (side) {
         var it = list.filter(function (x) { return x.side === side; }).sort(function (a, b) { return a.sy - b.sy; }), i;
+        /* Two labels only keep each other at a distance as much as both are showing. When one fades
+           out, the other slides back to its own part over the same third of a second, instead of
+           jumping there in one frame (up to 28 px). */
+        function room(p, q) { return (p.h / 2 + gap + q.h / 2) * Math.min(p.op, q.op); }
         if (it.length && it[0].ly < 3 + it[0].h / 2) it[0].ly = 3 + it[0].h / 2;
-        for (i = 1; i < it.length; i++) { var lo = it[i - 1].ly + it[i - 1].h / 2 + gap + it[i].h / 2; if (it[i].ly < lo) it[i].ly = lo; }
+        for (i = 1; i < it.length; i++) { var lo = it[i - 1].ly + room(it[i - 1], it[i]); if (it[i].ly < lo) it[i].ly = lo; }
         for (i = it.length - 1; i >= 0; i--) {
-          var hi = i === it.length - 1 ? H - 4 - it[i].h / 2 : it[i + 1].ly - it[i + 1].h / 2 - gap - it[i].h / 2;
+          var hi = i === it.length - 1 ? H - 4 - it[i].h / 2 : it[i + 1].ly - room(it[i], it[i + 1]);
           if (it[i].ly > hi) it[i].ly = hi;
         }
         it.forEach(function (x) {

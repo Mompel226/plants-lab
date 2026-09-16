@@ -1465,7 +1465,7 @@ picture{display:block;line-height:0}
 .pt__svg{width:100%;max-width:440px;height:auto;display:block;margin:0 auto}
 .pt__view{fill:#F5F0E3}
 .pt__viewline{fill:none;stroke:#E1D7C3;stroke-width:1}
-.pt__lab{fill:#232323;font-family:var(--font);font-weight:600}
+.pt__lab{fill:#232323;font-family:var(--font);font-weight:600;text-rendering:geometricPrecision}
 .pt__lead{fill:none;stroke:#474747;stroke-width:.9;stroke-linejoin:round}
 .pt__leadhalo{fill:none;stroke:#FFFFFF;stroke-opacity:.85;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
 .pt__pin{fill:#333333;stroke:#FFFFFF;stroke-width:.8}
