@@ -1304,10 +1304,15 @@ picture{display:block;line-height:0}
 .po__cap b{color:var(--green)}
 .po__table--proc{margin-top:16px}
 .po__stylenote{font-size:12.5px;line-height:1.5;color:var(--grey);margin:8px 0 0}
+.po__stylenote--grey{margin-top:6px}
+/* a spanning heading over the columns that share one quantity, and the row of trials under it */
+.po__table thead tr:first-child th[colspan]{text-align:center;border-bottom:1px solid var(--edge)}
+.po__table thead tr + tr th{font-weight:600;font-size:12px}
 /* the controlled variables belong under the table, once — not repeated down a column */
 .po__ctrlvars{font-size:12.5px;line-height:1.5;color:#4A4A4A;background:var(--card-2,#F7F5EF);border-left:3px solid var(--edge);
   border-radius:0 var(--r) var(--r) 0;padding:7px 11px;margin:8px 0 0}
 .po__ctrlvars b{color:var(--green)}
+.po__ctrlvars b + b,.po__ctrlvars b:not(:first-child){color:var(--ink);font-weight:600}
 /* the one thing you change, and the ones you have stopped being able to change */
 .po__row--iv select{font-weight:600}
 .po__row--iv span small{display:block;font-weight:400;font-size:11.5px;color:var(--grey)}
