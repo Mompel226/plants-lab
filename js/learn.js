@@ -1529,13 +1529,13 @@
       poWhyRow('Accuracy', 'how close you are to the true value',
         poWhyMark('n', '<b>Neither of them.</b> A leak at the bung, a bubble that did not start at 0, reading the scale from the side — each makes <b>every</b> trial wrong in the same direction. Repeating them, or repeating them on five shoots, gives you a more precise wrong answer. Accuracy is only improved by <b>changing what you do</b>: seal the joint, open the tap, read at eye level.'), null) +
       poWhyRow('Reliability', 'a mean you can trust — always say <i>which</i> mean',
-        poWhyMark('p', '<b>Only for this shoot.</b> Close trials mean you can trust the mean <b>for this one shoot</b>. They say nothing about the plant, however close they are.'),
+        poWhyMark('p', '<b>At IGCSE, yes; in real science, only for this shoot.</b> In an IGCSE answer, repeating trials and calculating a mean counts as making your results more reliable, and earns the mark. In real science, close trials only make the mean reliable <b>for this one shoot</b> — they say nothing about the plant.'),
         poWhyMark('y', '<b>Yes — for the plant.</b> This is where the word belongs: more shoots make the mean <b>for the species</b> one you can trust.')) +
       poWhyRow('Validity', 'whether your conclusion is about what you claim',
         poWhyMark('n', '<b>No.</b> A carefully repeated run on one shoot is still one shoot.'),
         poWhyMark('y', '<b>Yes — and this is the strongest reason of all.</b> With one shoot you can only write a sentence about <b>your shoot</b>. With several you can write one about <b>the plant</b>.')) +
       '</tbody></table>';
-    var warn = '<p class="po__why__w"><b>In an IGCSE answer, “to improve reliability” on its own earns no marks.</b> Write what the repeats let you <i>do</i>: find an <b>anomalous result</b>, and calculate a <b>mean</b>. And say why you used more than one shoot: one shoot may not be <b>representative</b> of the plant.</p>' +
+    var warn = '<p class="po__why__w"><b>IGCSE and real science use “reliable” differently.</b> In an IGCSE answer, repeating trials and <b>calculating a mean</b> counts as making results <b>more reliable</b> — that earns the mark, and so does saying repeats let you <b>identify anomalous results</b>. In real science, repeats on one shoot make the result reliable only <b>for that shoot</b>; to be reliable for the plant you need <b>true replicates</b>. And say why you used more than one shoot: one shoot may not be <b>representative</b> of the plant.</p>' +
       '<p class="po__why__w po__why__w--bad"><b>One thing no amount of repeating can fix.</b> A potometer measures the water the shoot takes <b>in</b>, not the water its leaves lose — some is kept for growth and to hold the cells firm (turgid). That is why every heading here says <b>rate of water uptake</b>.</p>';
     var livehtml;
     if (!live) {
@@ -1585,9 +1585,9 @@
       poWhyOne('Accuracy', 'how close you are to the true value',
         poWhyMark('n', '<b>Repeating does not improve accuracy.</b> A leak, or a bubble that did not start at 0, makes <b>every</b> trial wrong in the same direction — repeat it and you get the same wrong answer again. Only changing what you do fixes it: seal the joint, open the tap, read the scale at eye level.')) +
       poWhyOne('Reliability', 'a mean you can trust — always say which',
-        poWhyMark('p', '<b>Only for this one shoot.</b> Close trials mean you can trust the mean <b>for this shoot</b>. They cannot tell you whether another plant would give the same.')) +
+        poWhyMark('y', '<b>Yes — for this experiment.</b> Repeating trials and calculating a mean is what IGCSE counts as making your results <b>more reliable</b>, and it earns the mark. <i>(In real science, repeats on one shoot only make the result reliable for that shoot. To be reliable for the whole plant you would need shoots from other plants.)</i>')) +
       '</tbody></table>';
-    var warn = '<p class="po__why__w"><b>In the exam</b>, write what the repeats let you <i>do</i>: repeat each reading, <b>identify any anomalous result</b>, and <b>calculate a mean</b> of the rest. Writing only “to make it reliable” or “to make it accurate” earns no marks.</p>';
+    var warn = '<p class="po__why__w"><b>In the exam</b>, write: repeat the investigation and <b>calculate a mean</b>, to make the results <b>more reliable</b>. Repeats also let you <b>identify anomalous results</b> and leave them out of the mean. Both earn marks.</p>';
     var door = '<div class="po__why__door"><p><b>One shoot may not be typical of the plant.</b> Cutting a new shoot from <b>another plant</b> and repeating the experiment on it is a different kind of repeat — a <b>true replicate</b>. It tells you about the plant, not just about your measuring.</p>' +
       '<button type="button" class="po__why__go">Try it on the More realistic bench →</button></div>';
     var live = '';
