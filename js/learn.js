@@ -4974,8 +4974,22 @@
       s += '<ellipse class="lp__ringhalo"' + e + '/><ellipse class="lp__ring"' + e + '/>';
     });
     function textW(t) { return t.length * 7.4; }
+    /* where a horizontal line at height y meets a ring, on the side facing the label — so a label can
+       name the WHOLE ringed structure (the leader stops on its outline) while another names what is
+       inside it (the leader goes in) */
+    function ringEdgeX(r, y, right) {
+      var cx = PAD + r[0] / 100 * IW, cy = r[1] / 100 * IH, rx = r[2], ry = r[3], th = (r[4] || 0) * Math.PI / 180;
+      var A = rx * Math.sin(th), B = ry * Math.cos(th), R = Math.sqrt(A * A + B * B), d = y - cy;
+      if (!R || Math.abs(d) > R) return null;
+      var al = Math.atan2(A, B), s1 = Math.asin(d / R);
+      var xs = [s1 - al, Math.PI - s1 - al].map(function (t) { return cx + rx * Math.cos(t) * Math.cos(th) - ry * Math.sin(t) * Math.sin(th); });
+      return right ? Math.max(xs[0], xs[1]) : Math.min(xs[0], xs[1]);
+    }
     pins.forEach(function (q) {
       var x = PAD + q[0] / 100 * IW, y = q[1] / 100 * IH, right = q[3] !== 'left';
+      if (q[4] && q[4].edgeOf != null && spec.rings && spec.rings[q[4].edgeOf]) {
+        var ex = ringEdgeX(spec.rings[q[4].edgeOf], y, right); if (ex != null) x = ex;
+      }
       var end = right ? PAD + IW + 5 : PAD - 5, tx = right ? PAD + IW + 11 : PAD - 11;
       at[q[2]] = { y: y, right: right, w: textW(q[2]) };
       var ln = ' x1="' + x.toFixed(1) + '" y1="' + y.toFixed(1) + '" x2="' + end + '" y2="' + y.toFixed(1) + '"';
