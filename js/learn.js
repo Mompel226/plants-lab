@@ -4972,9 +4972,9 @@
       { cx: 78, cy: 334, dir: 1 }
     ];
     var TUBES = [
-      { g: 0, o: 1, t0: 5.6, t1: 15.8, pts: [[122, 43.5], [121, 51], [116, 62], [108.6, 73], [107.6, 90], [107.5, 140], [107.5, 196], [107.6, 250], [107.8, 276], [109.5, 286.5], [113.5, 291.3], [119.5, 292]] },
-      { g: 1, o: 2, t0: 5.3, t1: 15.5, pts: [[104, 39], [104, 50], [104, 62], [104, 90], [104, 140], [104, 196], [104, 260], [104, 312], [103.3, 325], [100, 331.8], [95, 333.8], [89, 334]] },
-      { g: 2, o: 0, t0: 5.5, t1: 14.4, pts: [[86, 43.5], [87.5, 51], [92.5, 62], [99.6, 73], [100.5, 90], [100.5, 140], [100.5, 196], [100.5, 228], [100.3, 239], [98.4, 246.5], [94.6, 249.7], [89, 250]] }
+      { g: 0, o: 1, t0: 5.6, t1: 17.3, pts: [[122, 43.5], [121, 51], [116, 62], [108.6, 73], [107.6, 90], [107.5, 140], [107.5, 196], [107.6, 250], [107.8, 276], [109.5, 286.5], [113.5, 291.3], [119.5, 292]] },
+      { g: 1, o: 2, t0: 5.3, t1: 17, pts: [[104, 39], [104, 50], [104, 62], [104, 90], [104, 140], [104, 196], [104, 260], [104, 312], [103.3, 325], [100, 331.8], [95, 333.8], [89, 334]] },
+      { g: 2, o: 0, t0: 5.5, t1: 15.9, pts: [[86, 43.5], [87.5, 51], [92.5, 62], [99.6, 73], [100.5, 90], [100.5, 140], [100.5, 196], [100.5, 228], [100.3, 239], [98.4, 246.5], [94.6, 249.7], [89, 250]] }
     ];
     TUBES.forEach(function (tb) { tb.path = spline(tb.pts); });
 
@@ -4994,25 +4994,25 @@
     }
     function lenAtY(tb, y) { for (var i = 0; i < tb.path.pts.length; i++) if (tb.path.pts[i][1] >= y) return tb.path.len[i]; return tb.path.total; }
     TUBES.forEach(function (tb) {
-      tb.burst = tb.t1 + .45;
-      tb.move0 = tb.burst + .25; tb.move1 = tb.move0 + 1.3;
-      tb.fuse0 = tb.move1; tb.fuse1 = tb.fuse0 + .75;
+      tb.burst = tb.t1 + .6;
+      tb.move0 = tb.burst + .3; tb.move1 = tb.move0 + 2;
+      tb.fuse0 = tb.move1; tb.fuse1 = tb.fuse0 + 1.3;
       tb.div = whenLen(tb, tb.path.total * .42);     /* IB: the generative cell divides */
     });
     var A = TUBES[0];
     var T_STYLE = whenLen(A, lenAtY(A, 196));       /* A's tip leaves the style */
-    var T4 = A.t1, T5 = A.fuse1 + 1.65, T6 = T5 + 5.6, END = T6 + 6.2;
+    var T4 = A.t1, T5 = A.fuse1 + 1.6, T6 = T5 + 5.6, END = T6 + 6.2;
 
     var STEPS = [
-      { t: 0, h: 'Pollination', p: 'Pollen grains land on the sticky stigma. The animation follows one grain.',
+      { t: 0, h: 'Pollination', p: 'Pollen grains land on the sticky stigma. In this animation there are three.',
         ib: 'Each grain contains two cells: a tube cell, with the tube nucleus, and a small generative cell.' },
-      { t: A.t0, h: 'The pollen tube grows', p: 'The grain grows a pollen tube down through the style. The pollen nucleus moves down the tube, near its tip. In most plants this takes hours, or a few days.',
-        ib: 'The tube nucleus moves near the tip. The generative cell divides by mitosis into two male gametes.' },
-      { t: T_STYLE, h: 'Into an ovule', p: 'The tube enters the ovary. Then it enters an ovule through a small opening, the micropyle.' },
-      { t: T4, h: 'Fertilisation', p: 'The pollen nucleus fuses with the nucleus of the female gamete. The new cell is a zygote.',
-        ib: 'One male gamete fuses with the egg cell. The second fuses with the central cell of the ovule: double fertilisation, which is beyond IB.' },
+      { t: A.t0, h: 'The pollen tube grows', p: 'Each grain grows a pollen tube down through the style. A pollen nucleus moves down each tube, near its tip. In most plants this takes hours, or a few days.',
+        ib: 'In each tube, the tube nucleus moves near the tip. The generative cell divides by mitosis into two male gametes.' },
+      { t: T_STYLE, h: 'Into an ovule', p: 'Each tube enters the ovary, then its own ovule, through a small opening: the micropyle.' },
+      { t: T4, h: 'Fertilisation', p: 'In each ovule, a pollen nucleus fuses with the nucleus of the female gamete. The new cell is a zygote.',
+        ib: 'In each ovule, one male gamete fuses with the egg cell. The second fuses with the central cell: double fertilisation, which is beyond IB.' },
       { t: T5, h: 'The ovule becomes a seed', tag: 'after fertilisation', p: 'The zygote develops into an embryo, and the outside of the ovule becomes the seed coat. Each fertilised ovule becomes one seed.' },
-      { t: T6, h: 'The ovary becomes the fruit', tag: 'after fertilisation', p: 'Over several weeks the ovary develops into the fruit, with the seeds inside. The style and stigma wither.' }
+      { t: T6, h: 'The ovary becomes the fruit', tag: 'after fertilisation', p: 'Over several weeks the ovary develops into the fruit, with the three seeds inside. The style and stigma wither.' }
     ];
     function stepAt(t) { var k = 0; for (var i = 0; i < STEPS.length; i++) if (t >= STEPS[i].t) k = i; return k; }
     function stepEnd(i) { return i + 1 < STEPS.length ? STEPS[i + 1].t : END; }
@@ -5042,7 +5042,7 @@
     }
     var PAP = [[76.5, 56], [79.5, 51.5], [83.5, 49], [88, 49], [92, 51], [96.5, 47.8], [100.2, 45], [104, 44], [107.8, 45], [111.5, 47.8], [116, 51], [120, 49], [124.5, 49], [128.5, 51.5], [131.5, 56]];
     var svgHtml =
-      '<svg viewBox="0 0 ' + W + ' ' + H + '" class="pt__svg" role="img" aria-label="A carpel cut in half. Pollen grains land on the stigma, a pollen tube grows down the style into an ovule, the pollen nucleus fuses with the nucleus of the female gamete, and then the ovules become seeds and the ovary becomes a fruit.">' +
+      '<svg viewBox="0 0 ' + W + ' ' + H + '" class="pt__svg" role="img" aria-label="A carpel cut in half. Three pollen grains land on the stigma, and each grows a pollen tube down the style into its own ovule. In each ovule a pollen nucleus fuses with the nucleus of the female gamete. Then the ovules become seeds and the ovary becomes a fruit.">' +
       '<defs>' +
         '<clipPath id="' + id('v') + '"><rect x="' + VX + '" y="' + VY + '" width="' + VW + '" height="' + VH + '" rx="14"/></clipPath>' +
         '<clipPath id="' + id('s') + '"><rect data-r="styleclip" x="-50" y="-100" width="300" height="300"/></clipPath>' +
@@ -5349,7 +5349,8 @@
       return lines;
     }
     function ovaryEdge(side) { var ov = S.ov, y = S.cam[1], dy = (y - ov.cy) / ov.ry, hw = ov.rx * Math.sqrt(Math.max(0, 1 - dy * dy)); return { x: side === 'L' ? 104 - hw + 5 : 104 + hw - 5, y: y }; }
-    function styleEdge(side) { var y = S.cam[1]; return { x: side === 'L' ? 104 - 8.6 - (y - 72) * .012 : 104 + 8.6 + (y - 72) * .012, y: y }; }
+    /* level with the middle of the view, but never below the style's own base */
+    function styleEdge(side) { var y = Math.min(S.cam[1], S.ov.top - 10); return { x: side === 'L' ? 104 - 8.6 - (y - 72) * .012 : 104 + 8.6 + (y - 72) * .012, y: y }; }
     function ovW(i, u, v) { return toWorld(S.ovules[i], u, v); }
     var LABELS = [
       /* the carpel, before anything happens */
@@ -5361,21 +5362,21 @@
       { tx: 'stigma', side: 'L', t0: 3.4, t1: 9, at: function () { return { x: 79, y: 62 }; } },
       { tx: 'pollen grain', side: 'R', t0: 3.2, t1: 7.4, layer: 'core', at: function () { var g = S.grains[0]; return { x: g.x + 7.6 * g.s, y: g.y }; } },
       { tx: 'pollen grain', side: 'R', t0: 3.2, t1: 4.7, layer: 'ib', at: function () { var g = S.grains[0]; return { x: g.x + 7.6 * g.s, y: g.y }; } },
-      { tx: 'tube nucleus', side: 'R', t0: 4.9, t1: A.t1 - 1.2, layer: 'ib', dot: C.tubeN, at: function () { var n = S.nuc[0].tn; return { x: n.x - 1.2, y: n.y }; } },
+      { tx: 'tube nucleus', side: 'R', t0: 4.9, t1: A.t1 - 2.2, layer: 'ib', dot: C.tubeN, at: function () { var n = S.nuc[0].tn; return { x: n.x - 1.2, y: n.y }; } },
       { tx: 'generative cell', side: 'R', t0: 4.9, t1: A.div + .5, layer: 'ib', dot: C.male, at: function () { var n = S.nuc[0].gc; return { x: n.x + 1.4, y: n.y }; } },
       /* 2 the tube grows */
       { tx: 'style', side: 'L', t0: 7.6, t1: T_STYLE + .4, at: function () { return styleEdge('L'); } },
-      { tx: 'pollen tube', side: 'R', t0: 6.9, t1: A.t1 - 1.1, at: function () { var L = tubeLen(A, S.t), p = at(A.path, Math.max(8, L - 40)); return { x: p.x + 1.6, y: p.y }; } },
-      { tx: 'pollen nucleus', side: 'R', t0: 7.6, t1: A.t1 - 1.3, layer: 'core', dot: C.male, at: function () { var n = S.nuc[0]; return { x: n.x + 1.4, y: n.y }; } },
-      { tx: 'two male gametes', side: 'R', t0: A.div + .8, t1: A.t1 - 1.3, layer: 'ib', dot: C.male, at: function () { var n = S.nuc[0]; return { x: (n.ma.x + n.mb.x) / 2 + 1.4, y: (n.ma.y + n.mb.y) / 2 }; } },
+      { tx: 'pollen tube', side: 'R', t0: 6.9, t1: A.t1 + .5, at: function () { var L = tubeLen(A, S.t), p = at(A.path, Math.max(8, L - 40)); return { x: p.x + 1.6, y: p.y }; } },
+      { tx: 'pollen nucleus', side: 'R', t0: 7.6, t1: A.t1 - 2.2, layer: 'core', dot: C.male, at: function () { var n = S.nuc[0]; return { x: n.x + 1.4, y: n.y }; } },
+      { tx: 'two male gametes', side: 'R', t0: A.div + .8, t1: A.t1 - 2.2, layer: 'ib', dot: C.male, at: function () { var n = S.nuc[0]; return { x: (n.ma.x + n.mb.x) / 2 + 1.4, y: (n.ma.y + n.mb.y) / 2 }; } },
       /* 3 into an ovule */
       { tx: 'ovary', side: 'L', t0: T_STYLE + .3, t1: A.t1 - 1.2, at: function () { return ovaryEdge('L'); } },
-      { tx: 'ovule', side: 'R', t0: T_STYLE + 1.6, t1: A.t1 + .1, at: function () { return ovW(1, -14, -6.8); } },
+      { tx: 'ovule', side: 'R', t0: T_STYLE + 1.6, t1: A.t1 + .6, at: function () { return ovW(1, -14, -6.8); } },
       { tx: 'micropyle', side: 'L', t0: A.t1 - 1.5, t1: A.burst + .9, at: function () { return ovW(1, 17.2, 2.4); } },
       /* 4 fertilisation */
-      { tx: 'pollen nucleus', side: 'L', t0: A.t1 + .7, t1: A.fuse0 + .35, layer: 'core', dot: C.male, at: function () { var n = S.nuc[0]; return { x: n.x - 1.4, y: n.y + 1.2 }; } },
-      { tx: 'male gamete', side: 'L', t0: A.t1 + .7, t1: A.fuse0 + .35, layer: 'ib', dot: C.male, at: function () { var n = S.nuc[0].ma; return { x: n.x - 1.4, y: n.y + 1.2 }; } },
-      { tx: 'nucleus of the female gamete', side: 'R', t0: A.t1 + .2, t1: A.fuse1 - .2, dot: C.eggN, at: function () { return ovW(1, 7.2, -1.2); } },
+      { tx: 'pollen nucleus', side: 'L', t0: A.t1 - 1.6, t1: A.fuse0 + .35, layer: 'core', dot: C.male, at: function () { var n = S.nuc[0]; return { x: n.x - 1.4, y: n.y + 1.2 }; } },
+      { tx: 'male gamete', side: 'L', t0: A.t1 - 1.6, t1: A.fuse0 + .35, layer: 'ib', dot: C.male, at: function () { var n = S.nuc[0].ma; return { x: n.x - 1.4, y: n.y + 1.2 }; } },
+      { tx: 'nucleus of the female gamete', side: 'R', t0: A.t1 + .4, t1: A.fuse1 - .2, dot: C.eggN, at: function () { return ovW(1, 7.2, -1.2); } },
       { tx: 'zygote', side: 'R', t0: A.fuse1 - .2, t1: T5 + 1.2, at: function () { return ovW(1, 7.2, -3.1); } },
       { tx: 'endosperm nucleus', side: 'R', t0: A.fuse1 + .25, t1: T5 + .9, layer: 'ib', dot: C.endo, at: function () { return ovW(1, -1.5, 1.6); } },
       /* 5 the ovule becomes a seed */
@@ -5430,6 +5431,8 @@
     /* ----- the controls: above the drawing and the steps ----- */
     var bar = h('div', 'pt__bar');
     var play = h('button', 'pt__play'); play.type = 'button';
+    var all = h('button', 'pt__all', '<span class="pt__ico" aria-hidden="true">▶▶</span> Play all'); all.type = 'button';
+    all.title = 'Play every step without stopping';
     var progBar = h('div', 'pt__prog');
     progBar.setAttribute('aria-hidden', 'true');
     STEPS.forEach(function (st, i) {
@@ -5439,7 +5442,7 @@
       progBar.appendChild(sgm);
     });
     var count = h('span', 'pt__count');
-    bar.appendChild(play); bar.appendChild(progBar); bar.appendChild(count);
+    bar.appendChild(play); bar.appendChild(all); bar.appendChild(progBar); bar.appendChild(count);
     box.appendChild(bar);
 
     var wrap2 = h('div', 'pt');
@@ -5485,8 +5488,16 @@
     /* under both columns, so the explanation reads at a comfortable width */
     box.appendChild(more); box.appendChild(panel);
 
-    /* ----- playing ----- */
-    var T = 0, playing = false, raf = null, last = null, timer = null, started = false;
+    /* ----- playing, one step at a time -----
+       Each step plays, then waits on its last frame until Next is pressed. Run straight through,
+       the steps gave 4 to 6 seconds for 12 to 30 words (47 with the IB line). That is faster than
+       an adult reads English silently, about 240 words a minute (Brysbaert 2019), with no time
+       left to watch the drawing, and Daniel could not finish reading them. Learner-paced segments
+       are also what the research on animations recommends (Mayer and Chandler 2001). "Play all"
+       still runs the whole story without stopping, for revision. */
+    var T = 0, playing = false, raf = null, last = null, started = false, stopAt = null;
+    function segEnd(i) { return i + 1 < STEPS.length ? STEPS[i + 1].t - .02 : END; }
+    function atStepEnd() { return started && !playing && stopAt != null && T >= stopAt - 1e-3; }
     function still() { return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
     function paint(t) {
       render(t);
@@ -5506,48 +5517,47 @@
       syncPlay();
     }
     function syncPlay() {
-      var ended = T >= END - 1e-6;
+      var ended = T >= END - 1e-3, next = atStepEnd() && !ended;
       play.innerHTML = playing ? '<span class="pt__ico" aria-hidden="true">❚❚</span> Pause'
         : ended ? '<span class="pt__ico" aria-hidden="true">↻</span> Play again'
-        : started ? '<span class="pt__ico" aria-hidden="true">▶</span> Resume'
-        : '<span class="pt__ico" aria-hidden="true">▶</span> Play';
+        : !started ? '<span class="pt__ico" aria-hidden="true">▶</span> Play'
+        : next ? '<span class="pt__ico" aria-hidden="true">▶</span> Next step'
+        : '<span class="pt__ico" aria-hidden="true">▶</span> Resume';
       play.classList.toggle('is-playing', playing);
+      play.classList.toggle('is-next', next);
+      all.hidden = still();
     }
     function stop() {
       playing = false;
       if (raf) cancelAnimationFrame(raf); raf = null;
-      if (timer) clearTimeout(timer); timer = null;
     }
     function frame(ts) {
       if (!box.isConnected) { stop(); return; }
       if (last == null) last = ts;
-      T = Math.min(END, T + Math.min(.1, (ts - last) / 1000)); last = ts;
-      if (T >= END) { playing = false; raf = null; paint(T); return; }
+      var lim = stopAt == null ? END : stopAt;
+      T = Math.min(lim, T + Math.min(.1, (ts - last) / 1000)); last = ts;
+      if (T >= lim) { playing = false; raf = null; paint(T); return; }
       paint(T);
       raf = requestAnimationFrame(frame);
     }
-    function start() {
-      stop(); started = true; playing = true; watchSize();
-      if (still()) { stillStep(stepAt(T)); return; }
-      last = null; raf = requestAnimationFrame(frame); syncPlay();
+    /* play from one moment to another, then wait there. With reduced motion there is no
+       movement at all: the step is shown as a still of how it ends. */
+    function run(from, to) {
+      stop(); watchSize(); started = true; stopAt = to;
+      if (still()) { T = to; paint(T); return; }
+      T = from; playing = true; last = null; paint(T);
+      raf = requestAnimationFrame(frame);
     }
-    /* With reduced motion there is no camera move and no growth to watch: each step is shown as a
-       still of how it ends, and Play moves to the next still every few seconds. */
-    function stillStep(i) {
-      T = Math.max(STEPS[i].t, stepEnd(i) - .05); paint(T);
-      if (!playing) return;
-      if (i + 1 < STEPS.length) timer = setTimeout(function () { if (box.isConnected && playing) stillStep(i + 1); else stop(); }, 4500);
-      else { playing = false; T = END; paint(T); }
-    }
-    function goStep(i) {
-      stop(); started = true; watchSize();
-      if (still()) { playing = true; stillStep(i); return; }
-      T = STEPS[i].t; playing = true; last = null; paint(T); raf = requestAnimationFrame(frame);
-    }
+    function goStep(i) { run(STEPS[i].t, segEnd(i)); }
     play.addEventListener('click', function () {
       if (playing) { stop(); paint(T); return; }
-      if (T >= END - 1e-6) T = 0;
-      start();
+      if (!started || T >= END - 1e-3) { goStep(0); return; }
+      if (atStepEnd()) { goStep(stepAt(T) + 1); return; }
+      run(T, stopAt == null ? segEnd(stepAt(T)) : stopAt);          /* resume */
+    });
+    all.addEventListener('click', function () {
+      var from = !started || T >= END - 1e-3 ? 0 : atStepEnd() ? STEPS[stepAt(T) + 1].t : T;
+      run(from, END);
     });
 
     /* the drawing gets smaller on a phone, so its labels get relatively bigger */
@@ -5574,7 +5584,7 @@
     box.__seek = function (t, withIb) {
       stop();
       if (withIb != null && !!withIb !== ib) { ib = !!withIb; paintMore(); }
-      started = t > 0; T = Math.max(0, Math.min(END, t)); paint(T);
+      started = t > 0; stopAt = null; T = Math.max(0, Math.min(END, t)); paint(T);
       return { steps: STEPS.map(function (st) { return Math.round(st.t * 100) / 100; }), end: END };
     };
 
