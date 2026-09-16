@@ -101,7 +101,8 @@
     ['succulents', 'succulents-900.jpg', '<b>Succulents</b>: thick, fleshy stems and leaves holding a store of water — a xerophyte\u2019s answer to a dry season.', 'From the 18.2 lesson slides'],
     ['marram grass', 'marram-close-900.jpg', '<b>Marram grass</b> close to, growing on bare sand. Each leaf is rolled into a tube, which is why it can live where the wind is constant and the sand holds no water.', 'From the 18.2 lesson slides'],
     ['marram', 'marram-close-900.jpg', '<b>Marram</b>: the grass that holds a sand dune together. Rolled leaves, a thick cuticle and stomata sunk in pits — the standard xerophyte in the exam.', 'From the 18.2 lesson slides'],
-    ['wind-pollinated', 'plantain-2-900.jpg', 'A <b>wind-pollinated</b> flower: ribwort plantain. No petals worth the name, no scent, no nectar — just anthers hung outside the flower on long filaments, where the wind can take the pollen away.', 'From the 16.3 lesson slides'],
+    /* not the plantain: the station's own picture of a wind-pollinated flower, the finder just below, is a plantain already */
+    ['wind-pollinated', 'dogstail-anthers-900.jpg', 'A <b>wind-pollinated</b> flower, magnified: crested dog\u2019s-tail, a grass. The white, feathery threads are its stigmas — a net of fine branches that traps pollen grains carried in the air. The pale anthers hang outside the flower on thin filaments, exposed to the wind. No petals, no scent, no nectar.', 'Crested dog\u2019s-tail · Blokenearexeter · public domain · Wikimedia Commons'],
     ['insect-pollinated', 'bee-pollen-900.jpg', '<b>Insect pollination</b>, close to: the pollen grains caught all over this bee\u2019s head and hairs. Spiky grains hook into the hairs, and the next flower it visits gets them.', 'From the 16.3 lesson slides'],
   ].forEach(function (e) { PEEK[e[0]] = [e[1], e[2], e[3]]; });
 
