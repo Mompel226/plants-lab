@@ -1340,7 +1340,7 @@
      taken a little off the mark: about a millimetre either way, bell-shaped, never more than two and a half. It is what
      makes repeats differ, and so what gives a standard deviation something to measure. */
   function poJitter() { var u = Math.random() || 1e-9, v = Math.random(); var g = Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); return Math.max(-2.5, Math.min(2.5, g * .9)); }
-  var PO_T95 = { 2: 12.71, 3: 4.30, 4: 3.18, 5: 2.78 };
+  var PO_T95 = { 2: 12.71, 3: 4.30, 4: 3.18, 5: 2.78, 6: 2.57 };
   function poStats(vals) {
     var n = vals.length, mean = vals.reduce(function (a, b) { return a + b; }, 0) / n;
     if (n < 2) return { n: n, mean: mean };
@@ -1348,6 +1348,57 @@
     return { n: n, mean: mean, sd: sd, se: se, t: t, ci: t * se };
   }
   function poKeyOf(s) { return [s.sp.id, s.leaves, s.light, s.temp, s.hum, s.wind, s.grease, s.joint, s.time].join('|'); }
+  /* ----- two kinds of repeat, and only one of them says anything about the plant -----
+     Trials on ONE mounted shoot are technical replicates: their spread is the repeatability of the
+     method — how steadily the student times the run and reads the scale. Shoots cut from different
+     plants are true replicates: their spread is how much the plants themselves differ, and it is the
+     only spread that supports a sentence about the species (Hurlbert 1984; Lazic et al. 2018). So the
+     widget keeps them apart everywhere — one shoot is one sub-row, one point on the graph and one term
+     in every between-shoot figure — and NO standard error or confidence interval exists below three
+     shoots. Letters run A, B, C… by the order the shoots first appear ON THIS LINE, never by
+     PO_STATE.shoot, which only counts up and is cleared by neither the table nor the IV. */
+  var PO_MAX_SHOOTS = 5;
+  function poLetter(i) { return i < 0 ? '?' : String.fromCharCode(65 + i); }
+  function poNest(g, order) {
+    var by = {}, seq = [];
+    g.trials.forEach(function (t) {
+      var sh = t.r.s && t.r.s.shoot != null ? t.r.s.shoot : 0;   /* 0: saved before the shoot was stored — never counted as a shoot */
+      if (!by[sh]) { by[sh] = { shoot: sh, letter: sh ? poLetter(order.indexOf(sh)) : '–', trials: [], vals: [] }; seq.push(by[sh]); }
+      by[sh].trials.push(t); by[sh].vals.push(t.r.rate);
+    });
+    seq.sort(function (a, b) { return order.indexOf(a.shoot) - order.indexOf(b.shoot); });
+    seq.forEach(function (q) { var st = poStats(q.vals); q.n = q.vals.length; q.mean = st.mean; q.sd = st.sd == null ? null : st.sd; });
+    g.shoots = seq;
+    return g;
+  }
+  /* the ONLY producer of a between-shoot number anywhere in the widget. Below three shoots it returns
+     null for the standard error and the interval, so no part of the page is able to print one. */
+  function poShootStats(g) {
+    var ok = (g.shoots || []).filter(function (q) { return q.shoot && q.n; });
+    var k = ok.length, means = ok.map(function (q) { return q.mean; });
+    if (!k) return { k: 0, shoots: ok, means: [], grand: null, sd: null, se: null, ci: null, t: null, diff: null };
+    var st = poStats(means);
+    return { k: k, shoots: ok, means: means, grand: st.mean,
+             sd: k >= 2 ? st.sd : null, se: k >= 3 ? st.se : null, ci: k >= 3 ? st.ci : null, t: k >= 3 ? st.t : null,
+             diff: k === 2 ? Math.abs(means[1] - means[0]) : null };
+  }
+  /* Every shoot is measured at every value of the independent variable, so this is a repeated-measures
+     design: the honest statement about the EFFECT is each shoot's own change, not the spread at one
+     level. Cumming's overlap rules are for independent groups and do not apply here. */
+  function poPairedStats(rows, iv) {
+    var F = iv && poFact(iv);
+    if (!F || !F[2] || rows.length < 2) return null;
+    var rs = rows.slice().sort(function (a, b) { return (+poIvValue(a.s, iv)) - (+poIvValue(b.s, iv)); });
+    var lo = rs[0], hi = rs[rs.length - 1], a = {}, b = {};
+    (lo.shoots || []).forEach(function (q) { if (q.shoot && q.n) a[q.shoot] = q.mean; });
+    (hi.shoots || []).forEach(function (q) { if (q.shoot && q.n) b[q.shoot] = q.mean; });
+    var ids = Object.keys(a).filter(function (id) { return b[id] != null; });
+    if (ids.length < 2) return null;
+    var rises = ids.map(function (id) { return b[id] - a[id]; }), st = poStats(rises);
+    return { k: ids.length, rises: rises, mean: st.mean, se: st.se, ci: ids.length >= 3 ? st.ci : null,
+             from: poIvValue(lo.s, iv), to: poIvValue(hi.s, iv),
+             sameWay: rises.every(function (v) { return v > 0; }) || rises.every(function (v) { return v < 0; }) };
+  }
   /* What goes in the first column of a results table is the INDEPENDENT VARIABLE. The
      controlled variables are the ones that did not change, so repeating them down every row
      says nothing; they are stated once, under the title. */
@@ -1423,6 +1474,23 @@
       return Object.keys(seen).length > 1;
     });
   }
+  /* the sentence the whole rebuild exists for, printed where the two spreads sit side by side */
+  function poNestNote(k, errK) {
+    var w = errK === 'sd' ? 'standard deviation' : errK === 'se' ? 'standard error' : '95 % confidence interval';
+    return '<p class="po__nest"><b>Two spreads, and they are not the same thing.</b> ' +
+      'On a shoot\'s row, the standard deviation is the spread of the trials on <b>that</b> shoot. It is about your method — how steadily you time the run and read the scale. ' +
+      'On the tinted row, the figure is worked out from the ' + k + ' shoot means. It is about <b>the plant</b>. ' +
+      'Only the second can answer a question about the species, which is why that box is left empty on a shoot\'s row.' +
+      (errK === 'none' ? '' : ' The ' + w + ' shown is worked out between shoots only, never from the trials.') +
+      ' The tinted row does not average all the trials: it averages the ' + k + ' shoot means, so each shoot counts once however many trials it has.</p>';
+  }
+  function poPairedNote(p, ivWord) {
+    var lo = p.mean - (p.ci || 0), hi = p.mean + (p.ci || 0), dir = p.mean > 0 ? 'rose' : 'fell';
+    return '<p class="po__paired"><b>Every shoot changed in the same direction.</b> Between ' + esc(String(p.from)) + ' and ' + esc(String(p.to)) +
+      ', the ' + p.k + ' shoots\' rates ' + dir + ' by ' + p.rises.map(function (v) { return Math.abs(v).toFixed(2); }).join(', ') + ' mm/min. ' +
+      'Mean change ' + p.mean.toFixed(2) + ' mm/min' + (p.ci != null ? ' (95 % confidence interval ' + lo.toFixed(2) + ' to ' + hi.toFixed(2) + ')' : '') + ', <i>n</i> = ' + p.k + ' shoots. ' +
+      'Each shoot was measured at both ends, so this — not an error bar at one level — is the honest statement about the effect of ' + (ivWord || 'the factor') + '.</p>';
+  }
   function poErrBarsSaid(k) {
     return k === 'sd' ? 'error bars show one standard deviation either side of each mean'
          : k === 'se' ? 'error bars show one standard error either side of each mean'
@@ -1439,10 +1507,18 @@
       (s.grease === 'none' ? '' : ' · grease on the ' + esc(s.grease === 'both' ? 'two surfaces' : s.grease + ' surface')) + (s.joint === 'open' ? ' · <b>joint leaking</b>' : '') + ' · ' + s.time + ' min';
   }
   function poGroups(runs) {   /* one row per set of conditions, within each line; lines in order, rows in the order first recorded */
-    var G = {}, order = [];
-    runs.forEach(function (r, i) { var ln = r.line || 0, k = ln + '|' + poKeyOf(r.s); if (!G[k]) { G[k] = { key: k, line: ln, s: r.s, trials: [] }; order.push(k); } G[k].trials.push({ r: r, i: i }); });
+    var G = {}, order = [], lineShoots = {};
+    runs.forEach(function (r, i) {
+      var ln = r.line || 0, k = ln + '|' + poKeyOf(r.s);
+      if (!G[k]) { G[k] = { key: k, line: ln, s: r.s, trials: [] }; order.push(k); }
+      G[k].trials.push({ r: r, i: i });
+      var sh = r.s && r.s.shoot;                              /* the order the shoots appear on a line fixes their letters for every row of it */
+      if (sh != null) { if (!lineShoots[ln]) lineShoots[ln] = []; if (lineShoots[ln].indexOf(sh) < 0) lineShoots[ln].push(sh); }
+    });
     order.sort(function (a, b) { return G[a].line - G[b].line; });
-    return order.map(function (k) { return G[k]; });
+    /* `trials` stays exactly as it was, so every consumer that predates the shoots still works;
+       `shoots` is added beside it */
+    return order.map(function (k) { return poNest(G[k], lineShoots[G[k].line] || []); });
   }
 
   var PO_TERMS = {
@@ -1916,7 +1992,7 @@
       ctl.classList.remove('is-locked'); ctl.querySelectorAll('input,select').forEach(function (e) { e.disabled = false; }); freezeControls();
       bStart.textContent = '▶ Start the clock';
       species.value = 'bean'; leaves.inp.value = 5; light.inp.value = 60; temp.inp.value = 20; hum.inp.value = 50; wind.inp.value = 0; grease.value = 'none'; joint.value = 'sealed'; time.value = '5';
-      PO_STATE.shoot = 1; PO_STATE.shootF = 1;
+      PO_STATE.shoot = 1; PO_STATE.shootF = .84 + Math.random() * .32;   /* shoot A is a shoot like any other: fixed at 1.00 it was the model's own rate, with B and C scattered round it */
       runs.length = 0; errK = 'none'; PO_STATE.err = 'none'; PO_STATE.line = 0; PO_STATE.lineNames = []; PO_STATE.hidden = []; PO_STATE.dots = true; bDots.setAttribute('aria-pressed', 'true');
       errBar.querySelectorAll('button:not(.po__dots)').forEach(function (x) { x.setAttribute('aria-pressed', x.getAttribute('data-k') === 'none' ? 'true' : 'false'); });
       pop.hidden = true; popTerm = null;
@@ -1943,6 +2019,10 @@
     armed(bAll, 'Sure? Press again to reset', function () { return runs.length > 0; }, resetAll);
     bNew.addEventListener('click', function () {
       if (run) return;
+      if (poShootsOnLine() >= PO_MAX_SHOOTS) {
+        say.textContent = PO_MAX_SHOOTS + ' shoots on this line already — as many as the table holds. Finish the ones you have, or start a new line on the graph.';
+        return;
+      }
       PO_STATE.shoot = (PO_STATE.shoot || 1) + 1; PO_STATE.shootF = .84 + Math.random() * .32;
       resetBubble(); remember();
       say.textContent = 'Shoot ' + String.fromCharCode(64 + PO_STATE.shoot) + ', cut from another plant of the same kind: its own leaves, its own rate. Trials on one shoot are technical replicates; shoots from different plants are true replicates — only they say something about the species.';
@@ -1974,11 +2054,18 @@
     var tableWrap = h('div', 'po__tablewrap'), tabsEl = h('div', 'po__linetabs'), pop = h('div', 'po__pop'), chart = h('div', 'po__chart'), popTerm = null;
     pop.hidden = true;
     var tools = h('div', 'po__tools');
-    var errK = PO_STATE.err || 'none';
+    var errK = PO_STATE.err || 'none', kNow = 0;   /* kNow: shoots on the current line, set by paintData — the gate on SE and CI */
     var errBar = h('div', 'po__errbar', '<span class="po__errbar__l">Error bars</span>');
     [['none', 'none'], ['sd', 'standard deviation'], ['se', 'standard error'], ['ci', '95 % confidence interval']].forEach(function (o) {
       var b = h('button', 'po__errbar__b', esc(o[1])); b.type = 'button'; b.setAttribute('data-k', o[0]); b.setAttribute('aria-pressed', o[0] === errK ? 'true' : 'false');
-      b.addEventListener('click', function () { errK = o[0]; PO_STATE.err = errK; errBar.querySelectorAll('button:not(.po__dots)').forEach(function (x) { x.setAttribute('aria-pressed', x.getAttribute('data-k') === errK ? 'true' : 'false'); }); paintData(); });   /* the ? on the column heading explains the statistic; choosing one only draws it */
+      b.addEventListener('click', function () {
+        if ((o[0] === 'se' || o[0] === 'ci') && kNow < 3) {                 /* a standard error between fewer than three shoots is not one */
+          say.textContent = kNow < 2
+            ? 'You need a second shoot before that error bar can mean anything. Repeats on one shoot show how steady your method is, not how much the plants differ.'
+            : 'Two shoots is not enough for a standard error. Cut a third with “Use a shoot from another plant”.';
+          return;
+        }
+        errK = o[0]; PO_STATE.err = errK; errBar.querySelectorAll('button:not(.po__dots)').forEach(function (x) { x.setAttribute('aria-pressed', x.getAttribute('data-k') === errK ? 'true' : 'false'); }); paintData(); });   /* the ? on the column heading explains the statistic; choosing one only draws it */
       errBar.appendChild(b);
     });
     /* the trials themselves can be hidden, so the means and their error bars stand clear */
@@ -2010,11 +2097,22 @@
     var keyOf = poKeyOf, condText = poCondText;
     /* grease and the joint are part of a row's identity (poKeyOf), so a row is wholly on this bench
        or wholly off it — filtering by group leaves each trial's index pointing at the real array */
+    function poShootsOnLine() {
+      var seen = {}, k = 0;
+      runs.forEach(function (r) { var sh = r.s && r.s.shoot; if (sh && (r.line || 0) === PO_STATE.line && !seen[sh]) { seen[sh] = 1; k++; } });
+      return k;
+    }
     function groups() {
       var G = poGroups(runs);
       return PO_STATE.mode === 'full' ? G : G.filter(function (g) { return poInMode(g.s); });
     }
-    function trialsFor(s) { var k = keyOf(s); return runs.filter(function (r) { return keyOf(r.s) === k && (r.line || 0) === PO_STATE.line; }).length; }
+    /* five trials is the cap for ONE shoot at one set of conditions. Counting across shoots would make
+       the second shoot unrunnable at every condition the first had finished — which is the whole point
+       of cutting it. Compared against the argument's own shoot, not the one now mounted. */
+    function trialsFor(s) {
+      var k = keyOf(s), sh = s.shoot;
+      return runs.filter(function (r) { return keyOf(r.s) === k && (r.line || 0) === PO_STATE.line && r.s.shoot === sh; }).length;
+    }
     var stats = poStats;
     var TERMS = PO_TERMS;
     function showTerm(term) {
@@ -2115,30 +2213,75 @@
     function trialCls(r) {
       return 'po__trial' + (r.leak ? ' po__trial--leak' : '') + (r.notZero ? ' po__trial--nozero' : '');
     }
-    function rowHtml(g) {                      /* IGCSE: repeats and the mean in one row */
-      var vals = g.trials.map(function (t) { return t.r.rate; }), st = stats(vals), cells = '';
-      for (var i = 0; i < MAX_TRIALS; i++) {
-        var t = g.trials[i];
-        cells += t ? '<td class="' + trialCls(t.r) + '"' + (t.r.notZero ? ' title="The bubble did not start from 0, so this rate is too high. Press the cross to drop it."' : '') + '>' + t.r.rate.toFixed(2) + '<small title="' + t.r.distance + ' mm on shoot ' + String.fromCharCode(64 + (t.r.s.shoot || 1)) + '">' + t.r.distance + ' mm · ' + String.fromCharCode(64 + (t.r.s.shoot || 1)) + '</small>' + delBtn(t) + '</td>' : '<td class="po__trial po__trial--empty">—</td>';
-      }
-      return '<tr><td class="po__cond">' + firstCell(g.s) + '</td>' + cells +
-        '<td class="po__statcell"><b>' + st.mean.toFixed(2) + '</b></td>' + (errK === 'none' ? '' : '<td class="po__statcell">' + (st[errK] != null ? (errK === 'ci' ? '± ' : '') + st[errK].toFixed(2) : '—') + '</td>') + '</tr>';
+    /* ----- the rows -----
+       One shoot, one row. The independent variable's cell is rowspanned down the block, so the first
+       column carries the IV and nothing else. The tinted row under each block is worked out from the
+       shoot MEANS, not from the pooled trials, so each shoot counts once however many trials it has —
+       with three trials each the two agree, and they stop agreeing the moment one shoot has more.
+       The between-shoot box is blank on a shoot's row: trials on one shoot cannot say anything about
+       the plant, and the table enforces that rather than a paragraph under it. */
+    function trialTd(t, raw) {
+      if (!t) return '<td class="po__trial po__trial--empty">—</td>';
+      var r = t.r;
+      return '<td class="' + trialCls(r) + '"' + (r.notZero ? ' title="The bubble did not start from 0, so this reading is too high. Press the cross to drop it."' : '') + '>' +
+        (raw ? r.distance : r.rate.toFixed(2)) + (raw ? '' : '<small>' + r.distance + ' mm</small>') + delBtn(t) + '</td>';
     }
-    function rawRowHtml(g) {                   /* IB table 1: only what was read off the scale */
-      var cells = '';
-      for (var i = 0; i < MAX_TRIALS; i++) {
-        var t = g.trials[i];
-        cells += t ? '<td class="' + trialCls(t.r) + '"' + (t.r.notZero ? ' title="The bubble did not start from 0, so this distance is too long. Press the cross to drop it."' : '') + '>' + t.r.distance + '<small>shoot ' + String.fromCharCode(64 + (t.r.s.shoot || 1)) + '</small>' + delBtn(t) + '</td>' : '<td class="po__trial po__trial--empty">—</td>';
-      }
-      return '<tr><td class="po__cond">' + firstCell(g.s) + '</td>' + cells + '</tr>';
+    function statTd(v, pre, bold) {
+      return '<td class="po__statcell">' + (v == null ? '<span class="po__blank">—</span>'
+        : (bold ? '<b>' : '') + (pre || '') + v.toFixed(2) + (bold ? '</b>' : '')) + '</td>';
     }
-    function procRowHtml(g) {                  /* IB table 2: only what was worked out from it */
+    var blankTd = '<td class="po__statcell"><span class="po__blank">—</span></td>';
+    /* Columns showing the same quantity must be the same width. Left to itself the browser hands the
+       leftover space to whichever column happens to hold the widest text, which is what made Trial 3
+       balloon while Trial 1 stayed narrow — and with table-layout:fixed a spanning header gives every
+       column under it an equal share, so a long heading spills. One colgroup settles both. */
+    function colsFor(w) {
+      var tot = w.reduce(function (a, b) { return a + b; }, 0);
+      return '<colgroup>' + w.map(function (x) { return '<col style="width:' + (x / tot * 100).toFixed(2) + '%">'; }).join('') + '</colgroup>';
+    }
+    function blockHtml(g, o) {
+      var nest = poShootStats(g), out = '';
+      var seq = g.shoots && g.shoots.length ? g.shoots : [{ letter: '–', trials: g.trials, n: g.trials.length, mean: null, sd: null }];
+      var span = o.multi ? seq.length + 1 : 1;
+      seq.forEach(function (q, i) {
+        var cells = '';
+        for (var j = 0; j < o.m; j++) cells += trialTd(q.trials[j], o.raw);
+        out += '<tr>' +
+          (i === 0 ? '<td class="po__cond po__ivcell"' + (span > 1 ? ' rowspan="' + span + '"' : '') + '>' + firstCell(g.s) + '</td>' : '') +
+          (o.multi ? '<td class="po__shootcell">' + q.letter + '</td>' : '') + cells +
+          (o.raw ? '' : statTd(q.mean, '', true) + (o.within ? statTd(q.sd) : '') + (o.solo ? statTd(poStats(q.vals || [])[errK], errK === 'ci' ? '± ' : '') : '') + (o.between ? blankTd : '')) +
+          '</tr>';
+      });
+      if (o.multi && !o.raw) {
+        out += '<tr class="po__srow"><td class="po__shootcell">All ' + nest.k + ' shoots</td><td colspan="' + o.m + '"></td>' +
+          statTd(nest.grand, '', true) + (o.within ? blankTd : '') +
+          (o.between ? statTd(nest[errK], errK === 'ci' ? '± ' : '') : '') + '</tr>';
+      }
+      return out;
+    }
+    /* IB table 2, when there are several shoots: each shoot becomes a COLUMN, so sixteen processed
+       rows become four. The figure in brackets is that shoot's own spread. */
+    function procWideHtml(rows, order) {
+      return rows.map(function (g) {
+        var nest = poShootStats(g), by = {};
+        (g.shoots || []).forEach(function (q) { by[q.shoot] = q; });
+        return '<tr><td class="po__cond">' + firstCell(g.s) + '</td>' +
+          order.map(function (sh) {
+            var q = by[sh];
+            return '<td class="po__statcell">' + (!q || !q.n ? '<span class="po__blank">—</span>'
+              : '<b>' + q.mean.toFixed(2) + '</b>' + (q.sd == null ? '' : ' (' + q.sd.toFixed(2) + ')')) + '</td>';
+          }).join('') +
+          statTd(nest.grand, '', true) + (errK === 'none' ? '' : statTd(nest[errK], errK === 'ci' ? '± ' : '')) + '</tr>';
+      }).join('');
+    }
+    function procRowHtml(g) {                  /* IB table 2, one shoot: only what was worked out from the trials */
       var vals = g.trials.map(function (t) { return t.r.rate; }), st = stats(vals);
       return '<tr><td class="po__cond">' + firstCell(g.s) + '</td>' +
         '<td class="po__statcell">' + g.trials.length + '</td>' +
         '<td class="po__statcell"><b>' + st.mean.toFixed(2) + '</b></td>' +
         (errK === 'none' ? '' : '<td class="po__statcell">' + (st[errK] != null ? (errK === 'ci' ? '± ' : '') + st[errK].toFixed(2) : '—') + '</td>') + '</tr>';
     }
+
     /* the tabs above the table are the lines of the graph, one table each; the tab you are on is where runs are recorded */
     function paintData() {
       /* whether a control is frozen depends on whether the CURRENT LINE has runs, and that is
@@ -2180,49 +2323,100 @@
       var ivWord = PO_STATE.iv ? poIvPhrase(PO_STATE.iv, 0) : null;
       var ivEach = PO_STATE.iv ? poIvPhrase(PO_STATE.iv, 1) : null;
 
-      var statSaid = poStatSaid(errK);
-      var tail = ' Each row gives the trials and their mean' + (statSaid ? ', with ' + statSaid : '') + '.';
+      /* ----- how many shoots, and therefore which table this is -----
+         k, the number of shoots contributing runs, decides the SHAPE. Not the bench, not the style
+         toggle: a statistic exists when the data supports it and not before. */
+      var nests = rows.map(poShootStats);
+      var kMax = nests.reduce(function (a2, q) { return Math.max(a2, q.k); }, 0);
+      kNow = kMax;
+      errBar.querySelectorAll('button[data-k="se"],button[data-k="ci"]').forEach(function (b) {
+        var off = kMax < 3; b.classList.toggle('is-off', off); b.setAttribute('aria-disabled', off ? 'true' : 'false');
+        b.title = off ? (kMax < 2 ? 'You need a second shoot before this can mean anything.' : 'Two shoots is not enough for a standard error. Cut a third.') : '';
+      });
+      if (kMax < 3 && (errK === 'se' || errK === 'ci')) { errK = 'sd'; PO_STATE.err = 'sd'; errBar.querySelectorAll('button:not(.po__dots)').forEach(function (x) { x.setAttribute('aria-pressed', x.getAttribute('data-k') === 'sd' ? 'true' : 'false'); }); }
+      var multi = kMax >= 2;
+      var order = [];                      /* the shoots of this line, in the order they first appear */
+      rows.forEach(function (g) { (g.shoots || []).forEach(function (q) { if (q.shoot && order.indexOf(q.shoot) < 0) order.push(q.shoot); }); });
+      var m = 1;
+      rows.forEach(function (g) {
+        var seq = g.shoots && g.shoots.length ? g.shoots : [{ trials: g.trials }];
+        seq.forEach(function (q) { if (q.trials.length > m) m = q.trials.length; });
+      });
+      var within = multi, between = multi && errK !== 'none', solo = !multi && errK !== 'none';
+      var trialCells2 = ''; for (var ti = 1; ti <= m; ti++) trialCells2 += '<th>Trial ' + ti + '</th>';
+      var errLong = errK === 'sd' ? 'Standard deviation' : errK === 'se' ? 'Standard error' : '95 % confidence interval';
+      var withinH = '<th>' + term('sd', 'Standard deviation of the trials') + '</th>';
+      var betweenH = '<th>' + term(errK, errLong + ' of the shoot means') + '</th>';
+      var paired = poPairedStats(rows, PO_STATE.iv);
+
+      /* A title names the species, the independent variable and the dependent variable, states the
+         range the IV was taken over — and then only what a reader cannot see: what the tint means,
+         what is in brackets, what the grey figures are. It does not narrate the columns. */
+      var shootWord = multi ? kMax + ' ' + esc(sp) + ' shoots' : 'a ' + esc(sp) + ' shoot';
+      var ofShoots = PO_STATE.iv === 'sp' ? '' : ' of ' + shootWord;
+      var rangeSaid = '';
+      if (PO_STATE.iv && poFact(PO_STATE.iv) && poFact(PO_STATE.iv)[2] && rows.length > 1) {
+        var vs = rows.map(function (g) { return +poIvValue(g.s, PO_STATE.iv); }).sort(function (x, y) { return x - y; });
+        rangeSaid = ' over the range ' + vs[0] + '–' + vs[vs.length - 1] + (poFact(PO_STATE.iv)[1].match(/\(([^)]*)\)/) ? ' ' + poFact(PO_STATE.iv)[1].match(/\(([^)]*)\)/)[1] : '');
+      }
+      var tintNote = multi ? ' Tinted rows are worked out from the ' + kMax + ' shoot means.' : '';
+      var greyTail = ' Grey figures are the bubble\'s distance, in mm.';
       var titleIGCSE = (ivWord
-        ? 'The effect of ' + ivWord + ' on the rate of water uptake' + ofShoot + ', measured with a bubble potometer.'
-        : 'Rate of water uptake of a ' + esc(sp) + ' shoot under a range of conditions, measured with a bubble potometer.') + tail;
-      var titleRAW = ivWord
-        ? 'Raw data: the distance moved by the air bubble in a bubble potometer, ' + ivEach + forShoot + '.'
-        : 'Raw data: the distance moved by the air bubble in a bubble potometer, for a ' + esc(sp) + ' shoot.';
+        ? 'The effect of ' + ivWord + ' on the rate of water uptake' + ofShoots + ', measured with a bubble potometer' + rangeSaid + '.'
+        : 'Rate of water uptake' + ofShoots + ' under a range of conditions, measured with a bubble potometer.') + tintNote + greyTail;
+      var titleRAW = (ivWord
+        ? 'Raw data: the distance moved by the air bubble in a bubble potometer, ' + ivEach + (PO_STATE.iv === 'sp' ? '' : ', for ' + shootWord) + '.'
+        : 'Raw data: the distance moved by the air bubble in a bubble potometer, for ' + shootWord + '.') +
+        ' Each distance was read to the nearest millimetre, so each is uncertain by ± 0.5 mm.';
       var titlePROC = 'Processed data: ' + (ivWord
-        ? 'the effect of ' + ivWord + ' on the mean rate of water uptake' + ofShoot
-        : 'the mean rate of water uptake of a ' + esc(sp) + ' shoot') +
-        (statSaid ? ', with ' + statSaid : ', from the trials in Table 1') + '.';
+        ? 'the effect of ' + ivWord + ' on the mean rate of water uptake' + ofShoots + rangeSaid
+        : 'the mean rate of water uptake' + ofShoots) + '.' +
+        (multi ? ' Brackets are the standard deviation of each shoot\'s own trials.' : '');
 
       var lineHead = '<div class="po__linehead" style="--lc:' + poLineColour(cur) + '"><span class="po__swatch"></span><input class="po__linename" value="' + esc(PO_STATE.lineNames[cur] || '') + '" placeholder="' + esc(poLineName(cur)) + ' — name it: privet, fan on, dark…"><span class="po__linenote">the runs you record now go on this line</span>' + (lines.length > 1 ? '<button type="button" class="wbtn wbtn--quiet po__delline">Delete this line</button>' : '') + '</div>';
 
-      /* One column, one quantity. The small grey figure is an aid at the bench and is not part
-         of the table; say so, because a student copying this layout would be copying a fault. */
-      var greyNote = '<p class="po__stylenote po__stylenote--grey">Under each rate, in grey, is the distance the bubble moved, so a reading can be checked against the number worked out from it. <b>It would not appear in a table you handed in</b> — one column, one quantity — and neither would the shoot letter.</p>';
-      var greyNoteRaw = '<p class="po__stylenote po__stylenote--grey">The grey letter under each distance is the shoot it was read on, an aid at the bench. <b>It would not appear in a table you handed in</b>: one column, one quantity.</p>';
+      /* One column, one quantity. The small grey figure is an aid at the bench and is not part of the
+         table; say so, because a student copying this layout would be copying a fault. The shoot
+         column is the exception — it WOULD appear, because it says which plant each row is about. */
+      var greyNote = '<p class="po__stylenote po__stylenote--grey">Under each rate, in grey, is the distance the bubble moved, so a reading can be checked against the number worked out from it. <b>It would not appear in a table you handed in</b> — one column, one quantity.' + (multi ? ' The shoot column would: it says which piece of plant each row is about.' : '') + '</p>';
 
       var tables = '';
       if (rows.length && ibStyle) {
+        var procHead = multi
+          ? '<thead><tr><th rowspan="2">' + IVH + '</th><th colspan="' + order.length + '">Mean rate of water uptake for each shoot (mm min⁻¹)</th>' +
+            '<th colspan="' + (errK === 'none' ? 1 : 2) + '">Across the ' + kMax + ' shoots (mm min⁻¹)</th></tr>' +
+            '<tr>' + order.map(function (sh, i) { return '<th>Shoot ' + poLetter(i) + '</th>'; }).join('') +
+            '<th>' + term('mean', 'Mean') + '</th>' + (errK === 'none' ? '' : '<th>' + term(errK, errLong) + '</th>') + '</tr></thead>'
+          : '<thead><tr><th rowspan="2">' + IVH + '</th><th rowspan="2"><i>n</i></th>' +
+            '<th colspan="' + (errK === 'none' ? 1 : 2) + '">Rate of water uptake (mm min⁻¹)</th></tr>' +
+            '<tr><th>' + term('mean', 'Mean') + '</th>' + (errK === 'none' ? '' : '<th>' + term(errK, errName) + '</th>') + '</tr></thead>';
+        var wRaw = [13].concat(multi ? [9] : []); for (var wi = 0; wi < m; wi++) wRaw.push(13);
+        var wProc = multi ? [13].concat(order.map(function () { return 14; })).concat([11]).concat(errK === 'none' ? [] : [13])
+                          : [16, 7, 12].concat(errK === 'none' ? [] : [14]);
         tables =
-          '<table class="po__table"><caption class="po__cap"><b>Table 1.</b> ' + titleRAW + '</caption>' +
-          '<thead><tr><th rowspan="2">' + IVH + '</th><th colspan="5">Distance moved by the bubble (mm ± 0.5)</th></tr>' +
-          '<tr>' + trialCells + '</tr></thead>' +
-          '<tbody>' + rows.map(rawRowHtml).join('') + '</tbody></table>' + controlledLine(rows) + greyNoteRaw +
-          '<table class="po__table po__table--proc"><caption class="po__cap"><b>Table 2.</b> ' + titlePROC + '</caption>' +
-          '<thead><tr><th rowspan="2">' + IVH + '</th><th rowspan="2"><i>n</i></th>' +
-          '<th colspan="' + (errK === 'none' ? 1 : 2) + '">Rate of water uptake (mm min⁻¹)</th></tr>' +
-          '<tr><th>' + term('mean', 'Mean') + '</th>' + (errK === 'none' ? '' : '<th>' + term(errK, errName) + '</th>') + '</tr></thead>' +
-          '<tbody>' + rows.map(procRowHtml).join('') + '</tbody></table>' +
-          '<p class="po__stylenote">Rate = distance ÷ time, worked out for each trial and then averaged. IB keeps the two apart: <b>what the instrument read</b> in one table, <b>what you did with it</b> in the next, and five trials is the usual minimum for a standard deviation to mean anything.</p>';
+          '<table class="po__table"><caption class="po__cap"><b>Table 1.</b> ' + titleRAW + '</caption>' + colsFor(wRaw) +
+          '<thead><tr><th rowspan="2">' + IVH + '</th>' + (multi ? '<th rowspan="2">Shoot</th>' : '') +
+          '<th colspan="' + m + '">Distance moved by the bubble (mm)</th></tr>' +
+          '<tr>' + trialCells2 + '</tr></thead>' +
+          '<tbody>' + rows.map(function (g) { return blockHtml(g, { multi: multi, m: m, raw: true }); }).join('') + '</tbody></table>' + controlledLine(rows) +
+          '<table class="po__table po__table--proc"><caption class="po__cap"><b>Table 2.</b> ' + titlePROC + '</caption>' + colsFor(wProc) + procHead +
+          '<tbody>' + (multi ? procWideHtml(rows, order) : rows.map(procRowHtml).join('')) + '</tbody></table>' +
+          '<p class="po__stylenote">Rate = distance ÷ time, worked out for each trial' + (multi ? ', then averaged for each shoot, then the ' + kMax + ' shoot means averaged — so each shoot counts once, however many trials it has' : ' and then averaged') + '. IB keeps the two apart: <b>what the instrument read</b> in one table, <b>what you did with it</b> in the next.</p>';
       } else if (rows.length) {
-        var span = 5 + 1 + (errK === 'none' ? 0 : 1);
+        var span = m + 1 + (within ? 1 : 0) + (between ? 1 : 0) + (solo ? 1 : 0);
+        var w = [12].concat(multi ? [8] : []); for (var wj = 0; wj < m; wj++) w.push(10);
+        w.push(10); if (within) w.push(17); if (solo) w.push(15); if (between) w.push(17);
         tables =
-          '<table class="po__table"><caption class="po__cap"><b>Table 1.</b> ' + titleIGCSE + '</caption>' +
-          '<thead><tr><th rowspan="2">' + IVH + '</th><th colspan="' + span + '">Rate of water uptake (mm min⁻¹)</th></tr>' +
-          '<tr>' + trialCells + '<th>' + term('mean', 'Mean') + '</th>' + (errK === 'none' ? '' : '<th>' + term(errK, errName) + '</th>') + '</tr></thead>' +
-          '<tbody>' + rows.map(rowHtml).join('') + '</tbody></table>' + controlledLine(rows) + greyNote +
+          '<table class="po__table"><caption class="po__cap"><b>Table 1.</b> ' + titleIGCSE + '</caption>' + colsFor(w) +
+          '<thead><tr><th rowspan="2">' + IVH + '</th>' + (multi ? '<th rowspan="2">Shoot</th>' : '') +
+          '<th colspan="' + span + '">Rate of water uptake (mm min⁻¹)</th></tr>' +
+          '<tr>' + trialCells2 + '<th>' + term('mean', 'Mean') + '</th>' + (within ? withinH : '') + (solo ? '<th>' + term(errK, errName) + '</th>' : '') + (between ? betweenH : '') + '</tr></thead>' +
+          '<tbody>' + rows.map(function (g) { return blockHtml(g, { multi: multi, m: m, within: within, between: between, solo: solo }); }).join('') + '</tbody></table>' + controlledLine(rows) + greyNote +
           '<p class="po__stylenote">One ruled table, the repeats and the mean together, the unit written once above the columns it belongs to — which is what 0610 Paper 6 asks for.' +
           (PO_STATE.iv ? '' : ' <b>Choose an independent variable</b> above and the first column becomes that one thing, with the rest held constant and listed underneath.') + '</p>';
       }
+      if (multi) tables += poNestNote(kMax, errK);
+      if (paired && paired.sameWay) tables += poPairedNote(paired, ivWord);
       tableWrap.innerHTML = lineHead + tables;
       tabsEl.querySelectorAll('.po__linetab').forEach(function (b) { b.addEventListener('click', function () { PO_STATE.line = +b.getAttribute('data-line'); remember(); paintData(); say.textContent = 'On ' + poLineName(PO_STATE.line) + ': the runs you record now go on it.'; }); });
       var nameIn = tableWrap.querySelector('.po__linename');
