@@ -1487,6 +1487,10 @@
     return '<tr><td class="po__why__t">' + term + '<small>' + gloss + '</small></td>' +
       (b == null ? '<td colspan="2">' + a + '</td>' : '<td>' + a + '</td><td>' + b + '</td>') + '</tr>';
   }
+  /* The marks are read as an answer to ONE question — does this kind of repeat IMPROVE it? So a
+     ✓ means it improves it, a ✗ that it does not, and a ~ everything in between. Precision and
+     repeatability take the ~ on the same-shoot side: repeating MEASURES them and does not improve
+     them, and a tick there would teach a student exactly the wrong answer. */
   function poWhyMark(kind, text) {
     var m = kind === 'y' ? '<span class="po__why__v po__why__y">✓</span>' : kind === 'n' ? '<span class="po__why__v po__why__no">✗</span>' : '<span class="po__why__v po__why__p">~</span>';
     return m + text;
@@ -1515,10 +1519,10 @@
       '<th>Repeating on the SAME shoot<em>a technical replicate — a pseudo-replicate</em></th>' +
       '<th>Cutting a NEW shoot<em>a true replicate — a biological replicate</em></th></tr></thead><tbody>' +
       poWhyRow('Precision', 'how close repeat measurements are to each other',
-        poWhyMark('y', '<b>It measures it — it does not improve it.</b> The spread of your trials <i>is</i> the precision of your method. One more trial does not make a single reading more precise: it shows you how precise your readings already were, and it makes the <b>mean for this shoot</b> more precise.'),
+        poWhyMark('p', '<b>It measures it — it does not improve it.</b> The spread of your trials <i>is</i> the precision of your method. One more trial does not make a single reading more precise: it shows you how precise your readings already were, and it makes the <b>mean for this shoot</b> more precise.'),
         poWhyMark('n', '<b>Not precision at all.</b> The spread between shoots is not measuring error — it is how much the plants themselves differ.')) +
       poWhyRow('Repeatability', 'precision when nothing is changed',
-        poWhyMark('y', '<b>This is exactly repeatability</b>: the same person, the same potometer, the same shoot, over a short time. It is the one thing repeated trials genuinely tell you.'),
+        poWhyMark('p', '<b>This is exactly repeatability</b>: the same person, the same potometer, the same shoot, over a short time. It is the one thing repeated trials genuinely tell you.'),
         poWhyMark('n', '<b>No.</b> A new shoot changes the conditions, so the spread between shoots is not a repeatability figure. More shoots will not make your timing steadier.')) +
       poWhyRow('Reproducibility', 'precision when the person or the apparatus changes',
         poWhyMark('n', '<b>Neither of them.</b> Reproducibility means a <b>different student</b>, on a <b>different potometer</b>, getting the same answer. A new shoot is a new plant, not a new laboratory. This is the pair most often mixed up.'), null) +
@@ -1575,9 +1579,9 @@
       poWhyOne('Mean', 'add the trials, divide by how many',
         poWhyMark('y', '<b>A better value than any one trial.</b> Once an anomalous result is left out, the mean of the rest is your best answer for this shoot.')) +
       poWhyOne('Repeatability', 'how close repeat trials are to each other',
-        poWhyMark('y', '<b>This is exactly what repeated trials measure</b>: the same person, the same potometer, the same shoot, over a short time.')) +
+        poWhyMark('p', '<b>This is exactly what repeated trials measure</b>: the same person, the same potometer, the same shoot, over a short time.')) +
       poWhyOne('Precision', 'how close repeat measurements are to each other',
-        poWhyMark('y', '<b>Repeating measures it — it does not improve it.</b> The spread of your trials shows how precise your readings already were.')) +
+        poWhyMark('p', '<b>Repeating measures it — it does not improve it.</b> The spread of your trials shows how precise your readings already were.')) +
       poWhyOne('Accuracy', 'how close you are to the true value',
         poWhyMark('n', '<b>Repeating does not improve accuracy.</b> A leak, or a bubble that did not start at 0, makes <b>every</b> trial wrong in the same direction — repeat it and you get the same wrong answer again. Only changing what you do fixes it: seal the joint, open the tap, read the scale at eye level.')) +
       poWhyOne('Reliability', 'a mean you can trust — always say which',
