@@ -209,22 +209,32 @@
      Each rule says: this spelling, in this context, is not the glossary's sense — leave it
      alone. Add to it rather than removing a word from the glossary: the word is right
      elsewhere. */
+  /* SOURCE: listing the wrong senses one phrase at a time kept missing the next one — "these sources
+     of genetic variation" (the flower) and "the source of the auxin" (tropisms) both opened the
+     translocation station. So the rule is turned round: "source" is the phloem's source only on the
+     translocation station itself — where a one-word label like "Source" means nothing else — or in a
+     text elsewhere that is about the phloem at all, one that mentions a sink, sucrose, the phloem or
+     translocation. Anywhere else it is an ordinary word and is left alone. Found by Daniel. */
+  var PHLOEM_TEXT = /\b(sinks?|sucrose|phloem|translocat\w*)\b/i;
   var NOT_HERE = {
     'source':     [{ before: /\b(light|energy|heat|power|water|food)\s+$/i },
-                   { after: /^\s+of\s+(energy|light|heat|food|protein|carbohydrate|water|income)/i }],
+                   { after: /^\s+of\s+(energy|light|heat|food|protein|carbohydrate|water|income)/i },
+                   { unlessWhole: PHLOEM_TEXT, orStation: 'translocation' }],
     'sources':    [{ before: /\b(light|energy|heat|power|food)\s+$/i },
-                   { after: /^\s+of\s+(energy|light|heat|food)/i }],
+                   { after: /^\s+of\s+(energy|light|heat|food)/i },
+                   { unlessWhole: PHLOEM_TEXT, orStation: 'translocation' }],
     'capillary':  [{ after: /^\s+tube/i }],
     'capillaries':[{ after: /^\s+tube/i }],
     'control':    [{ after: /^\s+(the|it|them|this|these|for|every|all|each)\b/i }]
   };
-  function wrongSense(low, before, after) {
+  function wrongSense(low, before, after, whole) {
     var rules = NOT_HERE[low];
     if (!rules) return false;
     for (var i = 0; i < rules.length; i++) {
       var r = rules[i];
       if (r.before && r.before.test(before)) return true;
       if (r.after && r.after.test(after)) return true;
+      if (r.unlessWhole && !r.unlessWhole.test(whole) && here !== r.orStation) return true;   /* the glossary's sense needs this context, and it is not here */
     }
     return false;
   }
@@ -236,7 +246,7 @@
       if (STAT[low]) return '<b class="t t--plain is-stat" data-stat="' + STAT[low] + '" data-term="' + esc(m) + '" tabindex="0" role="button">' + m + '</b>';
       var before = String(whole).slice(0, at).replace(/<[^>]*>/g, '');
       if (NEGATED.test(before)) return m;
-      if (wrongSense(low, before, String(whole).slice(at + m.length).replace(/<[^>]*>/g, ''))) return m;
+      if (wrongSense(low, before, String(whole).slice(at + m.length).replace(/<[^>]*>/g, ''), String(whole).replace(/<[^>]*>/g, ''))) return m;
       var cat = e[1], act = '', cls = '';
       var first = !quiet && !(seen && seen[low]);
       if (seen) seen[low] = true;
