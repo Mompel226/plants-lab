@@ -1720,7 +1720,7 @@
     }
     return '<div class="po__pop__h"><span>' + esc(T.name) + (T.ib ? ' <span class="po__pop__ib">IB content · not asked at IGCSE</span>' : '') + '</span><button type="button" class="po__pop__x" aria-label="Close">✕</button></div>' +
            '<p>' + esc(T.what) + '</p>' +
-           '<div class="po__pop__fm">' + PO_FM[term] + '</div><p class="po__pop__key">' + PO_KEY[term] + '</p>' +
+           '<div class="po__pop__fm">' + PO_FM[term] + '</div><p class="po__pop__key">' + (shootLvl ? PO_KEY[term].replace(/how many trials/g, 'how many shoots').replace(/one trial/g, 'one shoot mean') : PO_KEY[term]) + '</p>' +
            worked +
            (T.ib ? '<p class="po__pop__note">This is IB Biology content: standard deviation, standard error and confidence intervals are not asked for in IGCSE 0610, which wants the mean. They are what a scientist would put on this graph.</p>' : '');
   }
@@ -1821,7 +1821,7 @@
       bNew.hidden = !full;                                  /* no true replicates at IGCSE */
       bWhy.textContent = full ? '? Why repeat? Why a new shoot?' : '? Why repeat a trial?';
       errBar.querySelectorAll('button[data-k="se"],button[data-k="ci"]').forEach(function (b) { b.hidden = !full; });
-      if (!full && (errK === 'se' || errK === 'ci')) { errK = 'sd'; PO_STATE.err = 'sd'; errBar.querySelectorAll('button:not(.po__dots)').forEach(function (x) { x.setAttribute('aria-pressed', x.getAttribute('data-k') === 'sd' ? 'true' : 'false'); }); }
+      if (!full && (errK === 'se' || errK === 'ci')) { errK = 'sd'; PO_STATE.err = 'sd'; errBar.querySelectorAll('button[data-k]:not(.po__dots)').forEach(function (x) { x.setAttribute('aria-pressed', x.getAttribute('data-k') === 'sd' ? 'true' : 'false'); }); }
       poRemountFirst();
       /* a hidden select still holds its value, and settings() reads straight off the DOM — so it would
          go on stamping grease='both' onto every new run, which this bench would then hide */
@@ -2188,7 +2188,7 @@
       species.value = 'bean'; leaves.inp.value = 5; light.inp.value = 60; temp.inp.value = 20; hum.inp.value = 50; wind.inp.value = 0; grease.value = 'none'; joint.value = 'sealed'; time.value = '5';
       PO_STATE.shoot = 1; PO_STATE.shootF = .84 + Math.random() * .32; PO_STATE.shootFs = { 1: PO_STATE.shootF };   /* shoot A is a shoot like any other: fixed at 1.00 it was the model's own rate, with B and C scattered round it */
       runs.length = 0; errK = 'none'; PO_STATE.err = 'none'; PO_STATE.line = 0; PO_STATE.lineNames = []; PO_STATE.hidden = []; PO_STATE.dots = true; bDots.setAttribute('aria-pressed', 'true');
-      errBar.querySelectorAll('button:not(.po__dots)').forEach(function (x) { x.setAttribute('aria-pressed', x.getAttribute('data-k') === 'none' ? 'true' : 'false'); });
+      errBar.querySelectorAll('button[data-k]:not(.po__dots)').forEach(function (x) { x.setAttribute('aria-pressed', x.getAttribute('data-k') === 'none' ? 'true' : 'false'); });
       pop.hidden = true; popTerm = null;
       result.hidden = true; bRecord.disabled = true; clockB.textContent = '0:00';
       setBubble(0); paintConditions(); paintData();
@@ -2259,11 +2259,11 @@
             : 'Two shoots is not enough for a standard error. Cut a third with “Use a shoot from another plant”.';
           return;
         }
-        errK = o[0]; PO_STATE.err = errK; errBar.querySelectorAll('button:not(.po__dots)').forEach(function (x) { x.setAttribute('aria-pressed', x.getAttribute('data-k') === errK ? 'true' : 'false'); }); paintData(); });   /* the ? on the column heading explains the statistic; choosing one only draws it */
+        errK = o[0]; PO_STATE.err = errK; errBar.querySelectorAll('button[data-k]:not(.po__dots)').forEach(function (x) { x.setAttribute('aria-pressed', x.getAttribute('data-k') === errK ? 'true' : 'false'); }); paintData(); });   /* the ? on the column heading explains the statistic; choosing one only draws it */
       errBar.appendChild(b);
     });
     /* the trials themselves can be hidden, so the means and their error bars stand clear */
-    var bDots = h('button', 'po__errbar__b po__dots', '· every trial'); bDots.type = 'button'; bDots.setAttribute('data-k', 'dots'); bDots.setAttribute('aria-pressed', PO_STATE.dots ? 'true' : 'false'); bDots.title = 'Show or hide the single trials behind each mean';
+    var bDots = h('button', 'po__errbar__b po__dots', '× every trial'); bDots.type = 'button'; bDots.setAttribute('data-k', 'dots'); bDots.setAttribute('aria-pressed', PO_STATE.dots ? 'true' : 'false'); bDots.title = 'Show or hide the single trials behind each mean';
     bDots.addEventListener('click', function () { PO_STATE.dots = !PO_STATE.dots; bDots.setAttribute('aria-pressed', PO_STATE.dots ? 'true' : 'false'); poPersist(); paintData(); });
     errBar.appendChild(h('span', 'po__errbar__l po__errbar__l2', 'Points')); errBar.appendChild(bDots);
     /* The same results, laid out the two ways a student will be asked for them. 0610 wants one
@@ -2559,7 +2559,7 @@
         var off = kMax < 3; b.classList.toggle('is-off', off); b.setAttribute('aria-disabled', off ? 'true' : 'false');
         b.title = off ? (kMax < 2 ? 'You need a second shoot before this can mean anything.' : 'Two shoots is not enough for a standard error. Cut a third.') : '';
       });
-      if (kMax < 3 && (errK === 'se' || errK === 'ci')) { errK = 'sd'; PO_STATE.err = 'sd'; errBar.querySelectorAll('button:not(.po__dots)').forEach(function (x) { x.setAttribute('aria-pressed', x.getAttribute('data-k') === 'sd' ? 'true' : 'false'); }); }
+      if (kMax < 3 && (errK === 'se' || errK === 'ci')) { errK = 'sd'; PO_STATE.err = 'sd'; errBar.querySelectorAll('button[data-k]:not(.po__dots)').forEach(function (x) { x.setAttribute('aria-pressed', x.getAttribute('data-k') === 'sd' ? 'true' : 'false'); }); }
       var multi = kMax >= 2;
       var order = [];                      /* the shoots of this line, in the order they first appear */
       rows.forEach(function (g) { (g.shoots || []).forEach(function (q) { if (q.shoot && order.indexOf(q.shoot) < 0) order.push(q.shoot); }); });
@@ -2613,7 +2613,7 @@
             '<th colspan="' + (errK === 'none' ? 1 : 2) + '">Across the ' + kMax + ' shoots (mm min⁻¹)</th></tr>' +
             '<tr>' + order.map(function (sh, i) { return '<th>Shoot ' + poLetter(i) + '</th>'; }).join('') +
             '<th>' + term('mean', 'Mean', 'shoot') + '</th>' + (errK === 'none' ? '' : '<th>' + term(errK, errLong, 'shoot') + '</th>') + '</tr></thead>'
-          : '<thead><tr><th rowspan="2">' + IVH + '</th><th rowspan="2"><i>n</i></th>' +
+          : '<thead><tr><th rowspan="2">' + IVH + '</th><th rowspan="2">Number of trials, <i>n</i></th>' +
             '<th colspan="' + (errK === 'none' ? 1 : 2) + '">Rate of water uptake (mm min⁻¹)</th></tr>' +
             '<tr><th>' + term('mean', 'Mean') + '</th>' + (errK === 'none' ? '' : '<th>' + term(errK, errName) + '</th>') + '</tr></thead>';
         var wRaw = [13].concat(multi ? [9] : []); for (var wi = 0; wi < m; wi++) wRaw.push(13);
@@ -2627,7 +2627,7 @@
           '<tbody>' + rows.map(function (g) { return blockHtml(g, { multi: multi, m: m, raw: true }); }).join('') + '</tbody></table>' + controlledLine(rows) +
           '<table class="po__table po__table--proc"><caption class="po__cap"><b>Table 2.</b> ' + titlePROC + '</caption>' + colsFor(wProc) + procHead +
           '<tbody>' + (multi ? procWideHtml(rows, order) : rows.map(procRowHtml).join('')) + '</tbody></table>' +
-          '<p class="po__stylenote">Rate = distance ÷ time, worked out for each trial' + (multi ? ', then averaged for each shoot, then the ' + kMax + ' shoot means averaged — so each shoot counts once, however many trials it has' : ' and then averaged') + '. IB keeps the two apart: <b>what the instrument read</b> in one table, <b>what you did with it</b> in the next.</p>';
+          '<p class="po__stylenote">' + (multi ? '<i>n</i> = ' + kMax + ' shoots, with ' + m + ' trial' + (m === 1 ? '' : 's') + ' on each: the standard error is worked out from the ' + kMax + ' shoot means, not from the trials. ' : '') + 'Rate = distance ÷ time, worked out for each trial' + (multi ? ', then averaged for each shoot, then the ' + kMax + ' shoot means averaged — so each shoot counts once, however many trials it has' : ' and then averaged') + '. IB keeps the two apart: <b>what the instrument read</b> in one table, <b>what you did with it</b> in the next.</p>';
       } else if (rows.length) {
         var span = m + 1 + (within ? 1 : 0) + (between ? 1 : 0) + (solo ? 1 : 0);
         var w = [12].concat(multi ? [8] : []); for (var wj = 0; wj < m; wj++) w.push(10);
@@ -2758,6 +2758,16 @@
         var xpad = (hi - lo) * 0.07 || 0.5; lo -= xpad; hi += xpad; }
       else { allPts.forEach(function (p) { if (cats.indexOf(p.x) < 0) cats.push(p.x); }); cats.sort(function (a, b) { return mode === 'factor' ? ORDER.indexOf(a) - ORDER.indexOf(b) : a - b; }); slot = (W - L - R) / cats.length; }
       function XN(v) { return lo === hi ? (L + W - R) / 2 : L + (W - L - R) * (v - lo) / (hi - lo); }
+      /* IGCSE plots every point as a CROSS, never a dot: the centre of a cross marks the reading
+         exactly, where a dot of any size covers it. Trials, means, shoot means and the plants' mean
+         are all crosses, told apart by size and weight; the bold ones stand on a white halo so a
+         whisker or a line passing behind does not break them up. */
+      function cross(cx, cy, r, cls, colour, halo, title) {
+        var d = 'M' + (cx - r).toFixed(1) + ' ' + (cy - r).toFixed(1) + 'L' + (cx + r).toFixed(1) + ' ' + (cy + r).toFixed(1) +
+                'M' + (cx - r).toFixed(1) + ' ' + (cy + r).toFixed(1) + 'L' + (cx + r).toFixed(1) + ' ' + (cy - r).toFixed(1);
+        return (halo ? '<path class="po__xhalo" d="' + d + '"/>' : '') +
+               '<path class="' + cls + '" style="stroke:' + colour + '" d="' + d + '">' + (title ? '<title>' + title + '</title>' : '') + '</path>';
+      }
       var dodgeGap = 60;
       if (numeric) { var ux = allPts.map(function (p) { return p.x; }).filter(function (v2, i2, a) { return a.indexOf(v2) === i2; }).sort(function (a, b) { return a - b; });
         for (var ui = 1; ui < ux.length; ui++) dodgeGap = Math.min(dodgeGap, XN(ux[ui]) - XN(ux[ui - 1])); }
@@ -2799,14 +2809,14 @@
             p.shoots.forEach(function (q, qi) {
               var qx = qi < left ? x - gut - (left - 1 - qi) * stp : x + gut + (qi - left) * stp;
               if (PO_STATE.dots) q.vals.forEach(function (v2, vi) {
-                s += '<circle class="po__dot po__dot--trial' + (q.bad[vi] ? ' po__dot--bad' : '') + '" style="fill:' + c + '" cx="' + qx.toFixed(1) + '" cy="' + Y(v2).toFixed(1) + '" r="1.9"/>';
+                s += cross(qx, Y(v2), 2.3, 'po__dot po__dot--trial' + (q.bad[vi] ? ' po__dot--bad' : ''), c, false);
               });
               if (errK === 'sd' && q.sd != null) {
                 var y1 = Y(q.mean + q.sd), y2 = Y(q.mean - q.sd);
                 s += '<path class="po__whisker po__whisker--shoot" style="stroke:' + c + '" d="M' + qx.toFixed(1) + ' ' + y1.toFixed(1) + ' V' + y2.toFixed(1) +
                      ' M' + (qx - 2.4).toFixed(1) + ' ' + y1.toFixed(1) + ' h4.8 M' + (qx - 2.4).toFixed(1) + ' ' + y2.toFixed(1) + ' h4.8"/>';
               }
-              s += '<circle class="po__dotshoot" style="stroke:' + c + '" cx="' + qx.toFixed(1) + '" cy="' + Y(q.mean).toFixed(1) + '" r="3.1"><title>Shoot ' + esc(q.letter) + ': mean ' + q.mean.toFixed(2) + (q.sd != null ? ', SD of its trials ' + q.sd.toFixed(2) : '') + '</title></circle>';
+              s += cross(qx, Y(q.mean), 3.6, 'po__dotshoot', c, true, 'Shoot ' + esc(q.letter) + ': mean ' + q.mean.toFixed(2) + (q.sd != null ? ', SD of its trials ' + q.sd.toFixed(2) : ''));
             });
           }
           if (p.err != null) {
@@ -2818,10 +2828,10 @@
           var badDots = '';
           if (PO_STATE.dots && !p.shoots) p.all.forEach(function (v2, i3) {
             var isBad = !!(p.allBad && p.allBad[i3]);
-            var c1 = '<circle class="po__dot' + (p.all.length > 1 ? ' po__dot--rep' : '') + (isBad ? ' po__dot--bad' : '') + '" style="fill:' + c + '" cx="' + x.toFixed(1) + '" cy="' + Y(v2).toFixed(1) + '" r="3"/>';
+            var c1 = cross(x, Y(v2), 3.2, 'po__dot' + (p.all.length > 1 ? ' po__dot--rep' : '') + (isBad ? ' po__dot--bad' : ''), c, false);
             if (isBad) badDots += c1; else s += c1;
           });
-          s += '<circle class="po__dotmean' + (p.shoots ? ' po__dotmean--grand' : '') + '" style="fill:' + c + '" cx="' + x.toFixed(1) + '" cy="' + Y(p.mean).toFixed(1) + '" r="' + (p.shoots ? 5.4 : p.all.length > 1 ? 4.5 : 3.5) + '"/>';   /* every row keeps its mean marker; the trials behind it can be hidden */
+          s += cross(x, Y(p.mean), p.shoots ? 5.8 : p.all.length > 1 ? 5.2 : 4.4, 'po__dotmean' + (p.shoots ? ' po__dotmean--grand' : ''), c, true);   /* every row keeps its mean marker; the trials behind it can be hidden */
           s += badDots;
         });
       });
@@ -2850,10 +2860,10 @@
       }
       /* what the marks are, and what n counts — the two things a figure caption must state */
       var nSaid = kGraph >= 2 && errK === 'sd'
-        ? ' Hollow points are the ' + kGraph + ' shoots, each the mean of its own trials, with thin bars showing one standard deviation of those trials — how precise the measuring is. Solid points are the mean of the ' + kGraph + ' shoot means, with thick bars showing one standard deviation between the shoots — the natural variation between plants (n = ' + kGraph + ' shoots).'
+        ? ' Small crosses are the ' + kGraph + ' shoots, each the mean of its own trials, with thin bars showing one standard deviation of those trials — how precise the measuring is. Large crosses are the mean of the ' + kGraph + ' shoot means, with thick bars showing one standard deviation between the shoots — the natural variation between plants (n = ' + kGraph + ' shoots).'
         : kGraph >= 2
-        ? ' Hollow points are the ' + kGraph + ' shoots, each the mean of its own trials; solid points are the mean of the ' + kGraph + ' shoot means (n = ' + kGraph + ' shoots).'
-        : mode === 'shoot' ? ' Each point is one shoot, the mean of its own trials; the faint dots behind it are those trials.'
+        ? ' Small crosses are the ' + kGraph + ' shoots, each the mean of its own trials; large crosses are the mean of the ' + kGraph + ' shoot means (n = ' + kGraph + ' shoots).'
+        : mode === 'shoot' ? ' Each large cross is one shoot, the mean of its own trials; the faint crosses behind it are those trials.'
         : ' Each point is the mean of its trials on one shoot (n = 1 shoot).';
       var figTitle = gIv
         ? 'The effect of ' + gIv + ' on the mean rate of water uptake' + (F[0] === 'sp' ? ' of a leafy shoot' : multi ? '' : ' of ' + (kGraph >= 2 ? kGraph + ' ' + gSp + ' shoots' : 'a ' + gSp + ' shoot')) + '.' +
@@ -2875,8 +2885,8 @@
         var thin = errK === 'sd' ? '<path d="M8 2 V14 M5.6 2 h4.8 M5.6 14 h4.8" stroke="' + kc + '" stroke-width="1.15" fill="none" opacity=".8"/>' : '';
         var thick = errK !== 'none' && errK !== 'ci' ? '<path d="M8 1 V15 M4.5 1 h7 M4.5 15 h7" stroke="' + kc + '" stroke-width="2.6" fill="none"/>' : '';
         gkey = '<div class="po__gkey">' +
-          '<span><svg width="16" height="16" viewBox="0 0 16 16">' + thin + '<circle cx="8" cy="8" r="3.1" fill="#fff" stroke="' + kc + '" stroke-width="1.6"/></svg>one shoot — the mean of its trials' + (errK === 'sd' ? ', and their spread: <b>how precise your measuring is</b>' : '') + '</span>' +
-          '<span><svg width="16" height="16" viewBox="0 0 16 16">' + thick + '<circle cx="8" cy="8" r="4.6" fill="' + kc + '" stroke="#fff" stroke-width="1.4"/></svg>the plants — the mean of the shoot means' + (errK === 'sd' ? ', and the spread <b>between shoots</b>' : errK === 'se' ? ', and the standard error <b>between shoots</b>' : '') + '</span>' +
+          '<span><svg width="16" height="16" viewBox="0 0 16 16">' + thin + '<path d="M4.4 4.4L11.6 11.6M4.4 11.6L11.6 4.4" stroke="#fff" stroke-width="4.6" stroke-linecap="round" fill="none"/><path d="M4.4 4.4L11.6 11.6M4.4 11.6L11.6 4.4" stroke="' + kc + '" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>one shoot — the mean of its trials' + (errK === 'sd' ? ', and their spread: <b>how precise your measuring is</b>' : '') + '</span>' +
+          '<span><svg width="16" height="16" viewBox="0 0 16 16">' + thick + '<path d="M2.6 2.6L13.4 13.4M2.6 13.4L13.4 2.6" stroke="#fff" stroke-width="5.6" stroke-linecap="round" fill="none"/><path d="M2.6 2.6L13.4 13.4M2.6 13.4L13.4 2.6" stroke="' + kc + '" stroke-width="3" stroke-linecap="round" fill="none"/></svg>the plants — the mean of the shoot means' + (errK === 'sd' ? ', and the spread <b>between shoots</b>' : errK === 'se' ? ', and the standard error <b>between shoots</b>' : '') + '</span>' +
           '</div>';
       }
       s += '</svg>' + legend + gkey + '<small class="po__gnote"><b>Figure 1.</b> ' + esc(figTitle + ciNote) + '</small>';
