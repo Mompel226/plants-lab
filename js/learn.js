@@ -1358,6 +1358,18 @@
                       joint: ['the seal at the bung', 'with the joint sealed and unsealed'],
                       time: ['the time the run lasted', 'at each length of run'] };
   function poIvPhrase(k, which) { var e = PO_IVPHRASE[k]; return e ? e[which || 0] : null; }
+  /* Several lines on one graph are several tables: the same independent variable, run again with
+     one controlled variable set differently. Which one, is the thing the reader needs told — and
+     if more than one differs, the comparison proves nothing, which is worth saying out loud. */
+  function poLinesDifferBy(lines, iv) {
+    if (lines.length < 2) return [];
+    return PO_FACTS.filter(function (F) {
+      if (F[0] === iv) return false;
+      var seen = {};
+      lines.forEach(function (l) { if (l.rows && l.rows.length) seen[poIvValue(l.rows[0].s, F[0])] = 1; });
+      return Object.keys(seen).length > 1;
+    });
+  }
   function poErrBarsSaid(k) {
     return k === 'sd' ? 'error bars show one standard deviation either side of each mean'
          : k === 'se' ? 'error bars show one standard error either side of each mean'
@@ -1676,15 +1688,23 @@
     var pos = 0, run = null, raf = null, lastRun = null;
     function remember() { PO_STATE.set = settings(); PO_STATE.pos = pos; PO_STATE.runs = runs; poPersist(); }   /* the shoot and its factor already live in PO_STATE */
     /* Everything but the independent variable is disabled, and says so. */
+    /* The controlled variables are held constant WITHIN A LINE, which is the unit a table and a
+       set of conditions belong to. So they are settable while the current line is still empty —
+       that is when you decide what this line is — and locked the moment its first run is
+       recorded. It makes "New line on the graph" work the way it reads: start a line, set the
+       one thing you want to compare, and it holds for every row of that line. */
+    function lineOpen() { return !runs.some(function (r) { return (r.line || 0) === PO_STATE.line; }); }
     function freezeControls() {
-      var iv = PO_STATE.iv, live = iv ? PO_IVCTL[iv] : null;
+      var iv = PO_STATE.iv, live = iv ? PO_IVCTL[iv] : null, open = lineOpen();
       ctl.querySelectorAll('.po__row').forEach(function (row) {
         if (row === ivRow) return;
         var inp = row.querySelector('input,select'); if (!inp) return;
-        var frozen = !!iv && inp.getAttribute('data-k') !== live;
+        var isIv = !!iv && inp.getAttribute('data-k') === live;
+        var frozen = !!iv && !isIv && !open;
         if (!run) inp.disabled = frozen;          /* a run locks the lot; this owns the rest of the time */
         row.classList.toggle('po__row--frozen', frozen);
-        row.classList.toggle('po__row--isiv', !!iv && !frozen);
+        row.classList.toggle('po__row--open', !!iv && !isIv && open);
+        row.classList.toggle('po__row--isiv', isIv);
       });
       ivRow.classList.toggle('po__row--set', !!iv);
     }
@@ -1913,7 +1933,7 @@
       if (!have) { say.textContent = poLineName(PO_STATE.line) + ' has no runs yet: record a run first, then start the next line.'; return; }
       var next = 0; runs.forEach(function (r) { next = Math.max(next, (r.line || 0) + 1); });
       PO_STATE.line = next; remember(); paintData();
-      say.textContent = poLineName(next) + ' started, in ' + PO_LINE_WORD[next % PO_LINE_WORD.length] + '. The runs you record now go on it. Change the one thing you want to compare — another plant, the fan on, the dark — keep the rest the same, and run.';
+      say.textContent = poLineName(next) + ' started, in ' + PO_LINE_WORD[next % PO_LINE_WORD.length] + '. Everything but the independent variable is unlocked until you record the first run on it: change the ONE thing you want to compare — another plant, the fan on, the leaves greased — and it is held constant for the rest of this line.';
     });
     /* Changing the independent variable is starting a new experiment, not editing this one:
        the settings that were held constant would differ between the rows already taken and the
@@ -2016,6 +2036,9 @@
     }
     /* the tabs above the table are the lines of the graph, one table each; the tab you are on is where runs are recorded */
     function paintData() {
+      /* whether a control is frozen depends on whether the CURRENT LINE has runs, and that is
+         exactly what changes here — recording, deleting, clearing, switching line, starting one */
+      freezeControls();
       var G = groups(), lines = [];
       G.forEach(function (g) { if (lines.indexOf(g.line) < 0) lines.push(g.line); });
       if (lines.indexOf(PO_STATE.line) < 0) lines.push(PO_STATE.line);
@@ -2220,11 +2243,23 @@
       var gSp = GS.length ? GS[0].s.sp.name : 'a leafy shoot';
       var gIv = mode === 'factor' ? (poIvPhrase(F[0], 0) || F[1].toLowerCase().replace(/ \(.*\)$/, '')) : null;
       var bars = withErrAny ? poErrBarsSaid(errK) : null;
+      var diff = multi ? poLinesDifferBy(byLine, mode === 'factor' ? F[0] : null) : [];
+      var lineSaid = '';
+      if (multi) {
+        if (diff.length === 1) {
+          var vals = byLine.map(function (l) { return poIvSaid(l.rows[0].s, diff[0][0]); });
+          lineSaid = ' One line for each ' + (poIvPhrase(diff[0][0], 0) || diff[0][1].toLowerCase()) + ': ' + vals.join(' and ') + '.';
+        } else if (diff.length === 0) {
+          lineSaid = ' The lines were run under the same conditions, so any difference between them is the scatter of the readings.';
+        } else {
+          lineSaid = ' The lines differ in more than one way (' + diff.map(function (Fx) { return poIvPhrase(Fx[0], 0) || Fx[1].toLowerCase(); }).join(', ') +
+                     '), so a difference between them cannot be put down to any one of them.';
+        }
+      }
       var figTitle = gIv
-        ? 'The effect of ' + gIv + ' on the mean rate of water uptake' + (F[0] === 'sp' ? ' of a leafy shoot' : ' of a ' + gSp + ' shoot') + '.' +
-          (multi ? ' One line for each table, each in its own colour.' : '') +
-          ' Each point is the mean of its trials' + (bars ? '; ' + bars : '') + '.'
-        : cap1(note) + (bars ? ' ' + cap1(bars) + '.' : '');
+        ? 'The effect of ' + gIv + ' on the mean rate of water uptake' + (F[0] === 'sp' ? ' of a leafy shoot' : multi ? '' : ' of a ' + gSp + ' shoot') + '.' +
+          lineSaid + ' Each point is the mean of its trials' + (bars ? '; ' + bars : '') + '.'
+        : cap1(note) + lineSaid + (bars ? ' ' + cap1(bars) + '.' : '');
       var ciNote = (withErrAny && errK === 'ci')
         ? ' Where two bands do not overlap the difference is statistically significant; where they overlap, nothing is proved either way.' : '';
       s += '</svg>' + legend + '<small class="po__gnote"><b>Figure 1.</b> ' + esc(figTitle + ciNote) + '</small>';

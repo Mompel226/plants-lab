@@ -1320,6 +1320,8 @@ picture{display:block;line-height:0}
 .po__row--frozen{opacity:.5}
 .po__row--frozen span::after{content:' · held constant';font-size:11px;color:var(--grey);font-weight:500}
 .po__row--isiv span::after{content:' · the one you change';font-size:11px;color:var(--green);font-weight:700}
+/* a line that has no runs yet: its controlled values are still being chosen */
+.po__row--open span::after{content:' · set it now, then held';font-size:11px;color:#8A5A0E;font-weight:600}
 .po__trial--leak{background:#FFF1EA}
 /* a trial whose bubble did not start from 0: kept, so the spread shows what it costs, but
    marked everywhere it appears so it can be found again and dropped */
