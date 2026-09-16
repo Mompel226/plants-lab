@@ -1763,3 +1763,22 @@ picture{display:block;line-height:0}
 .po__mode__say{font-size:12.4px;line-height:1.45;color:#4A4A4A;margin:7px 0 0;padding-left:3px;border-left:3px solid var(--edge);padding-left:9px}
 .po__mode:has(.po__mode__b--igcse.is-on) .po__mode__say{border-left-color:var(--green-2)}
 .po__mode:has(.po__mode__b--full.is-on)  .po__mode__say{border-left-color:var(--teal)}
+
+/* ----- the shoot inside the row: two kinds of repeat, kept apart by the table itself ----- */
+.po__srow td{background:var(--green-tint);font-weight:700}
+.po__srow td:first-child{font-weight:500;color:#3C3C3C}
+.po__ivcell{vertical-align:middle}
+.po__shootcell{white-space:nowrap;font-weight:600;color:#3C3C3C}
+.po__blank{color:var(--line)}
+.po__table thead th{white-space:normal;line-height:1.3}
+/* every column showing the same quantity gets the same width — the browser's own layout gives the
+   leftover space to whichever column happens to hold the widest text, which made Trial 3 balloon */
+.po__table{table-layout:fixed}
+.po__nest,.po__paired{font-size:12.5px;line-height:1.55;color:#3C3C3C;background:var(--card-2);
+  border-left:3px solid var(--green-2);border-radius:0 var(--r) var(--r) 0;padding:9px 12px;margin:10px 0 0}
+.po__paired{border-left-color:var(--teal)}
+.po__nest b,.po__paired b{color:var(--green)}
+.po__paired b{color:var(--teal)}
+.po__errbar__b.is-off{opacity:.45;border-style:dashed;cursor:not-allowed}
+/* a term button inside a heading must be allowed to wrap — .po__term is nowrap for the inline case */
+.po__table thead th .po__term{white-space:normal;text-align:left;line-height:1.3}
