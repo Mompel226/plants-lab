@@ -1829,3 +1829,7 @@ picture{display:block;line-height:0}
 .po__gkey svg{vertical-align:middle;margin-right:5px}
 .po__nest--warn{border-left-color:var(--amber);background:var(--amber-tint)}
 .po__nest--warn b{color:var(--amber)}
+/* no independent variable chosen: said at the top of the table, where it is read first */
+.po__noiv{font-size:12.8px;line-height:1.5;color:#3C3C3C;background:var(--amber-tint);border-left:3px solid var(--amber);
+  border-radius:0 var(--r) var(--r) 0;padding:8px 12px;margin:0 0 10px}
+.po__noiv b{color:var(--amber)}

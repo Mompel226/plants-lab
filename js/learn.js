@@ -2579,6 +2579,8 @@
       var cur = PO_STATE.line, rows = G.filter(function (g) { return g.line === cur; });
       var ibStyle = PO_STATE.style === 'ib';
       if (!bCopy.textContent.match(/^Copied/)) bCopy.textContent = ibStyle ? 'Copy the tables' : 'Copy the table';
+      bCopy.setAttribute('data-tip', 'Copies the ' + (ibStyle ? 'two tables' : 'table') + ' you are looking at, with ' + (ibStyle ? 'their titles' : 'its title') + ' and the controlled variables, ready to paste into a document or a spreadsheet.' +
+        (lines.length > 1 ? ' Only this line: open another line’s tab to copy its table.' : ''));
       if (!bClear.classList.contains('is-armed')) bClear.textContent = lines.length > 1 ? 'Clear all the tables' : ibStyle ? 'Clear the tables' : 'Clear the table';
       var errName = errK === 'sd' ? 'SD' : errK === 'se' ? 'SE' : '95 % CI';
       var term = function (k, label, level) { return '<button type="button" class="po__term" data-term="' + k + '"' + (level ? ' data-level="' + level + '"' : '') + ' title="What this is, and how it was worked out">' + label + '</button>'; };
@@ -2638,14 +2640,14 @@
       var greyTail = ' Grey figures are the bubble\'s distance, in mm.';
       var titleIGCSE = (ivWord
         ? 'The effect of ' + ivWord + ' on the rate of water uptake' + ofShoots + ', measured with a bubble potometer' + rangeSaid + '.'
-        : 'Rate of water uptake' + ofShoots + ' under a range of conditions, measured with a bubble potometer.') + tintNote + greyTail;
+        : 'Rate of water uptake' + ofShoots + ' under a range of conditions, measured with a bubble potometer. No independent variable was chosen, so each row gives all of its conditions.') + tintNote + greyTail;
       var titleRAW = (ivWord
         ? 'Raw data: the distance moved by the air bubble in a bubble potometer, ' + ivEach + (PO_STATE.iv === 'sp' ? '' : ', for ' + shootWord) + '.'
-        : 'Raw data: the distance moved by the air bubble in a bubble potometer, for ' + shootWord + '.') +
+        : 'Raw data: the distance moved by the air bubble in a bubble potometer, for ' + shootWord + '. No independent variable was chosen, so each row gives all of its conditions.') +
         ' Each distance was read to the nearest millimetre, so each is uncertain by ± 0.5 mm.';
       var titlePROC = 'Processed data: ' + (ivWord
         ? 'the effect of ' + ivWord + ' on the mean rate of water uptake' + ofShoots + rangeSaid
-        : 'the mean rate of water uptake' + ofShoots) + '.' +
+        : 'the mean rate of water uptake' + ofShoots + ', with no independent variable chosen') + '.' +
         (multi ? ' Brackets are the standard deviation of each shoot\'s own trials.' : '');
 
       var lineHead = '<div class="po__linehead" style="--lc:' + poLineColour(cur) + '"><span class="po__swatch"></span><input class="po__linename" value="' + esc(PO_STATE.lineNames[cur] || '') + '" placeholder="' + esc(poLineName(cur)) + ' — name it: privet, fan on, dark…"><span class="po__linenote">the runs you record now go on this line</span>' + (lines.length > 1 ? '<button type="button" class="wbtn wbtn--quiet po__delline">Delete this line</button>' : '') + '</div>';
@@ -2687,9 +2689,10 @@
           '<th colspan="' + span + '">Rate of water uptake (mm min⁻¹)</th></tr>' +
           '<tr>' + trialCells2 + '<th>' + term('mean', 'Mean') + '</th>' + (within ? withinH : '') + (solo ? '<th>' + term(errK, errLong + ' of the trials') + '</th>' : '') + (between ? betweenH : '') + '</tr></thead>' +
           '<tbody>' + rows.map(function (g) { return blockHtml(g, { multi: multi, m: m, within: within, between: between, solo: solo }); }).join('') + '</tbody></table>' + controlledLine(rows) + greyNote +
-          '<p class="po__stylenote">One ruled table, the repeats and the mean together, the unit written once above the columns it belongs to — which is what 0610 Paper 6 asks for.' +
-          (PO_STATE.iv ? '' : ' <b>Choose an independent variable</b> above and the first column becomes that one thing, with the rest held constant and listed underneath.') + '</p>';
+          '<p class="po__stylenote">One ruled table, the repeats and the mean together, the unit written once above the columns it belongs to — which is what 0610 Paper 6 asks for.</p>';
       }
+      /* with no independent variable the table still shows everything — but it says so, at the top, where it is read first */
+      if (rows.length && !PO_STATE.iv) tables = '<p class="po__noiv"><b>No independent variable chosen.</b> Every row lists all of its conditions, so nothing is held constant yet. Choose an independent variable above: the first column becomes that one variable, and everything else is held constant and listed under the table.</p>' + tables;
       if (multi) tables += poNestNote(kMax, errK, ibStyle);
       if (uneven) {
         var shortRows = rows.filter(function (g, gi) { return nests[gi].k < kMax; })
