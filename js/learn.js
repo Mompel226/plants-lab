@@ -1993,7 +1993,21 @@
       var mode = F && byLine.every(function (l) { var v = varyOf(l.rows); return v.length === 0 || (v.length === 1 && v[0][0] === F[0]); }) ? 'factor' : (!multi && varyOf(GS).length === 0 ? 'trials' : 'row');
       var W = 560, H = 240, L = 54, R = 16, T = 18, B = 54;
       var mk = function (g, x) { var vals = g.trials.map(function (t) { return t.r.rate; }), st = stats(vals); var e = errK === 'sd' ? st.sd : errK === 'se' ? st.se : errK === 'ci' ? st.ci : null; return { x: x, mean: st.mean, all: vals, allBad: g.trials.map(function (t) { return !!t.r.notZero; }), err: e == null || isNaN(e) ? null : e }; };
-      var numeric = mode === 'factor' ? !!F[2] : false;
+      /* Bars are for CATEGORIES; a number line is for numbers. Three questions, not one:
+           numeric — is the x-axis a number line? A measured factor is (temperature, light,
+                     humidity, leaves, time), and so is the trial number.
+           bars    — only where x is a set of names: the plant, the wind setting, the grease,
+                     the joint; or a row that differs in more than one factor at once, which is
+                     a treatment rather than a value.
+           joined  — a line through the points claims the x-axis is continuous and that between
+                     two readings the rate passes through the values between. True of
+                     temperature. NOT true of trial number, where the order is arbitrary — so
+                     the trials are drawn as points and left unjoined.
+         Trial number was being treated as a category, which is why the first runs came out as
+         bars even though 1, 2, 3 is as numeric as an axis gets. */
+      var numeric = mode === 'factor' ? !!F[2] : mode === 'trials';
+      var bars = !numeric;
+      var joined = numeric && mode === 'factor';
       var ORDER = mode === 'factor' ? ({ wind: PO_WIND, sp: PO_SPECIES.map(function (q) { return q.name; }), grease: PO_GREASE.map(function (q) { return q[0]; }), joint: ['sealed', 'not sealed'] })[F[0]] : null;
       var series = byLine.map(function (l) {
         var pts;
@@ -2004,7 +2018,7 @@
       });
       var xlab = mode === 'factor' ? F[1] : mode === 'trials' ? 'Trial' : 'Row';
       var note = mode === 'factor' ? 'Mean rate of uptake against ' + F[1].toLowerCase().replace(/ \/ .*/, '') + (multi ? ', one line a table, each in its own colour; each point is the mean of its trials.' : ' — the one factor you changed; each point is the mean of its trials.')
-        : mode === 'trials' ? 'One set of conditions so far: its trials, one by one. Change a factor and run again for a graph of means.'
+        : mode === 'trials' ? 'One set of conditions so far, and its trials one by one. The points are not joined: trial number is an order you happened to work in, not a quantity, so nothing passes between them. Change a factor and run again for a graph of means.'
         : multi ? 'The lines do not change the same one factor, so this is the mean by row of each table. Change one thing at a time — the same thing on every line — to compare them.'
         : 'More than one factor changed between rows (' + varyOf(GS).map(function (Fx) { return Fx[1].toLowerCase().replace(/ \/ .*/, ''); }).join(', ') + '), so this is the mean by row. Change one thing at a time to see what it does.';
       var allPts = []; series.forEach(function (sr) { allPts = allPts.concat(sr.pts); });
@@ -2013,7 +2027,10 @@
       var ystep = ymax > 10 ? 5 : ymax > 4 ? 2 : ymax > 2 ? 1 : ymax > 1 ? .5 : .25;
       function Y(v) { return T + (H - T - B) * (1 - Math.max(0, v) / ymax); }
       var cats = [], lo = 0, hi = 0, slot = 0;
-      if (numeric) { var xs = allPts.map(function (p) { return p.x; }); lo = Math.min.apply(null, xs); hi = Math.max.apply(null, xs); }
+      /* a little air at each end, so the first and last readings are points on a graph rather
+         than marks sitting on the axis */
+      if (numeric) { var xs = allPts.map(function (p) { return p.x; }); lo = Math.min.apply(null, xs); hi = Math.max.apply(null, xs);
+        var xpad = (hi - lo) * 0.07 || 0.5; lo -= xpad; hi += xpad; }
       else { allPts.forEach(function (p) { if (cats.indexOf(p.x) < 0) cats.push(p.x); }); cats.sort(function (a, b) { return mode === 'factor' ? ORDER.indexOf(a) - ORDER.indexOf(b) : a - b; }); slot = (W - L - R) / cats.length; }
       function XN(v) { return lo === hi ? (L + W - R) / 2 : L + (W - L - R) * (v - lo) / (hi - lo); }
       var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" class="po__gsvg" role="img" aria-label="' + esc(note) + '">';
@@ -2030,7 +2047,7 @@
           var up = withErr.map(function (p) { return xOf(p).toFixed(1) + ',' + Y(p.mean + p.err).toFixed(1); }), dn = withErr.slice().reverse().map(function (p) { return xOf(p).toFixed(1) + ',' + Y(p.mean - p.err).toFixed(1); });
           s += '<polygon class="po__band" style="fill:' + c + '" points="' + up.concat(dn).join(' ') + '"/>';
         }
-        if (numeric && sr.pts.length > 1) s += '<polyline class="po__line" style="stroke:' + c + '" points="' + sr.pts.map(function (p) { return xOf(p).toFixed(1) + ',' + Y(p.mean).toFixed(1); }).join(' ') + '"/>';
+        if (joined && sr.pts.length > 1) s += '<polyline class="po__line" style="stroke:' + c + '" points="' + sr.pts.map(function (p) { return xOf(p).toFixed(1) + ',' + Y(p.mean).toFixed(1); }).join(' ') + '"/>';
         sr.pts.forEach(function (p) {
           var x = xOf(p);
           /* On a categorical axis the bar carries the colour, so an error bar in that same
@@ -2038,10 +2055,10 @@
              outline — identity intact — and the error bar is drawn in ink over the top. On a
              line chart the whisker still wears its series colour: there the line is the
              identity and the whisker belongs to it. */
-          if (!numeric) s += '<rect class="po__gbar" style="fill:' + c + ';stroke:' + c + '" x="' + (x - bw / 2).toFixed(1) + '" y="' + Y(p.mean).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + (H - B - Y(p.mean)).toFixed(1) + '"/>';
+          if (bars) s += '<rect class="po__gbar" style="fill:' + c + ';stroke:' + c + '" x="' + (x - bw / 2).toFixed(1) + '" y="' + Y(p.mean).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + (H - B - Y(p.mean)).toFixed(1) + '"/>';
           if (p.err != null) {
-            if (errK === 'ci' && !numeric) s += '<rect class="po__band po__band--onbar" x="' + (x - bw * .7).toFixed(1) + '" y="' + Y(p.mean + p.err).toFixed(1) + '" width="' + (bw * 1.4).toFixed(1) + '" height="' + (Y(p.mean - p.err) - Y(p.mean + p.err)).toFixed(1) + '"/>';
-            if (errK !== 'ci') s += '<path class="po__whisker' + (numeric ? '' : ' po__whisker--onbar') + '" style="' + (numeric ? 'stroke:' + c : '') + '" d="M' + x.toFixed(1) + ' ' + Y(p.mean + p.err).toFixed(1) + ' V' + Y(p.mean - p.err).toFixed(1) + ' M' + (x - 6).toFixed(1) + ' ' + Y(p.mean + p.err).toFixed(1) + ' h12 M' + (x - 6).toFixed(1) + ' ' + Y(p.mean - p.err).toFixed(1) + ' h12"/>';
+            if (errK === 'ci' && bars) s += '<rect class="po__band po__band--onbar" x="' + (x - bw * .7).toFixed(1) + '" y="' + Y(p.mean + p.err).toFixed(1) + '" width="' + (bw * 1.4).toFixed(1) + '" height="' + (Y(p.mean - p.err) - Y(p.mean + p.err)).toFixed(1) + '"/>';
+            if (errK !== 'ci') s += '<path class="po__whisker' + (bars ? ' po__whisker--onbar' : '') + '" style="' + (bars ? '' : 'stroke:' + c) + '" d="M' + x.toFixed(1) + ' ' + Y(p.mean + p.err).toFixed(1) + ' V' + Y(p.mean - p.err).toFixed(1) + ' M' + (x - 6).toFixed(1) + ' ' + Y(p.mean + p.err).toFixed(1) + ' h12 M' + (x - 6).toFixed(1) + ' ' + Y(p.mean - p.err).toFixed(1) + ' h12"/>';
           }
           /* the red ones go on LAST: with one trial in a row the mean dot sits exactly on the
              trial dot, and whichever is painted second is the one you see */
