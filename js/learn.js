@@ -1513,54 +1513,60 @@
   }
   function poWhyHtml(best, condSaid) {
     var live = best ? poWhyLive(best, condSaid) : null;
-    var h2 = '<div class="po__why__h"><span class="po__why__q">?</span>Why repeat a trial? Why cut a new shoot?</div>' +
-      '<p class="po__why__top">They do two different jobs. Repeating on one shoot tells you <b>how good your measuring is</b>. Cutting a new shoot tells you <b>how good your conclusion is</b>. Neither can do the other\'s job.</p>';
-    var tbl = '<table class="po__why__g"><thead><tr><th>The word</th>' +
-      '<th>Repeating on the SAME shoot<em>a technical replicate — a pseudo-replicate</em></th>' +
-      '<th>Cutting a NEW shoot<em>a true replicate — a biological replicate</em></th></tr></thead><tbody>' +
-      poWhyRow('Precision', 'how close repeat measurements are to each other',
-        poWhyMark('p', '<b>It measures it — it does not improve it.</b> The spread of your trials <i>is</i> the precision of your method. One more trial does not make a single reading more precise: it shows you how precise your readings already were, and it makes the <b>mean for this shoot</b> more precise.'),
-        poWhyMark('n', '<b>Not precision at all.</b> The spread between shoots is not measuring error — it is how much the plants themselves differ.')) +
-      poWhyRow('Repeatability', 'precision when nothing is changed',
-        poWhyMark('p', '<b>This is exactly repeatability</b>: the same person, the same potometer, the same shoot, over a short time. It is the one thing repeated trials genuinely tell you.'),
-        poWhyMark('n', '<b>No.</b> A new shoot changes the conditions, so the spread between shoots is not a repeatability figure. More shoots will not make your timing steadier.')) +
-      poWhyRow('Reproducibility', 'precision when the person or the apparatus changes',
-        poWhyMark('n', '<b>Neither of them.</b> Reproducibility means a <b>different student</b>, on a <b>different potometer</b>, getting the same answer. A new shoot is a new plant, not a new laboratory. This is the pair most often mixed up.'), null) +
-      poWhyRow('Accuracy', 'how close you are to the true value',
-        poWhyMark('n', '<b>Neither of them.</b> A leak at the bung, a bubble that did not start at 0, reading the scale from the side — each makes <b>every</b> trial wrong in the same direction. Repeating them, or repeating them on five shoots, gives you a more precise wrong answer. Accuracy is only improved by <b>changing what you do</b>: seal the joint, open the tap, read at eye level.'), null) +
-      poWhyRow('Reliability', 'a mean you can trust — always say <i>which</i> mean',
-        poWhyMark('p', '<b>At IGCSE, yes; in real science, only for this shoot.</b> In an IGCSE answer, repeating trials and calculating a mean counts as making your results more reliable, and earns the mark. In real science, close trials only make the mean reliable <b>for this one shoot</b> — they say nothing about the plant.'),
-        poWhyMark('y', '<b>Yes — for the plant.</b> This is where the word belongs: more shoots make the mean <b>for the species</b> one you can trust.')) +
-      poWhyRow('Validity', 'whether your conclusion is about what you claim',
-        poWhyMark('n', '<b>No.</b> A carefully repeated run on one shoot is still one shoot.'),
-        poWhyMark('y', '<b>Yes — and this is the strongest reason of all.</b> With one shoot you can only write a sentence about <b>your shoot</b>. With several you can write one about <b>the plant</b>.')) +
+    /* Every sentence here follows Daniel's own guide ("Accuracy, precision, reliability and validity —
+       IGCSE and IB"), checked against the IB Biology guide (first assessment 2025), the OxfordAQA
+       subject vocabulary (the ASE definitions) and the ASE's Language of Mathematics in Science. */
+    var h2 = '<div class="po__why__h"><span class="po__why__q">?</span>Why repeat a trial? Why use a shoot from another plant?</div>' +
+      '<p class="po__why__top">Repeating a trial on the same shoot is a <b>technical replicate</b>. It tells you how consistent your measuring is, and averaging the trials gives a better value for <b>that one shoot — and nothing else</b>. ' +
+      'Using a shoot from another plant is a <b>true replicate</b>. Only different plants contain the natural variation between individuals, so only they tell you about <b>plants of this kind</b>.</p>';
+    var tbl = '<table class="po__why__g"><thead><tr><th>The word<em>does it help? ✓ yes · ~ in part · ✗ no</em></th>' +
+      '<th>Repeating on the SAME shoot<em>a technical replicate</em></th>' +
+      '<th>A shoot from ANOTHER plant<em>a true replicate</em></th></tr></thead><tbody>' +
+      poWhyRow('Precision', 'how close repeated measurements are to each other',
+        poWhyMark('p', '<b>Repeating lets you judge it</b> — you can only see how precise your measuring is after measuring more than once. Random errors spread your readings out; taking a mean cancels them out.'),
+        poWhyMark('n', '<b>Not a question of precision.</b> The spread between plants is natural variation between individuals, not imprecise measuring.')) +
+      poWhyRow('Repeatable and reproducible', 'two kinds of “I did it again and got the same answer”',
+        poWhyMark('p', 'Repeating your trials checks that your results are <b>repeatable</b>: the same person, using the same method and equipment, gets the same results. ') +
+        poWhyMark('n', 'Neither kind of repeat shows they are <b>reproducible</b> — that needs a <b>different person or different equipment</b> to follow your method, and it is the stronger test. A shoot from another plant is a new individual, not a new experimenter.'), null) +
+      poWhyRow('Accuracy', 'how close a measurement is to the true value',
+        poWhyMark('n', '<b>Neither can fix a systematic error.</b> A leak at the bung, or a bubble that did not start at 0, shifts <b>every</b> reading the same way — repeating gives you the same wrong answer, on one shoot or on five. Find and fix the cause.'), null) +
+      poWhyRow('Reliability', 'the word IGCSE and IB use for this',
+        poWhyMark('y', '<b>Yes.</b> At IGCSE and IB, repeating measurements and taking a mean is described as improving the reliability of your data. Write it that way.'),
+        poWhyMark('y', '<b>Yes.</b> Using enough independent samples — enough different plants — improves it too.')) +
+      poWhyRow('Validity', 'is the whole procedure suitable for answering the question?',
+        poWhyMark('n', '<b>Not for a question about plants.</b> One plant cannot tell you about plants, however carefully you measure it.'),
+        poWhyMark('y', '<b>Yes.</b> Several plants let your design answer a question about plants of this kind — as long as you also control variables and measure the right thing.')) +
+      poWhyRow('<i>n</i>', 'what your sample size counts',
+        poWhyMark('n', '<b>Still n = 1</b>, however many trials you do on the one shoot.'),
+        poWhyMark('y', '<b>This is what n counts:</b> the number of different plants.')) +
       '</tbody></table>';
-    var warn = '<p class="po__why__w"><b>IGCSE and real science use “reliable” differently.</b> In an IGCSE answer, repeating trials and <b>calculating a mean</b> counts as making results <b>more reliable</b> — that earns the mark, and so does saying repeats let you <b>identify anomalous results</b>. In real science, repeats on one shoot make the result reliable only <b>for that shoot</b>; to be reliable for the plant you need <b>true replicates</b>. And say why you used more than one shoot: one shoot may not be <b>representative</b> of the plant.</p>' +
-      '<p class="po__why__w po__why__w--bad"><b>One thing no amount of repeating can fix.</b> A potometer measures the water the shoot takes <b>in</b>, not the water its leaves lose — some is kept for growth and to hold the cells firm (turgid). That is why every heading here says <b>rate of water uptake</b>.</p>';
+    var warn = '<p class="po__why__w"><b>The trap: pseudoreplication.</b> Measuring one shoot five times and writing n = 5 is called <b>pseudoreplication</b>. You have one plant — pretending you have five makes your conclusion look far stronger than it is. Both kinds of repeat are useful: just say which you did.</p>' +
+      '<p class="po__why__w"><b>About the word “reliable”.</b> At IGCSE and IB, “repeating improves reliability” is correct — write it. In professional science the word has no single agreed meaning, so scientists usually say <b>repeatable</b> or <b>reproducible</b> instead, because those are exact.</p>' +
+      '<p class="po__why__w po__why__w--bad"><b>Validity also asks: did you measure the right thing?</b> A potometer measures the water the shoot takes <b>in</b>, not the water its leaves lose — some is kept for growth and to keep the cells firm (turgid). No number of repeats changes that, which is why every heading here says <b>rate of water uptake</b>.</p>';
     var livehtml;
     if (!live) {
       livehtml = '<div class="po__why__live"><h4>In your own table</h4>' +
-        '<p>Every run you have is on one shoot, so every number in your table is about <b>your measuring</b>. Nothing in it can yet say how much ' +
-        'shoots of this plant differ. <b>Would a second shoot give the same rate?</b> Press <b>Use a shoot from another plant</b> and find out.</p></div>';
+        '<p>Every run you have is on one shoot, so every number in your table is about <b>one plant</b>. Nothing in it can yet say how much ' +
+        'plants of this kind differ. <b>Would a shoot from another plant give the same rate?</b> Press <b>Use a shoot from another plant</b> and find out.</p></div>';
     } else {
       var times = live.gT > 0.01 ? Math.round(live.gS / live.gT) : 0;
       livehtml = '<div class="po__why__live"><h4>In your own table' + (live.cond ? ', at ' + esc(live.cond) : '') + '</h4>' +
-        '<table class="po__why__num"><tr><td>Your trials on one shoot differ by, on average</td><td><b>' + live.sw.toFixed(2) + ' mm/min</b> — your repeatability</td></tr>' +
-        '<tr><td>Your ' + live.k + ' shoots differ by</td><td><b>' + live.sb.toFixed(2) + ' mm/min</b> — how much the plants differ</td></tr></table>' +
+        '<table class="po__why__num"><tr><td>Your trials on one shoot differ by, on average</td><td><b>' + live.sw.toFixed(2) + ' mm/min</b> — how precise your measuring is</td></tr>' +
+        '<tr><td>Your ' + live.k + ' shoots differ by</td><td><b>' + live.sb.toFixed(2) + ' mm/min</b> — natural variation between plants</td></tr></table>' +
         (live.sw > 0 ? (function () {
           var ratio = live.sb / live.sw;
           return '<p>' + (ratio >= 1.5
-            ? 'The plants differ <b>' + ratio.toFixed(1) + ' times</b> as much as your measuring does, so that difference is real: it is not your reading error.'
+            ? 'The plants differ <b>' + ratio.toFixed(1) + ' times</b> as much as your measuring does, so the plants really do differ — it is not just your measuring.'
             : ratio >= 0.75
               ? 'Those two are about the same size, so at these conditions you <b>cannot yet tell the plants apart from your own measuring</b>. Measure for longer — a 10-minute run reads the scale four times as finely as a 2-minute one — or add a trial to each shoot.'
               : 'Your measuring varies <b>more</b> than the plants do here, so the spread you see is mostly your own reading error. Measure for longer before you compare the shoots.') + '</p>';
         })() : '') +
-        '<p>Your answer for this plant is <b>' + live.grand.toFixed(2) + (live.se ? ' ± ' + live.se.toFixed(2) : '') + ' mm/min</b> (standard error, <i>n</i> = ' + live.k + ' shoots).</p>' +
+        '<p>Your answer for plants of this kind is <b>' + live.grand.toFixed(2) + (live.se ? ' ± ' + live.se.toFixed(2) : '') + ' mm/min</b> (standard error, <i>n</i> = ' + live.k + ' shoots).</p>' +
         '<table class="po__why__num"><tr><td>One more trial on every shoot would make that</td><td>± ' + live.seTr.toFixed(2) + ' <b>(' + live.gT.toFixed(1) + ' % narrower)</b></td></tr>' +
         '<tr><td>One more shoot would make it</td><td>± ' + live.seSh.toFixed(2) + ' <b>(' + live.gS.toFixed(1) + ' % narrower)</b></td></tr></table>' +
         '<p class="po__why__punch">' + (live.gS >= live.gT
-          ? '<b>Another shoot helps ' + (times > 1 ? times + ' times as much as' : 'more than') + ' another trial</b> — and it is the only one of the two that makes your answer about the plant instead of about your shoot. If your time is short, cut a new shoot.'
-          : '<b>Another trial helps more here</b>, because your runs are short and your reading error is still large. Measure for longer — then cut another shoot, because only a new shoot makes your answer about the plant.') + '</p></div>';
+          ? '<b>Another shoot helps ' + (times > 1 ? times + ' times as much as' : 'more than') + ' another trial</b> — and only different plants tell you about plants of this kind rather than about one shoot. If your time is short, use a shoot from another plant.'
+          : '<b>Another trial helps more here</b>, because your runs are short and your reading error is still large. Measure for longer — then use a shoot from another plant, because only different plants tell you about plants of this kind.') + '</p></div>';
     }
     return h2 + tbl + warn + livehtml;
   }
@@ -1571,24 +1577,23 @@
      for — the examined answer — and it says plainly that there is a second kind of repeat, which
      lives on the other bench */
   function poWhyIgcse(best, condSaid) {
+    /* four rows, not six: two rows that say nearly the same thing (precision and repeatability) confused
+       a teacher who has taught these words for years, so the IGCSE panel keeps only the words that do
+       different jobs here — and follows Daniel's guide word for word where it can */
     var h2 = '<div class="po__why__h"><span class="po__why__q">?</span>Why repeat a trial?</div>' +
-      '<p class="po__why__top">Every trial on this bench is on the <b>same shoot</b>. Repeating a trial tells you <b>how good your measuring is</b> — and it is what an IGCSE question expects you to have done.</p>';
-    var tbl = '<table class="po__why__g po__why__g--one"><thead><tr><th>The word</th><th>What repeating a trial on the same shoot does</th></tr></thead><tbody>' +
-      poWhyOne('Anomalous result', 'a result far from the others',
-        poWhyMark('y', '<b>Repeats let you find one.</b> With a single trial you cannot tell that something went wrong — a leak, a bubble that stuck, a clock started late. With several, the odd one stands out. Repeats do not stop anomalous results happening; they let you <b>spot</b> them.')) +
-      poWhyOne('Mean', 'add the trials, divide by how many',
-        poWhyMark('y', '<b>A better value than any one trial.</b> Once an anomalous result is left out, the mean of the rest is your best answer for this shoot.')) +
-      poWhyOne('Repeatability', 'how close repeat trials are to each other',
-        poWhyMark('p', '<b>This is exactly what repeated trials measure</b>: the same person, the same potometer, the same shoot, over a short time.')) +
-      poWhyOne('Precision', 'how close repeat measurements are to each other',
-        poWhyMark('p', '<b>Repeating measures it — it does not improve it.</b> The spread of your trials shows how precise your readings already were.')) +
-      poWhyOne('Accuracy', 'how close you are to the true value',
-        poWhyMark('n', '<b>Repeating does not improve accuracy.</b> A leak, or a bubble that did not start at 0, makes <b>every</b> trial wrong in the same direction — repeat it and you get the same wrong answer again. Only changing what you do fixes it: seal the joint, open the tap, read the scale at eye level.')) +
-      poWhyOne('Reliability', 'a mean you can trust — always say which',
-        poWhyMark('y', '<b>Yes — for this experiment.</b> Repeating trials and calculating a mean is what IGCSE counts as making your results <b>more reliable</b>, and it earns the mark. <i>(In real science, repeats on one shoot only make the result reliable for that shoot. To be reliable for the whole plant you would need shoots from other plants.)</i>')) +
+      '<p class="po__why__top">Every trial on this bench is on the <b>same shoot</b>. Repeating a trial tells you <b>how consistent your measuring is</b> — and it is what an IGCSE question expects you to have done.</p>';
+    var tbl = '<table class="po__why__g po__why__g--one"><thead><tr><th>The word</th><th>Does repeating a trial on the same shoot help?</th></tr></thead><tbody>' +
+      poWhyOne('Anomalous result', 'a result that does not fit the others',
+        poWhyMark('y', '<b>Yes — repeats let you spot one.</b> With a single trial you cannot tell that something went wrong: a leak, a bubble that stuck, a clock started late. With several, the odd one stands out, and you leave it out of the mean.')) +
+      poWhyOne('Precision', 'how close repeated measurements are to each other',
+        poWhyMark('p', '<b>Repeating lets you judge it</b> — you can only see how precise your measuring is after measuring more than once. Random errors spread your readings out; taking a mean cancels them out.')) +
+      poWhyOne('Accuracy', 'how close a measurement is to the true value',
+        poWhyMark('n', '<b>Repeating cannot fix a systematic error.</b> A leak at the bung, or a bubble that did not start at 0, shifts <b>every</b> reading the same way — repeat it and you get the same wrong answer. Find and fix the cause.')) +
+      poWhyOne('Reliability', 'the word IGCSE uses for this',
+        poWhyMark('y', '<b>Yes.</b> At IGCSE, repeating your measurements and taking a mean is described as making your data <b>more reliable</b>. Write it that way.')) +
       '</tbody></table>';
     var warn = '<p class="po__why__w"><b>In the exam</b>, write: repeat the investigation and <b>calculate a mean</b>, to make the results <b>more reliable</b>. Repeats also let you <b>identify anomalous results</b> and leave them out of the mean. Both earn marks.</p>';
-    var door = '<div class="po__why__door"><p><b>One shoot may not be typical of the plant.</b> Cutting a new shoot from <b>another plant</b> and repeating the experiment on it is a different kind of repeat — a <b>true replicate</b>. It tells you about the plant, not just about your measuring.</p>' +
+    var door = '<div class="po__why__door"><p><b>One shoot is one plant.</b> Averaging your trials gives a better value for <b>this shoot — and nothing else</b>. To find out about plants of this kind you need shoots from <b>different plants</b> (true replicates), because only different plants show the natural variation between individuals.</p>' +
       '<button type="button" class="po__why__go">Try it on the More realistic bench →</button></div>';
     var live = '';
     if (best && best.trials.length) {
@@ -1598,7 +1603,7 @@
       live = '<div class="po__why__live"><h4>In your own table' + (condSaid ? ', at ' + esc(condSaid) : '') + '</h4>' +
         (st.n < 2
           ? '<p>You have one trial so far. <b>Record a second under the same conditions</b> and you will see how steady your measuring is.</p>'
-          : '<p>Your ' + st.n + ' trials differ by <b>' + st.sd.toFixed(2) + ' mm/min</b> (standard deviation) — that is your repeatability.</p>' +
+          : '<p>Your ' + st.n + ' trials differ by <b>' + st.sd.toFixed(2) + ' mm/min</b> (standard deviation) — that shows how precise your measuring is.</p>' +
             (bad && st2 ? '<p class="po__why__punch"><b>' + (bad === 1 ? 'One trial is' : bad + ' trials are') + ' marked red</b>: the bubble did not start from 0. Without ' + (bad === 1 ? 'it' : 'them') + ' the spread would be <b>' + st2.sd.toFixed(2) + ' mm/min</b> and the mean ' + st2.mean.toFixed(2) + ' instead of ' + st.mean.toFixed(2) + '. That is what an anomalous result costs — and why you repeat.</p>' : '')) +
         '</div>';
     }
@@ -1608,7 +1613,7 @@
     var w = errK === 'sd' ? 'standard deviation' : errK === 'se' ? 'standard error' : '95 % confidence interval';
     return '<p class="po__nest"><b>Two spreads, and they are not the same thing.</b> ' +
       'On a shoot\'s row, the standard deviation is the spread of the trials on <b>that</b> shoot. It is about your method — how steadily you time the run and read the scale. ' +
-      'On the tinted row, the figure is worked out from the ' + k + ' shoot means. It is about <b>the plant</b>. ' +
+      'On the tinted row, the figure is worked out from the ' + k + ' shoot means. It is about <b>plants of this kind</b>. ' +
       'Only the second can answer a question about the species, which is why that box is left empty on a shoot\'s row.' +
       (errK === 'none' ? '' : ' The ' + w + ' shown is worked out between shoots only, never from the trials.') +
       ' The tinted row does not average all the trials: it averages the ' + k + ' shoot means, so each shoot counts once however many trials it has.</p>';
@@ -2845,7 +2850,7 @@
       }
       /* what the marks are, and what n counts — the two things a figure caption must state */
       var nSaid = kGraph >= 2 && errK === 'sd'
-        ? ' Hollow points are the ' + kGraph + ' shoots, each the mean of its own trials, with thin bars showing one standard deviation of those trials — the repeatability of the method. Solid points are the mean of the ' + kGraph + ' shoot means, with thick bars showing one standard deviation between the shoots — how much the plants differ (n = ' + kGraph + ' shoots).'
+        ? ' Hollow points are the ' + kGraph + ' shoots, each the mean of its own trials, with thin bars showing one standard deviation of those trials — how precise the measuring is. Solid points are the mean of the ' + kGraph + ' shoot means, with thick bars showing one standard deviation between the shoots — the natural variation between plants (n = ' + kGraph + ' shoots).'
         : kGraph >= 2
         ? ' Hollow points are the ' + kGraph + ' shoots, each the mean of its own trials; solid points are the mean of the ' + kGraph + ' shoot means (n = ' + kGraph + ' shoots).'
         : mode === 'shoot' ? ' Each point is one shoot, the mean of its own trials; the faint dots behind it are those trials.'
@@ -2870,8 +2875,8 @@
         var thin = errK === 'sd' ? '<path d="M8 2 V14 M5.6 2 h4.8 M5.6 14 h4.8" stroke="' + kc + '" stroke-width="1.15" fill="none" opacity=".8"/>' : '';
         var thick = errK !== 'none' && errK !== 'ci' ? '<path d="M8 1 V15 M4.5 1 h7 M4.5 15 h7" stroke="' + kc + '" stroke-width="2.6" fill="none"/>' : '';
         gkey = '<div class="po__gkey">' +
-          '<span><svg width="16" height="16" viewBox="0 0 16 16">' + thin + '<circle cx="8" cy="8" r="3.1" fill="#fff" stroke="' + kc + '" stroke-width="1.6"/></svg>one shoot — the mean of its trials' + (errK === 'sd' ? ', and their spread: <b>your repeatability</b>' : '') + '</span>' +
-          '<span><svg width="16" height="16" viewBox="0 0 16 16">' + thick + '<circle cx="8" cy="8" r="4.6" fill="' + kc + '" stroke="#fff" stroke-width="1.4"/></svg>the plant — the mean of the shoot means' + (errK === 'sd' ? ', and the spread <b>between shoots</b>' : errK === 'se' ? ', and the standard error <b>between shoots</b>' : '') + '</span>' +
+          '<span><svg width="16" height="16" viewBox="0 0 16 16">' + thin + '<circle cx="8" cy="8" r="3.1" fill="#fff" stroke="' + kc + '" stroke-width="1.6"/></svg>one shoot — the mean of its trials' + (errK === 'sd' ? ', and their spread: <b>how precise your measuring is</b>' : '') + '</span>' +
+          '<span><svg width="16" height="16" viewBox="0 0 16 16">' + thick + '<circle cx="8" cy="8" r="4.6" fill="' + kc + '" stroke="#fff" stroke-width="1.4"/></svg>the plants — the mean of the shoot means' + (errK === 'sd' ? ', and the spread <b>between shoots</b>' : errK === 'se' ? ', and the standard error <b>between shoots</b>' : '') + '</span>' +
           '</div>';
       }
       s += '</svg>' + legend + gkey + '<small class="po__gnote"><b>Figure 1.</b> ' + esc(figTitle + ciNote) + '</small>';
