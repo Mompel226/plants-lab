@@ -1273,7 +1273,7 @@
      two thirds or so on bean, sunflower and geranium, almost none on marram, whose stomata line the inside of the rolled leaf), plus a little loss through the cuticle */
   function poGreaseF(sp, g) { var lower = sp.lower == null ? .95 : sp.lower, cut = .05; return g === 'upper' ? cut + (1 - cut) * lower : g === 'lower' ? cut + (1 - cut) * (1 - lower) : g === 'both' ? cut : 1; }
   var PO_MM = 4.2, PO_X0 = 108, PO_STEM = 574, PO_BORE_R = 0.5;   /* the scale's 0 mark, and the shoot's stem, in the drawing's units */
-  var PO_STATE = { runs: [], pos: 0, set: null, shoot: 1, shootF: 1, unlocked: false, line: 0, lineNames: [], hidden: [], dots: true, style: 'igcse', iv: null };
+  var PO_STATE = { runs: [], pos: 0, set: null, shoot: 1, shootF: 1, unlocked: false, line: 0, lineNames: [], hidden: [], dots: true, style: 'igcse', iv: null, err: 'none', mode: 'igcse' };
   try { if (sessionStorage.getItem('plants-lab.potometer.unlocked') === '1') PO_STATE.unlocked = true; } catch (e) {}
   /* the bench, the table and the shoot survive a reload (the tab's own storage; closing the tab clears it) */
   function poSpecies(id) { return PO_SPECIES.filter(function (q) { return q.id === id; })[0]; }
@@ -1284,6 +1284,11 @@
       PO_SAVED.runs.forEach(function (r) { r.s.sp = poSpecies(r.s.sp.id); });
       if (PO_SAVED.set) { PO_SAVED.set.sp = poSpecies(PO_SAVED.set.sp && PO_SAVED.set.sp.id); if (!PO_SAVED.set.sp) PO_SAVED.set = null; }
       PO_STATE.runs = PO_SAVED.runs; PO_STATE.set = PO_SAVED.set; PO_STATE.pos = +PO_SAVED.pos || 0; PO_STATE.shoot = +PO_SAVED.shoot || 1; PO_STATE.shootF = +PO_SAVED.shootF || 1; PO_STATE.err = PO_SAVED.err || 'none'; PO_STATE.line = +PO_SAVED.line || 0; PO_STATE.lineNames = PO_SAVED.lineNames || []; PO_STATE.hidden = PO_SAVED.hidden || []; PO_STATE.dots = PO_SAVED.dots !== false;
+      /* style and iv were written by poPersist and never read back: a reload dropped an IB table to IGCSE and forgot the declared independent variable */
+      PO_STATE.style = PO_SAVED.style === 'ib' ? 'ib' : 'igcse'; PO_STATE.iv = PO_SAVED.iv || null;
+      /* a table saved before the bench had modes: read the mode off the runs, so nobody's rows are hidden from them */
+      PO_STATE.mode = PO_SAVED.mode === 'full' || PO_SAVED.mode === 'igcse' ? PO_SAVED.mode
+        : (PO_STATE.runs.some(function (r) { return r.s && (r.s.grease !== 'none' || r.s.joint === 'open'); }) ? 'full' : 'igcse');
     }
   } catch (e) {}
   function poPersist() {
@@ -1350,6 +1355,19 @@
                   ['temp', 'Temperature (°C)', true], ['hum', 'Humidity (%)', true], ['wind', 'Wind', false],
                   ['grease', 'Petroleum jelly', false], ['joint', 'Joint at the bung', false], ['time', 'Time (min)', true]];
   var PO_IVCTL = { sp: 'species', leaves: 'leaves', light: 'light', temp: 'temp', hum: 'hum', wind: 'wind', grease: 'grease', joint: 'joint', time: 'time' };
+  /* Two benches, one widget. The IGCSE bench is the experiment 0610 actually sets: the four factors,
+     a joint that is always sealed and leaves that never carry petroleum jelly. The fuller one adds the
+     two things that can be done on purpose or go wrong. The mode decides which APPARATUS exists — never
+     which statistics do, because those follow the data. */
+  var PO_FULL_ONLY = { grease: 1, joint: 1 }, PO_UID = 0;
+  function poFactsFor(mode) {
+    if ((mode || PO_STATE.mode) === 'full') return PO_FACTS;
+    return PO_FACTS.filter(function (F) { return !PO_FULL_ONLY[F[0]]; });
+  }
+  function poInMode(s, mode) {
+    if ((mode || PO_STATE.mode) === 'full') return true;
+    return s.grease === 'none' && s.joint !== 'open';
+  }
   function poFact(k) { for (var i = 0; i < PO_FACTS.length; i++) if (PO_FACTS[i][0] === k) return PO_FACTS[i]; return null; }
   /* The BODY of a table carries numbers and names, never units: the unit is stated once, in the
      heading, and repeating it in every cell is the commonest thing wrong with a student's table. */
@@ -1387,7 +1405,7 @@
      if more than one differs, the comparison proves nothing, which is worth saying out loud. */
   function poLinesDifferBy(lines, iv) {
     if (lines.length < 2) return [];
-    return PO_FACTS.filter(function (F) {
+    return poFactsFor().filter(function (F) {
       if (F[0] === iv) return false;
       var seen = {};
       lines.forEach(function (l) { if (l.rows && l.rows.length) seen[poIvValue(l.rows[0].s, F[0])] = 1; });
@@ -1401,7 +1419,7 @@
   }
   /* every setting EXCEPT the one being changed: the controlled variables, written out once */
   function poControlledText(s, iv) {
-    return PO_FACTS.filter(function (F) { return F[0] !== iv; })
+    return poFactsFor().filter(function (F) { return F[0] !== iv; })
       .map(function (F) { return F[1].replace(/ \(.*\)$/, '').toLowerCase() + ' <b>' + poIvSaid(s, F[0]) + '</b>'; })
       .join(' · ');
   }
@@ -1516,9 +1534,13 @@
        starting again: the frozen settings would differ between the old rows and the new. */
     var ivRow = h('label', 'po__row po__row--iv', '<span>Independent variable <small>the one thing you change</small></span>');
     var ivSel = document.createElement('select'); ivSel.setAttribute('data-k', 'iv');
-    [['', '— choose one, and the rest are held constant —']].concat(PO_FACTS.map(function (F) { return [F[0], F[1].replace(/ \(.*\)$/, '')]; }))
-      .forEach(function (o) { var op = document.createElement('option'); op.value = o[0]; op.textContent = o[1]; ivSel.appendChild(op); });
-    ivSel.value = PO_STATE.iv || '';
+    function fillIv() {                                   /* only the factors this bench has */
+      ivSel.innerHTML = '';
+      [['', '— choose one, and the rest are held constant —']].concat(poFactsFor().map(function (F) { return [F[0], F[1].replace(/ \(.*\)$/, '')]; }))
+        .forEach(function (o) { var op = document.createElement('option'); op.value = o[0]; op.textContent = o[1]; ivSel.appendChild(op); });
+      ivSel.value = PO_STATE.iv || '';
+    }
+    fillIv();
     ivRow.appendChild(ivSel); ctl.appendChild(ivRow);
 
     var species = sel('Plant', 'species', PO_SPECIES.map(function (s) { return [s.id, s.name]; }), 'bean');
@@ -1532,6 +1554,48 @@
     var joint = sel('The joint at the bung', 'joint', [['sealed', 'sealed with petroleum jelly'], ['open', 'not sealed']], 'sealed');
     var time = sel('Measure for', 'time', [['1', '1 minute'], ['2', '2 minutes'], ['3', '3 minutes'], ['5', '5 minutes'], ['10', '10 minutes']], '5');
     if (PO_STATE.set) { var S0 = PO_STATE.set; species.value = S0.sp.id; leaves.inp.value = S0.leaves; light.inp.value = S0.light; temp.inp.value = S0.temp; hum.inp.value = S0.hum; wind.inp.value = S0.wind; grease.value = S0.grease; joint.value = S0.joint || 'sealed'; time.value = String(S0.time); }
+
+    /* ----- which bench: the four factors, or the whole apparatus -----
+       A radio group rather than a switch: both names stay readable, so a student can see what the
+       other position is before choosing it, and a screen reader is given the group and the choice.
+       It sits above the controls and OUTSIDE the table, which the teacher's word keeps hidden. */
+    var poUid = ++PO_UID, modeName = 'po-mode-' + poUid;
+    var modeBox = h('fieldset', 'po__mode');
+    modeBox.innerHTML = '<legend>Which bench are you using?</legend>' +
+      '<div class="po__mode__seg">' +
+      [['igcse', 'IGCSE lab'], ['full', 'More realistic']].map(function (o) {
+        return '<label class="po__mode__b"><input type="radio" name="' + modeName + '" value="' + o[0] + '"><span>' + o[1] + '</span></label>';
+      }).join('') + '</div><p class="po__mode__say"></p>';
+    var modeSay = modeBox.querySelector('.po__mode__say');
+    var greaseRow = grease.parentNode, jointRow = joint.parentNode;
+    function poModeSaid() {
+      return PO_STATE.mode === 'full'
+        ? 'Every control, including petroleum jelly on the leaves and a joint at the bung that can leak.'
+        : 'Four factors: temperature, wind, humidity and light. The joint at the bung is always sealed, and the leaves never carry petroleum jelly.';
+    }
+    function poApplyMode() {
+      var full = PO_STATE.mode === 'full';
+      greaseRow.hidden = !full; jointRow.hidden = !full;
+      /* a hidden select still holds its value, and settings() reads straight off the DOM — so it would
+         go on stamping grease='both' onto every new run, which this bench would then hide */
+      if (!full) { grease.value = 'none'; joint.value = 'sealed'; }
+      if (!full && (PO_STATE.iv === 'grease' || PO_STATE.iv === 'joint')) { PO_STATE.iv = null; ivWas = ''; }
+      fillIv();
+      modeBox.querySelectorAll('.po__mode__b').forEach(function (l) {
+        var i = l.querySelector('input'); i.checked = i.value === PO_STATE.mode; l.classList.toggle('is-on', i.checked);
+      });
+      modeSay.textContent = poModeSaid();
+    }
+    modeBox.addEventListener('change', function (e) {
+      if (!e.target || e.target.name !== modeName || run) return;
+      var want = e.target.value; if (want === PO_STATE.mode) return;
+      var lose = want === 'igcse' ? runs.filter(function (r) { return !poInMode(r.s, 'igcse'); }).length : 0;
+      PO_STATE.mode = want; poApplyMode(); remember(); paintConditions(); paintData();
+      say.textContent = want === 'full'
+        ? 'The whole apparatus. You can now set petroleum jelly on the leaves and whether the joint at the bung is sealed.'
+        : lose ? lose + (lose === 1 ? ' run used' : ' runs used') + ' petroleum jelly or an unsealed joint. Nothing is deleted — those rows are just not shown on this bench. Switch back to see them again.'
+        : 'The IGCSE bench: four factors, the joint sealed, no petroleum jelly on the leaves.';
+    });
 
     /* ----- the bench ----- */
     var stage = h('div', 'po__stage');
@@ -1932,7 +1996,12 @@
     tableBox.appendChild(errBar); tableBox.appendChild(tabsEl); tableBox.appendChild(tableWrap); tableBox.appendChild(pop); tableBox.appendChild(chart); tableBox.appendChild(tools);
 
     var keyOf = poKeyOf, condText = poCondText;
-    function groups() { return poGroups(runs); }
+    /* grease and the joint are part of a row's identity (poKeyOf), so a row is wholly on this bench
+       or wholly off it — filtering by group leaves each trial's index pointing at the real array */
+    function groups() {
+      var G = poGroups(runs);
+      return PO_STATE.mode === 'full' ? G : G.filter(function (g) { return poInMode(g.s); });
+    }
     function trialsFor(s) { var k = keyOf(s); return runs.filter(function (r) { return keyOf(r.s) === k && (r.line || 0) === PO_STATE.line; }).length; }
     var stats = poStats;
     var TERMS = PO_TERMS;
@@ -2067,11 +2136,13 @@
       G.forEach(function (g) { if (lines.indexOf(g.line) < 0) lines.push(g.line); });
       if (lines.indexOf(PO_STATE.line) < 0) lines.push(PO_STATE.line);
       lines.sort(function (a, b) { return a - b; });
-      kept.textContent = runs.length ? runs.length + (runs.length === 1 ? ' run recorded' : ' runs recorded') + (lines.length > 1 ? ' on ' + lines.length + ' lines' : '') + ' — write each one in your own table as you go.' : 'Nothing recorded yet.';
+      var shown = G.reduce(function (a, g) { return a + g.trials.length; }, 0), tucked = runs.length - shown;
+      kept.textContent = shown ? shown + (shown === 1 ? ' run recorded' : ' runs recorded') + (lines.length > 1 ? ' on ' + lines.length + ' lines' : '') + ' — write each one in your own table as you go.' : 'Nothing recorded yet.';
+      if (tucked) kept.textContent += '  ' + tucked + (tucked === 1 ? ' run is' : ' runs are') + ' kept but not shown: ' + (tucked === 1 ? 'it used' : 'they used') + ' petroleum jelly or an unsealed joint, which this bench does not have.';
       gate.hidden = unlocked || !NEED;
-      tableBox.hidden = !runs.length || !unlocked;
+      tableBox.hidden = !shown || !unlocked;
       poPersist();
-      if (!runs.length) { tabsEl.innerHTML = ''; tableWrap.innerHTML = ''; chart.innerHTML = ''; pop.hidden = true; popTerm = null; return; }
+      if (!shown) { tabsEl.innerHTML = ''; tableWrap.innerHTML = ''; chart.innerHTML = ''; pop.hidden = true; popTerm = null; return; }
       tabsEl.innerHTML = lines.map(function (ln) {
         var rows = G.filter(function (g) { return g.line === ln; }), n = rows.reduce(function (a, g) { return a + g.trials.length; }, 0);
         return '<button type="button" class="po__linetab" data-line="' + ln + '" data-rows="' + rows.length + '" data-n="' + n + '" aria-pressed="' + (ln === PO_STATE.line ? 'true' : 'false') + '" style="--lc:' + poLineColour(ln) + '" title="' + esc(poLineName(ln)) + ': ' + n + (n === 1 ? ' run' : ' runs') + '"><span class="po__swatch"></span>' + (ln + 1) + '<small>' + esc(poLineName(ln)) + '</small></button>';
@@ -2160,9 +2231,11 @@
       if (popTerm && (popTerm === 'mean' || popTerm === errK)) showTerm(popTerm); else { pop.hidden = true; popTerm = null; }   /* the pop-up is re-worked from the table as it now is */
     }
     /* the graph plots one point per row of the table — its mean — and picks its x-axis: the one factor that changed */
-    var FACT = [['leaves', 'Leaves on the shoot', true], ['light', 'Light (%)', true], ['temp', 'Temperature (°C)', true], ['hum', 'Humidity (%)', true], ['wind', 'Wind', false], ['time', 'Time (min)', true], ['sp', 'Plant', false], ['grease', 'Grease', false], ['joint', 'Joint at the bung', false]];
+    var FACT_ALL = [['leaves', 'Leaves on the shoot', true], ['light', 'Light (%)', true], ['temp', 'Temperature (°C)', true], ['hum', 'Humidity (%)', true], ['wind', 'Wind', false], ['time', 'Time (min)', true], ['sp', 'Plant', false], ['grease', 'Grease', false], ['joint', 'Joint at the bung', false]];
     function fval(s, f) { return f === 'sp' ? s.sp.name : f === 'wind' ? PO_WIND[s.wind] : f === 'joint' ? (s.joint === 'open' ? 'not sealed' : 'sealed') : s[f]; }
     function graph(G) {
+      /* the x-axis can only be a factor this bench has, and the bench can change between paints */
+      var FACT = FACT_ALL.filter(function (F) { return PO_STATE.mode === 'full' || !PO_FULL_ONLY[F[0]]; });
       var all = []; G.forEach(function (g) { if (all.indexOf(g.line) < 0) all.push(g.line); }); all.sort(function (a, b) { return a - b; });
       var shown = all.filter(function (ln) { return PO_STATE.hidden.indexOf(ln) < 0; });
       var legend = all.length > 1 ? '<div class="po__legend">' + all.map(function (ln) { var vis = shown.indexOf(ln) >= 0; return '<button type="button" class="po__legend__b" data-line="' + ln + '" aria-pressed="' + (vis ? 'true' : 'false') + '" style="--lc:' + poLineColour(ln) + '" title="' + (vis ? 'Hide' : 'Show') + ' this line on the graph"><span class="po__swatch"></span>' + esc(poLineName(ln)) + '</button>'; }).join('') + '<small>click a line to hide or show it</small></div>' : '';
@@ -2297,7 +2370,7 @@
     var live = h('div', 'po__live'); live.appendChild(clock); live.appendChild(read); live.appendChild(result);
     var slot = h('div', 'po__slot');
     var wrap2 = h('div', 'po');
-    var right = h('div', 'po__right'); right.appendChild(ctl); right.appendChild(btns); right.appendChild(say);
+    var right = h('div', 'po__right'); right.appendChild(modeBox); right.appendChild(ctl); right.appendChild(btns); right.appendChild(say);
     wrap2.appendChild(slot); wrap2.appendChild(right);
     box.appendChild(wrap2); box.appendChild(gate); box.appendChild(tableBox);
     box.appendChild(h('p', 'widget__note', 'A model, scaled to published class results rather than measured here (the sources are in the lab\'s credits file). Temperature and humidity act together in it, because in a real leaf they are one thing: what drives transpiration is the gap between the saturated air inside the leaf and the air outside, and that gap widens very steeply as the air warms and as it dries. Every run starts where the last one left the bubble unless you open the tap. Each run carries the small random errors of a real bench — hand timing, a bubble that hesitates, a reading to the nearest millimetre — so repeats differ, as they should.'));
@@ -2320,7 +2393,7 @@
     var onWide = function () { if (box.isConnected) mount(); else wideQ.removeEventListener('change', onWide); };
     wideQ.addEventListener('change', onWide);
     mount();
-    setBubble(PO_STATE.pos || 0); paintConditions(); paintData();
+    poApplyMode(); setBubble(PO_STATE.pos || 0); paintConditions(); paintData();
     return box;
   }
 
