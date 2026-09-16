@@ -1475,6 +1475,89 @@
     });
   }
   /* the sentence the whole rebuild exists for, printed where the two spreads sit side by side */
+  /* ----- why a repeat, and why a new shoot -----
+     Six words, each fastened to one quantity, each given a verdict for BOTH kinds of repeat.
+     Definitions follow the VIM (JCGM 200:2012), which the ASE Language of Measurement — and so
+     Cambridge — draws on. The two that are most often got wrong are stated as flatly as possible:
+     REPEATING MEASURES precision, it does not improve it; and NEITHER kind of replication improves
+     ACCURACY, because a leak makes every reading wrong in the same direction. */
+  function poWhyRow(term, gloss, a, b) {
+    return '<tr><td class="po__why__t">' + term + '<small>' + gloss + '</small></td>' +
+      (b == null ? '<td colspan="2">' + a + '</td>' : '<td>' + a + '</td><td>' + b + '</td>') + '</tr>';
+  }
+  function poWhyMark(kind, text) {
+    var m = kind === 'y' ? '<span class="po__why__v po__why__y">✓</span>' : kind === 'n' ? '<span class="po__why__v po__why__no">✗</span>' : '<span class="po__why__v po__why__p">~</span>';
+    return m + text;
+  }
+  /* the live half: the student's own two spreads, and which of the two next moves buys more.
+     The split is the nested one — a shoot mean's variance is the between-shoot variance plus the
+     within-shoot variance divided by the number of trials — so the answer follows their data and
+     inverts honestly at short run times, where the reading error really does dominate. */
+  function poWhyLive(g, temp) {
+    var nest = poShootStats(g), k = nest.k;
+    if (k < 2) return null;
+    var wv = nest.shoots.filter(function (q) { return q.n >= 2; }).map(function (q) { return q.sd * q.sd; });
+    var m = Math.round(nest.shoots.reduce(function (a, q) { return a + q.n; }, 0) / k) || 1;
+    var s2w = wv.length ? wv.reduce(function (a, v) { return a + v; }, 0) / wv.length : 0;
+    var vObs = nest.sd != null ? nest.sd * nest.sd : 0, s2b = Math.max(0, vObs - s2w / m);
+    var seNow = Math.sqrt(vObs / k), seTr = Math.sqrt((s2b + s2w / (m + 1)) / k), seSh = Math.sqrt(vObs / (k + 1));
+    var gT = seNow ? (seNow - seTr) / seNow * 100 : 0, gS = seNow ? (seNow - seSh) / seNow * 100 : 0;
+    return { k: k, m: m, sw: Math.sqrt(s2w), sb: nest.sd, grand: nest.grand, se: seNow,
+             seTr: seTr, seSh: seSh, gT: gT, gS: gS, cond: temp };
+  }
+  function poWhyHtml(best, condSaid) {
+    var live = best ? poWhyLive(best, condSaid) : null;
+    var h2 = '<div class="po__why__h"><span class="po__why__q">?</span>Why repeat a trial? Why cut a new shoot?</div>' +
+      '<p class="po__why__top">They do two different jobs. Repeating on one shoot tells you <b>how good your measuring is</b>. Cutting a new shoot tells you <b>how good your conclusion is</b>. Neither can do the other\'s job.</p>';
+    var tbl = '<table class="po__why__g"><thead><tr><th>The word</th>' +
+      '<th>Repeating on the SAME shoot<em>a technical replicate — a pseudo-replicate</em></th>' +
+      '<th>Cutting a NEW shoot<em>a true replicate — a biological replicate</em></th></tr></thead><tbody>' +
+      poWhyRow('Precision', 'how close repeat measurements are to each other',
+        poWhyMark('y', '<b>It measures it — it does not improve it.</b> The spread of your trials <i>is</i> the precision of your method. One more trial does not make a single reading more precise: it shows you how precise your readings already were, and it makes the <b>mean for this shoot</b> more precise.'),
+        poWhyMark('n', '<b>Not precision at all.</b> The spread between shoots is not measuring error — it is how much the plants themselves differ.')) +
+      poWhyRow('Repeatability', 'precision when nothing is changed',
+        poWhyMark('y', '<b>This is exactly repeatability</b>: the same person, the same potometer, the same shoot, over a short time. It is the one thing repeated trials genuinely tell you.'),
+        poWhyMark('n', '<b>No.</b> A new shoot changes the conditions, so the spread between shoots is not a repeatability figure. More shoots will not make your timing steadier.')) +
+      poWhyRow('Reproducibility', 'precision when the person or the apparatus changes',
+        poWhyMark('n', '<b>Neither of them.</b> Reproducibility means a <b>different student</b>, on a <b>different potometer</b>, getting the same answer. A new shoot is a new plant, not a new laboratory. This is the pair most often mixed up.'), null) +
+      poWhyRow('Accuracy', 'how close you are to the true value',
+        poWhyMark('n', '<b>Neither of them.</b> A leak at the bung, a bubble that did not start at 0, reading the scale from the side — each makes <b>every</b> trial wrong in the same direction. Repeating them, or repeating them on five shoots, gives you a more precise wrong answer. Accuracy is only improved by <b>changing what you do</b>: seal the joint, open the tap, read at eye level.'), null) +
+      poWhyRow('Reliability', 'a mean you can trust — always say <i>which</i> mean',
+        poWhyMark('p', '<b>Only for this shoot.</b> Close trials mean you can trust the mean <b>for this one shoot</b>. They say nothing about the plant, however close they are.'),
+        poWhyMark('y', '<b>Yes — for the plant.</b> This is where the word belongs: more shoots make the mean <b>for the species</b> one you can trust.')) +
+      poWhyRow('Validity', 'whether your conclusion is about what you claim',
+        poWhyMark('n', '<b>No.</b> A carefully repeated run on one shoot is still one shoot.'),
+        poWhyMark('y', '<b>Yes — and this is the strongest reason of all.</b> With one shoot you can only write a sentence about <b>your shoot</b>. With several you can write one about <b>the plant</b>.')) +
+      '</tbody></table>';
+    var warn = '<p class="po__why__w"><b>In an IGCSE answer, “to improve reliability” on its own earns no marks.</b> Write what the repeats let you <i>do</i>: find an <b>anomalous result</b>, and calculate a <b>mean</b>. And say why you used more than one shoot: one shoot may not be <b>representative</b> of the plant.</p>' +
+      '<p class="po__why__w po__why__w--bad"><b>One thing no amount of repeating can fix.</b> A potometer measures the water the shoot takes <b>in</b>, not the water its leaves lose — some is kept for growth and to hold the cells firm (turgid). That is why every heading here says <b>rate of water uptake</b>.</p>';
+    var livehtml;
+    if (!live) {
+      livehtml = '<div class="po__why__live"><h4>In your own table</h4>' +
+        '<p>Every run you have is on one shoot, so every number in your table is about <b>your measuring</b>. Nothing in it can yet say how much ' +
+        'shoots of this plant differ. <b>Would a second shoot give the same rate?</b> Press <b>Use a shoot from another plant</b> and find out.</p></div>';
+    } else {
+      var times = live.gT > 0.01 ? Math.round(live.gS / live.gT) : 0;
+      livehtml = '<div class="po__why__live"><h4>In your own table' + (live.cond ? ', at ' + esc(live.cond) : '') + '</h4>' +
+        '<table class="po__why__num"><tr><td>Your trials on one shoot differ by, on average</td><td><b>' + live.sw.toFixed(2) + ' mm/min</b> — your repeatability</td></tr>' +
+        '<tr><td>Your ' + live.k + ' shoots differ by</td><td><b>' + live.sb.toFixed(2) + ' mm/min</b> — how much the plants differ</td></tr></table>' +
+        (live.sw > 0 ? (function () {
+          var ratio = live.sb / live.sw;
+          return '<p>' + (ratio >= 1.5
+            ? 'The plants differ <b>' + ratio.toFixed(1) + ' times</b> as much as your measuring does, so that difference is real: it is not your reading error.'
+            : ratio >= 0.75
+              ? 'Those two are about the same size, so at these conditions you <b>cannot yet tell the plants apart from your own measuring</b>. Measure for longer — a 10-minute run reads the scale four times as finely as a 2-minute one — or add a trial to each shoot.'
+              : 'Your measuring varies <b>more</b> than the plants do here, so the spread you see is mostly your own reading error. Measure for longer before you compare the shoots.') + '</p>';
+        })() : '') +
+        '<p>Your answer for this plant is <b>' + live.grand.toFixed(2) + (live.se ? ' ± ' + live.se.toFixed(2) : '') + ' mm/min</b> (standard error, <i>n</i> = ' + live.k + ' shoots).</p>' +
+        '<table class="po__why__num"><tr><td>One more trial on every shoot would make that</td><td>± ' + live.seTr.toFixed(2) + ' <b>(' + live.gT.toFixed(1) + ' % narrower)</b></td></tr>' +
+        '<tr><td>One more shoot would make it</td><td>± ' + live.seSh.toFixed(2) + ' <b>(' + live.gS.toFixed(1) + ' % narrower)</b></td></tr></table>' +
+        '<p class="po__why__punch">' + (live.gS >= live.gT
+          ? '<b>Another shoot helps ' + (times > 1 ? times + ' times as much as' : 'more than') + ' another trial</b> — and it is the only one of the two that makes your answer about the plant instead of about your shoot. If your time is short, cut a new shoot.'
+          : '<b>Another trial helps more here</b>, because your runs are short and your reading error is still large. Measure for longer — then cut another shoot, because only a new shoot makes your answer about the plant.') + '</p></div>';
+    }
+    return h2 + tbl + warn + livehtml;
+  }
   function poNestNote(k, errK) {
     var w = errK === 'sd' ? 'standard deviation' : errK === 'se' ? 'standard error' : '95 % confidence interval';
     return '<p class="po__nest"><b>Two spreads, and they are not the same thing.</b> ' +
@@ -1845,8 +1928,32 @@
        line — with the practical's reset at its end */
     var rowA = h('div', 'po__brow'), rowB = h('div', 'po__brow');
     [bStart, bReset, bRecord, bSet].forEach(function (b) { b.type = 'button'; rowA.appendChild(b); });
-    [bNew, bLine, bAll].forEach(function (b) { b.type = 'button'; rowB.appendChild(b); });
+    /* the standing question, next to the button it is about, and OUTSIDE the table the teacher's
+       word gates — the student is collecting data long before that word is given */
+    var bWhy = h('button', 'wbtn wbtn--quiet po__whybtn', '? Why repeat? Why a new shoot?');
+    bWhy.setAttribute('data-tip', 'What a repeat on the same shoot tells you, what a new shoot tells you, and which words belong to which — in your own numbers.');
+    bWhy.setAttribute('aria-expanded', 'false');
+    [bNew, bWhy, bLine, bAll].forEach(function (b) { b.type = 'button'; rowB.appendChild(b); });
     btns.appendChild(rowA); btns.appendChild(rowB);
+    var whyBox = h('div', 'po__why'); whyBox.hidden = true;
+    bWhy.addEventListener('click', function () {
+      whyBox.hidden = !whyBox.hidden;
+      bWhy.setAttribute('aria-expanded', whyBox.hidden ? 'false' : 'true');
+      bWhy.classList.toggle('is-open', !whyBox.hidden);
+      if (!whyBox.hidden) paintWhy();
+    });
+    function paintWhy() {
+      if (whyBox.hidden) return;
+      var rs = groups().filter(function (g) { return g.line === PO_STATE.line; });
+      /* the conditions the student has worked on hardest — most shoots, then most trials, then the
+         most recent. A stated, neutral rule, so the panel is not quietly picking its best example. */
+      var best = null, bk = -1, bn = -1;
+      rs.forEach(function (g) {
+        var k = poShootStats(g).k, t = g.trials.length;
+        if (k > bk || (k === bk && t >= bn)) { bk = k; bn = t; best = g; }
+      });
+      whyBox.innerHTML = poWhyHtml(best, best && PO_STATE.iv ? poIvSaid(best.s, PO_STATE.iv) : '');
+    }
     bRecord.disabled = true;
     var result = h('div', 'po__result'); result.hidden = true; result.setAttribute('aria-live', 'polite');
     var say = h('p', 'po__say');
@@ -2416,6 +2523,7 @@
           (PO_STATE.iv ? '' : ' <b>Choose an independent variable</b> above and the first column becomes that one thing, with the rest held constant and listed underneath.') + '</p>';
       }
       if (multi) tables += poNestNote(kMax, errK);
+      paintWhy();
       if (paired && paired.sameWay) tables += poPairedNote(paired, ivWord);
       tableWrap.innerHTML = lineHead + tables;
       tabsEl.querySelectorAll('.po__linetab').forEach(function (b) { b.addEventListener('click', function () { PO_STATE.line = +b.getAttribute('data-line'); remember(); paintData(); say.textContent = 'On ' + poLineName(PO_STATE.line) + ': the runs you record now go on it.'; }); });
@@ -2455,8 +2563,30 @@
       var bestKey = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a]; })[0];
       var F = bestKey ? FACT.filter(function (x) { return x[0] === bestKey; })[0] : null;
       var mode = F && byLine.every(function (l) { var v = varyOf(l.rows); return v.length === 0 || (v.length === 1 && v[0][0] === F[0]); }) ? 'factor' : (!multi && varyOf(GS).length === 0 ? 'trials' : 'row');
+      /* One set of conditions run on more than one shoot is the state the crossover creates, and it
+         fell to 'trials': six runs on two shoots were drawn as six points against Trial 1..6, which
+         is a series of pseudo-replicates. x is the shoot instead. */
+      if (mode === 'trials' && GS.length === 1 && poShootStats(GS[0]).k >= 2) mode = 'shoot';
       var W = 560, H = 240, L = 54, R = 16, T = 18, B = 54;
-      var mk = function (g, x) { var vals = g.trials.map(function (t) { return t.r.rate; }), st = stats(vals); var e = errK === 'sd' ? st.sd : errK === 'se' ? st.se : errK === 'ci' ? st.ci : null; return { x: x, mean: st.mean, all: vals, allBad: g.trials.map(function (t) { return !!t.r.notZero; }), err: e == null || isNaN(e) ? null : e }; };
+      /* ----- one point per set of conditions, and the point is the mean of the SHOOT MEANS -----
+         Not the mean of the pooled trials: each shoot counts once however many trials it carries.
+         The error mark is the between-shoot figure, and poShootStats gives null below three shoots,
+         so no whisker can be drawn from pseudo-replicates. `all` becomes the shoot means, which
+         turns the existing faint-dot layer into one dot per SHOOT — the middle layer of a SuperPlot
+         (Lord et al. 2020, J Cell Biol) without a line of new geometry. With one shoot it is exactly
+         what it always was: the trials, with their own spread. */
+      var mk = function (g, x) {
+        var nest = poShootStats(g);
+        if (nest.k >= 2) {
+          return { x: x, mean: nest.grand, all: nest.means, allBad: nest.means.map(function () { return false; }),
+                   err: errK === 'sd' ? nest.sd : errK === 'se' ? nest.se : errK === 'ci' ? nest.ci : null,
+                   k: nest.k, hollow: false };
+        }
+        var vals = g.trials.map(function (t) { return t.r.rate; }), st = stats(vals);
+        return { x: x, mean: st.mean, all: vals, allBad: g.trials.map(function (t) { return !!t.r.notZero; }),
+                 err: errK === 'sd' ? st.sd : errK === 'se' ? st.se : errK === 'ci' ? st.ci : null,
+                 k: nest.k, hollow: false };
+      };
       /* Bars are for CATEGORIES; a number line is for numbers. Three questions, not one:
            numeric — is the x-axis a number line? A measured factor is (temperature, light,
                      humidity, leaves, time), and so is the trial number.
@@ -2469,13 +2599,17 @@
                      the trials are drawn as points and left unjoined.
          Trial number was being treated as a category, which is why the first runs came out as
          bars even though 1, 2, 3 is as numeric as an axis gets. */
-      var numeric = mode === 'factor' ? !!F[2] : mode === 'trials';
-      var bars = !numeric;
+      var numeric = mode === 'factor' ? !!F[2] : mode === 'trials';   /* 'shoot' is a set of names, so it is neither numeric nor joined */
+      var isBar = !numeric;   /* the boolean; the caption's error-bar SENTENCE is a separate thing, and used to share this name */
       var joined = numeric && mode === 'factor';
       var ORDER = mode === 'factor' ? ({ wind: PO_WIND, sp: PO_SPECIES.map(function (q) { return q.name; }), grease: PO_GREASE.map(function (q) { return q[0]; }), joint: ['sealed', 'not sealed'] })[F[0]] : null;
+      var kGraph = GS.reduce(function (a2, g) { return Math.max(a2, poShootStats(g).k); }, 0);
       var series = byLine.map(function (l) {
         var pts;
         if (mode === 'factor') { pts = l.rows.map(function (g) { return mk(g, numeric ? +fval(g.s, F[0]) : fval(g.s, F[0])); }); pts.sort(function (a, b) { return numeric ? a.x - b.x : ORDER.indexOf(a.x) - ORDER.indexOf(b.x); }); }
+        else if (mode === 'shoot') pts = (l.rows[0].shoots || []).filter(function (q) { return q.shoot && q.n; }).map(function (q) {
+          return { x: 'Shoot ' + q.letter, mean: q.mean, all: q.vals, allBad: q.trials.map(function (t) { return !!t.r.notZero; }), err: errK === 'sd' ? q.sd : null, k: 1 };
+        });
         else if (mode === 'trials') pts = l.rows[0].trials.map(function (t, i) { return { x: i + 1, mean: t.r.rate, all: [t.r.rate], allBad: [!!t.r.notZero], err: null }; });
         else pts = l.rows.map(function (g, i) { return mk(g, i + 1); });
         return { ln: l.ln, colour: poLineColour(l.ln), name: poLineName(l.ln), pts: pts };
@@ -2500,7 +2634,7 @@
       var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" class="po__gsvg" role="img" aria-label="' + esc(note) + '">';
       for (var v = 0; v <= ymax; v += ystep) s += '<line class="po__grid" x1="' + L + '" y1="' + Y(v).toFixed(1) + '" x2="' + (W - R) + '" y2="' + Y(v).toFixed(1) + '"/><text class="po__gt" x="' + (L - 6) + '" y="' + (Y(v) + 3.5).toFixed(1) + '" text-anchor="end">' + (ystep < 1 ? v.toFixed(2) : v) + '</text>';
       s += '<line class="po__axis" x1="' + L + '" y1="' + T + '" x2="' + L + '" y2="' + (H - B) + '"/><line class="po__axis" x1="' + L + '" y1="' + (H - B) + '" x2="' + (W - R) + '" y2="' + (H - B) + '"/>';
-      s += '<text class="po__gl" transform="rotate(-90)" x="' + (-(T + H - B) / 2) + '" y="14" text-anchor="middle">Rate (mm min⁻¹)</text><text class="po__gl" x="' + ((L + W - R) / 2) + '" y="' + (H - 8) + '" text-anchor="middle">' + esc(xlab) + '</text>';
+      s += '<text class="po__gl" transform="rotate(-90)" x="' + (-(T + H - B) / 2) + '" y="14" text-anchor="middle" font-size="10.5">Rate of water uptake (mm min⁻¹)</text><text class="po__gl" x="' + ((L + W - R) / 2) + '" y="' + (H - 8) + '" text-anchor="middle">' + esc(xlab) + '</text>';
       function cap1(s2) { return s2.charAt(0).toUpperCase() + s2.slice(1); }
       var nS = series.length, withErrAny = false;
       series.forEach(function (sr, k) {
@@ -2519,10 +2653,10 @@
              outline — identity intact — and the error bar is drawn in ink over the top. On a
              line chart the whisker still wears its series colour: there the line is the
              identity and the whisker belongs to it. */
-          if (bars) s += '<rect class="po__gbar" style="fill:' + c + ';stroke:' + c + '" x="' + (x - bw / 2).toFixed(1) + '" y="' + Y(p.mean).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + (H - B - Y(p.mean)).toFixed(1) + '"/>';
+          if (isBar) s += '<rect class="po__gbar" style="fill:' + c + ';stroke:' + c + '" x="' + (x - bw / 2).toFixed(1) + '" y="' + Y(p.mean).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + (H - B - Y(p.mean)).toFixed(1) + '"/>';
           if (p.err != null) {
-            if (errK === 'ci' && bars) s += '<rect class="po__band po__band--onbar" x="' + (x - bw * .7).toFixed(1) + '" y="' + Y(p.mean + p.err).toFixed(1) + '" width="' + (bw * 1.4).toFixed(1) + '" height="' + (Y(p.mean - p.err) - Y(p.mean + p.err)).toFixed(1) + '"/>';
-            if (errK !== 'ci') s += '<path class="po__whisker' + (bars ? ' po__whisker--onbar' : '') + '" style="' + (bars ? '' : 'stroke:' + c) + '" d="M' + x.toFixed(1) + ' ' + Y(p.mean + p.err).toFixed(1) + ' V' + Y(p.mean - p.err).toFixed(1) + ' M' + (x - 6).toFixed(1) + ' ' + Y(p.mean + p.err).toFixed(1) + ' h12 M' + (x - 6).toFixed(1) + ' ' + Y(p.mean - p.err).toFixed(1) + ' h12"/>';
+            if (errK === 'ci' && isBar) s += '<rect class="po__band po__band--onbar" x="' + (x - bw * .7).toFixed(1) + '" y="' + Y(p.mean + p.err).toFixed(1) + '" width="' + (bw * 1.4).toFixed(1) + '" height="' + (Y(p.mean - p.err) - Y(p.mean + p.err)).toFixed(1) + '"/>';
+            if (errK !== 'ci') s += '<path class="po__whisker' + (isBar ? ' po__whisker--onbar' : '') + '" style="' + (isBar ? '' : 'stroke:' + c) + '" d="M' + x.toFixed(1) + ' ' + Y(p.mean + p.err).toFixed(1) + ' V' + Y(p.mean - p.err).toFixed(1) + ' M' + (x - 6).toFixed(1) + ' ' + Y(p.mean + p.err).toFixed(1) + ' h12 M' + (x - 6).toFixed(1) + ' ' + Y(p.mean - p.err).toFixed(1) + ' h12"/>';
           }
           /* the red ones go on LAST: with one trial in a row the mean dot sits exactly on the
              trial dot, and whichever is painted second is the one you see */
@@ -2545,7 +2679,7 @@
          wrong, and it belongs with the figure it is about. */
       var gSp = GS.length ? GS[0].s.sp.name : 'a leafy shoot';
       var gIv = mode === 'factor' ? (poIvPhrase(F[0], 0) || F[1].toLowerCase().replace(/ \(.*\)$/, '')) : null;
-      var bars = withErrAny ? poErrBarsSaid(errK) : null;
+      var errSaid = withErrAny ? poErrBarsSaid(errK) : null;
       var diff = multi ? poLinesDifferBy(byLine, mode === 'factor' ? F[0] : null) : [];
       var lineSaid = '';
       if (multi) {
@@ -2559,12 +2693,23 @@
                      '), so a difference between them cannot be put down to any one of them.';
         }
       }
+      /* what the marks are, and what n counts — the two things a figure caption must state */
+      var nSaid = kGraph >= 2
+        ? ' The faint dots are the ' + kGraph + ' shoots, each the mean of its own trials, and the ' + (isBar ? 'bar' : 'line') + ' gives the mean of the ' + kGraph + ' shoot means (n = ' + kGraph + ' shoots).'
+        : mode === 'shoot' ? ' Each point is one shoot, the mean of its own trials; the faint dots behind it are those trials.'
+        : ' Each point is the mean of its trials on one shoot (n = 1 shoot).';
       var figTitle = gIv
-        ? 'The effect of ' + gIv + ' on the mean rate of water uptake' + (F[0] === 'sp' ? ' of a leafy shoot' : multi ? '' : ' of a ' + gSp + ' shoot') + '.' +
-          lineSaid + ' Each point is the mean of its trials' + (bars ? '; ' + bars : '') + '.'
-        : cap1(note) + lineSaid + (bars ? ' ' + cap1(bars) + '.' : '');
-      var ciNote = (withErrAny && errK === 'ci')
-        ? ' Where two bands do not overlap the difference is statistically significant; where they overlap, nothing is proved either way.' : '';
+        ? 'The effect of ' + gIv + ' on the mean rate of water uptake' + (F[0] === 'sp' ? ' of a leafy shoot' : multi ? '' : ' of ' + (kGraph >= 2 ? kGraph + ' ' + gSp + ' shoots' : 'a ' + gSp + ' shoot')) + '.' +
+          lineSaid + nSaid + (errSaid ? ' ' + cap1(errSaid) + '.' : '')
+        : cap1(note) + lineSaid + nSaid + (errSaid ? ' ' + cap1(errSaid) + '.' : '');
+      /* The overlap rule is for INDEPENDENT groups. Here the same shoots are measured at every value of
+         the independent variable, so it does not apply — a student following it reads two overlapping
+         bands and concludes "no difference" while every shoot rose. With one shoot the bands come from
+         technical replicates and say nothing about the plant at all. Neither case earns the old sentence. */
+      var ciNote = !(withErrAny && errK === 'ci') ? ''
+        : kGraph >= 2
+          ? ' Do not judge a difference by whether two bands overlap: the same shoots were measured at every point, so the overlap rule, which is for separate groups, does not apply here. Read the change in each shoot instead.'
+          : ' These bands come from repeated trials on one shoot, so they show how steady your method was — not how much shoots of this plant differ.';
       s += '</svg>' + legend + '<small class="po__gnote"><b>Figure 1.</b> ' + esc(figTitle + ciNote) + '</small>';
       return s;
     }
@@ -2578,7 +2723,7 @@
     var wrap2 = h('div', 'po');
     var right = h('div', 'po__right'); right.appendChild(modeBox); right.appendChild(ctl); right.appendChild(btns); right.appendChild(say);
     wrap2.appendChild(slot); wrap2.appendChild(right);
-    box.appendChild(wrap2); box.appendChild(gate); box.appendChild(tableBox);
+    box.appendChild(wrap2); box.appendChild(whyBox); box.appendChild(gate); box.appendChild(tableBox);
     box.appendChild(h('p', 'widget__note', 'A model, scaled to published class results rather than measured here (the sources are in the lab\'s credits file). Temperature and humidity act together in it, because in a real leaf they are one thing: what drives transpiration is the gap between the saturated air inside the leaf and the air outside, and that gap widens very steeply as the air warms and as it dries. Every run starts where the last one left the bubble unless you open the tap. Each run carries the small random errors of a real bench — hand timing, a bubble that hesitates, a reading to the nearest millimetre — so repeats differ, as they should.'));
     var wideQ = window.matchMedia('(min-width: 1001px)');
     function mount() {
