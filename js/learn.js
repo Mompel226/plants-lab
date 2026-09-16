@@ -2269,34 +2269,59 @@
         : 'No independent variable chosen: every setting is free, and the table lists the conditions in full.';
     });
 
+    /* the exported table must keep the two kinds of repeat apart too, or the spreadsheet a student
+       goes on to work in pools the shoots again and hands back the pseudo-replicated number */
+    function seqOf(g) {
+      return g.shoots && g.shoots.length ? g.shoots
+        : [{ letter: '–', trials: g.trials, vals: g.trials.map(function (t) { return t.r.rate; }), n: g.trials.length, mean: stats(g.trials.map(function (t) { return t.r.rate; })).mean, sd: stats(g.trials.map(function (t) { return t.r.rate; })).sd }];
+    }
     bCopy.addEventListener('click', function () {
       /* what is copied is what is on the screen: one table, or the two the IB asks for */
       var lines;
       if (PO_STATE.style === 'ib') {
         var raw = ['Table 1  Raw data: distance moved by the air bubble', ''];
-        raw.push(['Line', 'Conditions'].concat([1, 2, 3, 4, 5].map(function (i) { return 'Trial ' + i + ' (mm ± 0.5)'; })).join('\t'));
+        raw.push(['Line', 'Conditions', 'Shoot'].concat([1, 2, 3, 4, 5].map(function (i) { return 'Trial ' + i + ' (mm ± 0.5)'; })).join('\t'));
         groups().forEach(function (g) {
-          var cells = [poLineName(g.line), condText(g.s).replace(/<[^>]+>/g, '')];
-          for (var i = 0; i < MAX_TRIALS; i++) cells.push(g.trials[i] ? String(g.trials[i].r.distance) : '');
-          raw.push(cells.join('\t'));
+          seqOf(g).forEach(function (q) {
+            var cells = [poLineName(g.line), condText(g.s).replace(/<[^>]+>/g, ''), q.letter];
+            for (var i = 0; i < MAX_TRIALS; i++) cells.push(q.trials[i] ? String(q.trials[i].r.distance) : '');
+            raw.push(cells.join('\t'));
+          });
         });
         var proc = ['', 'Table 2  Processed data: mean rate of water uptake', ''];
-        proc.push(['Line', 'Conditions', 'n', 'Mean rate (mm min⁻¹)', 'SD', 'SE', '95 % CI'].join('\t'));
+        proc.push(['Line', 'Conditions', 'Shoot', 'n', 'Mean rate (mm min⁻¹)', 'SD of the trials',
+                   'Mean of the shoot means', 'SD between shoots', 'SE between shoots', '95 % CI between shoots'].join('\t'));
         groups().forEach(function (g) {
-          var vals = g.trials.map(function (t) { return t.r.rate; }), st = stats(vals);
-          proc.push([poLineName(g.line), condText(g.s).replace(/<[^>]+>/g, ''), g.trials.length, st.mean.toFixed(2),
-                     st.sd != null ? st.sd.toFixed(2) : '', st.se != null ? st.se.toFixed(2) : '',
-                     st.ci != null ? '±' + st.ci.toFixed(2) : ''].join('\t'));
+          var nest = poShootStats(g), cond = condText(g.s).replace(/<[^>]+>/g, '');
+          seqOf(g).forEach(function (q) {
+            proc.push([poLineName(g.line), cond, q.letter, q.n, q.mean.toFixed(2), q.sd != null ? q.sd.toFixed(2) : '', '', '', '', ''].join('\t'));
+          });
+          if (nest.k >= 2) proc.push([poLineName(g.line), cond, 'All ' + nest.k + ' shoots', nest.k, '', '',
+            nest.grand.toFixed(2), nest.sd != null ? nest.sd.toFixed(2) : '', nest.se != null ? nest.se.toFixed(2) : '',
+            nest.ci != null ? '±' + nest.ci.toFixed(2) : ''].join('\t'));
         });
         lines = raw.concat(proc);
       } else {
-        var head = ['Line', 'Conditions'].concat([1, 2, 3, 4, 5].map(function (i) { return 'Trial ' + i + ' (mm min⁻¹)'; })).concat(['Mean', 'SD', 'SE', '95 % CI']);
-        lines = ['Table 1  Rate of water uptake by a leafy shoot', ''].concat([head.join('\t')]).concat(groups().map(function (g) {
-          var vals = g.trials.map(function (t) { return t.r.rate; }), st = stats(vals), cells = [poLineName(g.line), condText(g.s).replace(/<[^>]+>/g, '')];
-          for (var i = 0; i < MAX_TRIALS; i++) cells.push(vals[i] != null ? vals[i].toFixed(2) : '');
-          cells.push(st.mean.toFixed(2), st.sd != null ? st.sd.toFixed(2) : '', st.se != null ? st.se.toFixed(2) : '', st.ci != null ? '±' + st.ci.toFixed(2) : '');
-          return cells.join('\t');
-        }));
+        var head = ['Line', 'Conditions', 'Shoot'].concat([1, 2, 3, 4, 5].map(function (i) { return 'Trial ' + i + ' (mm min⁻¹)'; }))
+          .concat(['Mean', 'SD of the trials', 'SD between shoots', 'SE between shoots', '95 % CI between shoots']);
+        var body = [];
+        groups().forEach(function (g) {
+          var nest = poShootStats(g), cond = condText(g.s).replace(/<[^>]+>/g, '');
+          seqOf(g).forEach(function (q) {
+            var cells = [poLineName(g.line), cond, q.letter];
+            for (var i = 0; i < MAX_TRIALS; i++) cells.push(q.vals && q.vals[i] != null ? q.vals[i].toFixed(2) : '');
+            cells.push(q.mean.toFixed(2), q.sd != null ? q.sd.toFixed(2) : '', '', '', '');
+            body.push(cells.join('\t'));
+          });
+          if (nest.k >= 2) {
+            var srow = [poLineName(g.line), cond, 'All ' + nest.k + ' shoots'];
+            for (var j = 0; j < MAX_TRIALS; j++) srow.push('');
+            srow.push(nest.grand.toFixed(2), '', nest.sd != null ? nest.sd.toFixed(2) : '',
+                      nest.se != null ? nest.se.toFixed(2) : '', nest.ci != null ? '±' + nest.ci.toFixed(2) : '');
+            body.push(srow.join('\t'));
+          }
+        });
+        lines = ['Table 1  Rate of water uptake by a leafy shoot', ''].concat([head.join('\t')]).concat(body);
       }
       var tsv = lines.join('\n');
       var done = function () { bCopy.textContent = 'Copied — paste into a spreadsheet'; setTimeout(function () { bCopy.textContent = 'Copy the table'; }, 2200); };
