@@ -1253,17 +1253,17 @@
      own x-axis from whichever factor you changed. The rates are a model built to be fair to
      the biology (the widget says so), not measured data. */
   var PO_SPECIES = [
-    { id: 'bean',      name: 'French bean',   base: 3.2, lower: .7, note: 'broad, thin leaves',
+    { id: 'bean',      name: 'French bean',   base: 3.2, lower: .7, d50: 4.0, note: 'broad, thin leaves',
       leaf: { kind: 'heart', scale: 1.05, fill: '#5DBF6E', stroke: '#2A6B3B' } },
-    { id: 'sunflower', name: 'Sunflower',     base: 4.4, lower: .6, note: 'very large leaves',
+    { id: 'sunflower', name: 'Sunflower',     base: 4.4, lower: .6, d50: 4.2, note: 'very large leaves',
       leaf: { kind: 'heart', scale: 1.3, fill: '#4FAE5E', stroke: '#245B33', rough: true } },
-    { id: 'geranium',  name: 'Geranium',      base: 2.6, lower: .75, note: 'soft, hairy, rounded leaves',
+    { id: 'geranium',  name: 'Geranium',      base: 2.6, lower: .75, d50: 4.6, note: 'soft, hairy, rounded leaves',
       leaf: { kind: 'round', scale: .9, fill: '#7CC46A', stroke: '#3F7F3A' } },
-    { id: 'privet',    name: 'Privet',        base: 1.7, lower: .97, note: 'small, glossy, waxy leaves',
+    { id: 'privet',    name: 'Privet',        base: 1.7, lower: .97, d50: 6.2, note: 'small, glossy, waxy leaves',
       leaf: { kind: 'oval', scale: .72, fill: '#3F8F4E', stroke: '#1F5A2C', gloss: true } },
-    { id: 'ivy',       name: 'Ivy',           base: 1.5, lower: .97, note: 'tough, waxy, lobed leaves',
+    { id: 'ivy',       name: 'Ivy',           base: 1.5, lower: .97, d50: 6.8, note: 'tough, waxy, lobed leaves',
       leaf: { kind: 'lobed', scale: .95, fill: '#3E8A4A', stroke: '#1F5A2C', gloss: true, paleVeins: true } },
-    { id: 'marram',    name: 'Marram grass',  base: 0.5, lower: .03, note: 'narrow leaves, rolled into tubes',
+    { id: 'marram',    name: 'Marram grass',  base: 0.5, lower: .03, d50: 9.5, note: 'narrow leaves, rolled into tubes',
       leaf: { kind: 'grass', scale: 1.2, fill: '#9DB884', stroke: '#5E7A4B' } }
   ];
   var PO_WIND = ['still air', 'a gentle breeze', 'fan on low', 'fan on high'];
@@ -1296,8 +1296,32 @@
   function poLightF(L) { return .15 + .85 * (1 - Math.exp(-L / 35)) / (1 - Math.exp(-100 / 35)); }
   /* temperature: a straight rise as evaporation and diffusion speed up — next to nothing at 0 °C, twice the 20 °C rate at
      40 °C — and then a fall, because above about 40 °C the stomata close and the leaf begins to wilt */
-  function poTempF(T) { return T <= 40 ? Math.max(.03, T / 20) : Math.max(.2, 2 * (1 - (T - 40) / 25)); }
-  function poHumF(H) { return Math.max(.05, (100 - H) / 50); }
+  /* ----- temperature and humidity, as one thing, because they are one thing -----
+
+     Transpiration is evaporation followed by diffusion. It is NOT enzyme-controlled, so it has no
+     optimum and no denaturation: the old model rose to a peak at 40 °C and fell away above it,
+     which drew an enzyme curve and taught the misconception this lab corrects two stations later.
+
+     What drives it is the VAPOUR PRESSURE DEFICIT — the gap between the saturated air inside the
+     leaf and the air outside. Saturation vapour pressure rises very steeply with temperature
+     (Tetens' equation, about 7 % per °C near 20 °C), so warming the air widens that gap far faster
+     than a straight line, and humidity acts on the same gap rather than as a separate factor.
+
+     What CAN bend the curve over is the plant shutting its stomata when the air gets too dry for
+     it — a water-saving response, not heat damage. Every species does it at its own point, and
+     that is the difference worth seeing: a thin-leaved bean flattens off by about 40 °C, while
+     marram grass, built for a hot dry dune, is still climbing at 50 °C. d50 is the deficit at
+     which a species has half-closed.
+
+     Each species is normalised to 1 at 20 °C and 50 % humidity, so `base` still means what it
+     meant — the rate on an ordinary bench — and only the SHAPE of the response changes. */
+  function poEs(T) { return 0.61078 * Math.exp(17.27 * T / (T + 237.3)); }           /* kPa */
+  function poVpd(T, H) { return Math.max(0, poEs(T) * (1 - H / 100)); }
+  function poStomata(sp, vpd) { var d = (sp && sp.d50) || 4.5; return 1 / (1 + (vpd / d) * (vpd / d)); }
+  function poEvapF(sp, T, H) {
+    var v = poVpd(T, H), ref = poVpd(20, 50);
+    return (v * poStomata(sp, v)) / (ref * poStomata(sp, ref));
+  }
 
   /* ----- the statistics of the results table, shared by the table and by the Learn text -----
      What each one is, in plain words, and how it is worked out — with the student's own trials when
@@ -1682,9 +1706,9 @@
     }
     function rateOf(s) {
       var g = poGreaseF(s.sp, s.grease);
-      return s.sp.base * (s.leaves / 5) * poLightF(s.light) * poTempF(s.temp) * poHumF(s.hum) * PO_WINDF[s.wind] * g;
+      return s.sp.base * (s.leaves / 5) * poLightF(s.light) * poEvapF(s.sp, s.temp, s.hum) * PO_WINDF[s.wind] * g;
     }
-    global.PoModel = { rateOf: rateOf, species: PO_SPECIES, wind: PO_WIND };   /* for the audits: the curve each factor gives */
+    global.PoModel = { rateOf: rateOf, species: PO_SPECIES, wind: PO_WIND, vpd: poVpd, evap: poEvapF };   /* for the audits: the curve each factor gives */
     var pos = 0, run = null, raf = null, lastRun = null;
     function remember() { PO_STATE.set = settings(); PO_STATE.pos = pos; PO_STATE.runs = runs; poPersist(); }   /* the shoot and its factor already live in PO_STATE */
     /* Everything but the independent variable is disabled, and says so. */
@@ -2276,7 +2300,7 @@
     var right = h('div', 'po__right'); right.appendChild(ctl); right.appendChild(btns); right.appendChild(say);
     wrap2.appendChild(slot); wrap2.appendChild(right);
     box.appendChild(wrap2); box.appendChild(gate); box.appendChild(tableBox);
-    box.appendChild(h('p', 'widget__note', 'A model, scaled to published class results rather than measured here (the sources are in the lab\'s credits file). Every run starts where the last one left the bubble unless you open the tap. Each run carries the small random errors of a real bench — hand timing, a bubble that hesitates, a reading to the nearest millimetre — so repeats differ, as they should.'));
+    box.appendChild(h('p', 'widget__note', 'A model, scaled to published class results rather than measured here (the sources are in the lab\'s credits file). Temperature and humidity act together in it, because in a real leaf they are one thing: what drives transpiration is the gap between the saturated air inside the leaf and the air outside, and that gap widens very steeply as the air warms and as it dries. Every run starts where the last one left the bubble unless you open the tap. Each run carries the small random errors of a real bench — hand timing, a bubble that hesitates, a reading to the nearest millimetre — so repeats differ, as they should.'));
     var wideQ = window.matchMedia('(min-width: 1001px)');
     function mount() {
       var host = document.getElementById('benchHost'), sim = document.getElementById('simHost');
