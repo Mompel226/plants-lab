@@ -311,7 +311,7 @@
         s += '<text x="' + xp.toFixed(1) + '" y="' + (H - P.b + 18) + '" font-size="11" fill="#5B6B63" text-anchor="middle">' + Math.round(t) + '</text>';
       }
       s += '<text x="' + ((P.l + W - P.r) / 2) + '" y="' + (H - 8) + '" font-size="12.5" fill="#3C3C3C" text-anchor="middle">' + esc(a.name) + ' /' + esc(a.unit.trim() || '%') + '</text>';
-      s += '<text transform="translate(15,' + ((P.t + H - P.b) / 2) + ') rotate(-90)" font-size="12.5" fill="#3C3C3C" text-anchor="middle">Rate of photosynthesis / %</text>';
+      s += '<text transform="translate(15,' + ((P.t + H - P.b) / 2) + ') rotate(-90)" font-size="12.5" fill="#3C3C3C" text-anchor="middle">Rate of photosynthesis (%)</text>';
 
       /* saved curves */
       marks = [];
@@ -826,8 +826,8 @@
                '<td>' + (r0.meas === 'weed' ? 'plant' : '<span class="pw__warn">glass</span>') + '</td>' +
                '<td>' + g.map(function (x) { return x.n; }).join(', ') + '</td><td><b>' + mean.toFixed(1) + '</b></td></tr>';
       }).join('');
-      table.innerHTML = '<table class="ctable"><thead><tr><th>Lamp / cm</th><th>Light / units</th><th>NaHCO₃ / %</th>' +
-        '<th>Water / °C</th><th>Shield</th><th>Measured to</th><th>Counts</th><th>Mean</th></tr></thead><tbody>' + body + '</tbody></table>' +
+      table.innerHTML = '<table class="ctable"><thead><tr><th>Lamp (cm)</th><th>Light (units)</th><th>NaHCO₃ (%)</th>' +
+        '<th>Water (°C)</th><th>Shield</th><th>Measured to</th><th>Counts</th><th>Mean</th></tr></thead><tbody>' + body + '</tbody></table>' +
         '<p class="pw__hint">A row is only comparable with another if everything except the one variable is the same — including the column you were not watching.</p>';
     }
 
@@ -1322,25 +1322,29 @@
   /* What goes in the first column of a results table is the INDEPENDENT VARIABLE. The
      controlled variables are the ones that did not change, so repeating them down every row
      says nothing; they are stated once, under the title. */
-  var PO_FACTS = [['sp', 'Plant', false], ['leaves', 'Leaves on the shoot', true], ['light', 'Light / %', true],
-                  ['temp', 'Temperature / °C', true], ['hum', 'Humidity / %', true], ['wind', 'Wind', false],
-                  ['grease', 'Petroleum jelly', false], ['joint', 'Joint at the bung', false], ['time', 'Time / min', true]];
+  var PO_FACTS = [['sp', 'Plant', false], ['leaves', 'Leaves on the shoot', true], ['light', 'Light (%)', true],
+                  ['temp', 'Temperature (°C)', true], ['hum', 'Humidity (%)', true], ['wind', 'Wind', false],
+                  ['grease', 'Petroleum jelly', false], ['joint', 'Joint at the bung', false], ['time', 'Time (min)', true]];
   var PO_IVCTL = { sp: 'species', leaves: 'leaves', light: 'light', temp: 'temp', hum: 'hum', wind: 'wind', grease: 'grease', joint: 'joint', time: 'time' };
   function poFact(k) { for (var i = 0; i < PO_FACTS.length; i++) if (PO_FACTS[i][0] === k) return PO_FACTS[i]; return null; }
+  /* The BODY of a table carries numbers and names, never units: the unit is stated once, in the
+     heading, and repeating it in every cell is the commonest thing wrong with a student's table. */
   function poIvValue(s, k) {
     return k === 'sp' ? esc(s.sp.name)
       : k === 'wind' ? esc(PO_WIND[s.wind])
       : k === 'grease' ? esc(s.grease === 'none' ? 'none' : s.grease === 'both' ? 'both surfaces' : s.grease + ' surface')
       : k === 'joint' ? (s.joint === 'open' ? 'not sealed' : 'sealed')
-      : k === 'light' || k === 'hum' ? s[k] + ' %'
-      : k === 'temp' ? s.temp + ' °C'
-      : k === 'time' ? s.time + ' min'
       : String(s[k]);
+  }
+  /* the same value WITH its unit, for prose — a title, a caption, the controlled-variable line */
+  function poIvSaid(s, k) {
+    var u = { light: ' %', hum: ' %', temp: ' °C', time: ' min' }[k] || '';
+    return poIvValue(s, k) + u;
   }
   /* every setting EXCEPT the one being changed: the controlled variables, written out once */
   function poControlledText(s, iv) {
     return PO_FACTS.filter(function (F) { return F[0] !== iv; })
-      .map(function (F) { return F[1].replace(/ \/ .*/, '').toLowerCase() + ' ' + poIvValue(s, F[0]); })
+      .map(function (F) { return F[1].replace(/ \(.*\)$/, '').toLowerCase() + ' <b>' + poIvSaid(s, F[0]) + '</b>'; })
       .join(' · ');
   }
   function poCondText(s) {
@@ -1454,7 +1458,7 @@
        starting again: the frozen settings would differ between the old rows and the new. */
     var ivRow = h('label', 'po__row po__row--iv', '<span>Independent variable <small>the one thing you change</small></span>');
     var ivSel = document.createElement('select'); ivSel.setAttribute('data-k', 'iv');
-    [['', '— choose one, and the rest are held constant —']].concat(PO_FACTS.map(function (F) { return [F[0], F[1].replace(/ \/ .*/, '')]; }))
+    [['', '— choose one, and the rest are held constant —']].concat(PO_FACTS.map(function (F) { return [F[0], F[1].replace(/ \(.*\)$/, '')]; }))
       .forEach(function (o) { var op = document.createElement('option'); op.value = o[0]; op.textContent = o[1]; ivSel.appendChild(op); });
     ivSel.value = PO_STATE.iv || '';
     ivRow.appendChild(ivSel); ctl.appendChild(ivRow);
@@ -1905,7 +1909,7 @@
       ivWas = want; PO_STATE.iv = want || null;
       poPersist(); paintConditions(); paintData();
       say.textContent = want
-        ? poFact(want)[1].replace(/ \/ .*/, '') + ' is the independent variable. Everything else is now held constant — change it, run, record, and repeat.'
+        ? poFact(want)[1].replace(/ \(.*\)$/, '') + ' is the independent variable. Everything else is now held constant — change it, run, record, and repeat.'
         : 'No independent variable chosen: every setting is free, and the table lists the conditions in full.';
     });
 
@@ -1914,14 +1918,14 @@
       var lines;
       if (PO_STATE.style === 'ib') {
         var raw = ['Table 1  Raw data: distance moved by the air bubble', ''];
-        raw.push(['Line', 'Conditions'].concat([1, 2, 3, 4, 5].map(function (i) { return 'Trial ' + i + ' / mm (± 0.5)'; })).join('\t'));
+        raw.push(['Line', 'Conditions'].concat([1, 2, 3, 4, 5].map(function (i) { return 'Trial ' + i + ' (mm ± 0.5)'; })).join('\t'));
         groups().forEach(function (g) {
           var cells = [poLineName(g.line), condText(g.s).replace(/<[^>]+>/g, '')];
           for (var i = 0; i < MAX_TRIALS; i++) cells.push(g.trials[i] ? String(g.trials[i].r.distance) : '');
           raw.push(cells.join('\t'));
         });
         var proc = ['', 'Table 2  Processed data: mean rate of water uptake', ''];
-        proc.push(['Line', 'Conditions', 'n', 'Mean rate / mm min⁻¹', 'SD', 'SE', '95 % CI'].join('\t'));
+        proc.push(['Line', 'Conditions', 'n', 'Mean rate (mm min⁻¹)', 'SD', 'SE', '95 % CI'].join('\t'));
         groups().forEach(function (g) {
           var vals = g.trials.map(function (t) { return t.r.rate; }), st = stats(vals);
           proc.push([poLineName(g.line), condText(g.s).replace(/<[^>]+>/g, ''), g.trials.length, st.mean.toFixed(2),
@@ -1930,7 +1934,7 @@
         });
         lines = raw.concat(proc);
       } else {
-        var head = ['Line', 'Conditions'].concat([1, 2, 3, 4, 5].map(function (i) { return 'Trial ' + i + ' / mm min⁻¹'; })).concat(['Mean', 'SD', 'SE', '95 % CI']);
+        var head = ['Line', 'Conditions'].concat([1, 2, 3, 4, 5].map(function (i) { return 'Trial ' + i + ' (mm min⁻¹)'; })).concat(['Mean', 'SD', 'SE', '95 % CI']);
         lines = ['Table 1  Rate of water uptake by a leafy shoot', ''].concat([head.join('\t')]).concat(groups().map(function (g) {
           var vals = g.trials.map(function (t) { return t.r.rate; }), st = stats(vals), cells = [poLineName(g.line), condText(g.s).replace(/<[^>]+>/g, '')];
           for (var i = 0; i < MAX_TRIALS; i++) cells.push(vals[i] != null ? vals[i].toFixed(2) : '');
@@ -2006,30 +2010,60 @@
       var cur = PO_STATE.line, rows = G.filter(function (g) { return g.line === cur; });
       var ibStyle = PO_STATE.style === 'ib';
       var errName = errK === 'sd' ? 'SD' : errK === 'se' ? 'SE' : '95 % CI';
-      var errHead = errK === 'none' ? '' : '<th><button type="button" class="po__term" data-term="' + errK + '" title="What this is, and how it was worked out">' + errName + '</button></th>';
-      var meanHead = '<th><button type="button" class="po__term" data-term="mean" title="What this is, and how it was worked out">Mean</button>' +
-                     (ibStyle ? '<small>rate / mm min⁻¹</small>' : '') + '</th>';
-      var trialHeads = function (unit) { return [1, 2, 3, 4, 5].map(function (i) { return '<th>Trial ' + i + '<small>' + unit + '</small></th>'; }).join(''); };
+      var term = function (k, label) { return '<button type="button" class="po__term" data-term="' + k + '" title="What this is, and how it was worked out">' + label + '</button>'; };
+
+      /* A results table has TWO header rows when several columns are the same quantity. The unit
+         is written once, at the top, over all of them; the row beneath only says which trial.
+         Writing "mm min⁻¹" five times is what makes a student's table look like a spreadsheet
+         and not like a result. */
+      var IVH = firstHead();
+      var trialCells = [1, 2, 3, 4, 5].map(function (i) { return '<th>Trial ' + i + '</th>'; }).join('');
+
+      /* A title tells a reader what the table is of without their having to look at it: the
+         dependent variable, the independent variable, and the organism. */
+      var sp = rows.length ? rows[0].s.sp.name : 'a leafy shoot';
+      var ivWord = PO_STATE.iv ? poFact(PO_STATE.iv)[1].replace(/ \(.*\)$/, '').toLowerCase() : null;
+
+      var titleIGCSE = ivWord
+        ? 'The effect of ' + ivWord + ' on the rate of water uptake of a ' + esc(sp) + ' shoot, measured with a bubble potometer.'
+        : 'Rate of water uptake of a ' + esc(sp) + ' shoot under a range of conditions, measured with a bubble potometer.';
+      var titleRAW = ivWord
+        ? 'Raw data: the distance moved by the air bubble in a bubble potometer, at each ' + ivWord + ', for a ' + esc(sp) + ' shoot.'
+        : 'Raw data: the distance moved by the air bubble in a bubble potometer, for a ' + esc(sp) + ' shoot.';
+      var titlePROC = ivWord
+        ? 'Processed data: the effect of ' + ivWord + ' on the mean rate of water uptake of a ' + esc(sp) + ' shoot, with the ' +
+          (errK === 'none' ? 'trials it was averaged from' : errName === 'SD' ? 'standard deviation of its trials' : errName === 'SE' ? 'standard error of the mean' : '95 % confidence interval of the mean') + '.'
+        : 'Processed data: the mean rate of water uptake of a ' + esc(sp) + ' shoot, and the spread of its trials.';
 
       var lineHead = '<div class="po__linehead" style="--lc:' + poLineColour(cur) + '"><span class="po__swatch"></span><input class="po__linename" value="' + esc(PO_STATE.lineNames[cur] || '') + '" placeholder="' + esc(poLineName(cur)) + ' — name it: privet, fan on, dark…"><span class="po__linenote">the runs you record now go on this line</span>' + (lines.length > 1 ? '<button type="button" class="wbtn wbtn--quiet po__delline">Delete this line</button>' : '') + '</div>';
+
+      /* One column, one quantity. The small grey figure is an aid at the bench and is not part
+         of the table; say so, because a student copying this layout would be copying a fault. */
+      var greyNote = '<p class="po__stylenote po__stylenote--grey">Under each rate, in grey, is the distance the bubble moved, so a reading can be checked against the number worked out from it. <b>It would not appear in a table you handed in</b> — one column, one quantity — and neither would the shoot letter.</p>';
+      var greyNoteRaw = '<p class="po__stylenote po__stylenote--grey">The grey letter under each distance is the shoot it was read on, an aid at the bench. <b>It would not appear in a table you handed in</b>: one column, one quantity.</p>';
 
       var tables = '';
       if (rows.length && ibStyle) {
         tables =
-          '<table class="po__table"><caption class="po__cap"><b>Table 1</b> Raw data: the distance the air bubble moved along the millimetre scale in each trial.</caption>' +
-          '<thead><tr><th>' + firstHead() + '</th>' + trialHeads('distance / mm (± 0.5)') + '</tr></thead>' +
-          '<tbody>' + rows.map(rawRowHtml).join('') + '</tbody></table>' + controlledLine(rows) +
-          '<table class="po__table po__table--proc"><caption class="po__cap"><b>Table 2</b> Processed data: mean rate of water uptake, and how far the trials spread around it.</caption>' +
-          '<thead><tr><th>' + firstHead() + '</th><th><i>n</i><small>trials</small></th>' + meanHead + errHead + '</tr></thead>' +
+          '<table class="po__table"><caption class="po__cap"><b>Table 1.</b> ' + titleRAW + '</caption>' +
+          '<thead><tr><th rowspan="2">' + IVH + '</th><th colspan="5">Distance moved by the bubble (mm ± 0.5)</th></tr>' +
+          '<tr>' + trialCells + '</tr></thead>' +
+          '<tbody>' + rows.map(rawRowHtml).join('') + '</tbody></table>' + controlledLine(rows) + greyNoteRaw +
+          '<table class="po__table po__table--proc"><caption class="po__cap"><b>Table 2.</b> ' + titlePROC + '</caption>' +
+          '<thead><tr><th rowspan="2">' + IVH + '</th><th rowspan="2"><i>n</i></th>' +
+          '<th colspan="' + (errK === 'none' ? 1 : 2) + '">Rate of water uptake (mm min⁻¹)</th></tr>' +
+          '<tr><th>' + term('mean', 'Mean') + '</th>' + (errK === 'none' ? '' : '<th>' + term(errK, errName) + '</th>') + '</tr></thead>' +
           '<tbody>' + rows.map(procRowHtml).join('') + '</tbody></table>' +
           '<p class="po__stylenote">Rate = distance ÷ time, worked out for each trial and then averaged. IB keeps the two apart: <b>what the instrument read</b> in one table, <b>what you did with it</b> in the next, and five trials is the usual minimum for a standard deviation to mean anything.</p>';
       } else if (rows.length) {
+        var span = 5 + 1 + (errK === 'none' ? 0 : 1);
         tables =
-          '<table class="po__table"><caption class="po__cap"><b>Table 1</b> Rate of water uptake by a leafy shoot, measured with a potometer.</caption>' +
-          '<thead><tr><th>' + firstHead() + '</th>' + trialHeads('rate / mm min⁻¹') + meanHead + errHead + '</tr></thead>' +
-          '<tbody>' + rows.map(rowHtml).join('') + '</tbody></table>' + controlledLine(rows) +
-          '<p class="po__stylenote">One ruled table, the repeats and the mean together, every heading carrying its unit — which is what 0610 Paper 6 asks for.' +
-          (PO_STATE.iv ? '' : ' <b>Choose an independent variable</b> above and the first column becomes that one thing, with the rest held constant and listed underneath — which is how a results table is set out.') + '</p>';
+          '<table class="po__table"><caption class="po__cap"><b>Table 1.</b> ' + titleIGCSE + '</caption>' +
+          '<thead><tr><th rowspan="2">' + IVH + '</th><th colspan="' + span + '">Rate of water uptake (mm min⁻¹)</th></tr>' +
+          '<tr>' + trialCells + '<th>' + term('mean', 'Mean') + '</th>' + (errK === 'none' ? '' : '<th>' + term(errK, errName) + '</th>') + '</tr></thead>' +
+          '<tbody>' + rows.map(rowHtml).join('') + '</tbody></table>' + controlledLine(rows) + greyNote +
+          '<p class="po__stylenote">One ruled table, the repeats and the mean together, the unit written once above the columns it belongs to — which is what 0610 Paper 6 asks for.' +
+          (PO_STATE.iv ? '' : ' <b>Choose an independent variable</b> above and the first column becomes that one thing, with the rest held constant and listed underneath.') + '</p>';
       }
       tableWrap.innerHTML = lineHead + tables;
       tabsEl.querySelectorAll('.po__linetab').forEach(function (b) { b.addEventListener('click', function () { PO_STATE.line = +b.getAttribute('data-line'); remember(); paintData(); say.textContent = 'On ' + poLineName(PO_STATE.line) + ': the runs you record now go on it.'; }); });
@@ -2051,7 +2085,7 @@
       if (popTerm && (popTerm === 'mean' || popTerm === errK)) showTerm(popTerm); else { pop.hidden = true; popTerm = null; }   /* the pop-up is re-worked from the table as it now is */
     }
     /* the graph plots one point per row of the table — its mean — and picks its x-axis: the one factor that changed */
-    var FACT = [['leaves', 'Leaves on the shoot', true], ['light', 'Light / %', true], ['temp', 'Temperature / °C', true], ['hum', 'Humidity / %', true], ['wind', 'Wind', false], ['time', 'Time / min', true], ['sp', 'Plant', false], ['grease', 'Grease', false], ['joint', 'Joint at the bung', false]];
+    var FACT = [['leaves', 'Leaves on the shoot', true], ['light', 'Light (%)', true], ['temp', 'Temperature (°C)', true], ['hum', 'Humidity (%)', true], ['wind', 'Wind', false], ['time', 'Time (min)', true], ['sp', 'Plant', false], ['grease', 'Grease', false], ['joint', 'Joint at the bung', false]];
     function fval(s, f) { return f === 'sp' ? s.sp.name : f === 'wind' ? PO_WIND[s.wind] : f === 'joint' ? (s.joint === 'open' ? 'not sealed' : 'sealed') : s[f]; }
     function graph(G) {
       var all = []; G.forEach(function (g) { if (all.indexOf(g.line) < 0) all.push(g.line); }); all.sort(function (a, b) { return a - b; });
@@ -2093,10 +2127,10 @@
         return { ln: l.ln, colour: poLineColour(l.ln), name: poLineName(l.ln), pts: pts };
       });
       var xlab = mode === 'factor' ? F[1] : mode === 'trials' ? 'Trial' : 'Row';
-      var note = mode === 'factor' ? 'Mean rate of uptake against ' + F[1].toLowerCase().replace(/ \/ .*/, '') + (multi ? ', one line a table, each in its own colour; each point is the mean of its trials.' : ' — the one factor you changed; each point is the mean of its trials.')
+      var note = mode === 'factor' ? 'Mean rate of uptake against ' + F[1].toLowerCase().replace(/ \(.*\)$/, '') + (multi ? ', one line a table, each in its own colour; each point is the mean of its trials.' : ' — the one factor you changed; each point is the mean of its trials.')
         : mode === 'trials' ? 'One set of conditions so far, and its trials one by one. The points are not joined: trial number is an order you happened to work in, not a quantity, so nothing passes between them. Change a factor and run again for a graph of means.'
         : multi ? 'The lines do not change the same one factor, so this is the mean by row of each table. Change one thing at a time — the same thing on every line — to compare them.'
-        : 'More than one factor changed between rows (' + varyOf(GS).map(function (Fx) { return Fx[1].toLowerCase().replace(/ \/ .*/, ''); }).join(', ') + '), so this is the mean by row. Change one thing at a time to see what it does.';
+        : 'More than one factor changed between rows (' + varyOf(GS).map(function (Fx) { return Fx[1].toLowerCase().replace(/ \(.*\)$/, ''); }).join(', ') + '), so this is the mean by row. Change one thing at a time to see what it does.';
       var allPts = []; series.forEach(function (sr) { allPts = allPts.concat(sr.pts); });
       var top = Math.max.apply(null, allPts.map(function (p) { return Math.max(Math.max.apply(null, p.all), p.err != null ? p.mean + p.err : 0); }));
       var ymax = top * 1.15 || 1;
@@ -2112,7 +2146,7 @@
       var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" class="po__gsvg" role="img" aria-label="' + esc(note) + '">';
       for (var v = 0; v <= ymax; v += ystep) s += '<line class="po__grid" x1="' + L + '" y1="' + Y(v).toFixed(1) + '" x2="' + (W - R) + '" y2="' + Y(v).toFixed(1) + '"/><text class="po__gt" x="' + (L - 6) + '" y="' + (Y(v) + 3.5).toFixed(1) + '" text-anchor="end">' + (ystep < 1 ? v.toFixed(2) : v) + '</text>';
       s += '<line class="po__axis" x1="' + L + '" y1="' + T + '" x2="' + L + '" y2="' + (H - B) + '"/><line class="po__axis" x1="' + L + '" y1="' + (H - B) + '" x2="' + (W - R) + '" y2="' + (H - B) + '"/>';
-      s += '<text class="po__gl" transform="rotate(-90)" x="' + (-(T + H - B) / 2) + '" y="14" text-anchor="middle">Rate / mm min⁻¹</text><text class="po__gl" x="' + ((L + W - R) / 2) + '" y="' + (H - 8) + '" text-anchor="middle">' + esc(xlab) + '</text>';
+      s += '<text class="po__gl" transform="rotate(-90)" x="' + (-(T + H - B) / 2) + '" y="14" text-anchor="middle">Rate (mm min⁻¹)</text><text class="po__gl" x="' + ((L + W - R) / 2) + '" y="' + (H - 8) + '" text-anchor="middle">' + esc(xlab) + '</text>';
       function cap1(s2) { return s2.charAt(0).toUpperCase() + s2.slice(1); }
       var nS = series.length, withErrAny = false;
       series.forEach(function (sr, k) {
