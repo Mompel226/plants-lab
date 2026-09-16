@@ -1273,7 +1273,7 @@
      two thirds or so on bean, sunflower and geranium, almost none on marram, whose stomata line the inside of the rolled leaf), plus a little loss through the cuticle */
   function poGreaseF(sp, g) { var lower = sp.lower == null ? .95 : sp.lower, cut = .05; return g === 'upper' ? cut + (1 - cut) * lower : g === 'lower' ? cut + (1 - cut) * (1 - lower) : g === 'both' ? cut : 1; }
   var PO_MM = 4.2, PO_X0 = 108, PO_STEM = 574, PO_BORE_R = 0.5;   /* the scale's 0 mark, and the shoot's stem, in the drawing's units */
-  var PO_STATE = { runs: [], pos: 0, set: null, shoot: 1, shootF: 1, unlocked: false, line: 0, lineNames: [], hidden: [], dots: true, style: 'igcse', iv: null, err: 'none', mode: 'igcse' };
+  var PO_STATE = { runs: [], pos: 0, set: null, shoot: 1, shootF: .84 + Math.random() * .32, unlocked: false, line: 0, lineNames: [], hidden: [], dots: true, style: 'igcse', iv: null, err: 'none', mode: 'igcse', shootFs: {} };
   try { if (sessionStorage.getItem('plants-lab.potometer.unlocked') === '1') PO_STATE.unlocked = true; } catch (e) {}
   /* the bench, the table and the shoot survive a reload (the tab's own storage; closing the tab clears it) */
   function poSpecies(id) { return PO_SPECIES.filter(function (q) { return q.id === id; })[0]; }
@@ -1287,12 +1287,14 @@
       /* style and iv were written by poPersist and never read back: a reload dropped an IB table to IGCSE and forgot the declared independent variable */
       PO_STATE.style = PO_SAVED.style === 'ib' ? 'ib' : 'igcse'; PO_STATE.iv = PO_SAVED.iv || null;
       /* a table saved before the bench had modes: read the mode off the runs, so nobody's rows are hidden from them */
+      PO_STATE.shootFs = PO_SAVED.shootFs || {};
       PO_STATE.mode = PO_SAVED.mode === 'full' || PO_SAVED.mode === 'igcse' ? PO_SAVED.mode
-        : (PO_STATE.runs.some(function (r) { return r.s && (r.s.grease !== 'none' || r.s.joint === 'open'); }) ? 'full' : 'igcse');
+        : (PO_STATE.runs.some(function (r) { return r.s && (r.s.grease !== 'none' || r.s.joint === 'open' || (r.s.shoot || 1) !== ((PO_STATE.runs[0].s || {}).shoot || 1)); }) ? 'full' : 'igcse');
     }
   } catch (e) {}
+  if (PO_STATE.shootFs[PO_STATE.shoot] == null) PO_STATE.shootFs[PO_STATE.shoot] = PO_STATE.shootF;
   function poPersist() {
-    try { sessionStorage.setItem('plants-lab.potometer', JSON.stringify({ runs: PO_STATE.runs, pos: PO_STATE.pos, set: PO_STATE.set, shoot: PO_STATE.shoot, shootF: PO_STATE.shootF, err: PO_STATE.err, line: PO_STATE.line, lineNames: PO_STATE.lineNames, hidden: PO_STATE.hidden, dots: PO_STATE.dots, style: PO_STATE.style, iv: PO_STATE.iv })); } catch (e) {}
+    try { sessionStorage.setItem('plants-lab.potometer', JSON.stringify({ runs: PO_STATE.runs, pos: PO_STATE.pos, set: PO_STATE.set, shoot: PO_STATE.shoot, shootF: PO_STATE.shootF, err: PO_STATE.err, line: PO_STATE.line, lineNames: PO_STATE.lineNames, hidden: PO_STATE.hidden, dots: PO_STATE.dots, style: PO_STATE.style, iv: PO_STATE.iv, mode: PO_STATE.mode, shootFs: PO_STATE.shootFs })); } catch (e) {}
   }
   function sha256hex(text) {
     return crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)).then(function (buf) { return Array.prototype.map.call(new Uint8Array(buf), function (b) { return ('0' + b.toString(16)).slice(-2); }).join(''); });
@@ -1558,6 +1560,46 @@
     }
     return h2 + tbl + warn + livehtml;
   }
+  function poWhyOne(term, gloss, body) {
+    return '<tr><td class="po__why__t">' + term + '<small>' + gloss + '</small></td><td>' + body + '</td></tr>';
+  }
+  /* the IGCSE bench: every trial is on one shoot, so the panel is about what repeating a trial is
+     for — the examined answer — and it says plainly that there is a second kind of repeat, which
+     lives on the other bench */
+  function poWhyIgcse(best, condSaid) {
+    var h2 = '<div class="po__why__h"><span class="po__why__q">?</span>Why repeat a trial?</div>' +
+      '<p class="po__why__top">Every trial on this bench is on the <b>same shoot</b>. Repeating a trial tells you <b>how good your measuring is</b> — and it is what an IGCSE question expects you to have done.</p>';
+    var tbl = '<table class="po__why__g po__why__g--one"><thead><tr><th>The word</th><th>What repeating a trial on the same shoot does</th></tr></thead><tbody>' +
+      poWhyOne('Anomalous result', 'a result far from the others',
+        poWhyMark('y', '<b>Repeats let you find one.</b> With a single trial you cannot tell that something went wrong — a leak, a bubble that stuck, a clock started late. With several, the odd one stands out. Repeats do not stop anomalous results happening; they let you <b>spot</b> them.')) +
+      poWhyOne('Mean', 'add the trials, divide by how many',
+        poWhyMark('y', '<b>A better value than any one trial.</b> Once an anomalous result is left out, the mean of the rest is your best answer for this shoot.')) +
+      poWhyOne('Repeatability', 'how close repeat trials are to each other',
+        poWhyMark('y', '<b>This is exactly what repeated trials measure</b>: the same person, the same potometer, the same shoot, over a short time.')) +
+      poWhyOne('Precision', 'how close repeat measurements are to each other',
+        poWhyMark('y', '<b>Repeating measures it — it does not improve it.</b> The spread of your trials shows how precise your readings already were.')) +
+      poWhyOne('Accuracy', 'how close you are to the true value',
+        poWhyMark('n', '<b>Repeating does not improve accuracy.</b> A leak, or a bubble that did not start at 0, makes <b>every</b> trial wrong in the same direction — repeat it and you get the same wrong answer again. Only changing what you do fixes it: seal the joint, open the tap, read the scale at eye level.')) +
+      poWhyOne('Reliability', 'a mean you can trust — always say which',
+        poWhyMark('p', '<b>Only for this one shoot.</b> Close trials mean you can trust the mean <b>for this shoot</b>. They cannot tell you whether another plant would give the same.')) +
+      '</tbody></table>';
+    var warn = '<p class="po__why__w"><b>In the exam</b>, write what the repeats let you <i>do</i>: repeat each reading, <b>identify any anomalous result</b>, and <b>calculate a mean</b> of the rest. Writing only “to make it reliable” or “to make it accurate” earns no marks.</p>';
+    var door = '<div class="po__why__door"><p><b>One shoot may not be typical of the plant.</b> Cutting a new shoot from <b>another plant</b> and repeating the experiment on it is a different kind of repeat — a <b>true replicate</b>. It tells you about the plant, not just about your measuring.</p>' +
+      '<button type="button" class="po__why__go">Try it on the More realistic bench →</button></div>';
+    var live = '';
+    if (best && best.trials.length) {
+      var vals = best.trials.map(function (t) { return t.r.rate; }), st = poStats(vals);
+      var good = best.trials.filter(function (t) { return !t.r.notZero; }).map(function (t) { return t.r.rate; });
+      var bad = vals.length - good.length, st2 = good.length >= 2 ? poStats(good) : null;
+      live = '<div class="po__why__live"><h4>In your own table' + (condSaid ? ', at ' + esc(condSaid) : '') + '</h4>' +
+        (st.n < 2
+          ? '<p>You have one trial so far. <b>Record a second under the same conditions</b> and you will see how steady your measuring is.</p>'
+          : '<p>Your ' + st.n + ' trials differ by <b>' + st.sd.toFixed(2) + ' mm/min</b> (standard deviation) — that is your repeatability.</p>' +
+            (bad && st2 ? '<p class="po__why__punch"><b>' + (bad === 1 ? 'One trial is' : bad + ' trials are') + ' marked red</b>: the bubble did not start from 0. Without ' + (bad === 1 ? 'it' : 'them') + ' the spread would be <b>' + st2.sd.toFixed(2) + ' mm/min</b> and the mean ' + st2.mean.toFixed(2) + ' instead of ' + st.mean.toFixed(2) + '. That is what an anomalous result costs — and why you repeat.</p>' : '')) +
+        '</div>';
+    }
+    return h2 + tbl + warn + live + door;
+  }
   function poNestNote(k, errK) {
     var w = errK === 'sd' ? 'standard deviation' : errK === 'se' ? 'standard error' : '95 % confidence interval';
     return '<p class="po__nest"><b>Two spreads, and they are not the same thing.</b> ' +
@@ -1743,14 +1785,35 @@
       }).join('') + '</div><p class="po__mode__say"></p>';
     var modeSay = modeBox.querySelector('.po__mode__say');
     var greaseRow = grease.parentNode, jointRow = joint.parentNode;
+    /* An IGCSE practical is done on ONE shoot, repeated. True replication — a shoot cut from another
+       plant — belongs to the fuller bench, and so do the tables and graph that keep the two kinds of
+       repeat apart. The IGCSE bench stays as simple as the exam it prepares for. */
     function poModeSaid() {
       return PO_STATE.mode === 'full'
-        ? 'Every control, including petroleum jelly on the leaves and a joint at the bung that can leak.'
-        : 'Four factors: temperature, wind, humidity and light. The joint at the bung is always sealed, and the leaves never carry petroleum jelly.';
+        ? 'Every control: petroleum jelly on the leaves, a joint at the bung that can leak, and shoots cut from other plants — true replicates, kept apart from your repeat trials in the table and on the graph.'
+        : 'Four factors: temperature, wind, humidity and light, on one shoot with repeated trials. The joint at the bung is always sealed, and the leaves never carry petroleum jelly.';
+    }
+    /* the shoot each line started on — the one the IGCSE bench shows, and remounts */
+    function poFirstShoots() {
+      var f = {};
+      runs.forEach(function (r) { var ln = r.line || 0, sh = r.s && r.s.shoot; if (f[ln] == null && sh != null) f[ln] = sh; });
+      return f;
+    }
+    function poRemountFirst() {
+      if (PO_STATE.mode === 'full') return;
+      var f = poFirstShoots()[PO_STATE.line];
+      if (f == null || f === PO_STATE.shoot) return;
+      PO_STATE.shoot = f;
+      if (PO_STATE.shootFs[f] != null) PO_STATE.shootF = PO_STATE.shootFs[f];
     }
     function poApplyMode() {
       var full = PO_STATE.mode === 'full';
       greaseRow.hidden = !full; jointRow.hidden = !full;
+      bNew.hidden = !full;                                  /* no true replicates at IGCSE */
+      bWhy.textContent = full ? '? Why repeat? Why a new shoot?' : '? Why repeat a trial?';
+      errBar.querySelectorAll('button[data-k="se"],button[data-k="ci"]').forEach(function (b) { b.hidden = !full; });
+      if (!full && (errK === 'se' || errK === 'ci')) { errK = 'sd'; PO_STATE.err = 'sd'; errBar.querySelectorAll('button:not(.po__dots)').forEach(function (x) { x.setAttribute('aria-pressed', x.getAttribute('data-k') === 'sd' ? 'true' : 'false'); }); }
+      poRemountFirst();
       /* a hidden select still holds its value, and settings() reads straight off the DOM — so it would
          go on stamping grease='both' onto every new run, which this bench would then hide */
       if (!full) { grease.value = 'none'; joint.value = 'sealed'; }
@@ -1764,11 +1827,12 @@
     modeBox.addEventListener('change', function (e) {
       if (!e.target || e.target.name !== modeName || run) return;
       var want = e.target.value; if (want === PO_STATE.mode) return;
-      var lose = want === 'igcse' ? runs.filter(function (r) { return !poInMode(r.s, 'igcse'); }).length : 0;
+      var firsts = poFirstShoots();
+      var lose = want === 'igcse' ? runs.filter(function (r) { return !poInMode(r.s, 'igcse') || (r.s.shoot != null && firsts[r.line || 0] != null && r.s.shoot !== firsts[r.line || 0]); }).length : 0;
       PO_STATE.mode = want; poApplyMode(); remember(); paintConditions(); paintData();
       say.textContent = want === 'full'
-        ? 'The whole apparatus. You can now set petroleum jelly on the leaves and whether the joint at the bung is sealed.'
-        : lose ? lose + (lose === 1 ? ' run used' : ' runs used') + ' petroleum jelly or an unsealed joint. Nothing is deleted — those rows are just not shown on this bench. Switch back to see them again.'
+        ? 'The whole apparatus. You can now set petroleum jelly on the leaves and whether the joint at the bung is sealed — and cut a shoot from another plant, a true replicate.'
+        : lose ? lose + (lose === 1 ? ' run is' : ' runs are') + ' not shown on this bench: they used petroleum jelly, an unsealed joint, or a second shoot. Nothing is deleted — switch back to see them again.'
         : 'The IGCSE bench: four factors, the joint sealed, no petroleum jelly on the leaves.';
     });
 
@@ -1956,7 +2020,18 @@
         var k = poShootStats(g).k, t = g.trials.length;
         if (k > bk || (k === bk && t >= bn)) { bk = k; bn = t; best = g; }
       });
-      whyBox.innerHTML = poWhyHtml(best, best && PO_STATE.iv ? poIvSaid(best.s, PO_STATE.iv) : '');
+      /* on the IGCSE bench the lesson IS the anomalous result, so a row holding one of the student's
+         own red trials is the row to talk about */
+      if (PO_STATE.mode !== 'full') {
+        var red = rs.filter(function (g) { return g.trials.some(function (t) { return t.r.notZero; }) && g.trials.length >= 3; })[0];
+        if (red) best = red;
+      }
+      whyBox.innerHTML = PO_STATE.mode === 'full' ? poWhyHtml(best, best && PO_STATE.iv ? poIvSaid(best.s, PO_STATE.iv) : '') : poWhyIgcse(best, best && PO_STATE.iv ? poIvSaid(best.s, PO_STATE.iv) : '');
+      var go = whyBox.querySelector('.po__why__go');
+      if (go) go.addEventListener('click', function () {
+        var r = modeBox.querySelector('input[value="full"]'); r.checked = true; r.dispatchEvent(new Event('change', { bubbles: true }));
+        paintWhy(); bNew.focus();
+      });
     }
     bRecord.disabled = true;
     var result = h('div', 'po__result'); result.hidden = true; result.setAttribute('aria-live', 'polite');
@@ -2103,7 +2178,7 @@
       ctl.classList.remove('is-locked'); ctl.querySelectorAll('input,select').forEach(function (e) { e.disabled = false; }); freezeControls();
       bStart.textContent = '▶ Start the clock';
       species.value = 'bean'; leaves.inp.value = 5; light.inp.value = 60; temp.inp.value = 20; hum.inp.value = 50; wind.inp.value = 0; grease.value = 'none'; joint.value = 'sealed'; time.value = '5';
-      PO_STATE.shoot = 1; PO_STATE.shootF = .84 + Math.random() * .32;   /* shoot A is a shoot like any other: fixed at 1.00 it was the model's own rate, with B and C scattered round it */
+      PO_STATE.shoot = 1; PO_STATE.shootF = .84 + Math.random() * .32; PO_STATE.shootFs = { 1: PO_STATE.shootF };   /* shoot A is a shoot like any other: fixed at 1.00 it was the model's own rate, with B and C scattered round it */
       runs.length = 0; errK = 'none'; PO_STATE.err = 'none'; PO_STATE.line = 0; PO_STATE.lineNames = []; PO_STATE.hidden = []; PO_STATE.dots = true; bDots.setAttribute('aria-pressed', 'true');
       errBar.querySelectorAll('button:not(.po__dots)').forEach(function (x) { x.setAttribute('aria-pressed', x.getAttribute('data-k') === 'none' ? 'true' : 'false'); });
       pop.hidden = true; popTerm = null;
@@ -2134,7 +2209,7 @@
         say.textContent = PO_MAX_SHOOTS + ' shoots on this line already — as many as the table holds. Finish the ones you have, or start a new line on the graph.';
         return;
       }
-      PO_STATE.shoot = (PO_STATE.shoot || 1) + 1; PO_STATE.shootF = .84 + Math.random() * .32;
+      PO_STATE.shoot = (PO_STATE.shoot || 1) + 1; PO_STATE.shootF = .84 + Math.random() * .32; PO_STATE.shootFs[PO_STATE.shoot] = PO_STATE.shootF;
       resetBubble(); remember();
       say.textContent = 'Shoot ' + String.fromCharCode(64 + PO_STATE.shoot) + ', cut from another plant of the same kind: its own leaves, its own rate. Trials on one shoot are technical replicates; shoots from different plants are true replicates — only they say something about the species.';
     });
@@ -2215,7 +2290,14 @@
     }
     function groups() {
       var G = poGroups(runs);
-      return PO_STATE.mode === 'full' ? G : G.filter(function (g) { return poInMode(g.s); });
+      if (PO_STATE.mode === 'full') return G;
+      var first = poFirstShoots();
+      return G.filter(function (g) { return poInMode(g.s); }).map(function (g) {
+        var f = first[g.line];
+        if (f == null) return g;
+        var keep = g.trials.filter(function (t) { var sh = t.r.s && t.r.s.shoot; return sh == null || sh === f; });
+        return keep.length === g.trials.length ? g : poNest({ key: g.key, line: g.line, s: g.s, trials: keep }, [f]);   /* each t.i still indexes the real array */
+      }).filter(function (g) { return g.trials.length; });
     }
     /* five trials is the cap for ONE shoot at one set of conditions. Counting across shoots would make
        the second shoot unrunnable at every condition the first had finished — which is the whole point
@@ -2429,7 +2511,7 @@
       lines.sort(function (a, b) { return a - b; });
       var shown = G.reduce(function (a, g) { return a + g.trials.length; }, 0), tucked = runs.length - shown;
       kept.textContent = shown ? shown + (shown === 1 ? ' run recorded' : ' runs recorded') + (lines.length > 1 ? ' on ' + lines.length + ' lines' : '') + ' — write each one in your own table as you go.' : 'Nothing recorded yet.';
-      if (tucked) kept.textContent += '  ' + tucked + (tucked === 1 ? ' run is' : ' runs are') + ' kept but not shown: ' + (tucked === 1 ? 'it used' : 'they used') + ' petroleum jelly or an unsealed joint, which this bench does not have.';
+      if (tucked) kept.textContent += '  ' + tucked + (tucked === 1 ? ' run is' : ' runs are') + ' kept but not shown: ' + (tucked === 1 ? 'it used' : 'they used') + ' petroleum jelly, an unsealed joint or a second shoot, which this bench does not have.';
       gate.hidden = unlocked || !NEED;
       tableBox.hidden = !shown || !unlocked;
       poPersist();
@@ -2546,7 +2628,7 @@
           '<table class="po__table"><caption class="po__cap"><b>Table 1.</b> ' + titleIGCSE + '</caption>' + colsFor(w) +
           '<thead><tr><th rowspan="2">' + IVH + '</th>' + (multi ? '<th rowspan="2">Shoot</th>' : '') +
           '<th colspan="' + span + '">Rate of water uptake (mm min⁻¹)</th></tr>' +
-          '<tr>' + trialCells2 + '<th>' + term('mean', 'Mean') + '</th>' + (within ? withinH : '') + (solo ? '<th>' + term(errK, errName) + '</th>' : '') + (between ? betweenH : '') + '</tr></thead>' +
+          '<tr>' + trialCells2 + '<th>' + term('mean', 'Mean') + '</th>' + (within ? withinH : '') + (solo ? '<th>' + term(errK, errLong + ' of the trials') + '</th>' : '') + (between ? betweenH : '') + '</tr></thead>' +
           '<tbody>' + rows.map(function (g) { return blockHtml(g, { multi: multi, m: m, within: within, between: between, solo: solo }); }).join('') + '</tbody></table>' + controlledLine(rows) + greyNote +
           '<p class="po__stylenote">One ruled table, the repeats and the mean together, the unit written once above the columns it belongs to — which is what 0610 Paper 6 asks for.' +
           (PO_STATE.iv ? '' : ' <b>Choose an independent variable</b> above and the first column becomes that one thing, with the rest held constant and listed underneath.') + '</p>';
@@ -2555,7 +2637,7 @@
       paintWhy();
       if (paired && paired.sameWay) tables += poPairedNote(paired, ivWord);
       tableWrap.innerHTML = lineHead + tables;
-      tabsEl.querySelectorAll('.po__linetab').forEach(function (b) { b.addEventListener('click', function () { PO_STATE.line = +b.getAttribute('data-line'); remember(); paintData(); say.textContent = 'On ' + poLineName(PO_STATE.line) + ': the runs you record now go on it.'; }); });
+      tabsEl.querySelectorAll('.po__linetab').forEach(function (b) { b.addEventListener('click', function () { PO_STATE.line = +b.getAttribute('data-line'); poRemountFirst(); remember(); paintData(); say.textContent = 'On ' + poLineName(PO_STATE.line) + ': the runs you record now go on it.'; }); });
       var nameIn = tableWrap.querySelector('.po__linename');
       nameIn.addEventListener('change', function () { PO_STATE.lineNames[cur] = nameIn.value.trim(); poPersist(); paintData(); });
       tableWrap.querySelectorAll('.po__del').forEach(function (b) { b.addEventListener('click', function () { runs.splice(+b.getAttribute('data-i'), 1); paintData(); }); });
@@ -2609,7 +2691,10 @@
         if (nest.k >= 2) {
           return { x: x, mean: nest.grand, all: nest.means, allBad: nest.means.map(function () { return false; }),
                    err: errK === 'sd' ? nest.sd : errK === 'se' ? nest.se : errK === 'ci' ? nest.ci : null,
-                   k: nest.k, hollow: false };
+                   k: nest.k, hollow: false,
+                   shoots: nest.shoots.map(function (q) {
+                     return { letter: q.letter, mean: q.mean, sd: q.sd, vals: q.vals, bad: q.trials.map(function (t) { return !!t.r.notZero; }) };
+                   }) };
         }
         var vals = g.trials.map(function (t) { return t.r.rate; }), st = stats(vals);
         return { x: x, mean: st.mean, all: vals, allBad: g.trials.map(function (t) { return !!t.r.notZero; }),
@@ -2633,6 +2718,7 @@
       var joined = numeric && mode === 'factor';
       var ORDER = mode === 'factor' ? ({ wind: PO_WIND, sp: PO_SPECIES.map(function (q) { return q.name; }), grease: PO_GREASE.map(function (q) { return q[0]; }), joint: ['sealed', 'not sealed'] })[F[0]] : null;
       var kGraph = GS.reduce(function (a2, g) { return Math.max(a2, poShootStats(g).k); }, 0);
+      if (kGraph >= 2 && mode === 'factor') H = 300;
       var series = byLine.map(function (l) {
         var pts;
         if (mode === 'factor') { pts = l.rows.map(function (g) { return mk(g, numeric ? +fval(g.s, F[0]) : fval(g.s, F[0])); }); pts.sort(function (a, b) { return numeric ? a.x - b.x : ORDER.indexOf(a.x) - ORDER.indexOf(b.x); }); }
@@ -2649,7 +2735,11 @@
         : multi ? 'The lines do not change the same one factor, so this is the mean by row of each table. Change one thing at a time — the same thing on every line — to compare them.'
         : 'More than one factor changed between rows (' + varyOf(GS).map(function (Fx) { return Fx[1].toLowerCase().replace(/ \(.*\)$/, ''); }).join(', ') + '), so this is the mean by row. Change one thing at a time to see what it does.';
       var allPts = []; series.forEach(function (sr) { allPts = allPts.concat(sr.pts); });
-      var top = Math.max.apply(null, allPts.map(function (p) { return Math.max(Math.max.apply(null, p.all), p.err != null ? p.mean + p.err : 0); }));
+      var top = Math.max.apply(null, allPts.map(function (p) {
+        var t2 = Math.max(Math.max.apply(null, p.all), p.err != null ? p.mean + p.err : 0);
+        (p.shoots || []).forEach(function (q) { t2 = Math.max(t2, q.sd != null ? q.mean + q.sd : q.mean, Math.max.apply(null, q.vals)); });
+        return t2;
+      }));
       var ymax = top * 1.15 || 1;
       var ystep = ymax > 10 ? 5 : ymax > 4 ? 2 : ymax > 2 ? 1 : ymax > 1 ? .5 : .25;
       function Y(v) { return T + (H - T - B) * (1 - Math.max(0, v) / ymax); }
@@ -2660,6 +2750,9 @@
         var xpad = (hi - lo) * 0.07 || 0.5; lo -= xpad; hi += xpad; }
       else { allPts.forEach(function (p) { if (cats.indexOf(p.x) < 0) cats.push(p.x); }); cats.sort(function (a, b) { return mode === 'factor' ? ORDER.indexOf(a) - ORDER.indexOf(b) : a - b; }); slot = (W - L - R) / cats.length; }
       function XN(v) { return lo === hi ? (L + W - R) / 2 : L + (W - L - R) * (v - lo) / (hi - lo); }
+      var dodgeGap = 60;
+      if (numeric) { var ux = allPts.map(function (p) { return p.x; }).filter(function (v2, i2, a) { return a.indexOf(v2) === i2; }).sort(function (a, b) { return a - b; });
+        for (var ui = 1; ui < ux.length; ui++) dodgeGap = Math.min(dodgeGap, XN(ux[ui]) - XN(ux[ui - 1])); }
       var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" class="po__gsvg" role="img" aria-label="' + esc(note) + '">';
       for (var v = 0; v <= ymax; v += ystep) s += '<line class="po__grid" x1="' + L + '" y1="' + Y(v).toFixed(1) + '" x2="' + (W - R) + '" y2="' + Y(v).toFixed(1) + '"/><text class="po__gt" x="' + (L - 6) + '" y="' + (Y(v) + 3.5).toFixed(1) + '" text-anchor="end">' + (ystep < 1 ? v.toFixed(2) : v) + '</text>';
       s += '<line class="po__axis" x1="' + L + '" y1="' + T + '" x2="' + L + '" y2="' + (H - B) + '"/><line class="po__axis" x1="' + L + '" y1="' + (H - B) + '" x2="' + (W - R) + '" y2="' + (H - B) + '"/>';
@@ -2683,19 +2776,44 @@
              line chart the whisker still wears its series colour: there the line is the
              identity and the whisker belongs to it. */
           if (isBar) s += '<rect class="po__gbar" style="fill:' + c + ';stroke:' + c + '" x="' + (x - bw / 2).toFixed(1) + '" y="' + Y(p.mean).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + (H - B - Y(p.mean)).toFixed(1) + '"/>';
+          /* BOTH spreads on one figure. Each shoot is drawn a few pixels either side of its reading —
+             the position dodge used for exactly this — as a hollow point at its own mean with a THIN
+             bar: the standard deviation of that shoot's trials, the repeatability of the method.
+             The plant is drawn at the reading itself, as a solid point at the mean of the shoot means
+             with a THICK bar: the spread between shoots, how much the plants differ. Set side by side
+             the lesson is visible — when the thick bar is longer than the thin ones, the plants differ
+             by more than the measuring does. (Lord et al. 2020, J Cell Biol, for the layering.) */
+          if (p.shoots && p.shoots.length >= 2) {
+            /* the shoots fan out either side of the reading with a gap at the centre, where the plant's
+               own bar stands — so no shoot is ever drawn underneath it. Shoot A is always leftmost. */
+            var kk = p.shoots.length, left = Math.floor(kk / 2), gut = isBar ? Math.max(6, bw * .16) : 14;
+            var room = isBar ? bw * .5 : dodgeGap * .46, stp = Math.max(5, Math.min(12, (room - gut) / Math.max(1, kk - left)));
+            p.shoots.forEach(function (q, qi) {
+              var qx = qi < left ? x - gut - (left - 1 - qi) * stp : x + gut + (qi - left) * stp;
+              if (PO_STATE.dots) q.vals.forEach(function (v2, vi) {
+                s += '<circle class="po__dot po__dot--trial' + (q.bad[vi] ? ' po__dot--bad' : '') + '" style="fill:' + c + '" cx="' + qx.toFixed(1) + '" cy="' + Y(v2).toFixed(1) + '" r="1.9"/>';
+              });
+              if (errK === 'sd' && q.sd != null) {
+                var y1 = Y(q.mean + q.sd), y2 = Y(q.mean - q.sd);
+                s += '<path class="po__whisker po__whisker--shoot" style="stroke:' + c + '" d="M' + qx.toFixed(1) + ' ' + y1.toFixed(1) + ' V' + y2.toFixed(1) +
+                     ' M' + (qx - 2.4).toFixed(1) + ' ' + y1.toFixed(1) + ' h4.8 M' + (qx - 2.4).toFixed(1) + ' ' + y2.toFixed(1) + ' h4.8"/>';
+              }
+              s += '<circle class="po__dotshoot" style="stroke:' + c + '" cx="' + qx.toFixed(1) + '" cy="' + Y(q.mean).toFixed(1) + '" r="3.1"><title>Shoot ' + esc(q.letter) + ': mean ' + q.mean.toFixed(2) + (q.sd != null ? ', SD of its trials ' + q.sd.toFixed(2) : '') + '</title></circle>';
+            });
+          }
           if (p.err != null) {
             if (errK === 'ci' && isBar) s += '<rect class="po__band po__band--onbar" x="' + (x - bw * .7).toFixed(1) + '" y="' + Y(p.mean + p.err).toFixed(1) + '" width="' + (bw * 1.4).toFixed(1) + '" height="' + (Y(p.mean - p.err) - Y(p.mean + p.err)).toFixed(1) + '"/>';
-            if (errK !== 'ci') s += '<path class="po__whisker' + (isBar ? ' po__whisker--onbar' : '') + '" style="' + (isBar ? '' : 'stroke:' + c) + '" d="M' + x.toFixed(1) + ' ' + Y(p.mean + p.err).toFixed(1) + ' V' + Y(p.mean - p.err).toFixed(1) + ' M' + (x - 6).toFixed(1) + ' ' + Y(p.mean + p.err).toFixed(1) + ' h12 M' + (x - 6).toFixed(1) + ' ' + Y(p.mean - p.err).toFixed(1) + ' h12"/>';
+            if (errK !== 'ci') s += '<path class="po__whisker' + (isBar ? ' po__whisker--onbar' : '') + (p.shoots ? ' po__whisker--grand' : '') + '" style="' + (isBar ? '' : 'stroke:' + c) + '" d="M' + x.toFixed(1) + ' ' + Y(p.mean + p.err).toFixed(1) + ' V' + Y(p.mean - p.err).toFixed(1) + ' M' + (x - 6).toFixed(1) + ' ' + Y(p.mean + p.err).toFixed(1) + ' h12 M' + (x - 6).toFixed(1) + ' ' + Y(p.mean - p.err).toFixed(1) + ' h12"/>';
           }
           /* the red ones go on LAST: with one trial in a row the mean dot sits exactly on the
              trial dot, and whichever is painted second is the one you see */
           var badDots = '';
-          if (PO_STATE.dots) p.all.forEach(function (v2, i3) {
+          if (PO_STATE.dots && !p.shoots) p.all.forEach(function (v2, i3) {
             var isBad = !!(p.allBad && p.allBad[i3]);
             var c1 = '<circle class="po__dot' + (p.all.length > 1 ? ' po__dot--rep' : '') + (isBad ? ' po__dot--bad' : '') + '" style="fill:' + c + '" cx="' + x.toFixed(1) + '" cy="' + Y(v2).toFixed(1) + '" r="3"/>';
             if (isBad) badDots += c1; else s += c1;
           });
-          s += '<circle class="po__dotmean" style="fill:' + c + '" cx="' + x.toFixed(1) + '" cy="' + Y(p.mean).toFixed(1) + '" r="' + (p.all.length > 1 ? 4.5 : 3.5) + '"/>';   /* every row keeps its mean marker; the trials behind it can be hidden */
+          s += '<circle class="po__dotmean' + (p.shoots ? ' po__dotmean--grand' : '') + '" style="fill:' + c + '" cx="' + x.toFixed(1) + '" cy="' + Y(p.mean).toFixed(1) + '" r="' + (p.shoots ? 5.4 : p.all.length > 1 ? 4.5 : 3.5) + '"/>';   /* every row keeps its mean marker; the trials behind it can be hidden */
           s += badDots;
         });
       });
@@ -2723,13 +2841,15 @@
         }
       }
       /* what the marks are, and what n counts — the two things a figure caption must state */
-      var nSaid = kGraph >= 2
-        ? ' The faint dots are the ' + kGraph + ' shoots, each the mean of its own trials, and the ' + (isBar ? 'bar' : 'line') + ' gives the mean of the ' + kGraph + ' shoot means (n = ' + kGraph + ' shoots).'
+      var nSaid = kGraph >= 2 && errK === 'sd'
+        ? ' Hollow points are the ' + kGraph + ' shoots, each the mean of its own trials, with thin bars showing one standard deviation of those trials — the repeatability of the method. Solid points are the mean of the ' + kGraph + ' shoot means, with thick bars showing one standard deviation between the shoots — how much the plants differ (n = ' + kGraph + ' shoots).'
+        : kGraph >= 2
+        ? ' Hollow points are the ' + kGraph + ' shoots, each the mean of its own trials; solid points are the mean of the ' + kGraph + ' shoot means (n = ' + kGraph + ' shoots).'
         : mode === 'shoot' ? ' Each point is one shoot, the mean of its own trials; the faint dots behind it are those trials.'
         : ' Each point is the mean of its trials on one shoot (n = 1 shoot).';
       var figTitle = gIv
         ? 'The effect of ' + gIv + ' on the mean rate of water uptake' + (F[0] === 'sp' ? ' of a leafy shoot' : multi ? '' : ' of ' + (kGraph >= 2 ? kGraph + ' ' + gSp + ' shoots' : 'a ' + gSp + ' shoot')) + '.' +
-          lineSaid + nSaid + (errSaid ? ' ' + cap1(errSaid) + '.' : '')
+          lineSaid + nSaid + (errSaid && !(kGraph >= 2 && errK === 'sd') ? ' ' + cap1(errSaid).replace('Error bars show', kGraph >= 2 ? 'Thick bars show' : 'Error bars show') + (kGraph >= 2 ? ', worked out between shoots' : '') + '.' : '')
         : cap1(note) + lineSaid + nSaid + (errSaid ? ' ' + cap1(errSaid) + '.' : '');
       /* The overlap rule is for INDEPENDENT groups. Here the same shoots are measured at every value of
          the independent variable, so it does not apply — a student following it reads two overlapping
@@ -2739,7 +2859,19 @@
         : kGraph >= 2
           ? ' Do not judge a difference by whether two bands overlap: the same shoots were measured at every point, so the overlap rule, which is for separate groups, does not apply here. Read the change in each shoot instead.'
           : ' These bands come from repeated trials on one shoot, so they show how steady your method was — not how much shoots of this plant differ.';
-      s += '</svg>' + legend + '<small class="po__gnote"><b>Figure 1.</b> ' + esc(figTitle + ciNote) + '</small>';
+      /* a key for the two kinds of mark, whenever shoots are drawn beside each other — the caption
+         says it in words, the key shows it in the same ink the figure uses */
+      var gkey = '';
+      if (kGraph >= 2 && mode === 'factor') {
+        var kc = series.length ? series[0].colour : '#14572B';
+        var thin = errK === 'sd' ? '<path d="M8 2 V14 M5.6 2 h4.8 M5.6 14 h4.8" stroke="' + kc + '" stroke-width="1.15" fill="none" opacity=".8"/>' : '';
+        var thick = errK !== 'none' && errK !== 'ci' ? '<path d="M8 1 V15 M4.5 1 h7 M4.5 15 h7" stroke="' + kc + '" stroke-width="2.6" fill="none"/>' : '';
+        gkey = '<div class="po__gkey">' +
+          '<span><svg width="16" height="16" viewBox="0 0 16 16">' + thin + '<circle cx="8" cy="8" r="3.1" fill="#fff" stroke="' + kc + '" stroke-width="1.6"/></svg>one shoot — the mean of its trials' + (errK === 'sd' ? ', and their spread: <b>your repeatability</b>' : '') + '</span>' +
+          '<span><svg width="16" height="16" viewBox="0 0 16 16">' + thick + '<circle cx="8" cy="8" r="4.6" fill="' + kc + '" stroke="#fff" stroke-width="1.4"/></svg>the plant — the mean of the shoot means' + (errK === 'sd' ? ', and the spread <b>between shoots</b>' : errK === 'se' ? ', and the standard error <b>between shoots</b>' : '') + '</span>' +
+          '</div>';
+      }
+      s += '</svg>' + legend + gkey + '<small class="po__gnote"><b>Figure 1.</b> ' + esc(figTitle + ciNote) + '</small>';
       return s;
     }
 

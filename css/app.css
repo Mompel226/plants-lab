@@ -1810,3 +1810,18 @@ picture{display:block;line-height:0}
 .po__why__num td:first-child{color:#4A4A4A}
 .po__why__punch{background:var(--card);border-left:3px solid var(--green);border-radius:0 var(--r-sm) var(--r-sm) 0;padding:7px 10px;margin-top:9px!important}
 @media (max-width:640px){ .po__why__g,.po__why__g thead,.po__why__g tbody,.po__why__g tr,.po__why__g td,.po__why__g th{display:block;width:auto!important} .po__why__g thead{display:none} }
+.po__why__g--one thead th:first-child{width:24%}
+.po__why__door{border-top:1px solid var(--edge-2);background:var(--teal-tint);padding:11px 14px 13px;font-size:12.8px;line-height:1.55}
+.po__why__door p{margin:0}
+.po__why__door b{color:var(--teal)}
+.po__why__go{margin-top:9px;font:inherit;font-size:13px;font-weight:700;color:#fff;background:var(--teal);border:0;border-radius:8px;padding:7px 13px;cursor:pointer}
+.po__why__go:hover{filter:brightness(1.08)}
+.po__why__go:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+/* both spreads on one figure: a shoot is hollow with a thin bar, the plant is solid with a thick one */
+.po__dotshoot{fill:#fff;stroke-width:1.6}
+.po__dot--trial{opacity:.28}
+.po__whisker--shoot{stroke-width:1.15;opacity:.8;fill:none}
+.po__whisker--grand{stroke-width:2.6!important}
+.po__dotmean--grand{stroke:#fff;stroke-width:1.6}
+.po__gkey{display:flex;flex-wrap:wrap;gap:4px 18px;font-size:11.8px;color:#4A4A4A;margin:4px 0 0;align-items:center}
+.po__gkey svg{vertical-align:middle;margin-right:5px}
