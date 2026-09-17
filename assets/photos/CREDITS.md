@@ -214,6 +214,29 @@ bench, not measured here. What it is scaled to:
 |---|---|---|---|
 | `seedling-*` | [Cucumber Seedling.jpg](https://commons.wikimedia.org/wiki/File:Cucumber_Seedling.jpg) — was the picture behind the word *seedling* until 17 September 2026, when the side view of sunflower seedlings from the 16.3 slides replaced it; the file is kept but no longer shown | Peter Chastain | Public domain |
 | `dogstail-anthers-*` | [Anthers and stamen.jpg](https://commons.wikimedia.org/wiki/File:Anthers_and_stamen.jpg) — crested dog's-tail, a grass, magnified: the picture behind the word *wind-pollinated*. Resized from 1024 × 768 to 900 × 675, not cropped | Blokenearexeter | Public domain (released by the author) |
+### "Did you know?" cards (station curiosities)
+
+Thirteen pictures, one per station, downloaded from Wikimedia Commons with Daniel's permission on
+18 September 2026. Each one is credited under its own card as well.
+
+| File | Source | Author | Licence |
+|---|---|---|---|
+| `methuselah-palm-*` | [PikiWiki Israel 29317 Methuselah date palm from Massada ruines in kibbu.JPG](https://commons.wikimedia.org/wiki/File:PikiWiki_Israel_29317_Methuselah_date_palm_from_Massada_ruines_in_kibbu.JPG) — the date palm grown from a 2,000-year-old seed (Sallon et al. 2008, *Science* 320: 1464) | Dr Avishai Teicher, PikiWiki Israel | CC BY 2.5 |
+| `mangrove-roots-*` | [Avicennia Sp. DSCN9864 (19).jpg](https://commons.wikimedia.org/wiki/File:Avicennia_Sp._DSCN9864_(19).jpg) — pneumatophores standing out of the mud. Cropped to the roots | Dr Raju Kasambe | CC BY-SA 4.0 |
+| `redwood-giant-*` | [Stratosphere Giant.jpg](https://commons.wikimedia.org/wiki/File:Stratosphere_Giant.jpg) — a coast redwood with a person at its foot, for the limit on pulling water up (Koch et al. 2004, *Nature* 428: 851) | Forestgiant1990 | CC BY 4.0 |
+| `lily-giant-underside-*` | [Victoria amazonica back side2.jpg](https://commons.wikimedia.org/wiki/File:Victoria_amazonica_back_side2.jpg) — the ribs and spines under a giant water lily leaf | Suguri F | CC BY-SA 3.0 |
+| `balanophora-*` | [リュウキュウツチトリモチ Balanophora fungosa 西表島 2018年11月.jpg](https://commons.wikimedia.org/wiki/File:%E3%83%AA%E3%83%A5%E3%82%A6%E3%82%AD%E3%83%A5%E3%82%A6%E3%83%84%E3%83%81%E3%83%88%E3%83%AA%E3%83%A2%E3%83%81_Balanophora_fungosa_%E8%A5%BF%E8%A1%A8%E5%B3%B6_2018%E5%B9%B411%E6%9C%88.jpg) — the holoparasite of Chen et al. (2023), *Nature Plants* 9: 1627 | Mmsmr | CC0 |
+| `guttation-maize-*` | [Guttation in Zea mays.jpg](https://commons.wikimedia.org/wiki/File:Guttation_in_Zea_mays.jpg) — a guttation drop at a leaf tip. Cropped to the drop | Prakash Botanic Force | CC BY-SA 4.0 |
+| `hales-tube-*` | [Statical essays… Fleuron T069058-12.png](https://commons.wikimedia.org/wiki/File:Statical_essays-_containing_vegetable_staticks;_or,_an_account_of_some_statical_experiments_on_the_sap_in_vegetables_Fleuron_T069058-12.png) — a plate from Stephen Hales, *Vegetable Staticks* (1727): a branch sealed into a tube of water. Cropped to Fig. 31 | Stephen Hales | Public domain |
+| `aphids-stem-*` | [Pulgones del rosal.jpg](https://commons.wikimedia.org/wiki/File:Pulgones_del_rosal.jpg) — aphids feeding along a rose stem (Kennedy and Mittler 1953, *Nature* 171: 528) | Brandon Antonio Segura Torres | CC BY-SA 4.0 |
+| `sunflower-field-*` | [Helianthus annuus in Gers (1).jpg](https://commons.wikimedia.org/wiki/File:Helianthus_annuus_in_Gers_(1).jpg) — a sunflower field, heads facing one way (Atamian et al. 2016, *Science* 353: 587) | Krzysztof Golik | CC BY-SA 4.0 |
+| `titan-thermal-*` | [Measuring temperature of a blooming Amorphophallus titanum 3.jpg](https://commons.wikimedia.org/wiki/File:Measuring_temperature_of_a_blooming_Amorphophallus_titanum_3.jpg) — a thermal camera on a titan arum in flower (Barthlott et al. 2009, *Plant Biology* 11: 499). Cropped to the screen | Olaf | CC0 |
+| `sandbox-fruit-*` | [Hura crepitans (fruit).jpg](https://commons.wikimedia.org/wiki/File:Hura_crepitans_(fruit).jpg) — the fruit that fires its seeds (Swaine and Beer 1977, *New Phytologist* 78: 695) | Hans Hillewaert | CC BY-SA 3.0 |
+| `lithops-stones-*` | [Lithops sp.-IMG 5442.jpg](https://commons.wikimedia.org/wiki/File:Lithops_sp.-IMG_5442.jpg) — living stones among pebbles (Field et al. 2013, *PLOS ONE* 8(10): e75671) | C T Johansson | CC BY-SA 3.0 |
+| `flytrap-hairs-*` | [Venus Flytrap showing trigger hairs.jpg](https://commons.wikimedia.org/wiki/File:Venus_Flytrap_showing_trigger_hairs.jpg) — the trigger hairs the plant counts (Böhm et al. 2016, *Current Biology* 26: 286) | Noah Elhardt | CC BY-SA 2.5 |
+
+### Read the plant (station 12)
+
 | `cactus-spines-*` | [Cactus spines (detail) (14935351642).jpg](https://commons.wikimedia.org/wiki/File:Cactus_spines_(detail)_(14935351642).jpg) — spines on a cactus stem in the tropical house at Kew: *Read the plant*, "Leaves reduced to spines". Taken at 1920 px wide, not cropped | James Petts | CC BY-SA 2.0 |
 | `cactus-stem-section-*` | [Cut Cereus (brightened).jpg](https://commons.wikimedia.org/wiki/File:Cut_Cereus_(brightened).jpg) — a cactus stem cut across: "Thick, fleshy stem". Cropped to the cut | Tangopaso (photograph), Peter coxhead (brightened) | Public domain |
 | `yucca-cuticle-*`, `yucca-sunken-stoma-*` | [Angiosperm Morphology Heavily Cutinized Epidermis of Yucca Leaf (36999100086).jpg](https://commons.wikimedia.org/wiki/File:Angiosperm_Morphology_Heavily_Cutinized_Epidermis_of_Yucca_Leaf_(36999100086).jpg) — a yucca leaf at ×400, cropped twice: the thick cuticle ("Thick waxy cuticle") and a sunken stoma ("Few stomata, sunk in pits") | Berkshire Community College Bioscience Image Library | CC0 |
