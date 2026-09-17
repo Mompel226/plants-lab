@@ -1517,6 +1517,14 @@ picture{display:block;line-height:0}
 @media (max-width:820px){ .ad{grid-template-columns:1fr} }
 /* Read the plant: the picture of each feature. It stands in the plant's column (.sim), in the strip
    on a phone, or under the chips of the plant it belongs to. */
+/* an extension chip: dashed, with a small tag, so it never passes for an exam feature */
+.ad__chip--ext{border-style:dashed;border-color:#C9A3B0;background:#FFF8FA}
+.ad__chip--ext:hover{border-color:var(--red)}
+.ad__chip--ext.is-on{background:#8C3B55;border-color:#8C3B55;border-style:solid;color:#fff}
+.ad__extpill{display:inline-block;margin-left:4px;font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--red);background:var(--red-tint);border-radius:var(--r-pill);padding:0 6px;vertical-align:1px}
+.ad__chip--ext.is-on .ad__extpill{background:rgba(255,255,255,.2);color:#fff}
+.ad__extnote{display:block;font-size:11.5px;font-weight:700;letter-spacing:.02em;color:var(--red);margin-bottom:2px}
 .ad__slot:empty{display:none}
 .ad__slot{margin-top:10px;padding-top:10px;border-top:1px solid var(--edge)}
 .ad--split .ad__slot{display:none}
@@ -1527,6 +1535,7 @@ picture{display:block;line-height:0}
 .adv__tag{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border-radius:var(--r-pill);padding:2px 9px}
 .adv__tag--xerophyte{background:#FBF1DC;color:#7A5410;border:1px solid #E2B95F}
 .adv__tag--hydrophyte{background:#E6F2FA;color:#1F5E86;border:1px solid #7FB8DC}
+.adv__tag--ext{background:var(--red-tint);color:var(--red);border:1px solid #E7B7AE}
 .adv__title{font-size:16.5px;font-weight:700;color:var(--ink)}
 .adv__fig{position:relative;width:100%}
 .adv__frame{position:absolute;top:0;border-radius:8px;overflow:hidden;background:#fff;
@@ -1572,6 +1581,9 @@ picture{display:block;line-height:0}
 .adv__tilecap{display:block;padding:7px 10px;font-size:13px;font-weight:700;color:var(--ink)}
 /* the drawings and the particles */
 .adv__svgtxt{font-size:13px;font-weight:600;fill:#3B2A1A;font-family:var(--font)}
+.adv__camhead{font-size:13px;font-weight:800;letter-spacing:.14em;font-family:var(--font)}
+.adv__camtxt{font-size:17px;font-weight:600;font-family:var(--font)}
+.adv__camtag{font-size:15px;font-weight:800;fill:#4A4A4A;font-family:var(--font);paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round}
 .adv__root{fill:#F4E7CC;stroke:#6F5332;stroke-width:1}
 .adv__flow{fill:none;stroke:#2F7FCB;stroke-width:2.2;stroke-dasharray:5 11;stroke-linecap:round}
 .adv__lroot{fill:#DCCBA8;stroke:#8E7A5A;stroke-width:.5}

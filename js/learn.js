@@ -5899,6 +5899,158 @@
     }
   };
 
+  /* CAM photosynthesis, for the extension chip. A patch of cactus skin in section, through a day
+     and a night of 16 seconds: the thick cuticle and the epidermis, a stoma, the air space below it,
+     and chlorenchyma cells with chloroplasts round a large vacuole. At night the stoma opens, carbon
+     dioxide diffuses in and is stored as malic acid, and the vacuoles fill with it (amber). By day
+     the stoma closes, the acid goes down as it releases carbon dioxide, and the chloroplasts use
+     that carbon dioxide to make sugar in the light. Black and Osmond (2003), Photosynthesis Research 76: 329. */
+  AD_DIAGRAMS.cam = function () {
+    var W = 640, H = 420, uid = ++AD_UID, P = 16;
+    function dayness(ph) {
+      if (ph < .44) return 0; if (ph < .5) return adEase((ph - .44) / .06);
+      if (ph < .94) return 1; return 1 - adEase((ph - .94) / .06);
+    }
+    function acidAt(ph) {
+      if (ph < .44) return .12 + .72 * adEase(ph / .44);
+      if (ph < .5) return .84;
+      if (ph < .94) return .84 - .72 * adEase((ph - .5) / .44);
+      return .12;
+    }
+    function hex(c) { return [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)]; }
+    function mix(a, b, k) { var x = hex(a), y = hex(b); return 'rgb(' + [0, 1, 2].map(function (i) { return Math.round(x[i] + (y[i] - x[i]) * adClamp(k)); }).join(',') + ')'; }
+    var CELLS = [[16, 196, 206, 402], [214, 218, 428, 404], [436, 196, 624, 402]];
+    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" class="adv__svg" preserveAspectRatio="xMidYMid meet" aria-hidden="true">' +
+      '<defs><linearGradient id="acSky' + uid + '" x1="0" x2="0" y1="0" y2="1"><stop data-r="sky0" offset="0"/><stop data-r="sky1" offset="1"/></linearGradient>' +
+      CELLS.map(function (c, i) {
+        return '<clipPath id="acVac' + uid + '_' + i + '"><rect x="' + (c[0] + 24) + '" y="' + (c[1] + 32) + '" width="' + (c[2] - c[0] - 48) + '" height="' + (c[3] - c[1] - 58) + '" rx="26"/></clipPath>';
+      }).join('') + '</defs>' +
+      '<rect width="' + W + '" height="122" fill="url(#acSky' + uid + ')"/>';
+    var stars = '';
+    [[90, 22], [150, 64], [228, 30], [300, 84], [372, 18], [430, 58], [516, 36], [586, 78], [610, 20], [48, 96]].forEach(function (st) { stars += '<circle data-r="star" cx="' + st[0] + '" cy="' + st[1] + '" r="1.4" fill="#FFFFFF"/>'; });
+    s += '<g data-r="stars">' + stars + '</g>' +
+      '<circle data-r="sun" r="17" fill="#FFD25A" stroke="#F4A93A" stroke-width="3"/>' +
+      '<g data-r="moon"><circle r="14" fill="#F4F1DE"/><circle cx="6" cy="-4" r="12" data-r="moonbite"/></g>' +
+      '<text data-r="phase" x="24" y="44" class="adv__camhead"></text>' +
+      '<text data-r="line1" x="24" y="72" class="adv__camtxt"></text>' +
+      '<text data-r="line2" x="24" y="96" class="adv__camtxt"></text>';
+    /* inside the stem: the mesophyll background, three cells, their vacuoles, the acid, the chloroplasts */
+    s += '<rect y="160" width="' + W + '" height="' + (H - 160) + '" fill="#E6EFD9"/>' +
+         '<path d="M250 164 C270 188 300 204 320 206 C340 204 370 188 390 164Z" fill="#F7FAF1"/>';
+    var chl = [];
+    CELLS.forEach(function (c, i) {
+      var cx0 = c[0], cy0 = c[1], cx1 = c[2], cy1 = c[3];
+      s += '<rect x="' + cx0 + '" y="' + cy0 + '" width="' + (cx1 - cx0) + '" height="' + (cy1 - cy0) + '" rx="34" fill="#CFE3B4" stroke="#6F8F4E" stroke-width="3"/>' +
+           '<rect x="' + (cx0 + 24) + '" y="' + (cy0 + 32) + '" width="' + (cx1 - cx0 - 48) + '" height="' + (cy1 - cy0 - 58) + '" rx="26" fill="#F5FAFC" stroke="#9DB7BF" stroke-width="1.6"/>' +
+           '<g clip-path="url(#acVac' + uid + '_' + i + ')"><rect data-r="acid" x="' + (cx0 + 24) + '" width="' + (cx1 - cx0 - 48) + '" y="' + cy1 + '" height="0" fill="#F0A93C" opacity=".5"/>' +
+           '<path data-r="acidtop" d="M0 0" fill="none" stroke="#E0902A" stroke-width="1.6" opacity=".7"/></g>';
+      var n = i === 1 ? 12 : 9, cx = (cx0 + cx1) / 2, cy = (cy0 + cy1) / 2, rx = (cx1 - cx0) / 2 - 12, ry = (cy1 - cy0) / 2 - 14;
+      for (var k = 0; k < n; k++) {
+        var a = k / n * Math.PI * 2 + (i === 1 ? .15 : .4), px = cx + Math.cos(a) * rx, py = cy + Math.sin(a) * ry;
+        if (py < cy0 + 8 || py > cy1 - 8) continue;
+        chl.push([px, py]);
+        s += '<ellipse cx="' + adF(px) + '" cy="' + adF(py) + '" rx="10" ry="5.5" transform="rotate(' + adF(a * 180 / Math.PI + 90) + ' ' + adF(px) + ' ' + adF(py) + ')" fill="#3F8A3A" stroke="#23541F" stroke-width="1"/>' +
+             '<path d="M' + adF(px - 5) + ' ' + adF(py) + 'H' + adF(px + 5) + '" stroke="#8CCB7A" stroke-width=".9" transform="rotate(' + adF(a * 180 / Math.PI + 90) + ' ' + adF(px) + ' ' + adF(py) + ')"/>';
+      }
+      s += '<circle cx="' + adF(cx0 + (cx1 - cx0) * .78) + '" cy="' + (cy0 + 20) + '" r="7" fill="#C9B6D6" stroke="#8E74A6" stroke-width="1"/>';
+    });
+    /* the skin on top: a thick cuticle and a row of epidermis cells, with the stoma in the middle */
+    s += '<rect y="116" width="' + W + '" height="12" fill="#D9AD55"/><rect y="116" width="' + W + '" height="3" fill="#F2D38B" opacity=".8"/>';
+    for (var ex = 0; ex < W; ex += 64) {
+      if (ex >= 256 && ex < 384) continue;
+      s += '<rect x="' + (ex + 2) + '" y="129" width="60" height="33" rx="9" fill="#EDF4DF" stroke="#7E9A62" stroke-width="2"/>';
+    }
+    s += '<rect x="258" y="129" width="30" height="33" rx="8" fill="#EDF4DF" stroke="#7E9A62" stroke-width="2"/><rect x="352" y="129" width="30" height="33" rx="8" fill="#EDF4DF" stroke="#7E9A62" stroke-width="2"/>' +
+         '<rect data-r="porecut" x="312" y="114" width="16" height="16" fill="#F7FAF1"/>' +
+         '<g data-r="gl"><ellipse cx="0" cy="146" rx="15" ry="19" fill="#9BCB7D" stroke="#4E7D3A" stroke-width="2.4"/><path d="M8 131 Q14 146 8 161" fill="none" stroke="#3B6A2B" stroke-width="3.2"/><ellipse cx="-3" cy="142" rx="3.5" ry="2.2" fill="#3F8A3A"/><ellipse cx="-2" cy="152" rx="3.5" ry="2.2" fill="#3F8A3A"/></g>' +
+         '<g data-r="gr"><ellipse cx="0" cy="146" rx="15" ry="19" fill="#9BCB7D" stroke="#4E7D3A" stroke-width="2.4"/><path d="M-8 131 Q-14 146 -8 161" fill="none" stroke="#3B6A2B" stroke-width="3.2"/><ellipse cx="3" cy="142" rx="3.5" ry="2.2" fill="#3F8A3A"/><ellipse cx="2" cy="152" rx="3.5" ry="2.2" fill="#3F8A3A"/></g>';
+    /* moving things: CO2 in at night, CO2 to the chloroplasts by day, sugar, and a little water vapour */
+    var dots = '';
+    for (var d = 0; d < 12; d++) dots += '<g data-r="co2n"><circle r="6" fill="#6B6B6B" stroke="#fff" stroke-width="1.2"/></g>';
+    for (var d2 = 0; d2 < 12; d2++) dots += '<g data-r="co2d"><circle r="6" fill="#6B6B6B" stroke="#fff" stroke-width="1.2"/></g>';
+    for (var d3 = 0; d3 < 6; d3++) dots += '<path data-r="sugar" d="M0 -6 L5.2 -3 L5.2 3 L0 6 L-5.2 3 L-5.2 -3Z" fill="#FFFFFF" stroke="#C0842A" stroke-width="1.6"/>';
+    for (var d4 = 0; d4 < 4; d4++) dots += '<circle data-r="vap" r="4.2" fill="#4E9BD8" stroke="#fff" stroke-width="1"/>';
+    s += dots + '<text data-r="co2tag" class="adv__camtag">CO₂</text></svg>';
+
+    var box = document.createElement('div'); box.innerHTML = s;
+    var el = box.firstChild, R = {};
+    ['sky0', 'sky1', 'stars', 'sun', 'moon', 'moonbite', 'phase', 'line1', 'line2', 'porecut', 'gl', 'gr', 'co2tag'].forEach(function (k) { R[k] = el.querySelector('[data-r="' + k + '"]'); });
+    var acids = el.querySelectorAll('[data-r="acid"]'), tops = el.querySelectorAll('[data-r="acidtop"]');
+    var co2n = el.querySelectorAll('[data-r="co2n"]'), co2d = el.querySelectorAll('[data-r="co2d"]'), sugars = el.querySelectorAll('[data-r="sugar"]'), vaps = el.querySelectorAll('[data-r="vap"]');
+    var nearChl = chl.filter(function (c) { return c[0] > 214 && c[0] < 428 && c[1] > 218; });
+    var TEXT = { night: ['NIGHT · cool', 'Stomata open: CO₂ diffuses in', 'and is stored as malic acid.'],
+                 day: ['DAY · hot', 'Stomata closed: little water lost.', 'The acid gives back the CO₂.'] };
+    function frac(x) { return x - Math.floor(x); }
+    function render(t) {
+      var ph = frac(t / P + .02), dn = dayness(ph), nightW = 1 - dn;
+      R.sky0.setAttribute('stop-color', mix('#101B38', '#8FCBEA', dn));
+      R.sky1.setAttribute('stop-color', mix('#2B3D63', '#DDF0F6', dn));
+      R.moonbite.setAttribute('fill', mix('#101B38', '#8FCBEA', dn));
+      R.stars.setAttribute('opacity', adF(nightW));
+      var sa = adSeg(ph, .47, .97), ma = ph < .5 ? adSeg(ph, -.03, .47) : adSeg(ph, .97, 1.47);
+      R.sun.setAttribute('transform', 'translate(' + adF(380 + 230 * sa) + ' ' + adF(104 - 76 * Math.sin(Math.PI * sa)) + ')');
+      R.sun.setAttribute('opacity', adF(dn));
+      R.moon.setAttribute('transform', 'translate(' + adF(380 + 230 * ma) + ' ' + adF(104 - 70 * Math.sin(Math.PI * ma)) + ')');
+      R.moon.setAttribute('opacity', adF(nightW));
+      var txt = dn < .5 ? TEXT.night : TEXT.day, fadeTxt = Math.abs(dn - .5) * 2;
+      R.phase.textContent = txt[0]; R.line1.textContent = txt[1]; R.line2.textContent = txt[2];
+      ['phase', 'line1', 'line2'].forEach(function (k) {
+        R[k].setAttribute('fill', dn < .5 ? '#FFFFFF' : '#1F2A20');
+        R[k].setAttribute('opacity', adF(adClamp(fadeTxt * 1.4)));
+      });
+      /* the stoma: the two guard cells bow apart at night */
+      var gap = 3 + 9 * nightW;
+      R.gl.setAttribute('transform', 'translate(' + adF(320 - 15 - gap) + ' 0)');
+      R.gr.setAttribute('transform', 'translate(' + adF(320 + 15 + gap) + ' 0)');
+      R.porecut.setAttribute('x', adF(320 - gap)); R.porecut.setAttribute('width', adF(gap * 2));
+      /* the acid in each vacuole */
+      var lev = acidAt(ph);
+      for (var i = 0; i < acids.length; i++) {
+        var c = CELLS[i], vy0 = c[1] + 32, vy1 = c[3] - 26, y = vy1 - lev * (vy1 - vy0);
+        acids[i].setAttribute('y', adF(y)); acids[i].setAttribute('height', adF(vy1 - y + 2));
+        tops[i].setAttribute('d', 'M' + (c[0] + 24) + ' ' + adF(y) + ' Q' + adF((c[0] + c[2]) / 2) + ' ' + adF(y + 3 * Math.sin(t * 2 + i)) + ' ' + (c[2] - 24) + ' ' + adF(y));
+      }
+      /* carbon dioxide in through the stoma at night, down to the vacuole */
+      for (var n = 0; n < co2n.length; n++) {
+        var u = frac(t / 3.2 + n / co2n.length), px, py;
+        var sx = 372 + (n * 37) % 240;
+        if (u < .4) { var k1 = u / .4; px = sx + (320 - sx) * adEase(k1); py = 40 + 80 * adEase(k1); }
+        else if (u < .6) { var k2 = (u - .4) / .2; px = 320; py = 120 + 60 * k2; }
+        else { var k3 = (u - .6) / .4; px = 320 + ((n % 5) - 2) * 26 * k3; py = 180 + 150 * adEase(k3); }
+        co2n[n].setAttribute('transform', 'translate(' + adF(px) + ' ' + adF(py) + ')');
+        co2n[n].setAttribute('opacity', adF(nightW * (u > .9 ? (1 - u) * 10 : 1) * .95));
+      }
+      /* by day, out of the vacuole to the chloroplasts, where sugar appears */
+      for (var m = 0; m < co2d.length; m++) {
+        var v = frac(t / 2.6 + m / co2d.length), target = nearChl[m % nearChl.length] || [320, 300];
+        var ox = 280 + (m * 29) % 80, oy = 300 + (m * 17) % 60;
+        co2d[m].setAttribute('transform', 'translate(' + adF(ox + (target[0] - ox) * adEase(v)) + ' ' + adF(oy + (target[1] - oy) * adEase(v)) + ')');
+        co2d[m].setAttribute('opacity', adF(dn * (v > .8 ? (1 - v) * 5 : 1) * .95));
+      }
+      for (var g = 0; g < sugars.length; g++) {
+        var w2 = frac(t / 2.6 + g / sugars.length + .35), tg = nearChl[(g * 2) % nearChl.length] || [320, 300];
+        sugars[g].setAttribute('transform', 'translate(' + adF(tg[0] + (g % 2 ? -14 : 14)) + ' ' + adF(tg[1] - 12 - 10 * w2) + ')');
+        sugars[g].setAttribute('opacity', adF(dn * Math.sin(Math.PI * w2)));
+      }
+      /* a little water vapour escapes while the stoma is open at night: the cool air keeps it little */
+      for (var q = 0; q < vaps.length; q++) {
+        var z = frac(t / 4 + q / vaps.length);
+        vaps[q].setAttribute('transform', 'translate(' + adF(320 + (q - 1.5) * 10 * z) + ' ' + adF(190 - 170 * z) + ')');
+        vaps[q].setAttribute('opacity', adF(nightW * .8 * Math.sin(Math.PI * z)));
+      }
+      R.co2tag.setAttribute('x', dn < .5 ? '352' : '440'); R.co2tag.setAttribute('y', dn < .5 ? '100' : '232');
+      R.co2tag.setAttribute('opacity', adF(Math.abs(dn - .5) * 2));
+    }
+    return { el: el, w: W, h: H, dur: 1e9, loop: true, still: 6.4, render: render,
+             ref: function (name) {
+               if (name === 'chloro') {
+                 var right = nearChl.filter(function (p) { return p[0] > 360; }).sort(function (x, y) { return y[1] - x[1]; });
+                 var c = right[0] || nearChl[0]; return c ? [c[0] / W * 100, c[1] / H * 100] : null;
+               }
+               return null;
+             } };
+  };
+
   /* ----- a picture with its labels, and its animation if it has one ----- */
   function adFigure(pic, host, keyEl, alive) {
     var fig = h('div', 'adv__fig'), frame = h('div', 'adv__frame'), labs = h('div', 'adv__labs');
@@ -6147,7 +6299,9 @@
         ['Thick, fleshy stem', 'stores water, and holds the chloroplasts', 'so photosynthesis happens in the stem and the store lasts through the dry season'],
         ['Thick waxy cuticle', 'waterproofs the whole surface', 'so water cannot evaporate through it'],
         ['Few stomata, sunk in pits', 'trap a pocket of humid air over each pore', 'so the concentration gradient out of the plant is small and little water vapour diffuses away'],
-        ['Roots spread wide, just under the surface', 'catch rain as soon as it falls', 'before it soaks away or evaporates']] },
+        ['Roots spread wide, just under the surface', 'catch rain as soon as it falls', 'before it soaks away or evaporates'],
+        /* not in 0610 or the IB guide: marked as an extension, on the chip and in the picture */
+        ['Stomata open at night (CAM)', 'take in carbon dioxide in the cool night and store it as an acid', 'so the stomata can stay closed in the heat of the day, and little water is lost', 'ext']] },
       { name: 'A water lily, in a pond', kind: 'hydrophyte', problem: 'Water everywhere; little oxygen in the mud; light only at the surface.', feats: [
         ['Large, flat leaves that float', 'catch light at the surface and touch the air', 'so it can photosynthesise and exchange gases above the water'],
         ['Stomata on the upper surface', 'open onto the air, not the water', 'so carbon dioxide can get in and oxygen out'],
@@ -6186,6 +6340,7 @@
       var p = PLANTS[pi], pic = PICS[f[0]];
       if (live) { live.stop(); live = null; }
       vhead.innerHTML = '<span class="adv__tag adv__tag--' + p.kind + '">' + (p.kind === 'xerophyte' ? 'Xerophyte' : 'Hydrophyte') + '</span>' +
+                        (f[3] === 'ext' ? '<span class="adv__tag adv__tag--ext">Extension</span>' : '') +
                         '<b class="adv__title">' + esc(f[0]) + '</b>';
       stage.innerHTML = ''; keyEl.innerHTML = '';
       if (!pic) { cap.textContent = ''; return; }
@@ -6198,10 +6353,11 @@
       col.innerHTML = '<h4>' + esc(p.name) + '<small>' + esc(p.problem) + '</small></h4>';
       var chips = h('div', 'ad__chips'), say = h('p', 'ad__say', '<i>Click a feature.</i>'), slot = h('div', 'ad__slot');
       p.feats.forEach(function (f) {
-        var b = h('button', 'ad__chip', esc(f[0])); b.type = 'button';
+        var b = h('button', 'ad__chip' + (f[3] === 'ext' ? ' ad__chip--ext' : ''), esc(f[0]) + (f[3] === 'ext' ? ' <span class="ad__extpill">extension</span>' : '')); b.type = 'button';
+        b.setAttribute('data-feat', f[0]);
         b.addEventListener('click', function () {
           chipsAll.forEach(function (x) { x.classList.toggle('is-on', x === b); });
-          say.innerHTML = '<span class="ad__f">' + esc(f[0]) + '</span> <span class="ad__arrow">→</span> <span class="ad__d">' + esc(f[1]) + '</span> <span class="ad__arrow">→</span> <span class="ad__w">' + esc(f[2]) + '</span>';
+          say.innerHTML = (f[3] === 'ext' ? '<span class="ad__extnote">Extension: not in 0610 or the IB guide</span> ' : '') + '<span class="ad__f">' + esc(f[0]) + '</span> <span class="ad__arrow">→</span> <span class="ad__d">' + esc(f[1]) + '</span> <span class="ad__arrow">→</span> <span class="ad__w">' + esc(f[2]) + '</span>';
           cards.forEach(function (c, k) { if (k !== pi) { var s2 = c.querySelector('.ad__say'); if (s2 && !c.querySelector('.ad__chip.is-on')) s2.innerHTML = '<i>Click a feature.</i>'; } });
           lastPlant = pi;
           showPic(pi, f);
@@ -6310,7 +6466,7 @@
     box.__onReset = detach;
     /* for the headless checks: show a feature by its chip's name, and jump its animation to time t */
     box.__show = function (name, t) {
-      for (var i = 0; i < chipsAll.length; i++) if (chipsAll[i].textContent === name) { chipsAll[i].click(); break; }
+      for (var i = 0; i < chipsAll.length; i++) if (chipsAll[i].getAttribute('data-feat') === name) { chipsAll[i].click(); break; }
       if (t != null && live) live.seek(t);
       return !!live;
     };
