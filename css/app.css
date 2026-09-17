@@ -1611,6 +1611,12 @@ picture{display:block;line-height:0}
 .adv__replay{position:absolute;z-index:2;font:inherit;font-size:12px;font-weight:600;padding:4px 10px;cursor:pointer;
   border:1px solid var(--edge);border-radius:var(--r-pill);background:rgba(255,255,255,.94);color:#3C3C3C}
 .adv__replay:hover{border-color:var(--green);color:var(--green)}
+/* labels drawn inside a diagram, so the picture can have the whole width */
+.adv__ilab{font-family:var(--font);font-weight:700;fill:#2A1E12;paint-order:stroke;stroke:#FCF7EB;stroke-linejoin:round;stroke-linecap:round}
+.adv__ilab--light{fill:#FFFFFF;stroke:#17405E}
+.adv__ilead{stroke:#3B2A1A;fill:none;opacity:.8}
+.adv__idot{fill:#3B2A1A}
+.adv__ruler{font-family:var(--font);font-weight:600;fill:#3B2A1A}
 .adv__replay[hidden]{display:none}
 .adv__intro{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .adv__tile{font:inherit;display:block;text-align:left;padding:0;overflow:hidden;cursor:pointer;
