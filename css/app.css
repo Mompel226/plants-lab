@@ -1525,6 +1525,24 @@ picture{display:block;line-height:0}
   color:var(--red);background:var(--red-tint);border-radius:var(--r-pill);padding:0 6px;vertical-align:1px}
 .ad__chip--ext.is-on .ad__extpill{background:rgba(255,255,255,.2);color:#fff}
 .ad__extnote{display:block;font-size:11.5px;font-weight:700;letter-spacing:.02em;color:var(--red);margin-bottom:2px}
+/* ----- stagephoto: a station picture that stands where the plant is ----- */
+.sph{margin:20px 0}
+.sph__sent{display:block;height:0;overflow:hidden}
+.sph__shell{margin:0}
+.sph__shell img{width:100%;height:auto;display:block;border-radius:var(--r-md);border:1px solid var(--line);background:#fff}
+.sph__cap{margin-top:7px;font-size:13px;line-height:1.5}
+.sph__credit{margin:3px 0 0;font-size:10.5px;color:var(--muted)}
+.sph__stub{margin:0;padding:2px 0 2px 9px;border-left:3px solid #CBB68A;font-size:12.5px;line-height:1.5;color:var(--muted)}
+.sph__stub[hidden]{display:none}
+.sph__arrow{color:#B08A4A;font-size:11px;margin-right:2px}
+.sim > .sph__shell{margin-top:auto;margin-bottom:auto;width:100%}
+.sim > .sph__shell img{max-height:60vh;object-fit:contain;background:#FBF6EC}
+.sim > .sph__shell .sph__cap{font-size:13.5px;line-height:1.55}
+.sim > .sph__shell--strip{display:flex;flex-direction:column;justify-content:center;height:100%;margin:0}
+.sim > .sph__shell--strip picture{flex:1;min-height:0;display:flex}
+.sim > .sph__shell--strip img{height:100%;width:100%;max-height:none;object-fit:contain}
+.sim > .sph__shell--strip .sph__cap,.sim > .sph__shell--strip .sph__credit{display:none}
+
 /* ----- curio: a strange true thing, fenced off from the exam ----- */
 .curio{margin:26px 0;border:1px solid #E3D6BF;border-left:4px solid #B08A4A;border-radius:var(--r-lg);
   background:linear-gradient(180deg,#FCF7EC,#FBF3E4);padding:14px 16px 16px;overflow:hidden}
