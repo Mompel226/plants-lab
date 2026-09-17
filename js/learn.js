@@ -5602,6 +5602,146 @@
     return box;
   }
 
+  /* ---------- the plant's column, and who is standing in it ----------
+     Three things now want the same place: the Read the plant viewer, the auxin experiments, and the
+     station photographs that should appear beside the words the reader has reached. Two of them can
+     be level with the reader at the same time, and #simHost holds exactly one thing, so one arbiter
+     owns it. Every claim says whether it is able (its layout has room), and whether the reader is
+     level with it; the arbiter stages the claim nearest the middle of the reading area, and a higher
+     rank wins over a lower one, so the interactive viewer always beats a photograph. ---------- */
+  var STAGE = (function () {
+    var claims = [], holder = null;
+    function scrollerOf(el) {
+      var n = el && el.parentNode;
+      while (n && n.nodeType === 1) {
+        var st = window.getComputedStyle(n);
+        if (/(auto|scroll)/.test(st.overflowY) && n.scrollHeight > n.clientHeight + 4) return n;
+        n = n.parentNode;
+      }
+      return null;
+    }
+    function band(c) {
+      var sc = scrollerOf(c.box), t = 0, b = window.innerHeight || 800;
+      if (sc) { var q = sc.getBoundingClientRect(); t = q.top; b = q.bottom; }
+      return [t, b];
+    }
+    function dist(c) {
+      var el = (c.watch && c.watch()) || c.box, r = el.getBoundingClientRect(), tb = band(c);
+      return Math.abs((r.top + r.bottom) / 2 - (tb[0] + tb[1]) / 2) - (c.rank || 0) * 1e6;
+    }
+    function choose() {
+      var best = null, bestD = Infinity;
+      for (var i = claims.length - 1; i >= 0; i--) {
+        var c = claims[i];
+        if (!c.box.isConnected) { claims.splice(i, 1); if (holder === c) holder = null; continue; }
+        if (!c.wants || (c.able && !c.able())) continue;
+        var d = dist(c);
+        if (d < bestD) { bestD = d; best = c; }
+      }
+      return best;
+    }
+    function apply() {
+      var win = choose();
+      if (win === holder) return;
+      var ref = (win || holder || {}).box, sc = ref && scrollerOf(ref);
+      var before = ref && ref.isConnected ? ref.getBoundingClientRect().top : 0;
+      var old = holder;
+      holder = win;
+      if (old && old.off) old.off();
+      if (win && win.on) win.on();
+      if (global.Plate && global.Plate.stageSim) global.Plate.stageSim(!!win);
+      /* staging can change the height of the strip above the words: correct the scroll by what moved */
+      if (sc && ref && ref.isConnected) {
+        var moved = ref.getBoundingClientRect().top - before;
+        if (Math.abs(moved) > 1) sc.scrollTop += moved;
+      }
+    }
+    return {
+      add: function (c) { c.wants = false; claims.push(c); return c; },
+      drop: function (c) {
+        var i = claims.indexOf(c); if (i >= 0) claims.splice(i, 1);
+        if (holder === c) { holder = null; if (c.off) c.off(); apply(); if (!claims.length && global.Plate && global.Plate.stageSim) global.Plate.stageSim(false); }
+      },
+      want: function (c, v) { v = !!v; if (c.wants === v) { if (v) apply(); return; } c.wants = v; apply(); },
+      holding: function (c) { return holder === c; },
+      scrollerOf: scrollerOf
+    };
+  })();
+
+  /* ---------- stagephoto: a station photograph that stands in the plant's column ----------
+     Daniel, on station 12: "make sure that you don't repeat images and then the images maybe show up
+     on the left. As the students scroll, those images show on the left." So on a wide screen the
+     picture never sits in the words at all: the words keep one quiet line naming it, and the picture
+     itself appears where the plant is while the reader is level with it. On a phone it goes to the
+     strip. Where there is room for neither, it is an ordinary figure. ---------- */
+  function stagephoto(spec) {
+    var box = h('figure', 'sph');
+    var sent = h('span', 'sph__sent'); sent.setAttribute('aria-hidden', 'true');
+    var stub = h('p', 'sph__stub');
+    var park = h('div', 'sph__park'); park.hidden = true;
+    var shell = h('div', 'sph__shell');
+    var P = W.picture({ img: spec.img, alt: spec.alt || '' });
+    shell.appendChild(P.pic);
+    if (spec.cap) shell.appendChild(h('figcaption', 'sph__cap', W.mk(spec.cap)));
+    if (spec.credit) shell.appendChild(h('p', 'sph__credit', esc(spec.credit)));
+    box.appendChild(sent); box.appendChild(stub); box.appendChild(park); box.appendChild(shell);
+
+    var wideQ = window.matchMedia('(min-width: 1001px)');
+    var stripQ = window.matchMedia('(max-width: 1000px) and (min-height: 561px)');
+    function host() { return document.getElementById('simHost'); }
+    function owned() { var hs = host(); return !!(hs && hs.contains(box)); }
+    function mode() {
+      if (owned() || !host()) return 'flow';
+      if (wideQ.matches) return 'column';
+      if (stripQ.matches) return 'strip';
+      return 'flow';
+    }
+    function place(on) {
+      var m = mode(), hs = host();
+      box.classList.toggle('sph--staged', m !== 'flow');
+      shell.classList.toggle('sph__shell--strip', m === 'strip');
+      stub.hidden = m === 'flow';
+      stub.innerHTML = m === 'flow' ? '' :
+        '<span class="sph__arrow" aria-hidden="true">' + (m === 'strip' ? '▲' : '◀') + '</span> ' + W.mk(spec.stub || spec.cap || '');
+      var want = m === 'flow' ? box : (on ? hs : park);
+      if (shell.parentNode !== want) {
+        if (want === hs) hs.innerHTML = '';
+        want.appendChild(shell);
+      }
+    }
+    var claim = STAGE.add({
+      box: box, rank: 0,
+      able: function () { return mode() !== 'flow'; },
+      watch: function () { return stub.hidden ? box : stub; },
+      on: function () { place(true); },
+      off: function () { place(false); }
+    });
+    /* the sentinel is a point at the top of the line that names the picture, and a point does not
+       move when the picture leaves the words — so nothing here can chase its own tail */
+    var io = null, INSET = 20;
+    function watch() {
+      if (io) { io.disconnect(); io = null; }
+      if (mode() === 'flow' || !window.IntersectionObserver) { STAGE.want(claim, false); return; }
+      try {
+        io = new IntersectionObserver(function (es) {
+          if (!es || !es.length) return;
+          if (!box.isConnected) { detach(); return; }
+          STAGE.want(claim, !!es[es.length - 1].isIntersecting);
+        }, { root: STAGE.scrollerOf(box) || null, rootMargin: '-' + INSET + '% 0px -' + INSET + '% 0px', threshold: 0 });
+        io.observe(sent);
+      } catch (e) { io = null; }
+    }
+    function mount() { place(STAGE.holding(claim)); watch(); }
+    function detach() { if (io) { io.disconnect(); io = null; } wideQ.removeEventListener('change', onWide); stripQ.removeEventListener('change', onWide); STAGE.drop(claim); }
+    var onWide = function () { if (box.isConnected) mount(); else detach(); };
+    wideQ.addEventListener('change', onWide);
+    stripQ.addEventListener('change', onWide);
+    box.__onMove = mount;
+    box.__onReset = detach;
+    requestAnimationFrame(mount);
+    return box;
+  }
+
   /* ---------- adapt: two plants, feature by feature ----------
      Every chip shows the feature itself. The pictures are photographs, slides under the microscope,
      and, for the two root features, animated diagrams: no photograph shows roots in the soil. Each
@@ -5654,7 +5794,8 @@
        is there to make that point. A shower wets the top 14 cm; the roots take the water up and the
        stem swells a little; the rest soaks down below the roots or evaporates from the top. */
     'desert-roots': function () {
-      var W = 640, H = 420, uid = ++AD_UID, rnd = adRand(7), CM = 3.2;
+      var W = 800, H = 500, uid = ++AD_UID, rnd = adRand(7), CM = 3.2;
+      var BREAK = 348, WATER = 430, MX = 700;      /* the scale break, the water table, and where the mesquite stands */
       function surf(x) { return 190 + 1.8 * Math.sin(x / 53) + 1.2 * Math.sin(x / 19 + 1); }
       var sP = []; for (var x = 0; x <= W; x += 8) sP.push([x, surf(x)]);
       var surfPath = adLine(sP);
@@ -5667,18 +5808,33 @@
           '<clipPath id="adSoilClip' + uid + '"><path d="' + surfPath + 'L' + W + ' ' + H + 'L0 ' + H + 'Z"/></clipPath>' +
         '</defs>' +
         '<rect width="' + W + '" height="195" fill="url(#adSky' + uid + ')"/>' +
-        '<path d="M0 166 L64 152 L130 161 L210 139 L268 154 L346 143 L424 160 L502 141 L584 157 L640 148 L640 196 L0 196Z" fill="#E0CAA4" opacity=".8"/>' +
-        '<path d="M0 178 L90 171 L170 177 L250 168 L330 176 L420 170 L520 178 L640 172 L640 196 L0 196Z" fill="#D6BD93" opacity=".55"/>' +
+        '<path d="M0 166 L64 152 L130 161 L210 139 L268 154 L346 143 L424 160 L502 141 L584 157 L648 147 L722 158 L800 145 L800 196 L0 196Z" fill="#E0CAA4" opacity=".8"/>' +
+        '<path d="M0 178 L90 171 L170 177 L250 168 L330 176 L420 170 L520 178 L640 172 L730 179 L800 173 L800 196 L0 196Z" fill="#D6BD93" opacity=".55"/>' +
         '<path d="' + surfPath + 'L' + W + ' ' + H + 'L0 ' + H + 'Z" fill="url(#adSoil' + uid + ')"/>';
       var soil = '';
-      for (var i = 0; i < 300; i++) {
-        var gx = rnd() * W, gy = 196 + Math.pow(rnd(), .85) * 222, gr = .6 + rnd() * rnd() * 3.6;
+      for (var i = 0; i < 380; i++) {
+        var gx = rnd() * W, gy = 196 + Math.pow(rnd(), .85) * (H - 204), gr = .6 + rnd() * rnd() * 3.6;
         var col = ['#B08759', '#E6CFA8', '#98704A', '#D1B188', '#86643F'][Math.floor(rnd() * 5)];
         soil += '<ellipse cx="' + adF(gx) + '" cy="' + adF(gy) + '" rx="' + adF(gr * 1.3) + '" ry="' + adF(gr) + '" fill="' + col + '" opacity="' + adF(.3 + rnd() * .45) + '"/>';
       }
       s += '<g clip-path="url(#adSoilClip' + uid + ')">' + soil +
            '<rect data-r="wet" x="0" y="0" width="' + W + '" height="0" fill="url(#adWet' + uid + ')"/>' +
-           '<rect data-r="deep" x="0" y="0" width="' + W + '" height="0" fill="url(#adWet' + uid + ')"/></g>';
+           '<rect data-r="deep" x="0" y="0" width="' + W + '" height="0" fill="url(#adWet' + uid + ')"/>' +
+           /* the water table: the water that is always there, metres down */
+           '<g data-r="water" opacity="0"><rect x="0" y="' + WATER + '" width="' + W + '" height="' + (H - WATER) + '" fill="#2C86C8" opacity=".58"/>' +
+           '<path d="' + (function () {
+             var d3 = 'M0 ' + WATER;
+             for (var wx = 0; wx < W; wx += 40) d3 += 'Q' + (wx + 20) + ' ' + (WATER + (wx % 80 ? 5 : -5)) + ' ' + (wx + 40) + ' ' + WATER;
+             return d3;
+           })() + '" fill="none" stroke="#7FB6DC" stroke-width="3" opacity=".95"/>' +
+           (function () {
+             var bb = '';
+             for (var wb = 0; wb < 44; wb++) {
+               var bx = rnd() * W, by = WATER + 6 + rnd() * (H - WATER - 10);
+               bb += '<circle cx="' + adF(bx) + '" cy="' + adF(by) + '" r="' + adF(1.6 + rnd() * 2.6) + '" fill="#CDE6F7" opacity="' + adF(.4 + rnd() * .45) + '"/>';
+             }
+             return bb;
+           })() + '</g></g>';
       s += '<path d="' + surfPath + '" fill="none" stroke="#9F7A50" stroke-width="1.3" opacity=".75"/>';
       /* the depth ruler */
       var ruler = '<g transform="translate(26 0)"><path d="M0 ' + adF(surf(26)) + 'V' + adF(surf(26) + 30 * CM) + '" stroke="#3B2A1A" stroke-width="1.5"/>';
@@ -5717,7 +5873,31 @@
         for (var q = 0; q <= 4; q++) bp.push([p0[0] + b[1] * q * 4.6, p0[1] + q * 2.6]);
         roots += '<path class="adv__root" d="' + adRibbon(bp, 1.8, .35) + '"/>';
       });
-      s += roots + '<g data-r="flows" opacity="0">' + flows + '</g>';
+      /* the mesquite next door: one root straight down to the water table. Roots more than 50 m deep
+         have been dug up in the Sonoran Desert (Phillips 1963, Ecology 44: 424), so the picture cannot
+         be to scale all the way down: below the ruler the scale breaks, and the break says so. */
+      var mtap = [];
+      for (var my = 0; my <= WATER + 14 - surf(MX); my += 5) mtap.push([MX + Math.sin(my / 26) * 3.4, surf(MX) + my]);
+      var mroot = '<path class="adv__root" d="' + adRibbon(mtap, 14, 3.2) + '"/>';
+      [[.16, -1, 30], [.3, 1, 26], [.52, -1, 22], [.68, 1, 20], [.85, -1, 18]].forEach(function (b) {
+        var p0 = mtap[Math.round(b[0] * (mtap.length - 1))], bp = [];
+        for (var q = 0; q <= 5; q++) bp.push([p0[0] + b[1] * q / 5 * b[2], p0[1] + q / 5 * b[2] * .75]);
+        mroot += '<path class="adv__root" d="' + adRibbon(bp, 3.2, .7) + '"/>';
+      });
+      var mflow = '<path class="adv__flow" data-r="mflow" d="' + adLine(mtap.slice().reverse()) + '"/>';
+      s += roots + mroot + '<g data-r="flows" opacity="0">' + flows + '</g>' +
+           '<g data-r="mflows" opacity="0">' + mflow + '</g>';
+      /* the break itself: a torn band across the picture, the usual way of saying "not to scale here" */
+      function zigPts(y) {
+        var out = [];
+        for (var zx = 0; zx <= W + 26; zx += 13) out.push([zx, y + (zx % 26 ? -5 : 5)]);
+        return out;
+      }
+      function pathOf(pts) { return 'M' + pts.map(function (q) { return adF(q[0]) + ' ' + adF(q[1]); }).join('L'); }
+      var zTop = zigPts(BREAK - 9), zBot = zigPts(BREAK + 9);
+      s += '<g><path d="' + pathOf(zTop) + 'L' + pathOf(zBot.slice().reverse()).slice(1) + 'Z" fill="#F4EEE1"/>' +
+           '<path d="' + pathOf(zTop) + '" fill="none" stroke="#A98A5E" stroke-width="1.4"/>' +
+           '<path d="' + pathOf(zBot) + '" fill="none" stroke="#A98A5E" stroke-width="1.4"/></g>';
 
       /* the barrel cactus, about 50 cm tall: shaded round, a rib every 19.5 degrees, areoles and spines */
       var cx = 320, base = 193, top = base - 50 * CM, hw = 66;
@@ -5747,6 +5927,21 @@
       });
       s += '<g data-r="cactus">' + cac + spines + flowers + '</g>';
 
+      /* the mesquite above ground: a short trunk, forked branches, and a thin, feathery crown */
+      var mes = '<ellipse cx="' + (MX + 4) + '" cy="' + (surf(MX) + 2) + '" rx="58" ry="6" fill="#5A3E22" opacity=".18"/>' +
+        '<path d="M' + (MX - 11) + ' ' + surf(MX) + ' C' + (MX - 9) + ' ' + (surf(MX) - 34) + ' ' + (MX - 6) + ' ' + (surf(MX) - 54) + ' ' + (MX - 5) + ' ' + (surf(MX) - 76) +
+        'L' + (MX + 6) + ' ' + (surf(MX) - 76) + ' C' + (MX + 8) + ' ' + (surf(MX) - 52) + ' ' + (MX + 11) + ' ' + (surf(MX) - 32) + ' ' + (MX + 14) + ' ' + surf(MX) + 'Z" fill="#6E5334"/>';
+      [[-46, -128, -1], [42, -132, 1], [-16, -150, -1], [20, -148, 1], [-30, -112, -1]].forEach(function (br) {
+        mes += '<path d="M' + MX + ' ' + (surf(MX) - 70) + ' Q' + adF(MX + br[0] * .5) + ' ' + adF(surf(MX) + br[1] * .7) + ' ' + adF(MX + br[0]) + ' ' + adF(surf(MX) + br[1]) +
+               '" fill="none" stroke="#6E5334" stroke-width="4.4" stroke-linecap="round"/>';
+      });
+      for (var lf = 0; lf < 230; lf++) {
+        var la = rnd() * Math.PI * 2, lr = Math.pow(rnd(), .6) * 60;
+        var lx = MX + Math.cos(la) * lr * 1.1, ly = surf(MX) - 138 + Math.sin(la) * lr * .6;
+        mes += '<ellipse cx="' + adF(lx) + '" cy="' + adF(ly) + '" rx="' + adF(3.2 + rnd() * 2.6) + '" ry="' + adF(1.5 + rnd() * 1.2) + '" transform="rotate(' + adF(rnd() * 180) + ' ' + adF(lx) + ' ' + adF(ly) + ')" fill="' + ['#6E8B4F', '#84A25E', '#5C7A43'][Math.floor(rnd() * 3)] + '" opacity="' + adF(.7 + rnd() * .3) + '"/>';
+      }
+      s += '<g data-r="mesquite">' + mes + '</g>';
+
       var rain = '';
       for (var d = 0; d < 110; d++) rain += '<line data-r="drop" x1="0" y1="0" x2="-3" y2="14" stroke="#5E88B2" stroke-width="1.4" stroke-linecap="round" opacity="0"/>';
       var vap = '';
@@ -5755,8 +5950,9 @@
 
       var wrap = document.createElement('div'); wrap.innerHTML = s;
       var el = wrap.firstChild, R = {};
-      ['wet', 'deep', 'cactus', 'flows'].forEach(function (k) { R[k] = el.querySelector('[data-r="' + k + '"]'); });
+      ['wet', 'deep', 'cactus', 'flows', 'water', 'mflows'].forEach(function (k) { R[k] = el.querySelector('[data-r="' + k + '"]'); });
       var drops = el.querySelectorAll('[data-r="drop"]'), vaps = el.querySelectorAll('[data-r="vap"]'), flowEls = el.querySelectorAll('[data-r="flow"]');
+      var mflowEl = el.querySelector('[data-r="mflow"]');
       var DX = [], DP = [], VX = [];
       for (var q = 0; q < drops.length; q++) { DX.push(rnd() * (W + 60)); DP.push(rnd()); }
       for (var q2 = 0; q2 < vaps.length; q2++) VX.push(70 + q2 * 56 + rnd() * 20);
@@ -5778,6 +5974,10 @@
         R.deep.setAttribute('height', adF(sink * .9));
         R.deep.setAttribute('opacity', adF(.8 * adSeg(t, 8, 9.5)));
         R.flows.setAttribute('opacity', adF(adSeg(t, 3.3, 3.9) * (1 - adSeg(t, 8.6, 9.6))));
+        /* the neighbour's water: always there, and always being drawn up */
+        R.water.setAttribute('opacity', adF(adSeg(t, 8.6, 9.8)));
+        R.mflows.setAttribute('opacity', adF(adSeg(t, 10.4, 11.4)));
+        if (mflowEl) mflowEl.style.strokeDashoffset = adF(-t * 24);
         for (var f = 0; f < flowEls.length; f++) flowEls[f].style.strokeDashoffset = adF(-t * 24);
         var sw = 1 + .035 * adEase(adSeg(t, 3.6, 7.6));
         R.cactus.setAttribute('transform', 'translate(' + cx + ' ' + base + ') scale(' + adF(sw) + ' 1) translate(' + (-cx) + ' ' + (-base) + ')');
@@ -5788,10 +5988,12 @@
           vaps[j].setAttribute('opacity', adF(vo * .85 * (1 - rise / 40)));
         }
       }
-      return { el: el, w: W, h: H, dur: 11.6, still: 6, render: render,
+      return { el: el, w: W, h: H, dur: 14.4, still: 6, render: render,
                ref: function (name) {
                  if (name === 'root' && refs.root) return [refs.root[0] / W * 100, refs.root[1] / H * 100];
-                 if (name === 'deep') return [93, (S0 + 20 * CM) / H * 100];
+                 if (name === 'deep') return [74, (S0 + 20 * CM) / H * 100];
+                 if (name === 'tap') return [MX / W * 100 + 1.8, (BREAK + 34) / H * 100];
+                 if (name === 'water') return [34, (WATER + 16) / H * 100];
                  return null;
                } };
     },
@@ -6374,7 +6576,7 @@
     /* ----- where the viewer stands: the column, the strip, or inside the widget ----- */
     var wideQ = window.matchMedia('(min-width: 1001px)');
     var stripQ = window.matchMedia('(max-width: 1000px) and (min-height: 561px)');
-    var staged = null;
+    var park = h('div', 'ad__park'); park.hidden = true; box.appendChild(park);
     function host() { return document.getElementById('simHost'); }
     function owned() { var hs = host(); return !!(hs && hs.contains(box)); }
     function mode() {
@@ -6383,58 +6585,47 @@
       if (stripQ.matches) return 'strip';
       return 'flow';
     }
-    function mount() {
+    /* arrange the pack for this mode. In the column the picture never sits in the words: it waits,
+       hidden, until the reader is level with the chips and the arbiter stages it. */
+    function place(on) {
       var hs = host(), m = mode(), home = slots[lastPlant];
       if (m === 'column') {
-        if (pack.parentNode !== hs) { hs.innerHTML = ''; hs.appendChild(pack); }
         if (stage.parentNode !== pack) pack.insertBefore(stage, keyEl);
+        var want = on ? hs : park;
+        if (pack.parentNode !== want) { if (want === hs) hs.innerHTML = ''; want.appendChild(pack); }
+      } else if (m === 'strip') {
+        if (pack.parentNode !== home) home.appendChild(pack);
+        if (on) { if (stage.parentNode !== hs) { hs.innerHTML = ''; hs.appendChild(stage); } }
+        else if (stage.parentNode !== pack) pack.insertBefore(stage, keyEl);
       } else {
         if (pack.parentNode !== home) home.appendChild(pack);
-        if (m === 'strip') { if (stage.parentNode !== hs) { hs.innerHTML = ''; hs.appendChild(stage); } }
-        else if (stage.parentNode !== pack) pack.insertBefore(stage, keyEl);
+        if (stage.parentNode !== pack) pack.insertBefore(stage, keyEl);
       }
-      stage.classList.toggle('adv__stage--fill', m === 'strip');
+      stage.classList.toggle('adv__stage--fill', m === 'strip' && on);
       box.classList.toggle('ad--split', m === 'column');
       box.classList.toggle('ad--strip', m === 'strip');
-      if (m === 'flow' && staged !== null) { staged = null; if (global.Plate && global.Plate.stageSim) global.Plate.stageSim(false); }
-      if (m !== 'flow') { staged = null; look(); }
-      watch();
       if (live) live.layout();
     }
-    box.__onMove = mount;
-
-    function scrollerOf(el) {
-      var n = el && el.parentNode;
-      while (n && n.nodeType === 1) {
-        var st = window.getComputedStyle(n);
-        if (/(auto|scroll)/.test(st.overflowY) && n.scrollHeight > n.clientHeight + 4) return n;
-        n = n.parentNode;
-      }
-      return null;
+    var claim = STAGE.add({
+      box: box, rank: 1,                         /* the viewer beats a photograph for the column */
+      able: function () { return mode() !== 'flow'; },
+      watch: function () { return wrap; },
+      on: function () { place(true); },
+      off: function () { place(false); }
+    });
+    function mount() {
+      place(STAGE.holding(claim));
+      watch();
+      STAGE.want(claim, mode() !== 'flow' && reading());
     }
+    box.__onMove = mount;     /* app.js re-runs this after re-parenting the widget */
+
     function reading() {
-      var r = wrap.getBoundingClientRect(), sc = scrollerOf(box);
+      var r = wrap.getBoundingClientRect(), sc = STAGE.scrollerOf(box);
       var t = 0, b = window.innerHeight || 800;
       if (sc) { var q = sc.getBoundingClientRect(); t = q.top; b = q.bottom; }
       var hs = host(), lead = (mode() === 'strip' && hs) ? hs.getBoundingClientRect().height : 0;
       return r.bottom > t + lead + 30 && r.top < b - LOWER * (b - t - lead);
-    }
-    /* staging can change the height of the strip; correcting the scroll by what moved stops the flicker */
-    function say(v) {
-      /* a widget taken off the page (the tab changed) is told once more that it is out of view:
-         it must not hide the column, which may already hold the Practise copy of this widget */
-      if (!box.isConnected) { detach(); return; }
-      if (v === staged) return;
-      staged = v;
-      var sc = scrollerOf(box), before = box.getBoundingClientRect().top;
-      if (global.Plate && global.Plate.stageSim) global.Plate.stageSim(v);
-      if (sc) { var moved = box.getBoundingClientRect().top - before; if (Math.abs(moved) > 1) sc.scrollTop += moved; }
-      if (v && live) live.layout();
-    }
-    function look() {
-      if (!box.isConnected) { detach(); return; }
-      if (mode() === 'flow') return;
-      say(reading());
     }
     /* one observer, one fixed band, watching the two plant cards (which do not change size when the
        picture is staged): the same rules the auxin experiments settled on. The band stops a third of
@@ -6443,14 +6634,17 @@
     var io = null, LOWER = .35;
     function watch() {
       if (io) { io.disconnect(); io = null; }
-      var m = mode(); if (m === 'flow' || !window.IntersectionObserver) return;
+      var m = mode();
+      if (m === 'flow' || !window.IntersectionObserver) { STAGE.want(claim, false); return; }
       var col = document.querySelector('.platecol');
       var lead = (m === 'strip' && col) ? Math.round(col.getBoundingClientRect().height) : 0;
       try {
         io = new IntersectionObserver(function (es) {
           if (!es || !es.length) return;
-          say(!!es[es.length - 1].isIntersecting);
-        }, { root: scrollerOf(box) || null, rootMargin: (-lead - 30) + 'px 0px -' + Math.round(LOWER * 100) + '% 0px', threshold: 0 });
+          /* a widget taken off the page (the tab changed) is told once more that it is out of view */
+          if (!box.isConnected) { detach(); return; }
+          STAGE.want(claim, !!es[es.length - 1].isIntersecting);
+        }, { root: STAGE.scrollerOf(box) || null, rootMargin: (-lead - 30) + 'px 0px -' + Math.round(LOWER * 100) + '% 0px', threshold: 0 });
         io.observe(wrap);
       } catch (e) { io = null; }
     }
@@ -6459,6 +6653,7 @@
       if (live) { live.stop(); live = null; }
       wideQ.removeEventListener('change', onWide);
       stripQ.removeEventListener('change', onWide);
+      STAGE.drop(claim);
     }
     var onWide = function () { if (box.isConnected) mount(); else detach(); };
     wideQ.addEventListener('change', onWide);
@@ -6567,7 +6762,7 @@
 
   [['video', video], ['germinate', germinate], ['equation', equation], ['limitgraph', limitgraph], ['watch', watch], ['pondweed', pondweed], ['starchtest', starchtest], ['indicator', indicator],
    ['potometer', potometer], ['sourcesink', sourcesink], ['auxin', auxin], ['diagram', diagram], ['labelphoto', labelphoto], ['pollentube', pollentube], ['adapt', adapt],
-   ['curio', curio]]
+   ['curio', curio], ['stagephoto', stagephoto]]
     .forEach(function (m) { W.register(m[0], m[1]); });
 
   global.Learn = { widget: W.widget, reap: W.reap, svgFor: svgFor, DIAGRAMS: DIAGRAMS, PART_INFO: PART_INFO };
