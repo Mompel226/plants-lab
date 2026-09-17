@@ -1525,6 +1525,27 @@ picture{display:block;line-height:0}
   color:var(--red);background:var(--red-tint);border-radius:var(--r-pill);padding:0 6px;vertical-align:1px}
 .ad__chip--ext.is-on .ad__extpill{background:rgba(255,255,255,.2);color:#fff}
 .ad__extnote{display:block;font-size:11.5px;font-weight:700;letter-spacing:.02em;color:var(--red);margin-bottom:2px}
+/* ----- curio: a strange true thing, fenced off from the exam ----- */
+.curio{margin:26px 0;border:1px solid #E3D6BF;border-left:4px solid #B08A4A;border-radius:var(--r-lg);
+  background:linear-gradient(180deg,#FCF7EC,#FBF3E4);padding:14px 16px 16px;overflow:hidden}
+.curio__head{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;margin-bottom:10px}
+.curio__pill{font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#6B4E16;
+  background:#F0E0BC;border:1px solid #D7BE8C;border-radius:var(--r-pill);padding:2px 9px}
+.curio__fence{font-size:11.5px;color:var(--muted)}
+.curio__body{display:grid;grid-template-columns:300px 1fr;gap:16px;align-items:start}
+.curio--tall .curio__body{grid-template-columns:210px 1fr}
+.curio__fig{margin:0}
+.curio__fig picture{display:block}
+.curio__fig img{width:100%;height:auto;display:block;border-radius:var(--r-md);border:1px solid #E0D3BB;background:#EFE7D8}
+.curio__credit{margin-top:5px;font-size:10.5px;line-height:1.35;color:var(--muted)}
+.curio__title{margin:0 0 6px;font-size:16.5px;line-height:1.3;color:var(--ink)}
+.curio__p{margin:0 0 8px;font-size:14.5px;line-height:1.55}
+.curio__src{margin:2px 0 0;font-size:11.5px;color:var(--muted)}
+@media (max-width:620px){
+  .curio__body,.curio--tall .curio__body{grid-template-columns:1fr}
+  .curio__fig img{max-height:300px;object-fit:cover}
+  .curio--tall .curio__fig img{max-height:360px;object-fit:contain;background:#FBF6EC}
+}
 .ad__slot:empty{display:none}
 .ad__slot{margin-top:10px;padding-top:10px;border-top:1px solid var(--edge)}
 .ad--split .ad__slot{display:none}

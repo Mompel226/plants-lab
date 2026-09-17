@@ -6476,6 +6476,35 @@
     return box;
   }
 
+  /* ---------- curio: one strange true thing about plants, fenced off from the exam ----------
+     Daniel asked for these: "the world of plants is incredible and there are all these kind of
+     weird things". A photograph, a short story in plain sentences, and the paper it comes from.
+     Every card says, in its own head, that it is not on either syllabus. ---------- */
+  function curio(spec) {
+    /* ~like this~ is italic. The lab's own _like this_ means "underline this exam word", which is
+       not what a scientific name or a journal title wants, and Terms.mark would escape a raw tag. */
+    function ital(html) { return html.replace(/~([^~]+)~/g, '<i>$1</i>'); }
+    var box = h('section', 'curio' + (spec.shape === 'tall' ? ' curio--tall' : ''));
+    box.appendChild(h('div', 'curio__head',
+      '<span class="curio__pill">Did you know?</span>' +
+      '<span class="curio__fence">Not in 0610 or the IB guide. Nothing here is examined.</span>'));
+    var body = h('div', 'curio__body');
+    if (spec.img) {
+      var P = W.picture({ img: spec.img, alt: spec.alt || '' });
+      var fig = h('figure', 'curio__fig');
+      fig.appendChild(P.pic);
+      if (spec.credit) fig.appendChild(h('figcaption', 'curio__credit', ital(esc(spec.credit))));
+      body.appendChild(fig);
+    }
+    var txt = h('div', 'curio__text');
+    txt.appendChild(h('h4', 'curio__title', esc(spec.title || '')));
+    (spec.body || []).forEach(function (t) { txt.appendChild(h('p', 'curio__p', ital(W.mk(t)))); });
+    if (spec.source) txt.appendChild(h('p', 'curio__src', ital(esc(spec.source))));
+    body.appendChild(txt);
+    box.appendChild(body);
+    return box;
+  }
+
   /* ---------- labelphoto: a real photograph, labelled the way a drawing is ----------
      Labels sit in the margins at their part's own height, each on a leader RULED HORIZONTALLY, so no
      two leaders can cross. Parts can be ringed, and neighbouring labels can be bracketed into the
@@ -6537,7 +6566,8 @@
   }
 
   [['video', video], ['germinate', germinate], ['equation', equation], ['limitgraph', limitgraph], ['watch', watch], ['pondweed', pondweed], ['starchtest', starchtest], ['indicator', indicator],
-   ['potometer', potometer], ['sourcesink', sourcesink], ['auxin', auxin], ['diagram', diagram], ['labelphoto', labelphoto], ['pollentube', pollentube], ['adapt', adapt]]
+   ['potometer', potometer], ['sourcesink', sourcesink], ['auxin', auxin], ['diagram', diagram], ['labelphoto', labelphoto], ['pollentube', pollentube], ['adapt', adapt],
+   ['curio', curio]]
     .forEach(function (m) { W.register(m[0], m[1]); });
 
   global.Learn = { widget: W.widget, reap: W.reap, svgFor: svgFor, DIAGRAMS: DIAGRAMS, PART_INFO: PART_INFO };
