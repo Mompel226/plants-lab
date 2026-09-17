@@ -415,6 +415,9 @@
       if (typeof b === 'object' && b.sup) badge = '<span class="sup tip" tabindex="0" data-tip="Supplement — examined on Paper 4 (Extended) only. Core candidates can skip it.">S</span>';
       if (typeof b === 'object' && b.ext) badge = '<span class="sup sup--ext tip" tabindex="0" data-tip="Extension — not in the 2026–28 syllabus. Here to make sense of the rest; you will not be asked to write it.">extension</span>';
       li.innerHTML = badge + M(txt);
+      /* the part of the plant this sentence answers. Clicking that part on the drawing opens the
+         station and lands here (openGroup looks for exactly this attribute). */
+      if (typeof b === 'object' && b.group) li.setAttribute('data-group', b.group);
       /* A small picture beside the sentence, with the words running round it. One idea each and
          about the size of a postage stamp: a reader takes a picture in faster than a clause, and
          a big diagram in the middle of a paragraph stops the reading instead of helping it. */
@@ -644,11 +647,18 @@
      over the scrolling, so scrolling #panel there moves nothing at all — which is why a jump
      did nothing on an iPad held upright or on a phone. Never assume; walk up and find it. */
   function scrollerFor(el) {
+    /* A box that scrolls but is not full yet still owns the scrolling. Right after a station is
+       painted its widgets and pictures have no height, so the panel briefly looks short — take it
+       anyway, or a click on the plant scrolls the window, which does not move, and the reader is
+       left at the top of a station they asked to be shown the middle of. */
+    var loose = null;
     for (var n = el.parentNode; n && n.nodeType === 1 && n !== document.body; n = n.parentNode) {
       var oy = window.getComputedStyle(n).overflowY;
-      if ((oy === 'auto' || oy === 'scroll') && n.scrollHeight > n.clientHeight + 4) return n;
+      if (oy !== 'auto' && oy !== 'scroll') continue;
+      if (n.scrollHeight > n.clientHeight + 4) return n;
+      if (!loose) loose = n;
     }
-    return document.scrollingElement || document.documentElement;
+    return loose || document.scrollingElement || document.documentElement;
   }
   /* The tab bar sticks to the top of that same box, so the first line a reader can actually
      read starts below it, not at the box's top edge. */
@@ -688,6 +698,21 @@
     placeBlock(target, smooth);
     requestAnimationFrame(function () { placeBlock(target, false); });
     setTimeout(function () { placeBlock(target, false); }, 160);
+    /* A widget or a photograph above the target keeps growing after the first scroll — a station
+       whose animation is still building can push the sentence a page and a half down. So keep
+       re-placing while the page above is still changing height, for up to a second and a half, and
+       stop the moment the reader scrolls for themselves. */
+    var h0 = -1, mine = -1, t0 = Date.now(), tries = 0;
+    (function again() {
+      setTimeout(function () {
+        if (!target.isConnected) return;
+        var sc = scrollerFor(target);                            /* re-asked each time: it can change */
+        if (mine >= 0 && Math.abs(sc.scrollTop - mine) > 2) return;   /* the reader has taken over */
+        if (sc.scrollHeight !== h0) { h0 = sc.scrollHeight; placeBlock(target, false); }
+        mine = sc.scrollTop;
+        if (++tries < 14 && Date.now() - t0 < 1600) again();
+      }, 110);
+    })();
   }
   function panelScroller() {
     var inner = document.getElementById('panelInner');
@@ -1262,6 +1287,8 @@
   function boot() {
     (window.STATIONS || []).forEach(function (s) { S[s.id] = s; ORDER.push(s.id); });
     /* the first station to light a part owns it; 'leaves' and 'leaf' both belong to the leaf */
+    /* a station may claim a part outright; otherwise the first station that lights it owns it */
+    ORDER.forEach(function (id) { ((S[id].plate || {}).owns || []).forEach(function (g) { OWNER[g] = id; }); });
     ORDER.forEach(function (id) { ((S[id].plate || {}).light || []).forEach(function (g) { if (!OWNER[g]) OWNER[g] = id; }); });
     if (OWNER.leaf && !OWNER.leaves) OWNER.leaves = OWNER.leaf;
     if (!OWNER.plant) OWNER.plant = ORDER[0];
