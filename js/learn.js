@@ -5789,14 +5789,16 @@
   /* ----- the two diagrams. Each returns { el, w, h, dur, loop, still, render(t), ref(name) } ----- */
   var AD_DIAGRAMS = {
     /* A barrel cactus and its roots, in section, to scale: 3.2 units to 1 cm, so the plant is about
-       50 cm tall and the roots run 3 to 14 cm deep, about 8 cm on average: the depth Nobel measured
-       for the barrel cactus Ferocactus acanthodes (Oecologia 27: 117, 1977). The ruler down the soil
-       is there to make that point. A shower wets the top 14 cm; the roots take the water up and the
-       stem swells a little; the rest soaks down below the roots or evaporates from the top. */
+       50 cm tall and its roots run 3 to 14 cm deep, about 8 cm on average — the depth Nobel measured
+       for Ferocactus acanthodes (Oecologia 27: 117, 1977). Beside it stands a mesquite, and the
+       mesquite is drawn at the same scale, which is why only the foot of its trunk fits in the
+       picture: one root goes straight down, past a marked break in the scale, to the water table.
+       Roots have been dug up more than 50 m down (Phillips 1963, Ecology 44: 424).
+       The labels are inside the picture, so the picture can have the whole width. */
     'desert-roots': function () {
-      var W = 800, H = 500, uid = ++AD_UID, rnd = adRand(7), CM = 3.2;
-      var BREAK = 348, WATER = 430, MX = 700;      /* the scale break, the water table, and where the mesquite stands */
-      function surf(x) { return 190 + 1.8 * Math.sin(x / 53) + 1.2 * Math.sin(x / 19 + 1); }
+      var W = 760, H = 560, uid = ++AD_UID, rnd = adRand(7), CM = 3.2;
+      var BREAK = 372, WATER = 468, MX = 626, CX = 236;
+      function surf(x) { return 210 + 1.8 * Math.sin(x / 53) + 1.2 * Math.sin(x / 19 + 1); }
       var sP = []; for (var x = 0; x <= W; x += 8) sP.push([x, surf(x)]);
       var surfPath = adLine(sP);
       var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" class="adv__svg" preserveAspectRatio="xMidYMid meet" aria-hidden="true">' +
@@ -5804,24 +5806,24 @@
           '<linearGradient id="adSky' + uid + '" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#E9DCC3"/><stop offset="1" stop-color="#F8F0E2"/></linearGradient>' +
           '<linearGradient id="adSoil' + uid + '" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#DDBE92"/><stop offset=".35" stop-color="#C9A273"/><stop offset="1" stop-color="#9C7249"/></linearGradient>' +
           '<linearGradient id="adBody' + uid + '" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#28592D"/><stop offset=".28" stop-color="#4B874B"/><stop offset=".5" stop-color="#7DB46E"/><stop offset=".73" stop-color="#4A864A"/><stop offset="1" stop-color="#255329"/></linearGradient>' +
+          '<linearGradient id="adBark' + uid + '" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#4C3820"/><stop offset=".3" stop-color="#7A5C36"/><stop offset=".62" stop-color="#8E6C3F"/><stop offset="1" stop-color="#4A3620"/></linearGradient>' +
           '<linearGradient id="adWet' + uid + '" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#4A2F18" stop-opacity=".5"/><stop offset=".8" stop-color="#4A2F18" stop-opacity=".36"/><stop offset="1" stop-color="#4A2F18" stop-opacity="0"/></linearGradient>' +
           '<clipPath id="adSoilClip' + uid + '"><path d="' + surfPath + 'L' + W + ' ' + H + 'L0 ' + H + 'Z"/></clipPath>' +
         '</defs>' +
-        '<rect width="' + W + '" height="195" fill="url(#adSky' + uid + ')"/>' +
-        '<path d="M0 166 L64 152 L130 161 L210 139 L268 154 L346 143 L424 160 L502 141 L584 157 L648 147 L722 158 L800 145 L800 196 L0 196Z" fill="#E0CAA4" opacity=".8"/>' +
-        '<path d="M0 178 L90 171 L170 177 L250 168 L330 176 L420 170 L520 178 L640 172 L730 179 L800 173 L800 196 L0 196Z" fill="#D6BD93" opacity=".55"/>' +
+        '<rect width="' + W + '" height="215" fill="url(#adSky' + uid + ')"/>' +
+        '<path d="M0 182 L70 168 L140 177 L220 155 L280 170 L360 159 L440 176 L520 157 L600 173 L680 163 L760 172 L760 212 L0 212Z" fill="#E0CAA4" opacity=".8"/>' +
+        '<path d="M0 194 L96 187 L180 193 L264 184 L348 192 L440 186 L540 194 L640 188 L760 193 L760 212 L0 212Z" fill="#D6BD93" opacity=".55"/>' +
         '<path d="' + surfPath + 'L' + W + ' ' + H + 'L0 ' + H + 'Z" fill="url(#adSoil' + uid + ')"/>';
       var soil = '';
-      for (var i = 0; i < 380; i++) {
-        var gx = rnd() * W, gy = 196 + Math.pow(rnd(), .85) * (H - 204), gr = .6 + rnd() * rnd() * 3.6;
+      for (var i = 0; i < 420; i++) {
+        var gx = rnd() * W, gy = 214 + Math.pow(rnd(), .85) * (H - 220), gr = .6 + rnd() * rnd() * 3.6;
         var col = ['#B08759', '#E6CFA8', '#98704A', '#D1B188', '#86643F'][Math.floor(rnd() * 5)];
         soil += '<ellipse cx="' + adF(gx) + '" cy="' + adF(gy) + '" rx="' + adF(gr * 1.3) + '" ry="' + adF(gr) + '" fill="' + col + '" opacity="' + adF(.3 + rnd() * .45) + '"/>';
       }
       s += '<g clip-path="url(#adSoilClip' + uid + ')">' + soil +
            '<rect data-r="wet" x="0" y="0" width="' + W + '" height="0" fill="url(#adWet' + uid + ')"/>' +
            '<rect data-r="deep" x="0" y="0" width="' + W + '" height="0" fill="url(#adWet' + uid + ')"/>' +
-           /* the water table: the water that is always there, metres down */
-           '<g data-r="water" opacity="0"><rect x="0" y="' + WATER + '" width="' + W + '" height="' + (H - WATER) + '" fill="#2C86C8" opacity=".58"/>' +
+           '<g data-r="water" opacity="0"><rect x="0" y="' + WATER + '" width="' + W + '" height="' + (H - WATER) + '" fill="#2C86C8" opacity=".55"/>' +
            '<path d="' + (function () {
              var d3 = 'M0 ' + WATER;
              for (var wx = 0; wx < W; wx += 40) d3 += 'Q' + (wx + 20) + ' ' + (WATER + (wx % 80 ? 5 : -5)) + ' ' + (wx + 40) + ' ' + WATER;
@@ -5830,24 +5832,24 @@
            (function () {
              var bb = '';
              for (var wb = 0; wb < 44; wb++) {
-               var bx = rnd() * W, by = WATER + 6 + rnd() * (H - WATER - 10);
+               var bx = rnd() * W, by = WATER + 8 + rnd() * (H - WATER - 14);
                bb += '<circle cx="' + adF(bx) + '" cy="' + adF(by) + '" r="' + adF(1.6 + rnd() * 2.6) + '" fill="#CDE6F7" opacity="' + adF(.4 + rnd() * .45) + '"/>';
              }
              return bb;
            })() + '</g></g>';
       s += '<path d="' + surfPath + '" fill="none" stroke="#9F7A50" stroke-width="1.3" opacity=".75"/>';
-      /* the depth ruler */
-      var ruler = '<g transform="translate(26 0)"><path d="M0 ' + adF(surf(26)) + 'V' + adF(surf(26) + 30 * CM) + '" stroke="#3B2A1A" stroke-width="1.5"/>';
+      /* the depth ruler, in centimetres, beside the cactus */
+      var ruler = '<g transform="translate(30 0)"><path d="M0 ' + adF(surf(30)) + 'V' + adF(surf(30) + 30 * CM) + '" stroke="#3B2A1A" stroke-width="1.5"/>';
       [0, 10, 20, 30].forEach(function (cm) {
-        var yy = surf(26) + cm * CM;
-        ruler += '<path d="M-5 ' + adF(yy) + 'H5" stroke="#3B2A1A" stroke-width="1.5"/><text x="10" y="' + adF(yy + 4.5) + '" class="adv__svgtxt">' + (cm ? cm + ' cm' : '0') + '</text>';
+        var yy = surf(30) + cm * CM;
+        ruler += '<path d="M-5 ' + adF(yy) + 'H5" stroke="#3B2A1A" stroke-width="1.5"/><text data-r="rul" x="9" y="' + adF(yy + 4.5) + '" class="adv__ruler">' + (cm ? cm + ' cm' : '0') + '</text>';
       });
       s += ruler + '</g>';
 
-      var roots = '', flows = '', refs = {};
+      var roots = '', flows = '';
       /* [side, start x, depth of the run in cm, length in cm, seed] */
-      var MAIN = [[-1, 306, 5, 84, 11], [-1, 312, 9, 64, 12], [-1, 300, 3, 50, 13], [-1, 316, 13, 40, 14],
-                  [1, 334, 4, 86, 15], [1, 328, 8, 68, 16], [1, 340, 2.5, 52, 17], [1, 324, 12, 42, 18]];
+      var MAIN = [[-1, 222, 5, 62, 11], [-1, 228, 9, 48, 12], [-1, 216, 3, 40, 13], [-1, 232, 13, 30, 14],
+                  [1, 250, 4, 66, 15], [1, 244, 8, 52, 16], [1, 256, 2.5, 42, 17], [1, 240, 12, 32, 18]];
       MAIN.forEach(function (m) {
         var r2 = adRand(m[4]), side = m[0], len = m[3] * CM, pts = [];
         for (var sl = 0; sl <= len; sl += 6) {
@@ -5864,30 +5866,27 @@
           if (bp[5][1] < surf(bp[5][0]) + 5) bp[5][1] = surf(bp[5][0]) + 5;
           roots += '<path class="adv__root" d="' + adRibbon(bp, 1.9, .35) + '"/>';
         });
-        if (side === 1 && m[3] === 68) refs.root = pts[Math.round(.8 * (pts.length - 1))];
       });
-      var tap = []; for (var ty = 0; ty <= 15 * CM; ty += 4) tap.push([320 + Math.sin(ty / 9) * 1.5, surf(320) + 5 + ty]);
+      var tap = []; for (var ty = 0; ty <= 15 * CM; ty += 4) tap.push([CX + Math.sin(ty / 9) * 1.5, surf(CX) + 5 + ty]);
       roots += '<path class="adv__root" d="' + adRibbon(tap, 8, 1.4) + '"/>';
       [[.35, -1], [.55, 1], [.75, -1]].forEach(function (b) {
         var p0 = tap[Math.round(b[0] * (tap.length - 1))], bp = [];
         for (var q = 0; q <= 4; q++) bp.push([p0[0] + b[1] * q * 4.6, p0[1] + q * 2.6]);
         roots += '<path class="adv__root" d="' + adRibbon(bp, 1.8, .35) + '"/>';
       });
-      /* the mesquite next door: one root straight down to the water table. Roots more than 50 m deep
-         have been dug up in the Sonoran Desert (Phillips 1963, Ecology 44: 424), so the picture cannot
-         be to scale all the way down: below the ruler the scale breaks, and the break says so. */
+      /* the mesquite's one root, straight down through the break to the water */
       var mtap = [];
-      for (var my = 0; my <= WATER + 14 - surf(MX); my += 5) mtap.push([MX + Math.sin(my / 26) * 3.4, surf(MX) + my]);
-      var mroot = '<path class="adv__root" d="' + adRibbon(mtap, 14, 3.2) + '"/>';
-      [[.16, -1, 30], [.3, 1, 26], [.52, -1, 22], [.68, 1, 20], [.85, -1, 18]].forEach(function (b) {
+      for (var my = 0; my <= WATER + 26 - surf(MX); my += 5) mtap.push([MX + Math.sin(my / 30) * 3.6, surf(MX) + my]);
+      roots += '<path class="adv__root" d="' + adRibbon(mtap, 15, 3.4) + '"/>';
+      [[.14, -1, 34], [.28, 1, 28], [.5, -1, 24], [.66, 1, 22], [.83, -1, 18]].forEach(function (b) {
         var p0 = mtap[Math.round(b[0] * (mtap.length - 1))], bp = [];
         for (var q = 0; q <= 5; q++) bp.push([p0[0] + b[1] * q / 5 * b[2], p0[1] + q / 5 * b[2] * .75]);
-        mroot += '<path class="adv__root" d="' + adRibbon(bp, 3.2, .7) + '"/>';
+        roots += '<path class="adv__root" d="' + adRibbon(bp, 3.2, .7) + '"/>';
       });
       var mflow = '<path class="adv__flow" data-r="mflow" d="' + adLine(mtap.slice().reverse()) + '"/>';
-      s += roots + mroot + '<g data-r="flows" opacity="0">' + flows + '</g>' +
-           '<g data-r="mflows" opacity="0">' + mflow + '</g>';
-      /* the break itself: a torn band across the picture, the usual way of saying "not to scale here" */
+      s += roots + '<g data-r="flows" opacity="0">' + flows + '</g><g data-r="mflows" opacity="0">' + mflow + '</g>';
+
+      /* the break in the scale: below here the picture is no longer to scale, and says so */
       function zigPts(y) {
         var out = [];
         for (var zx = 0; zx <= W + 26; zx += 13) out.push([zx, y + (zx % 26 ? -5 : 5)]);
@@ -5899,72 +5898,92 @@
            '<path d="' + pathOf(zTop) + '" fill="none" stroke="#A98A5E" stroke-width="1.4"/>' +
            '<path d="' + pathOf(zBot) + '" fill="none" stroke="#A98A5E" stroke-width="1.4"/></g>';
 
-      /* the barrel cactus, about 50 cm tall: shaded round, a rib every 19.5 degrees, areoles and spines */
-      var cx = 320, base = 193, top = base - 50 * CM, hw = 66;
-      var cac = '<ellipse cx="' + (cx + 3) + '" cy="' + (base + 2) + '" rx="' + (hw + 20) + '" ry="6" fill="#5A3E22" opacity=".18"/>' +
-        '<path d="M' + (cx - hw + 2) + ' ' + base + ' C' + (cx - hw - 7) + ' ' + (base - 44) + ' ' + (cx - hw - 4) + ' ' + (top + 36) + ' ' + (cx - 38) + ' ' + (top + 10) +
-        ' C' + (cx - 20) + ' ' + (top - 3) + ' ' + (cx + 20) + ' ' + (top - 3) + ' ' + (cx + 38) + ' ' + (top + 10) +
-        ' C' + (cx + hw + 4) + ' ' + (top + 36) + ' ' + (cx + hw + 7) + ' ' + (base - 44) + ' ' + (cx + hw - 2) + ' ' + base + ' Z" fill="url(#adBody' + uid + ')"/>';
+      /* the barrel cactus, about 50 cm tall */
+      var base = surf(CX), top = base - 50 * CM, hw = 66;
+      var cac = '<ellipse cx="' + (CX + 3) + '" cy="' + adF(base + 2) + '" rx="' + (hw + 20) + '" ry="6" fill="#5A3E22" opacity=".18"/>' +
+        '<path d="M' + (CX - hw + 2) + ' ' + adF(base) + ' C' + (CX - hw - 7) + ' ' + adF(base - 44) + ' ' + (CX - hw - 4) + ' ' + adF(top + 36) + ' ' + (CX - 38) + ' ' + adF(top + 10) +
+        ' C' + (CX - 20) + ' ' + adF(top - 3) + ' ' + (CX + 20) + ' ' + adF(top - 3) + ' ' + (CX + 38) + ' ' + adF(top + 10) +
+        ' C' + (CX + hw + 4) + ' ' + adF(top + 36) + ' ' + (CX + hw + 7) + ' ' + adF(base - 44) + ' ' + (CX + hw - 2) + ' ' + adF(base) + ' Z" fill="url(#adBody' + uid + ')"/>';
       var spines = '';
       for (var rb = 0; rb <= 8; rb++) {
         var th = (-78 + rb * 19.5) * Math.PI / 180, sn = Math.sin(th), cs = Math.cos(th);
-        var x0 = cx + 12 * sn, y0 = top + 6, x1 = cx + (hw + 6) * sn, y1 = top + (base - top) * .45, x2 = cx + (hw - 2) * sn, y2 = base;
-        cac += '<path d="M' + adF(x0) + ' ' + y0 + ' Q' + adF(x1) + ' ' + adF(y1) + ' ' + adF(x2) + ' ' + y2 + '" fill="none" stroke="#1F4A25" stroke-width="1.7" opacity="' + adF(.2 + .5 * cs) + '"/>' +
-               '<path d="M' + adF(x0 + 3) + ' ' + y0 + ' Q' + adF(x1 + 3.5) + ' ' + adF(y1) + ' ' + adF(x2 + 3.5) + ' ' + y2 + '" fill="none" stroke="#B5DC9E" stroke-width="1.1" opacity="' + adF(.1 + .28 * cs) + '"/>';
+        var x0 = CX + 12 * sn, y0 = top + 6, x1 = CX + (hw + 6) * sn, y1 = top + (base - top) * .45, x2 = CX + (hw - 2) * sn, y2 = base;
+        cac += '<path d="M' + adF(x0) + ' ' + adF(y0) + ' Q' + adF(x1) + ' ' + adF(y1) + ' ' + adF(x2) + ' ' + adF(y2) + '" fill="none" stroke="#1F4A25" stroke-width="1.7" opacity="' + adF(.2 + .5 * cs) + '"/>' +
+               '<path d="M' + adF(x0 + 3) + ' ' + adF(y0) + ' Q' + adF(x1 + 3.5) + ' ' + adF(y1) + ' ' + adF(x2 + 3.5) + ' ' + adF(y2) + '" fill="none" stroke="#B5DC9E" stroke-width="1.1" opacity="' + adF(.1 + .28 * cs) + '"/>';
         [.08, .2, .32, .44, .56, .68, .8, .92].forEach(function (u) {
           var ax = (1 - u) * (1 - u) * x0 + 2 * u * (1 - u) * x1 + u * u * x2, ay = (1 - u) * (1 - u) * y0 + 2 * u * (1 - u) * y1 + u * u * y2;
           spines += '<ellipse cx="' + adF(ax) + '" cy="' + adF(ay) + '" rx="2.4" ry="1.8" fill="#F1E8CF"/>';
           [[-1.05, 8], [-.35, 13], [.3, 10], [1, 7]].forEach(function (sp) {
-            var a = sp[0] + sn * .6, lx = Math.sin(a) * sp[1], ly = -Math.cos(a) * sp[1] * .6 - 1.5;
+            var an = sp[0] + sn * .6, lx = Math.sin(an) * sp[1], ly = -Math.cos(an) * sp[1] * .6 - 1.5;
             spines += '<path d="M' + adF(ax) + ' ' + adF(ay) + ' q' + adF(lx * .45) + ' ' + adF(ly * .35) + ' ' + adF(lx) + ' ' + adF(ly) + '" stroke="' + (sp[1] > 12 ? '#B4552F' : '#E6CB84') + '" stroke-width="' + (sp[1] > 12 ? '1.35' : '1') + '" fill="none" stroke-linecap="round"/>';
           });
         });
       }
       var flowers = '';
-      [[cx - 22, top + 8, -24], [cx, top + 1, 0], [cx + 22, top + 8, 24]].forEach(function (fl) {
-        for (var pt = 0; pt < 8; pt++) flowers += '<ellipse cx="' + fl[0] + '" cy="' + (fl[1] - 6) + '" rx="2.8" ry="7.5" fill="#F4C54C" stroke="#D38A2A" stroke-width=".5" transform="rotate(' + (fl[2] + (pt - 3.5) * 20) + ' ' + fl[0] + ' ' + fl[1] + ')"/>';
-        flowers += '<circle cx="' + fl[0] + '" cy="' + (fl[1] - 1) + '" r="3" fill="#C4612C"/>';
+      [[CX - 22, top + 8, -24], [CX, top + 1, 0], [CX + 22, top + 8, 24]].forEach(function (fl) {
+        for (var pt = 0; pt < 8; pt++) flowers += '<ellipse cx="' + fl[0] + '" cy="' + adF(fl[1] - 6) + '" rx="2.8" ry="7.5" fill="#F4C54C" stroke="#D38A2A" stroke-width=".5" transform="rotate(' + (fl[2] + (pt - 3.5) * 20) + ' ' + fl[0] + ' ' + adF(fl[1]) + ')"/>';
+        flowers += '<circle cx="' + fl[0] + '" cy="' + adF(fl[1] - 1) + '" r="3" fill="#C4612C"/>';
       });
       s += '<g data-r="cactus">' + cac + spines + flowers + '</g>';
 
-      /* the mesquite above ground: a short trunk, forked branches, and a thin, feathery crown */
-      var mes = '<ellipse cx="' + (MX + 4) + '" cy="' + (surf(MX) + 2) + '" rx="58" ry="6" fill="#5A3E22" opacity=".18"/>' +
-        '<path d="M' + (MX - 11) + ' ' + surf(MX) + ' C' + (MX - 9) + ' ' + (surf(MX) - 34) + ' ' + (MX - 6) + ' ' + (surf(MX) - 54) + ' ' + (MX - 5) + ' ' + (surf(MX) - 76) +
-        'L' + (MX + 6) + ' ' + (surf(MX) - 76) + ' C' + (MX + 8) + ' ' + (surf(MX) - 52) + ' ' + (MX + 11) + ' ' + (surf(MX) - 32) + ' ' + (MX + 14) + ' ' + surf(MX) + 'Z" fill="#6E5334"/>';
-      [[-46, -128, -1], [42, -132, 1], [-16, -150, -1], [20, -148, 1], [-30, -112, -1]].forEach(function (br) {
-        mes += '<path d="M' + MX + ' ' + (surf(MX) - 70) + ' Q' + adF(MX + br[0] * .5) + ' ' + adF(surf(MX) + br[1] * .7) + ' ' + adF(MX + br[0]) + ' ' + adF(surf(MX) + br[1]) +
-               '" fill="none" stroke="#6E5334" stroke-width="4.4" stroke-linecap="round"/>';
-      });
-      for (var lf = 0; lf < 230; lf++) {
-        var la = rnd() * Math.PI * 2, lr = Math.pow(rnd(), .6) * 60;
-        var lx = MX + Math.cos(la) * lr * 1.1, ly = surf(MX) - 138 + Math.sin(la) * lr * .6;
-        mes += '<ellipse cx="' + adF(lx) + '" cy="' + adF(ly) + '" rx="' + adF(3.2 + rnd() * 2.6) + '" ry="' + adF(1.5 + rnd() * 1.2) + '" transform="rotate(' + adF(rnd() * 180) + ' ' + adF(lx) + ' ' + adF(ly) + ')" fill="' + ['#6E8B4F', '#84A25E', '#5C7A43'][Math.floor(rnd() * 3)] + '" opacity="' + adF(.7 + rnd() * .3) + '"/>';
+      /* the mesquite, at the same scale: a trunk about 26 cm across, so the tree runs far off the top
+         of the picture. Only its foot fits, which is the point being made. */
+      var mb = surf(MX), tw = 13 * CM;
+      var mes = '<ellipse cx="' + (MX + 4) + '" cy="' + adF(mb + 2) + '" rx="' + (tw + 34) + '" ry="7" fill="#5A3E22" opacity=".18"/>' +
+        '<path d="M' + adF(MX - tw - 16) + ' ' + adF(mb) + ' C' + adF(MX - tw - 6) + ' ' + adF(mb - 26) + ' ' + adF(MX - tw + 2) + ' ' + adF(mb - 60) + ' ' + adF(MX - tw + 4) + ' -30' +
+        'L' + adF(MX + tw - 2) + ' -30 C' + adF(MX + tw - 1) + ' ' + adF(mb - 64) + ' ' + adF(MX + tw + 8) + ' ' + adF(mb - 24) + ' ' + adF(MX + tw + 18) + ' ' + adF(mb) + 'Z" fill="url(#adBark' + uid + ')"/>';
+      /* two branches leaving the top of the picture, so the trunk reads as a tree and not a post */
+      mes += '<path d="M' + adF(MX - tw + 6) + ' -6 C' + adF(MX - tw - 30) + ' -18 ' + adF(MX - tw - 58) + ' -34 ' + adF(MX - tw - 96) + ' -78" fill="none" stroke="#6B502E" stroke-width="' + adF(tw * .55) + '" stroke-linecap="round"/>' +
+             '<path d="M' + adF(MX + tw - 8) + ' -14 C' + adF(MX + tw + 24) + ' -30 ' + adF(MX + tw + 40) + ' -52 ' + adF(MX + tw + 62) + ' -92" fill="none" stroke="#6B502E" stroke-width="' + adF(tw * .45) + '" stroke-linecap="round"/>';
+      for (var bk2 = 0; bk2 < 22; bk2++) {
+        var by2 = -20 + rnd() * (mb + 10), bx2 = MX - tw + 6 + rnd() * (tw * 2 - 12);
+        mes += '<path d="M' + adF(bx2) + ' ' + adF(by2) + ' q' + adF(-2 + rnd() * 4) + ' ' + adF(12 + rnd() * 26) + ' ' + adF(-1 + rnd() * 3) + ' ' + adF(26 + rnd() * 40) + '" fill="none" stroke="#3E2C18" stroke-width="' + adF(.8 + rnd()) + '" opacity="' + adF(.25 + rnd() * .3) + '"/>';
       }
       s += '<g data-r="mesquite">' + mes + '</g>';
 
       var rain = '';
-      for (var d = 0; d < 110; d++) rain += '<line data-r="drop" x1="0" y1="0" x2="-3" y2="14" stroke="#5E88B2" stroke-width="1.4" stroke-linecap="round" opacity="0"/>';
+      for (var d = 0; d < 120; d++) rain += '<line data-r="drop" x1="0" y1="0" x2="-3" y2="14" stroke="#5E88B2" stroke-width="1.4" stroke-linecap="round" opacity="0"/>';
       var vap = '';
       for (var v = 0; v < 10; v++) vap += '<path data-r="vap" d="M0 0 c-3 -6 3 -10 0 -16 c-3 -6 3 -10 0 -16" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" opacity="0"/>';
-      s += '<g>' + rain + '</g><g>' + vap + '</g></svg>';
+      s += '<g>' + rain + '</g><g>' + vap + '</g>';
+
+      /* the labels live inside the picture, so the picture can have the whole width. Each one is a
+         short line of words with a halo, and a rule to the thing it names. */
+      /* the short forms are for a phone, where the words are drawn larger against a smaller picture */
+      var LABS = [
+        { t: 'the stem stores the water', s: 'the stem stores water', x: 24, y: 96, at: 5.2, lead: [[150, 92], [CX - hw + 6, 118]] },
+        { t: 'rain wets the top only', s: 'rain wets the top', x: 352, y: 128, at: 2.6, lead: [[430, 134], [440, 226]] },
+        { t: 'roots spread wide, just under the surface', s: 'wide, shallow roots', x: 122, y: 302, at: .4, lead: [[214, 294], [226, 252]] },
+        { t: 'the rest soaks away, below the roots', s: 'the rest soaks away', x: 250, y: 348, at: 9.4, lead: [[390, 341], [396, 300]] },
+        { t: 'one root goes straight down', s: 'one root, straight down', x: 290, y: 420, at: 10.8, lead: [[500, 414], [MX - 20, 412]] },
+        { t: 'the water table: metres down, and always there', s: 'the water table', x: 26, y: 512, at: 12.2, light: true }
+      ];
+      var labSvg = '';
+      LABS.forEach(function (L, li) {
+        labSvg += '<g data-r="lab" opacity="0">' +
+          (L.lead ? '<path data-r="lead" class="adv__ilead" d="M' + L.lead[0][0] + ' ' + L.lead[0][1] + 'L' + L.lead[1][0] + ' ' + L.lead[1][1] + '"/>' +
+                    '<circle class="adv__idot" cx="' + L.lead[1][0] + '" cy="' + L.lead[1][1] + '" r="3"/>' : '') +
+          '<text data-r="labt" class="adv__ilab' + (L.light ? ' adv__ilab--light' : '') + '" x="' + L.x + '" y="' + L.y + '">' + L.t + '</text></g>';
+      });
+      s += labSvg + '</svg>';
 
       var wrap = document.createElement('div'); wrap.innerHTML = s;
       var el = wrap.firstChild, R = {};
       ['wet', 'deep', 'cactus', 'flows', 'water', 'mflows'].forEach(function (k) { R[k] = el.querySelector('[data-r="' + k + '"]'); });
       var drops = el.querySelectorAll('[data-r="drop"]'), vaps = el.querySelectorAll('[data-r="vap"]'), flowEls = el.querySelectorAll('[data-r="flow"]');
-      var mflowEl = el.querySelector('[data-r="mflow"]');
+      var mflowEl = el.querySelector('[data-r="mflow"]'), labEls = el.querySelectorAll('[data-r="lab"]');
+      var labTexts = el.querySelectorAll('[data-r="labt"]'), leads = el.querySelectorAll('[data-r="lead"]'), rulTexts = el.querySelectorAll('[data-r="rul"]');
       var DX = [], DP = [], VX = [];
-      for (var q = 0; q < drops.length; q++) { DX.push(rnd() * (W + 60)); DP.push(rnd()); }
-      for (var q2 = 0; q2 < vaps.length; q2++) VX.push(70 + q2 * 56 + rnd() * 20);
+      for (var q3 = 0; q3 < drops.length; q3++) { DX.push(rnd() * (W + 60)); DP.push(rnd()); }
+      for (var q4 = 0; q4 < vaps.length; q4++) VX.push(60 + q4 * 62 + rnd() * 20);
       var S0 = surf(W / 2);
       function render(t) {
         var rainOn = adSeg(t, .4, .9) * (1 - adSeg(t, 3.2, 3.8));
-        for (var i = 0; i < drops.length; i++) {
-          var yy = ((t * 560 + DP[i] * 220) % 220) - 24, xx = DX[i] - yy * .2;
-          drops[i].setAttribute('transform', 'translate(' + adF(xx) + ' ' + adF(yy) + ')');
-          drops[i].setAttribute('opacity', adF(rainOn * .8 * (yy < surf(xx) - 14 ? 1 : 0)));
+        for (var i2 = 0; i2 < drops.length; i2++) {
+          var yy = ((t * 560 + DP[i2] * 240) % 240) - 24, xx = DX[i2] - yy * .2;
+          drops[i2].setAttribute('transform', 'translate(' + adF(xx) + ' ' + adF(yy) + ')');
+          drops[i2].setAttribute('opacity', adF(rainOn * .8 * (yy < surf(xx) - 14 ? 1 : 0)));
         }
-        /* the wet band: down to 14 cm, then the water below the roots drains on and the top dries */
         var wetD = 14 * CM * adEase(adSeg(t, 1, 3.8)), dry = 6 * CM * adEase(adSeg(t, 7.8, 10.8));
         var sink = 16 * CM * adEase(adSeg(t, 7.8, 11));
         R.wet.setAttribute('y', adF(S0 - 6 + dry + sink * .55));
@@ -5974,28 +5993,32 @@
         R.deep.setAttribute('height', adF(sink * .9));
         R.deep.setAttribute('opacity', adF(.8 * adSeg(t, 8, 9.5)));
         R.flows.setAttribute('opacity', adF(adSeg(t, 3.3, 3.9) * (1 - adSeg(t, 8.6, 9.6))));
-        /* the neighbour's water: always there, and always being drawn up */
+        for (var f = 0; f < flowEls.length; f++) flowEls[f].style.strokeDashoffset = adF(-t * 24);
         R.water.setAttribute('opacity', adF(adSeg(t, 8.6, 9.8)));
         R.mflows.setAttribute('opacity', adF(adSeg(t, 10.4, 11.4)));
         if (mflowEl) mflowEl.style.strokeDashoffset = adF(-t * 24);
-        for (var f = 0; f < flowEls.length; f++) flowEls[f].style.strokeDashoffset = adF(-t * 24);
         var sw = 1 + .035 * adEase(adSeg(t, 3.6, 7.6));
-        R.cactus.setAttribute('transform', 'translate(' + cx + ' ' + base + ') scale(' + adF(sw) + ' 1) translate(' + (-cx) + ' ' + (-base) + ')');
+        R.cactus.setAttribute('transform', 'translate(' + CX + ' ' + adF(surf(CX)) + ') scale(' + adF(sw) + ' 1) translate(' + (-CX) + ' ' + adF(-surf(CX)) + ')');
         var vo = adSeg(t, 7.8, 8.4) * (1 - adSeg(t, 10.6, 11.4));
         for (var j = 0; j < vaps.length; j++) {
           var rise = ((t - 7.8) * 14 + j * 7) % 40;
           vaps[j].setAttribute('transform', 'translate(' + adF(VX[j]) + ' ' + adF(surf(VX[j]) - 4 - rise) + ')');
           vaps[j].setAttribute('opacity', adF(vo * .85 * (1 - rise / 40)));
         }
+        for (var L2 = 0; L2 < labEls.length; L2++) labEls[L2].setAttribute('opacity', adF(adSeg(t, LABS[L2].at, LABS[L2].at + .7)));
       }
-      return { el: el, w: W, h: H, dur: 14.4, still: 6, render: render,
-               ref: function (name) {
-                 if (name === 'root' && refs.root) return [refs.root[0] / W * 100, refs.root[1] / H * 100];
-                 if (name === 'deep') return [74, (S0 + 20 * CM) / H * 100];
-                 if (name === 'tap') return [MX / W * 100 + 1.8, (BREAK + 34) / H * 100];
-                 if (name === 'water') return [34, (WATER + 16) / H * 100];
-                 return null;
-               } };
+      /* keep the words the same size on the screen whatever size the picture is drawn at */
+      function scaleTo(px) {
+        var k = px ? W / px : 1, small = px && px < 440;
+        for (var i3 = 0; i3 < labTexts.length; i3++) {
+          labTexts[i3].textContent = small ? (LABS[i3].s || LABS[i3].t) : LABS[i3].t;
+          labTexts[i3].style.fontSize = adF((small ? 10.5 : 11.5) * k) + 'px';
+          labTexts[i3].style.strokeWidth = adF(4.2 * k) + 'px';
+        }
+        for (var i4 = 0; i4 < leads.length; i4++) leads[i4].style.strokeWidth = adF(1.2 * k) + 'px';
+        for (var i5 = 0; i5 < rulTexts.length; i5++) rulTexts[i5].style.fontSize = adF(10.5 * k) + 'px';
+      }
+      return { el: el, w: W, h: H, dur: 14.4, still: 6, render: render, scaleTo: scaleTo };
     },
 
     /* A water lily in a pond, in section: leaves floating on long stalks, the thick stem (rhizome)
@@ -6285,15 +6308,19 @@
       var need = { l: 0, r: 0 };
       pins.forEach(function (q) { var k = q[3] === 'left' ? 'l' : 'r'; need[k] = Math.max(need[k], adTextW(q[2])); });
       function margin(w) { return w ? Math.min(150, Math.max(84, Math.ceil(w) + 18)) : 0; }
-      var mL0 = margin(need.l), mR0 = margin(need.r);
-      var narrow = W0 - mL0 - mR0 < 240 || maxH < 200;
+      /* a picture that carries its own labels wants the whole width: no gutters at all */
+      var mL0 = pic.inside ? 0 : margin(need.l), mR0 = pic.inside ? 0 : margin(need.r);
+      var foot = replay ? 32 : 0;                 /* Play again sits UNDER the picture, never on it */
+      var room = maxH === Infinity ? Infinity : Math.max(120, maxH - foot);
+      var narrow = !pic.inside && (W0 - mL0 - mR0 < 240 || room < 200);
       var mL = narrow ? 0 : mL0, mR = narrow ? 0 : mR0;
       var wi = W0 - mL - mR, hi = wi * ih / iw;
-      if (hi > maxH) { hi = maxH; wi = hi * iw / ih; }
+      if (hi > room) { hi = room; wi = hi * iw / ih; }
       var left = mL + (W0 - mL - mR - wi) / 2;
       G = { left: left, wi: wi, hi: hi, narrow: narrow, W0: W0 };
-      if (replay) { replay.style.left = adF(left + 8) + 'px'; replay.style.top = '8px'; }
-      fig.style.height = adF(hi) + 'px';
+      if (replay) { replay.style.left = adF(left) + 'px'; replay.style.top = adF(hi + 6) + 'px'; }
+      if (D && D.scaleTo) D.scaleTo(wi);
+      fig.style.height = adF(hi + foot) + 'px';
       fig.classList.toggle('adv__fig--narrow', narrow);
       frame.style.left = adF(left) + 'px'; frame.style.width = adF(wi) + 'px'; frame.style.height = adF(hi) + 'px';
       over.setAttribute('width', W0); over.setAttribute('height', adF(hi)); over.setAttribute('viewBox', '0 0 ' + W0 + ' ' + adF(hi));
@@ -6311,7 +6338,7 @@
       });
       fxEls = adSvg('g', { 'class': 'adv__fx' }); over.appendChild(fxEls);
       var side = { left: [], right: [] };
-      pins.forEach(function (q, i) {
+      (pic.inside ? [] : pins).forEach(function (q, i) {
         var p = pos(q), it = { q: q, i: i, ax: G.left + p[0] / 100 * G.wi, ay: p[1] / 100 * G.hi, right: q[3] !== 'left' };
         it.g = adSvg('g', { 'class': 'adv__pin' });
         over.appendChild(it.g);
