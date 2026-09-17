@@ -5602,9 +5602,544 @@
     return box;
   }
 
-  /* ---------- adapt: two plants, feature by feature ---------- */
+  /* ---------- adapt: two plants, feature by feature ----------
+     Every chip shows the feature itself. The pictures are photographs, slides under the microscope,
+     and, for the two root features, animated diagrams: no photograph shows roots in the soil. Each
+     picture is described in the station's spec (pics), keyed by the chip's name.
+
+     Where the picture goes follows the auxin experiments. On a wide screen it stands in the plant's
+     column while the chips are level with the reader. On a phone it goes in the strip above the text,
+     and its words stay under the chips. In the Practise column the whole widget is there, so it stays
+     inside. Labels follow the drawing rules: a leader ruled horizontally to a name in the margin, or,
+     when there is no room for a margin, a numbered pin and a key underneath. */
+  var AD_UID = 0;
+  function adSvg(tag, attrs) {
+    var e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+  var AD_CTX = null;
+  function adTextW(str) {
+    try {
+      AD_CTX = AD_CTX || document.createElement('canvas').getContext('2d');
+      AD_CTX.font = '600 13px ' + (getComputedStyle(document.documentElement).getPropertyValue('--font').trim() || 'sans-serif');
+      return AD_CTX.measureText(str).width;
+    } catch (e) { return str.length * 7; }
+  }
+  function adStill() { return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches); }
+  function adClamp(k) { return k < 0 ? 0 : k > 1 ? 1 : k; }
+  function adSeg(t, a, b) { return adClamp((t - a) / (b - a)); }
+  function adEase(k) { k = adClamp(k); return k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2; }
+  function adRand(seed) { var s = seed >>> 0; return function () { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 4294967296; }; }
+  function adF(v) { return (Math.round(v * 100) / 100).toString(); }
+  /* a root drawn as a ribbon that tapers from w0 to w1 along its centre line */
+  function adRibbon(pts, w0, w1) {
+    var L = [], R = [], n = pts.length;
+    for (var i = 0; i < n; i++) {
+      var a = pts[Math.max(0, i - 1)], b = pts[Math.min(n - 1, i + 1)];
+      var dx = b[0] - a[0], dy = b[1] - a[1], len = Math.sqrt(dx * dx + dy * dy) || 1;
+      var nx = -dy / len, ny = dx / len, w = (w0 + (w1 - w0) * i / (n - 1)) / 2;
+      L.push(adF(pts[i][0] + nx * w) + ' ' + adF(pts[i][1] + ny * w));
+      R.unshift(adF(pts[i][0] - nx * w) + ' ' + adF(pts[i][1] - ny * w));
+    }
+    return 'M' + L.join('L') + 'L' + R.join('L') + 'Z';
+  }
+  function adLine(pts) { return 'M' + pts.map(function (p) { return adF(p[0]) + ' ' + adF(p[1]); }).join('L'); }
+
+  /* ----- the two diagrams. Each returns { el, w, h, dur, loop, still, render(t), ref(name) } ----- */
+  var AD_DIAGRAMS = {
+    /* A barrel cactus and its roots, in section, to scale: 3.2 units to 1 cm, so the plant is about
+       50 cm tall and the roots run 3 to 14 cm deep, about 8 cm on average: the depth Nobel measured
+       for the barrel cactus Ferocactus acanthodes (Oecologia 27: 117, 1977). The ruler down the soil
+       is there to make that point. A shower wets the top 14 cm; the roots take the water up and the
+       stem swells a little; the rest soaks down below the roots or evaporates from the top. */
+    'desert-roots': function () {
+      var W = 640, H = 420, uid = ++AD_UID, rnd = adRand(7), CM = 3.2;
+      function surf(x) { return 190 + 1.8 * Math.sin(x / 53) + 1.2 * Math.sin(x / 19 + 1); }
+      var sP = []; for (var x = 0; x <= W; x += 8) sP.push([x, surf(x)]);
+      var surfPath = adLine(sP);
+      var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" class="adv__svg" preserveAspectRatio="xMidYMid meet" aria-hidden="true">' +
+        '<defs>' +
+          '<linearGradient id="adSky' + uid + '" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#E9DCC3"/><stop offset="1" stop-color="#F8F0E2"/></linearGradient>' +
+          '<linearGradient id="adSoil' + uid + '" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#DDBE92"/><stop offset=".35" stop-color="#C9A273"/><stop offset="1" stop-color="#9C7249"/></linearGradient>' +
+          '<linearGradient id="adBody' + uid + '" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#28592D"/><stop offset=".28" stop-color="#4B874B"/><stop offset=".5" stop-color="#7DB46E"/><stop offset=".73" stop-color="#4A864A"/><stop offset="1" stop-color="#255329"/></linearGradient>' +
+          '<linearGradient id="adWet' + uid + '" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#4A2F18" stop-opacity=".5"/><stop offset=".8" stop-color="#4A2F18" stop-opacity=".36"/><stop offset="1" stop-color="#4A2F18" stop-opacity="0"/></linearGradient>' +
+          '<clipPath id="adSoilClip' + uid + '"><path d="' + surfPath + 'L' + W + ' ' + H + 'L0 ' + H + 'Z"/></clipPath>' +
+        '</defs>' +
+        '<rect width="' + W + '" height="195" fill="url(#adSky' + uid + ')"/>' +
+        '<path d="M0 166 L64 152 L130 161 L210 139 L268 154 L346 143 L424 160 L502 141 L584 157 L640 148 L640 196 L0 196Z" fill="#E0CAA4" opacity=".8"/>' +
+        '<path d="M0 178 L90 171 L170 177 L250 168 L330 176 L420 170 L520 178 L640 172 L640 196 L0 196Z" fill="#D6BD93" opacity=".55"/>' +
+        '<path d="' + surfPath + 'L' + W + ' ' + H + 'L0 ' + H + 'Z" fill="url(#adSoil' + uid + ')"/>';
+      var soil = '';
+      for (var i = 0; i < 300; i++) {
+        var gx = rnd() * W, gy = 196 + Math.pow(rnd(), .85) * 222, gr = .6 + rnd() * rnd() * 3.6;
+        var col = ['#B08759', '#E6CFA8', '#98704A', '#D1B188', '#86643F'][Math.floor(rnd() * 5)];
+        soil += '<ellipse cx="' + adF(gx) + '" cy="' + adF(gy) + '" rx="' + adF(gr * 1.3) + '" ry="' + adF(gr) + '" fill="' + col + '" opacity="' + adF(.3 + rnd() * .45) + '"/>';
+      }
+      s += '<g clip-path="url(#adSoilClip' + uid + ')">' + soil +
+           '<rect data-r="wet" x="0" y="0" width="' + W + '" height="0" fill="url(#adWet' + uid + ')"/>' +
+           '<rect data-r="deep" x="0" y="0" width="' + W + '" height="0" fill="url(#adWet' + uid + ')"/></g>';
+      s += '<path d="' + surfPath + '" fill="none" stroke="#9F7A50" stroke-width="1.3" opacity=".75"/>';
+      /* the depth ruler */
+      var ruler = '<g transform="translate(26 0)"><path d="M0 ' + adF(surf(26)) + 'V' + adF(surf(26) + 30 * CM) + '" stroke="#3B2A1A" stroke-width="1.5"/>';
+      [0, 10, 20, 30].forEach(function (cm) {
+        var yy = surf(26) + cm * CM;
+        ruler += '<path d="M-5 ' + adF(yy) + 'H5" stroke="#3B2A1A" stroke-width="1.5"/><text x="10" y="' + adF(yy + 4.5) + '" class="adv__svgtxt">' + (cm ? cm + ' cm' : '0') + '</text>';
+      });
+      s += ruler + '</g>';
+
+      var roots = '', flows = '', refs = {};
+      /* [side, start x, depth of the run in cm, length in cm, seed] */
+      var MAIN = [[-1, 306, 5, 84, 11], [-1, 312, 9, 64, 12], [-1, 300, 3, 50, 13], [-1, 316, 13, 40, 14],
+                  [1, 334, 4, 86, 15], [1, 328, 8, 68, 16], [1, 340, 2.5, 52, 17], [1, 324, 12, 42, 18]];
+      MAIN.forEach(function (m) {
+        var r2 = adRand(m[4]), side = m[0], len = m[3] * CM, pts = [];
+        for (var sl = 0; sl <= len; sl += 6) {
+          var k = sl / len, xx = m[1] + side * sl;
+          var depth = 1.6 * CM + (m[2] - 1.6) * CM * adEase(Math.min(1, k / .3)) + Math.sin(sl / 23 + m[4]) * 1.8;
+          pts.push([xx, surf(xx) + depth]);
+        }
+        roots += '<path class="adv__root" d="' + adRibbon(pts, 5.4, .8) + '"/>';
+        flows += '<path class="adv__flow" data-r="flow" d="' + adLine(pts.slice().reverse()) + '"/>';
+        [.2, .38, .56, .72, .86].forEach(function (bk, bi) {
+          var p0 = pts[Math.round(bk * (pts.length - 1))], bl = 12 + r2() * 24, bp = [];
+          var ang = (bi % 2 ? .75 : -.25) * (.5 + r2() * .6);
+          for (var q = 0; q <= 5; q++) bp.push([p0[0] + side * q / 5 * bl * .85, p0[1] + q / 5 * bl * ang]);
+          if (bp[5][1] < surf(bp[5][0]) + 5) bp[5][1] = surf(bp[5][0]) + 5;
+          roots += '<path class="adv__root" d="' + adRibbon(bp, 1.9, .35) + '"/>';
+        });
+        if (side === 1 && m[3] === 68) refs.root = pts[Math.round(.8 * (pts.length - 1))];
+      });
+      var tap = []; for (var ty = 0; ty <= 15 * CM; ty += 4) tap.push([320 + Math.sin(ty / 9) * 1.5, surf(320) + 5 + ty]);
+      roots += '<path class="adv__root" d="' + adRibbon(tap, 8, 1.4) + '"/>';
+      [[.35, -1], [.55, 1], [.75, -1]].forEach(function (b) {
+        var p0 = tap[Math.round(b[0] * (tap.length - 1))], bp = [];
+        for (var q = 0; q <= 4; q++) bp.push([p0[0] + b[1] * q * 4.6, p0[1] + q * 2.6]);
+        roots += '<path class="adv__root" d="' + adRibbon(bp, 1.8, .35) + '"/>';
+      });
+      s += roots + '<g data-r="flows" opacity="0">' + flows + '</g>';
+
+      /* the barrel cactus, about 50 cm tall: shaded round, a rib every 19.5 degrees, areoles and spines */
+      var cx = 320, base = 193, top = base - 50 * CM, hw = 66;
+      var cac = '<ellipse cx="' + (cx + 3) + '" cy="' + (base + 2) + '" rx="' + (hw + 20) + '" ry="6" fill="#5A3E22" opacity=".18"/>' +
+        '<path d="M' + (cx - hw + 2) + ' ' + base + ' C' + (cx - hw - 7) + ' ' + (base - 44) + ' ' + (cx - hw - 4) + ' ' + (top + 36) + ' ' + (cx - 38) + ' ' + (top + 10) +
+        ' C' + (cx - 20) + ' ' + (top - 3) + ' ' + (cx + 20) + ' ' + (top - 3) + ' ' + (cx + 38) + ' ' + (top + 10) +
+        ' C' + (cx + hw + 4) + ' ' + (top + 36) + ' ' + (cx + hw + 7) + ' ' + (base - 44) + ' ' + (cx + hw - 2) + ' ' + base + ' Z" fill="url(#adBody' + uid + ')"/>';
+      var spines = '';
+      for (var rb = 0; rb <= 8; rb++) {
+        var th = (-78 + rb * 19.5) * Math.PI / 180, sn = Math.sin(th), cs = Math.cos(th);
+        var x0 = cx + 12 * sn, y0 = top + 6, x1 = cx + (hw + 6) * sn, y1 = top + (base - top) * .45, x2 = cx + (hw - 2) * sn, y2 = base;
+        cac += '<path d="M' + adF(x0) + ' ' + y0 + ' Q' + adF(x1) + ' ' + adF(y1) + ' ' + adF(x2) + ' ' + y2 + '" fill="none" stroke="#1F4A25" stroke-width="1.7" opacity="' + adF(.2 + .5 * cs) + '"/>' +
+               '<path d="M' + adF(x0 + 3) + ' ' + y0 + ' Q' + adF(x1 + 3.5) + ' ' + adF(y1) + ' ' + adF(x2 + 3.5) + ' ' + y2 + '" fill="none" stroke="#B5DC9E" stroke-width="1.1" opacity="' + adF(.1 + .28 * cs) + '"/>';
+        [.08, .2, .32, .44, .56, .68, .8, .92].forEach(function (u) {
+          var ax = (1 - u) * (1 - u) * x0 + 2 * u * (1 - u) * x1 + u * u * x2, ay = (1 - u) * (1 - u) * y0 + 2 * u * (1 - u) * y1 + u * u * y2;
+          spines += '<ellipse cx="' + adF(ax) + '" cy="' + adF(ay) + '" rx="2.4" ry="1.8" fill="#F1E8CF"/>';
+          [[-1.05, 8], [-.35, 13], [.3, 10], [1, 7]].forEach(function (sp) {
+            var a = sp[0] + sn * .6, lx = Math.sin(a) * sp[1], ly = -Math.cos(a) * sp[1] * .6 - 1.5;
+            spines += '<path d="M' + adF(ax) + ' ' + adF(ay) + ' q' + adF(lx * .45) + ' ' + adF(ly * .35) + ' ' + adF(lx) + ' ' + adF(ly) + '" stroke="' + (sp[1] > 12 ? '#B4552F' : '#E6CB84') + '" stroke-width="' + (sp[1] > 12 ? '1.35' : '1') + '" fill="none" stroke-linecap="round"/>';
+          });
+        });
+      }
+      var flowers = '';
+      [[cx - 22, top + 8, -24], [cx, top + 1, 0], [cx + 22, top + 8, 24]].forEach(function (fl) {
+        for (var pt = 0; pt < 8; pt++) flowers += '<ellipse cx="' + fl[0] + '" cy="' + (fl[1] - 6) + '" rx="2.8" ry="7.5" fill="#F4C54C" stroke="#D38A2A" stroke-width=".5" transform="rotate(' + (fl[2] + (pt - 3.5) * 20) + ' ' + fl[0] + ' ' + fl[1] + ')"/>';
+        flowers += '<circle cx="' + fl[0] + '" cy="' + (fl[1] - 1) + '" r="3" fill="#C4612C"/>';
+      });
+      s += '<g data-r="cactus">' + cac + spines + flowers + '</g>';
+
+      var rain = '';
+      for (var d = 0; d < 110; d++) rain += '<line data-r="drop" x1="0" y1="0" x2="-3" y2="14" stroke="#5E88B2" stroke-width="1.4" stroke-linecap="round" opacity="0"/>';
+      var vap = '';
+      for (var v = 0; v < 10; v++) vap += '<path data-r="vap" d="M0 0 c-3 -6 3 -10 0 -16 c-3 -6 3 -10 0 -16" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" opacity="0"/>';
+      s += '<g>' + rain + '</g><g>' + vap + '</g></svg>';
+
+      var wrap = document.createElement('div'); wrap.innerHTML = s;
+      var el = wrap.firstChild, R = {};
+      ['wet', 'deep', 'cactus', 'flows'].forEach(function (k) { R[k] = el.querySelector('[data-r="' + k + '"]'); });
+      var drops = el.querySelectorAll('[data-r="drop"]'), vaps = el.querySelectorAll('[data-r="vap"]'), flowEls = el.querySelectorAll('[data-r="flow"]');
+      var DX = [], DP = [], VX = [];
+      for (var q = 0; q < drops.length; q++) { DX.push(rnd() * (W + 60)); DP.push(rnd()); }
+      for (var q2 = 0; q2 < vaps.length; q2++) VX.push(70 + q2 * 56 + rnd() * 20);
+      var S0 = surf(W / 2);
+      function render(t) {
+        var rainOn = adSeg(t, .4, .9) * (1 - adSeg(t, 3.2, 3.8));
+        for (var i = 0; i < drops.length; i++) {
+          var yy = ((t * 560 + DP[i] * 220) % 220) - 24, xx = DX[i] - yy * .2;
+          drops[i].setAttribute('transform', 'translate(' + adF(xx) + ' ' + adF(yy) + ')');
+          drops[i].setAttribute('opacity', adF(rainOn * .8 * (yy < surf(xx) - 14 ? 1 : 0)));
+        }
+        /* the wet band: down to 14 cm, then the water below the roots drains on and the top dries */
+        var wetD = 14 * CM * adEase(adSeg(t, 1, 3.8)), dry = 6 * CM * adEase(adSeg(t, 7.8, 10.8));
+        var sink = 16 * CM * adEase(adSeg(t, 7.8, 11));
+        R.wet.setAttribute('y', adF(S0 - 6 + dry + sink * .55));
+        R.wet.setAttribute('height', adF(Math.max(0, 6 + wetD - dry - sink * .2)));
+        R.wet.setAttribute('opacity', adF(1 - .55 * adSeg(t, 8.5, 11)));
+        R.deep.setAttribute('y', adF(S0 + 14 * CM + sink * .4));
+        R.deep.setAttribute('height', adF(sink * .9));
+        R.deep.setAttribute('opacity', adF(.8 * adSeg(t, 8, 9.5)));
+        R.flows.setAttribute('opacity', adF(adSeg(t, 3.3, 3.9) * (1 - adSeg(t, 8.6, 9.6))));
+        for (var f = 0; f < flowEls.length; f++) flowEls[f].style.strokeDashoffset = adF(-t * 24);
+        var sw = 1 + .035 * adEase(adSeg(t, 3.6, 7.6));
+        R.cactus.setAttribute('transform', 'translate(' + cx + ' ' + base + ') scale(' + adF(sw) + ' 1) translate(' + (-cx) + ' ' + (-base) + ')');
+        var vo = adSeg(t, 7.8, 8.4) * (1 - adSeg(t, 10.6, 11.4));
+        for (var j = 0; j < vaps.length; j++) {
+          var rise = ((t - 7.8) * 14 + j * 7) % 40;
+          vaps[j].setAttribute('transform', 'translate(' + adF(VX[j]) + ' ' + adF(surf(VX[j]) - 4 - rise) + ')');
+          vaps[j].setAttribute('opacity', adF(vo * .85 * (1 - rise / 40)));
+        }
+      }
+      return { el: el, w: W, h: H, dur: 11.6, still: 6, render: render,
+               ref: function (name) {
+                 if (name === 'root' && refs.root) return [refs.root[0] / W * 100, refs.root[1] / H * 100];
+                 if (name === 'deep') return [93, (S0 + 20 * CM) / H * 100];
+                 return null;
+               } };
+    },
+
+    /* A water lily in a pond, in section: leaves floating on long stalks, the thick stem (rhizome)
+       lying in the mud, and small roots anchoring it. A slow current sways the stalks, which bend
+       instead of snapping. The leaves are drawn a little from above, so they read as flat discs. */
+    'lily-roots': function () {
+      var W = 640, H = 420, uid = ++AD_UID, rnd = adRand(21), SURF = 96;
+      function mud(x) { return 318 + 2.6 * Math.sin(x / 47) + 1.6 * Math.sin(x / 17 + 2); }
+      var mP = []; for (var x = 0; x <= W; x += 8) mP.push([x, mud(x)]);
+      var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" class="adv__svg" preserveAspectRatio="xMidYMid meet" aria-hidden="true">' +
+        '<defs>' +
+          '<linearGradient id="alSky' + uid + '" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#E4EEEC"/><stop offset="1" stop-color="#F5F8F3"/></linearGradient>' +
+          '<linearGradient id="alWater' + uid + '" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#A2CDD3"/><stop offset=".4" stop-color="#72A6B1"/><stop offset="1" stop-color="#406F7A"/></linearGradient>' +
+          '<linearGradient id="alMud' + uid + '" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#6E553B"/><stop offset=".5" stop-color="#55422F"/><stop offset="1" stop-color="#3B2E25"/></linearGradient>' +
+          '<linearGradient id="alRhiz' + uid + '" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#A68660"/><stop offset=".5" stop-color="#7A5C3C"/><stop offset="1" stop-color="#51402C"/></linearGradient>' +
+          '<radialGradient id="alPad' + uid + '" cx=".42" cy=".4" r=".7"><stop offset="0" stop-color="#8CC266"/><stop offset=".7" stop-color="#5A9744"/><stop offset="1" stop-color="#3F7534"/></radialGradient>' +
+        '</defs>' +
+        '<rect width="' + W + '" height="' + (SURF + 1) + '" fill="url(#alSky' + uid + ')"/>' +
+        '<rect y="' + SURF + '" width="' + W + '" height="' + (H - SURF) + '" fill="url(#alWater' + uid + ')"/>' +
+        '<path d="M60 ' + SURF + ' L130 ' + SURF + ' L200 320 L80 320Z M250 ' + SURF + ' L300 ' + SURF + ' L360 320 L262 320Z M458 ' + SURF + ' L522 ' + SURF + ' L600 320 L482 320Z" fill="#FFFFFF" opacity=".07"/>';
+      var cur = '';
+      [150, 200, 250, 292].forEach(function (cy) {
+        cur += '<path data-r="cur" d="M-40 ' + cy + ' C60 ' + (cy - 6) + ' 140 ' + (cy + 6) + ' 240 ' + cy + ' S440 ' + (cy - 6) + ' 540 ' + cy + ' S700 ' + (cy + 5) + ' 760 ' + cy + '" fill="none" stroke="#FFFFFF" stroke-width="1.4" stroke-dasharray="22 30" opacity=".22"/>';
+      });
+      s += '<g>' + cur + '</g>';
+      s += '<path d="' + adLine(mP) + 'L' + W + ' ' + H + 'L0 ' + H + 'Z" fill="url(#alMud' + uid + ')"/>';
+      var grains = '';
+      for (var i = 0; i < 220; i++) {
+        var gx = rnd() * W, gy = 326 + rnd() * 92, gr = .6 + rnd() * 2;
+        grains += '<ellipse cx="' + adF(gx) + '" cy="' + adF(gy) + '" rx="' + adF(gr * 1.4) + '" ry="' + adF(gr) + '" fill="' + (rnd() < .5 ? '#86694C' : '#2E231C') + '" opacity="' + adF(.28 + rnd() * .4) + '"/>';
+      }
+      s += grains;
+      /* small roots, drawn before the rhizome so it covers their tops */
+      var roots = '', rootTips = [];
+      for (var rx = 214; rx <= 404; rx += 12) {
+        var rr = adRand(rx), len = 26 + rr() * 34, lean = (rr() - .5) * 1.1, pts = [];
+        for (var q = 0; q <= 7; q++) pts.push([rx + lean * q * len / 7 + Math.sin(q * 1.3 + rx) * 1.3, 338 + q * len / 7]);
+        roots += '<path class="adv__lroot" d="' + adRibbon(pts, 2.4, .5) + '"/>';
+        rootTips.push(pts[4]);
+        if (rr() < .6) {
+          var p0 = pts[3], bp = [];
+          for (var b = 0; b <= 4; b++) bp.push([p0[0] + (lean >= 0 ? 1 : -1) * b * 3.6, p0[1] + b * 3]);
+          roots += '<path class="adv__lroot" d="' + adRibbon(bp, 1.1, .3) + '"/>';
+        }
+      }
+      s += roots;
+      s += '<path d="M204 331 C201 319 214 312 232 314 L390 311 C412 311 424 319 422 331 C420 343 408 348 392 347 L232 349 C214 349 206 343 204 331Z" fill="url(#alRhiz' + uid + ')" stroke="#3F2F20" stroke-width=".9"/>';
+      [236, 262, 289, 316, 343, 370].forEach(function (lx) { s += '<ellipse cx="' + lx + '" cy="317" rx="6" ry="2.6" fill="#4A3624" opacity=".7"/>'; });
+      s += '<path d="M420 322 c9 -9 18 -7 19 1 c-4 3 -9 2 -11 -2" fill="#9FC27A" stroke="#557E3E" stroke-width=".8"/>';
+      /* stalks: base on the rhizome, top under a floating leaf, or under the flower */
+      var STALKS = [[236, 314, 112, SURF, 18, 0], [266, 313, 250, SURF, 22, 1.3], [312, 312, 336, SURF - 6, 14, 2.1], [350, 312, 452, SURF, 20, 3.2], [386, 312, 566, SURF, 17, .7]];
+      s += '<g>' + STALKS.map(function () { return '<path class="adv__stalk" d="M0 0"/><path class="adv__stalkhi" d="M0 0"/>'; }).join('') + '</g>';
+      s += '<g>' + STALKS.map(function (st, k) {
+        if (k === 2) {
+          var petals = '';
+          function petal(a, len, wid, fill) {
+            return '<path d="M0 0 C' + adF(-wid) + ' ' + adF(-len * .4) + ' ' + adF(-wid * .5) + ' ' + adF(-len * .9) + ' 0 ' + adF(-len) + ' C' + adF(wid * .5) + ' ' + adF(-len * .9) + ' ' + adF(wid) + ' ' + adF(-len * .4) + ' 0 0Z" fill="' + fill + '" stroke="#DCC3D6" stroke-width=".7" transform="rotate(' + a + ')"/>';
+          }
+          [-80, -56, 56, 80].forEach(function (a) { petals += petal(a, 19, 7, '#F7EEF4'); });
+          [-34, -12, 12, 34].forEach(function (a) { petals += petal(a, 22, 7.5, '#FFFFFF'); });
+          return '<g data-r="leaf"><path d="M-22 4 C-12 -1 12 -1 22 4 C12 8 -12 8 -22 4Z" fill="#4E8A3F"/>' + petals +
+                 '<ellipse cx="0" cy="-5" rx="6.5" ry="4" fill="#F0C23A" stroke="#CF9A22" stroke-width=".6"/></g>';
+        }
+        var rw = [58, 62, 0, 58, 52][k], ry = rw * .17, notch = k % 2 ? 1 : -1;
+        var veins = '';
+        for (var vn = 0; vn < 9; vn++) { var va = vn / 9 * Math.PI * 2; veins += '<path d="M0 0 L' + adF(Math.cos(va) * rw * .88) + ' ' + adF(Math.sin(va) * ry * .88) + '" stroke="#A9D38A" stroke-width=".7" opacity=".5"/>'; }
+        return '<g data-r="leaf">' +
+          '<ellipse cx="0" cy="2.4" rx="' + rw + '" ry="' + adF(ry) + '" fill="#6A3632"/>' +
+          '<ellipse cx="0" cy="0" rx="' + rw + '" ry="' + adF(ry) + '" fill="url(#alPad' + uid + ')" stroke="#2F5A2B" stroke-width=".7"/>' + veins +
+          '<path d="M0 0 L' + adF(notch * rw) + ' ' + adF(-ry * .12) + ' L' + adF(notch * rw) + ' ' + adF(ry * .5) + 'Z" fill="#8FBFC7"/>' +
+          '<ellipse cx="' + adF(-rw * .25) + '" cy="' + adF(-ry * .3) + '" rx="' + adF(rw * .35) + '" ry="' + adF(ry * .22) + '" fill="#FFFFFF" opacity=".16"/></g>';
+      }).join('') + '</g>';
+      s += '<path d="M0 ' + (SURF + .5) + ' H' + W + '" stroke="#FFFFFF" stroke-width="1.2" opacity=".7"/></svg>';
+
+      var wrap = document.createElement('div'); wrap.innerHTML = s;
+      var el = wrap.firstChild;
+      var stalkEls = el.querySelectorAll('.adv__stalk'), hiEls = el.querySelectorAll('.adv__stalkhi'), leafEls = el.querySelectorAll('[data-r="leaf"]'), curEls = el.querySelectorAll('[data-r="cur"]');
+      var tops = [];
+      function render(t) {
+        var env = Math.min(1, t / 2);
+        STALKS.forEach(function (st, k) {
+          var sway = st[4] * env * Math.sin(.9 * t + st[5]), bx = st[0], by = st[1], tx = st[2] + sway * .45, ty = st[3];
+          var c1x = bx + (tx - bx) * .12 + sway * .25, c1y = by - 80, c2x = tx - (tx - bx) * .3 + sway * .9, c2y = ty + 85;
+          var d = 'M' + bx + ' ' + by + ' C' + adF(c1x) + ' ' + c1y + ' ' + adF(c2x) + ' ' + c2y + ' ' + adF(tx) + ' ' + adF(ty + 2);
+          stalkEls[k].setAttribute('d', d); hiEls[k].setAttribute('d', d);
+          leafEls[k].setAttribute('transform', 'translate(' + adF(tx) + ' ' + ty + ') rotate(' + adF(sway * .05) + ')');
+          tops[k] = [bx, by, c1x, c1y, c2x, c2y, tx, ty];
+        });
+        for (var c = 0; c < curEls.length; c++) curEls[c].style.strokeDashoffset = adF(-t * 18);
+      }
+      function onStalk(k, u) {
+        var p = tops[k]; if (!p) return null;
+        var a = 1 - u;
+        return [a * a * a * p[0] + 3 * a * a * u * p[2] + 3 * a * u * u * p[4] + u * u * u * p[6],
+                a * a * a * p[1] + 3 * a * a * u * p[3] + 3 * a * u * u * p[5] + u * u * u * p[7]];
+      }
+      return { el: el, w: W, h: H, dur: 40, loop: true, still: 0, render: render,
+               ref: function (name) {
+                 if (name === 'stalk') { var p = onStalk(4, .45); return p ? [p[0] / W * 100, p[1] / H * 100] : null; }
+                 if (name === 'roots') { var r = rootTips[12]; return r ? [r[0] / W * 100, r[1] / H * 100] : null; }
+                 return null;
+               } };
+    }
+  };
+
+  /* ----- a picture with its labels, and its animation if it has one ----- */
+  function adFigure(pic, host, keyEl, alive) {
+    var fig = h('div', 'adv__fig'), frame = h('div', 'adv__frame'), labs = h('div', 'adv__labs');
+    var over = adSvg('svg', { 'class': 'adv__over', 'aria-hidden': 'true' });
+    var iw = 4, ih = 3, D = null, still = adStill();
+    if (pic.svg && AD_DIAGRAMS[pic.svg]) {
+      D = AD_DIAGRAMS[pic.svg](); iw = D.w; ih = D.h; frame.appendChild(D.el); frame.classList.add('adv__frame--svg');
+    } else if (pic.img) {
+      var P = W.picture({ img: pic.img, alt: pic.alt || '' });
+      var wh = (global.PHOTO_SIZE || {})[pic.img + '-900.jpg'] || [900, 600];
+      iw = wh[0]; ih = wh[1];
+      P.img.loading = 'eager';
+      var SZ = '(max-width: 1000px) 94vw, 560px';
+      P.img.sizes = SZ; var so = P.pic.querySelector('source'); if (so) so.sizes = SZ;
+      frame.appendChild(P.pic);
+    }
+    fig.appendChild(frame); fig.appendChild(over); fig.appendChild(labs);
+    fig.setAttribute('role', 'img');
+    fig.setAttribute('aria-label', (pic.alt || '') + ((pic.pins || []).length ? ' Labelled: ' + pic.pins.map(function (q) { return q[2]; }).join(', ') + '.' : ''));
+    host.appendChild(fig);
+
+    var pins = pic.pins || [], G = { left: 0, wi: 0, hi: 0, narrow: false }, items = [], rings = [], fxEls = null;
+    function pos(q) {
+      var o = q[4] || {}, r = o.ref && D && D.ref ? D.ref(o.ref) : null;
+      return r || [q[0], q[1]];
+    }
+    function layout() {
+      var W0 = host.clientWidth; if (!W0) return;
+      var maxH = host.classList.contains('adv__stage--fill') ? Math.max(120, host.clientHeight - 6) : Infinity;
+      var need = { l: 0, r: 0 };
+      pins.forEach(function (q) { var k = q[3] === 'left' ? 'l' : 'r'; need[k] = Math.max(need[k], adTextW(q[2])); });
+      function margin(w) { return w ? Math.min(150, Math.max(84, Math.ceil(w) + 18)) : 0; }
+      var mL0 = margin(need.l), mR0 = margin(need.r);
+      var narrow = W0 - mL0 - mR0 < 240 || maxH < 200;
+      var mL = narrow ? 0 : mL0, mR = narrow ? 0 : mR0;
+      var wi = W0 - mL - mR, hi = wi * ih / iw;
+      if (hi > maxH) { hi = maxH; wi = hi * iw / ih; }
+      var left = mL + (W0 - mL - mR - wi) / 2;
+      G = { left: left, wi: wi, hi: hi, narrow: narrow, W0: W0 };
+      if (replay) { replay.style.left = adF(left + 8) + 'px'; replay.style.top = '8px'; }
+      fig.style.height = adF(hi) + 'px';
+      fig.classList.toggle('adv__fig--narrow', narrow);
+      frame.style.left = adF(left) + 'px'; frame.style.width = adF(wi) + 'px'; frame.style.height = adF(hi) + 'px';
+      over.setAttribute('width', W0); over.setAttribute('height', adF(hi)); over.setAttribute('viewBox', '0 0 ' + W0 + ' ' + adF(hi));
+      draw();
+    }
+    /* rings and leaders are redrawn whenever the size changes; the name tags are HTML, so they wrap */
+    function draw() {
+      over.innerHTML = ''; labs.innerHTML = ''; items = []; rings = [];
+      if (keyEl) keyEl.innerHTML = '';
+      (pic.rings || []).forEach(function (r) {
+        var g = adSvg('g', { 'class': 'adv__ringg' });
+        var e = { cx: G.left + r[0] / 100 * G.wi, cy: r[1] / 100 * G.hi, rx: r[2] / 100 * G.wi, ry: r[3] / 100 * G.hi };
+        ['adv__ringhalo', 'adv__ring'].forEach(function (c) { g.appendChild(adSvg('ellipse', { 'class': c, cx: adF(e.cx), cy: adF(e.cy), rx: adF(e.rx), ry: adF(e.ry) })); });
+        over.appendChild(g); rings.push(g);
+      });
+      fxEls = adSvg('g', { 'class': 'adv__fx' }); over.appendChild(fxEls);
+      var side = { left: [], right: [] };
+      pins.forEach(function (q, i) {
+        var p = pos(q), it = { q: q, i: i, ax: G.left + p[0] / 100 * G.wi, ay: p[1] / 100 * G.hi, right: q[3] !== 'left' };
+        it.g = adSvg('g', { 'class': 'adv__pin' });
+        over.appendChild(it.g);
+        if (G.narrow) {
+          it.g.appendChild(adSvg('circle', { 'class': 'adv__numhalo', cx: adF(it.ax), cy: adF(it.ay), r: 11 }));
+          it.g.appendChild(adSvg('circle', { 'class': 'adv__num', cx: adF(it.ax), cy: adF(it.ay), r: 9 }));
+          var tx = adSvg('text', { 'class': 'adv__numtxt', x: adF(it.ax), y: adF(it.ay + 4), 'text-anchor': 'middle' });
+          tx.textContent = String(i + 1); it.g.appendChild(tx);
+          if (keyEl) { it.li = h('li', 'adv__keyi', esc(q[2])); keyEl.appendChild(it.li); }
+        } else {
+          it.lab = h('span', 'adv__lab adv__lab--' + (it.right ? 'r' : 'l'), esc(q[2]));
+          it.lab.style.width = adF(Math.max(60, (it.right ? G.W0 - (G.left + G.wi) : G.left) - 12)) + 'px';
+          labs.appendChild(it.lab);
+          side[it.right ? 'right' : 'left'].push(it);
+        }
+        items.push(it);
+      });
+      if (!G.narrow) ['left', 'right'].forEach(function (k) {
+        var list = side[k].sort(function (a, b) { return a.ay - b.ay; }), j;
+        list.forEach(function (it) { it.h = it.lab.offsetHeight || 18; it.ly = it.ay; });
+        for (j = 1; j < list.length; j++) { var lo = list[j - 1].ly + (list[j - 1].h + list[j].h) / 2 + 4; if (list[j].ly < lo) list[j].ly = lo; }
+        for (j = list.length - 1; j >= 0; j--) {
+          var hiY = j === list.length - 1 ? G.hi - list[j].h / 2 : list[j + 1].ly - (list[j + 1].h + list[j].h) / 2 - 4;
+          if (list[j].ly > hiY) list[j].ly = hiY;
+          if (list[j].ly < list[j].h / 2) list[j].ly = list[j].h / 2;
+        }
+        list.forEach(leader);
+      });
+      reveal(lastT, true);
+    }
+    function leader(it) {
+      var edge = it.right ? G.left + G.wi : G.left, dir = it.right ? 1 : -1;
+      it.lab.style.top = adF(it.ly - it.h / 2) + 'px';
+      it.lab.style.left = it.right ? adF(edge + 10) + 'px' : '0px';
+      var d = 'M' + adF(it.ax) + ' ' + adF(it.ay) + 'H' + adF(edge + dir * 3) + (Math.abs(it.ly - it.ay) > .5 ? 'L' + adF(edge + dir * 8) + ' ' + adF(it.ly) : 'H' + adF(edge + dir * 8));
+      if (!it.hal) {
+        it.hal = adSvg('path', { 'class': 'adv__leadhalo' }); it.ln = adSvg('path', { 'class': 'adv__lead' });
+        it.dot = adSvg('circle', { 'class': 'adv__dot', r: 2.6 });
+        it.g.appendChild(it.hal); it.g.appendChild(it.ln); it.g.appendChild(it.dot);
+      }
+      it.hal.setAttribute('d', d); it.ln.setAttribute('d', d);
+      it.dot.setAttribute('cx', adF(it.ax)); it.dot.setAttribute('cy', adF(it.ay));
+    }
+    /* a label whose part moves with the drawing (a swaying stalk) follows it, and only its leader moves */
+    function follow() {
+      if (G.narrow) return;
+      items.forEach(function (it) {
+        var o = it.q[4] || {}; if (!o.ref) return;
+        var p = pos(it.q); it.ax = G.left + p[0] / 100 * G.wi; it.ay = p[1] / 100 * G.hi; leader(it);
+      });
+    }
+    var lastT = -1;
+    function reveal(t, instant) {
+      lastT = t;
+      rings.forEach(function (g) { g.classList.add('is-on'); });
+      items.forEach(function (it, k) {
+        var at = (it.q[4] || {}).at, on = at == null ? t >= 0 : t >= at;
+        if (instant) { it.g.style.transitionDelay = ''; if (it.lab) it.lab.style.transitionDelay = ''; }
+        it.g.classList.toggle('is-on', on); if (it.lab) it.lab.classList.toggle('is-on', on); if (it.li) it.li.classList.toggle('is-on', on);
+      });
+    }
+
+    /* ----- animation: a diagram's own timeline, or a few particles over a photograph ----- */
+    var raf = null, t0 = null, ro = null, done = false;
+    var fx = pic.fx ? adParticles(pic.fx) : null;
+    function frameFn(now) {
+      if (!fig.isConnected || (alive && !alive())) { stop(); return; }
+      if (t0 == null) t0 = now;
+      var t = (now - t0) / 1000, shown = !!fig.offsetParent;
+      if (D && !D.loop) {
+        var tt = Math.min(t, D.dur);
+        D.render(tt); follow(); reveal(tt);
+        if (t >= D.dur) { done = true; raf = null; if (replay) replay.hidden = false; return; }
+      } else if (D) {
+        if (shown) { D.render(t); follow(); reveal(t); }
+      } else if (fx) {
+        if (shown) fx.step(t, G, fxEls);
+      } else { raf = null; return; }
+      raf = requestAnimationFrame(frameFn);
+    }
+    function play() {
+      if (raf) cancelAnimationFrame(raf);
+      t0 = null; done = false; if (replay) replay.hidden = true;
+      if (still) {
+        if (D) { D.render(D.still != null ? D.still : D.dur); follow(); reveal(1e9, true); }
+        else { reveal(1e9, true); if (fx) fx.still(G, fxEls); }
+        return;
+      }
+      if (!D) reveal(1e9);
+      raf = requestAnimationFrame(frameFn);
+    }
+    function stop() { if (raf) cancelAnimationFrame(raf); raf = null; if (ro) { ro.disconnect(); ro = null; } }
+    var replay = null;
+    if (D && !D.loop) {
+      replay = h('button', 'adv__replay', '↻ Play again'); replay.type = 'button'; replay.hidden = true;
+      replay.addEventListener('click', play);
+      fig.appendChild(replay);
+    }
+    if (D) D.render(0);
+    layout();
+    if (!D) items.forEach(function (it, k) { it.g.style.transitionDelay = (.35 + k * .18) + 's'; if (it.lab) it.lab.style.transitionDelay = (.35 + k * .18) + 's'; });
+    if (window.ResizeObserver) { ro = new ResizeObserver(function () { if (fig.isConnected) layout(); }); ro.observe(host); }
+    var frozen = false;
+    requestAnimationFrame(function () { requestAnimationFrame(function () { fig.classList.add('is-in'); if (!frozen) play(); }); });
+    return { stop: stop, layout: layout, fig: fig,
+             seek: function (t) { frozen = true; stop(); if (D) { D.render(D.loop ? t : Math.min(t, D.dur)); follow(); reveal(t, true); } else { reveal(1e9, true); if (fx) fx.still(G, fxEls); } fig.classList.add('is-in'); } };
+  }
+
+  /* Particles over a photograph, for the two features whose point is something moving that no
+     photograph can show: water vapour kept in a pit, and gases passing through a stoma. Positions
+     are percentages of the picture, so they stay on the part as the picture is resized. */
+  function adParticles(fx) {
+    var rnd = adRand(5), P = [], N = fx.type === 'gas' ? 16 : 14;
+    function born(k, t) {
+      if (fx.type === 'pit') return { k: k, x: fx.stoma[0] + (rnd() - .5) * 2, y: fx.stoma[1] - 1.5, vx: 0, vy: 0, t0: t, out: false, life: 1 };
+      var incoming = k % 2 === 0;
+      return incoming
+        ? { k: k, co2: true, x: fx.pore[0] + (rnd() - .5) * 16, y: fx.above[1] + rnd() * 4, t0: t, stage: 0, life: 1 }
+        : { k: k, co2: false, x: fx.below[0] + (rnd() - .5) * 8, y: fx.below[1] + rnd() * 6, t0: t, stage: 0, life: 1 };
+    }
+    function step(t, G, g) {
+      if (!G.wi) return;
+      if (!P.length) for (var k = 0; k < N; k++) { var b = born(k, t - rnd() * 3); P.push(b); }
+      var dt = 1 / 60;
+      P.forEach(function (p, i) {
+        if (fx.type === 'pit') {
+          var c = fx.pit;
+          p.vx += (rnd() - .5) * .9; p.vy += (rnd() - .52) * .9; p.vx *= .86; p.vy *= .86;
+          p.x += p.vx * dt * 6; p.y += p.vy * dt * 6;
+          var ex = (p.x - c[0]) / c[2], ey = (p.y - c[1]) / c[3];
+          if (!p.out && ex * ex + ey * ey > 1) {
+            if (p.y < fx.mouth[1] + 1 && Math.abs(p.x - fx.mouth[0]) < c[2] * .5 && rnd() < .05) p.out = true;
+            else { p.x = c[0] + (p.x - c[0]) / Math.sqrt(ex * ex + ey * ey) * .96; p.y = c[1] + (p.y - c[1]) / Math.sqrt(ex * ex + ey * ey) * .96; p.vx *= -.5; p.vy *= -.5; }
+          }
+          if (p.out) { p.vy -= .6; p.life -= dt * .6; }
+          if (p.life <= 0 || t - p.t0 > 16) P[i] = born(p.k, t);
+        } else {
+          var sp = 9 * dt;
+          if (p.co2) {
+            if (p.stage === 0) { p.x += (fx.pore[0] - p.x) * .035; p.y += sp * 1.1; if (p.y >= fx.pore[1] - .5) p.stage = 1; }
+            else { p.x += (rnd() - .5) * .4; p.y += sp; if (p.y > fx.below[1] + 4) p.life -= dt * 1.5; }
+          } else {
+            if (p.stage === 0) { p.x += (fx.pore[0] - p.x) * .05; p.y -= sp; if (p.y <= fx.pore[1] + .5) p.stage = 1; }
+            else { p.x += (rnd() - .5) * .5 + .05; p.y -= sp * 1.1; if (p.y < fx.above[1] + 5) p.life -= dt * 1.5; }
+          }
+          if (p.life <= 0) P[i] = born(p.k, t);
+        }
+      });
+      paint(G, g, t);
+    }
+    var els = [], halo = null, tags = [];
+    function paint(G, g, t) {
+      if (!g) return;
+      if (!els.length || els[0].ownerSVGElement !== g.ownerSVGElement) {
+        g.innerHTML = ''; els = []; tags = [];
+        if (fx.type === 'pit') {
+          halo = adSvg('ellipse', { 'class': 'adv__haze' }); g.appendChild(halo);
+        } else {
+          [['CO₂ in', 'adv__gastag adv__gastag--co2', fx.tagCo2], ['O₂ out', 'adv__gastag adv__gastag--o2', fx.tagO2]].forEach(function (tg) {
+            var tx = adSvg('text', { 'class': tg[1] }); tx.textContent = tg[0]; g.appendChild(tx); tags.push([tx, tg[2]]);
+          });
+        }
+        P.forEach(function (p) { var c = adSvg('circle', { r: 3, 'class': 'adv__mol' + (p.co2 ? ' adv__mol--co2' : '') }); g.appendChild(c); els.push(c); });
+      }
+      if (halo) {
+        var c = fx.pit;
+        halo.setAttribute('cx', adF(G.left + c[0] / 100 * G.wi)); halo.setAttribute('cy', adF(c[1] / 100 * G.hi));
+        halo.setAttribute('rx', adF(c[2] / 100 * G.wi)); halo.setAttribute('ry', adF(c[3] / 100 * G.hi));
+        halo.setAttribute('opacity', adF(.5 + .15 * Math.sin(t * 1.6)));
+      }
+      tags.forEach(function (tg) { tg[0].setAttribute('x', adF(G.left + tg[1][0] / 100 * G.wi)); tg[0].setAttribute('y', adF(tg[1][1] / 100 * G.hi)); });
+      P.forEach(function (p, i) {
+        if (!els[i]) return;
+        els[i].setAttribute('cx', adF(G.left + p.x / 100 * G.wi)); els[i].setAttribute('cy', adF(p.y / 100 * G.hi));
+        els[i].setAttribute('opacity', adF(Math.max(0, p.life) * .95));
+      });
+    }
+    return { step: step, still: function (G, g) { for (var s = 0; s < 240; s++) step(s / 60 + 3, G, g); } };
+  }
+
   function adapt(spec) {
-    var box = h('div', 'widget');
+    var box = h('div', 'widget ad-w');
     box.appendChild(head(spec.title || 'Read the plant', spec.ask, 'Click the features'));
     var PLANTS = [
       { name: 'A cactus, in a desert', kind: 'xerophyte', problem: 'Too little water; fierce sun; a downpour now and then.', feats: [
@@ -5621,23 +6156,167 @@
         ['Long, thin, flexible stem', 'the water holds it up', 'so it bends in a current instead of snapping'],
         ['Small roots', 'water and mineral ions come in over the whole surface', 'so a big root system is not needed']] }
     ];
-    var wrap = h('div', 'ad');
-    PLANTS.forEach(function (p) {
+    var PICS = spec.pics || {};
+    var wrap = h('div', 'ad'), cards = [], slots = [], chipsAll = [];
+
+    /* ----- the viewer: a heading, the picture, its key and its words ----- */
+    var pack = h('div', 'adv'), vhead = h('div', 'adv__head'), stage = h('div', 'adv__stage');
+    var keyEl = h('ol', 'adv__key'), cap = h('p', 'adv__cap');
+    cap.setAttribute('aria-live', 'polite');
+    pack.appendChild(vhead); pack.appendChild(stage); pack.appendChild(keyEl); pack.appendChild(cap);
+    var live = null, lastPlant = 0;
+
+    function showIntro() {
+      if (live) { live.stop(); live = null; }
+      vhead.innerHTML = '<b class="adv__title">See each feature</b>';
+      stage.innerHTML = ''; keyEl.innerHTML = '';
+      var intro = h('div', 'adv__intro');
+      (spec.intro || []).forEach(function (t, k) {
+        var tile = h('button', 'adv__tile adv__tile--' + PLANTS[k].kind); tile.type = 'button';
+        var P = W.picture({ img: t.img, alt: '' });
+        if (P) tile.appendChild(P.pic);
+        tile.appendChild(h('span', 'adv__tilecap', esc(PLANTS[k].name)));
+        tile.addEventListener('click', function () { var b = cards[k].querySelector('.ad__chip'); if (b) b.click(); });
+        intro.appendChild(tile);
+      });
+      stage.appendChild(intro);
+      cap.textContent = 'Click a feature on either plant, and a picture of that feature appears here.';
+    }
+    function showPic(pi, f) {
+      var p = PLANTS[pi], pic = PICS[f[0]];
+      if (live) { live.stop(); live = null; }
+      vhead.innerHTML = '<span class="adv__tag adv__tag--' + p.kind + '">' + (p.kind === 'xerophyte' ? 'Xerophyte' : 'Hydrophyte') + '</span>' +
+                        '<b class="adv__title">' + esc(f[0]) + '</b>';
+      stage.innerHTML = ''; keyEl.innerHTML = '';
+      if (!pic) { cap.textContent = ''; return; }
+      live = adFigure(pic, stage, keyEl, function () { return box.isConnected; });
+      cap.innerHTML = esc(pic.cap || '') + (pic.credit ? '<span class="adv__credit">' + esc(pic.credit) + '</span>' : '');
+    }
+
+    PLANTS.forEach(function (p, pi) {
       var col = h('div', 'ad__plant ad__plant--' + p.kind);
       col.innerHTML = '<h4>' + esc(p.name) + '<small>' + esc(p.problem) + '</small></h4>';
-      var chips = h('div', 'ad__chips'), say = h('p', 'ad__say', '<i>Click a feature.</i>');
+      var chips = h('div', 'ad__chips'), say = h('p', 'ad__say', '<i>Click a feature.</i>'), slot = h('div', 'ad__slot');
       p.feats.forEach(function (f) {
         var b = h('button', 'ad__chip', esc(f[0])); b.type = 'button';
         b.addEventListener('click', function () {
-          chips.querySelectorAll('.ad__chip').forEach(function (x) { x.classList.toggle('is-on', x === b); });
+          chipsAll.forEach(function (x) { x.classList.toggle('is-on', x === b); });
           say.innerHTML = '<span class="ad__f">' + esc(f[0]) + '</span> <span class="ad__arrow">→</span> <span class="ad__d">' + esc(f[1]) + '</span> <span class="ad__arrow">→</span> <span class="ad__w">' + esc(f[2]) + '</span>';
+          cards.forEach(function (c, k) { if (k !== pi) { var s2 = c.querySelector('.ad__say'); if (s2 && !c.querySelector('.ad__chip.is-on')) s2.innerHTML = '<i>Click a feature.</i>'; } });
+          lastPlant = pi;
+          showPic(pi, f);
+          mount();
         });
-        chips.appendChild(b);
+        chips.appendChild(b); chipsAll.push(b);
       });
-      col.appendChild(chips); col.appendChild(say); wrap.appendChild(col);
+      col.appendChild(chips); col.appendChild(say); col.appendChild(slot);
+      cards.push(col); slots.push(slot); wrap.appendChild(col);
     });
     box.appendChild(wrap);
     box.appendChild(h('p', 'widget__note', 'Feature → what it does → why that matters here. An answer with only the first part earns nothing.'));
+
+    /* ----- where the viewer stands: the column, the strip, or inside the widget ----- */
+    var wideQ = window.matchMedia('(min-width: 1001px)');
+    var stripQ = window.matchMedia('(max-width: 1000px) and (min-height: 561px)');
+    var staged = null;
+    function host() { return document.getElementById('simHost'); }
+    function owned() { var hs = host(); return !!(hs && hs.contains(box)); }
+    function mode() {
+      if (!spec.onStage || owned() || !host()) return 'flow';
+      if (wideQ.matches) return 'column';
+      if (stripQ.matches) return 'strip';
+      return 'flow';
+    }
+    function mount() {
+      var hs = host(), m = mode(), home = slots[lastPlant];
+      if (m === 'column') {
+        if (pack.parentNode !== hs) { hs.innerHTML = ''; hs.appendChild(pack); }
+        if (stage.parentNode !== pack) pack.insertBefore(stage, keyEl);
+      } else {
+        if (pack.parentNode !== home) home.appendChild(pack);
+        if (m === 'strip') { if (stage.parentNode !== hs) { hs.innerHTML = ''; hs.appendChild(stage); } }
+        else if (stage.parentNode !== pack) pack.insertBefore(stage, keyEl);
+      }
+      stage.classList.toggle('adv__stage--fill', m === 'strip');
+      box.classList.toggle('ad--split', m === 'column');
+      box.classList.toggle('ad--strip', m === 'strip');
+      if (m === 'flow' && staged !== null) { staged = null; if (global.Plate && global.Plate.stageSim) global.Plate.stageSim(false); }
+      if (m !== 'flow') { staged = null; look(); }
+      watch();
+      if (live) live.layout();
+    }
+    box.__onMove = mount;
+
+    function scrollerOf(el) {
+      var n = el && el.parentNode;
+      while (n && n.nodeType === 1) {
+        var st = window.getComputedStyle(n);
+        if (/(auto|scroll)/.test(st.overflowY) && n.scrollHeight > n.clientHeight + 4) return n;
+        n = n.parentNode;
+      }
+      return null;
+    }
+    function reading() {
+      var r = wrap.getBoundingClientRect(), sc = scrollerOf(box);
+      var t = 0, b = window.innerHeight || 800;
+      if (sc) { var q = sc.getBoundingClientRect(); t = q.top; b = q.bottom; }
+      var hs = host(), lead = (mode() === 'strip' && hs) ? hs.getBoundingClientRect().height : 0;
+      return r.bottom > t + lead + 30 && r.top < b - LOWER * (b - t - lead);
+    }
+    /* staging can change the height of the strip; correcting the scroll by what moved stops the flicker */
+    function say(v) {
+      /* a widget taken off the page (the tab changed) is told once more that it is out of view:
+         it must not hide the column, which may already hold the Practise copy of this widget */
+      if (!box.isConnected) { detach(); return; }
+      if (v === staged) return;
+      staged = v;
+      var sc = scrollerOf(box), before = box.getBoundingClientRect().top;
+      if (global.Plate && global.Plate.stageSim) global.Plate.stageSim(v);
+      if (sc) { var moved = box.getBoundingClientRect().top - before; if (Math.abs(moved) > 1) sc.scrollTop += moved; }
+      if (v && live) live.layout();
+    }
+    function look() {
+      if (!box.isConnected) { detach(); return; }
+      if (mode() === 'flow') return;
+      say(reading());
+    }
+    /* one observer, one fixed band, watching the two plant cards (which do not change size when the
+       picture is staged): the same rules the auxin experiments settled on. The band stops a third of
+       the way up from the bottom, so opening the station still shows the plant, and the pictures take
+       its place only once the reader has scrolled down to the chips. */
+    var io = null, LOWER = .35;
+    function watch() {
+      if (io) { io.disconnect(); io = null; }
+      var m = mode(); if (m === 'flow' || !window.IntersectionObserver) return;
+      var col = document.querySelector('.platecol');
+      var lead = (m === 'strip' && col) ? Math.round(col.getBoundingClientRect().height) : 0;
+      try {
+        io = new IntersectionObserver(function (es) {
+          if (!es || !es.length) return;
+          say(!!es[es.length - 1].isIntersecting);
+        }, { root: scrollerOf(box) || null, rootMargin: (-lead - 30) + 'px 0px -' + Math.round(LOWER * 100) + '% 0px', threshold: 0 });
+        io.observe(wrap);
+      } catch (e) { io = null; }
+    }
+    function detach() {
+      if (io) { io.disconnect(); io = null; }
+      if (live) { live.stop(); live = null; }
+      wideQ.removeEventListener('change', onWide);
+      stripQ.removeEventListener('change', onWide);
+    }
+    var onWide = function () { if (box.isConnected) mount(); else detach(); };
+    wideQ.addEventListener('change', onWide);
+    stripQ.addEventListener('change', onWide);
+    box.__onReset = detach;
+    /* for the headless checks: show a feature by its chip's name, and jump its animation to time t */
+    box.__show = function (name, t) {
+      for (var i = 0; i < chipsAll.length; i++) if (chipsAll[i].textContent === name) { chipsAll[i].click(); break; }
+      if (t != null && live) live.seek(t);
+      return !!live;
+    };
+
+    showIntro();
+    requestAnimationFrame(function () { mount(); });
     return box;
   }
 
