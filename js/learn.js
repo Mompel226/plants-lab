@@ -949,7 +949,7 @@
     var SHOT = [
       { img: 'starch-leaves', cap: 'One new green leaf and two old leaves, one red and one yellow, all picked in the sun.' },
       { img: 'starch-leaves', cap: 'Boiled in water, the leaves go soft and limp. This step was not photographed.' },
-      { img: 'starch-boil',   cap: 'Boiling in ethanol, in a water bath: the ethanol turns green because the chlorophyll is leaving the leaves.' },
+      { img: 'starch-boil', tall: true, cap: 'Boiling in ethanol, in a water bath: the ethanol turns green because the chlorophyll is leaving the leaves.' },
       { img: 'starch-decolourised', cap: 'Rinsed: the green is gone. The new leaf is pale, the red leaf almost white, and the yellow leaf keeps its yellow.' },
       { img: 'starch-iodine', cap: 'After iodine solution.' }
     ];
@@ -1135,7 +1135,7 @@
         /* the real practical: its photograph stands where the drawing does */
         var sh = SHOT[v];
         figure.innerHTML = '<picture><source srcset="assets/photos/' + sh.img + '-900.webp" type="image/webp">' +
-          '<img class="st__photo" src="assets/photos/' + sh.img + '-900.jpg" alt="' + esc(sh.cap) + '"></picture>';
+          '<img class="st__photo' + (sh.tall ? ' st__photo--tall' : '') + '" src="assets/photos/' + sh.img + '-900.jpg" alt="' + esc(sh.cap) + '"></picture>';
         cap.innerHTML = back + esc(sh.cap);
       } else {
         figure.innerHTML = draw(leaf.k, v);

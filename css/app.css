@@ -1195,6 +1195,8 @@ picture{display:block;line-height:0}
 .st__cap{font-size:12px;line-height:1.4;color:#5A5A5A;text-align:center;margin:7px 2px 1px}
 .st.st--real{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr)}
 .st__photo{display:block;width:100%;height:auto;border-radius:6px}
+/* the water bath stands upright, so it is capped in height rather than stretched to the width */
+.st__photo--tall{width:auto;max-width:100%;max-height:430px;margin:0 auto}
 .st--real .st__cap{text-align:left;font-size:13px;line-height:1.45;color:#4A4A4A;margin:8px 2px 2px}
 .st__res{font-size:14px;line-height:1.55;color:#3C3C3C;background:var(--green-tint);border:1px solid #A9D6BA;border-radius:var(--r);padding:11px 13px;margin-top:14px}
 .st__res b{color:var(--green)}
