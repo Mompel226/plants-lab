@@ -947,7 +947,7 @@
       { img: 'starch-leaves', cap: 'three leaves before the test: green, red and yellow' },
       { img: 'starch-boil',   cap: 'the ethanol going green: that colour is the chlorophyll leaving the leaves' },
       { img: 'starch-decolourised', cap: 'the same leaves with the colour gone' },
-      { img: 'starch-iodine', cap: 'the same leaves after iodine. The green leaf has turned blue-black, so it contained starch. The yellow leaf stayed orange-brown: no starch.' }
+      { img: 'starch-iodine', cap: 'the same leaves after iodine. The green leaf has turned blue-black all over: it was full of starch. The yellow and red leaves are orange-brown with darker patches: they held a little starch.' }
     ];
     var SHOT_CREDIT = 'From the starch practical slides';
 
@@ -1090,8 +1090,14 @@
         '<picture><source srcset="assets/photos/' + c.img + '-900.webp" type="image/webp">' +
         '<img src="assets/photos/' + c.img + '-900.jpg" width="600" height="714" loading="lazy" alt="The class leaves: ' + esc(c.h.toLowerCase()) + '"></picture></div>';
     }).join('') + '</div>' +
-      '<figcaption><b>Class practical, the three stages side by side.</b> The big green leaf goes pale in ethanol, then blue-black with iodine: it contained starch. ' +
-      'The yellow leaf stays yellow-orange: no starch. The photographs are turned and scaled so the big leaf lines up. · ' + esc(SHOT_CREDIT) + '</figcaption>';
+      /* Daniel, correcting the first version ("the yellow leaf stays yellow-orange: no starch"):
+         the yellow leaf still had green patches, and after iodine those patches are darker; the
+         red leaf goes brown with dark patches. Neither had NO starch: both had a little, fading
+         as the leaf aged. Checked on the photographs before rewording. */
+      '<figcaption><b>Class practical, the three stages side by side.</b> The big green leaf goes pale in ethanol, then blue-black with iodine: it was full of starch. ' +
+      'The yellow and red leaves are old leaves that had already lost most of their chlorophyll. After iodine they are orange-brown with darker patches, not blue-black: they still held a little starch. ' +
+      'On the yellow leaf the darker patches are where it was still green. With little chlorophyll left, an old leaf makes little new starch, and before the leaf falls the plant breaks down the starch it holds and carries the sugar away in the phloem. ' +
+      'The photographs are turned and scaled so the big leaf lines up. · ' + esc(SHOT_CREDIT) + '</figcaption>';
 
     var leaf = LEAVES[0], at = 0, view = null, btns = [], steps = [];
 
