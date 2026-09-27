@@ -1096,8 +1096,7 @@
          as the leaf aged. Checked on the photographs before rewording. */
       '<figcaption><b>Class practical, the three stages side by side.</b> The big green leaf goes pale in ethanol, then blue-black with iodine: it was full of starch. ' +
       'The yellow and red leaves are old leaves that had already lost most of their chlorophyll. After iodine they are orange-brown with darker patches, not blue-black: they still held a little starch. ' +
-      'On the yellow leaf the darker patches are where it was still green. With little chlorophyll left, an old leaf makes little new starch, and before the leaf falls the plant breaks down the starch it holds and carries the sugar away in the phloem. ' +
-      'The photographs are turned and scaled so the big leaf lines up. · ' + esc(SHOT_CREDIT) + '</figcaption>';
+      'On the yellow leaf the darker patches are where it was still green. With little chlorophyll left, an old leaf makes little new starch, and before the leaf falls the plant breaks down the starch it holds and carries the sugar away in the phloem.</figcaption>';
 
     var leaf = LEAVES[0], at = 0, view = null, btns = [], steps = [];
 
