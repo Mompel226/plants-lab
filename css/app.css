@@ -1141,6 +1141,10 @@ picture{display:block;line-height:0}
 .lg__mk:hover,.lg__mkt:hover{opacity:.75}
 .lg__btns{position:absolute;top:9px;right:11px;display:flex;gap:7px;flex-wrap:wrap;z-index:2}
 .lg__btns .wbtn{box-shadow:0 1px 5px rgba(20,30,25,.13)}
+/* with the graph standing in the plant's column, Plot and Clear sit with the sliders instead of on its corner */
+.widget.is-staged .lg__btns{position:static;justify-content:flex-start;margin:8px 0 6px}
+.widget.is-staged .lg__btns .wbtn{box-shadow:none}
+.sim > .stg-pack .lg__plot svg{min-width:0}
 @media (max-width:640px){.lg__stage{display:flex;flex-direction:column-reverse;gap:8px}.lg__btns{position:static;justify-content:flex-end}}
 .lg__read{display:grid;gap:5px;margin-top:11px;background:#fff;border:1px solid var(--edge);border-radius:var(--r);padding:10px 13px}
 .lg__rate{display:block;height:7px;border-radius:4px;background:#EDEBE3;overflow:hidden}
