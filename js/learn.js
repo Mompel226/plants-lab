@@ -934,15 +934,20 @@
                'pale: the chlorophyll is now in the ethanol',
                'softened again and spread flat, ready for the iodine', ''];
 
-    /* The drawing says what is happening; the photograph says what it looks like on the bench.
-       Three of Dr Mompel's class practical, shown in order as the steps are pressed — the leaves
-       before, the ethanol going green in the water bath, and the leaves with the colour gone. */
+    /* The drawing says what is happening to the leaf you chose; the photograph says what it looks
+       like on the bench. Four photographs of Dr Mompel's class practical, shown in order as the
+       steps are pressed — the leaves before, the ethanol going green in the water bath, the leaves
+       with the colour gone, and the same leaves after iodine.
+       The class leaves are not the four drawn ones, and after iodine they disagree with the default
+       leaf: the drawn control has no starch, the class's green leaf has plenty. So every caption
+       says whose leaf it is about ("Your leaf" under the drawing, "Class practical" under the
+       photograph), and the last photograph says outright that its green leaf contained starch. */
     var SHOT = [
-      { img: 'starch-leaves', cap: 'the leaves before the test' },
-      { img: 'starch-leaves', cap: 'the leaves before the test' },
+      { img: 'starch-leaves', cap: 'three leaves before the test: green, red and yellow' },
+      { img: 'starch-leaves', cap: 'three leaves before the test: green, red and yellow' },
       { img: 'starch-boil',   cap: 'the ethanol going green: that colour is the chlorophyll leaving the leaves' },
       { img: 'starch-decolourised', cap: 'the same leaves with the colour gone' },
-      { img: 'starch-decolourised', cap: 'the same leaves with the colour gone' }
+      { img: 'starch-iodine', cap: 'the same leaves after iodine. The green leaf has turned blue-black, so it contained starch. The yellow leaf stayed orange-brown: no starch.' }
     ];
     var SHOT_CREDIT = 'From the starch practical slides';
 
@@ -1094,11 +1099,11 @@
       btns.forEach(function (b, i) { b.classList.toggle('is-on', LEAVES[i] === leaf); });
       before.innerHTML = '<b>Before the test:</b> ' + leaf.before;
       figure.innerHTML = draw(leaf.k, at);
-      cap.textContent = at === 0 ? leaf.fresh : at === 4 ? leaf.out : CAP[at];
+      cap.innerHTML = '<b>Your leaf:</b> ' + esc(at === 0 ? leaf.fresh : at === 4 ? leaf.out : CAP[at]);
       var sh = SHOT[at];
       shot.innerHTML = '<picture><source srcset="assets/photos/' + sh.img + '-900.webp" type="image/webp">' +
-        '<img src="assets/photos/' + sh.img + '-900.jpg" alt="' + esc(sh.cap) + '" loading="lazy"></picture>' +
-        '<figcaption>' + esc(sh.cap) + ' · ' + esc(SHOT_CREDIT) + '</figcaption>';
+        '<img src="assets/photos/' + sh.img + '-900.jpg" alt="The class practical: ' + esc(sh.cap) + '" loading="lazy"></picture>' +
+        '<figcaption><b>Class practical:</b> ' + esc(sh.cap) + ' · ' + esc(SHOT_CREDIT) + '</figcaption>';
       steps.forEach(function (s, i) { s.li.classList.toggle('is-done', i < at); s.why.hidden = i >= at; });
       res.hidden = at < STEPS.length;
       if (at === STEPS.length) res.innerHTML = '<b>' + esc(leaf.res) + '</b> ' + leaf.say;
