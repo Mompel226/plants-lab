@@ -834,6 +834,7 @@
     paint(); paintTable();
     var tick = setInterval(function () { if (!S.running && settleFrac() < 1) paint(); }, 220);
     box.__onReset = function () { if (timer) clearInterval(timer); clearInterval(tick); };
+    if (spec.onStage) stageWidget(box, stage, spec.title || 'Count the bubbles');
     return box;
   }
 
@@ -1288,6 +1289,7 @@
     paintGrid(); paintAll();
     box.appendChild(h('p', 'widget__note', 'The indicator starts orange-red, the colour it takes with the carbon dioxide in ordinary air, and answers one question only: has the carbon dioxide gone up, down, or not changed? Try to build a pair that shows the algae photosynthesise; then one that shows they respire; then one that proves the algae caused it.'));
     box.__onReset = function () { T[0] = { what: 'algae', where: 'light' }; T[1] = { what: 'none', where: 'light' }; };
+    if (spec.onStage) stageWidget(box, stage, spec.title || 'Hydrogencarbonate indicator');
     return box;
   }
 
@@ -5707,13 +5709,106 @@
       add: function (c) { c.wants = false; claims.push(c); return c; },
       drop: function (c) {
         var i = claims.indexOf(c); if (i >= 0) claims.splice(i, 1);
-        if (holder === c) { holder = null; if (c.off) c.off(); apply(); if (!claims.length && global.Plate && global.Plate.stageSim) global.Plate.stageSim(false); }
+        if (holder !== c) return;
+        holder = null;
+        if (c.off) c.off();
+        /* A widget taken off the page (the tab changed) is dropped here too, and it must not hand
+           the column back: by then the column may hold the Practise tab's copy of a simulation,
+           and stageSim(false) would hide it. Only a claim still on the page gives the column up. */
+        if (!c.box.isConnected) return;
+        apply();
+        if (!holder && global.Plate && global.Plate.stageSim) global.Plate.stageSim(false);
       },
       want: function (c, v) { v = !!v; if (c.wants === v) { if (v) apply(); return; } c.wants = v; apply(); },
       holding: function (c) { return holder === c; },
       scrollerOf: scrollerOf
     };
   })();
+
+  /* ---------- stageWidget: a widget's drawing stands in the plant's column ----------
+     Daniel's rule for every animation (Circulation Lab 25–26 Sep; here, 27 Sep, for Count the
+     bubbles and the hydrogencarbonate tubes): the drawing on the LEFT, the controls on the right,
+     so nothing has to be scrolled between them. The widget hands over its drawing. On a wide screen
+     the drawing never sits in the words: it waits, hidden, until the reader is level with the
+     widget, then stands where the plant is. On a phone it goes to the strip at the top. Where there
+     is room for neither (a short landscape phone, or the Practise tab's own column) it stays in
+     the widget. The whole widget box is watched, and its height does not change when the drawing
+     leaves, so the band cannot flicker. The arbiter above decides who holds the column. */
+  function stageWidget(box, drawing, title) {
+    var pack = h('div', 'stg-pack');
+    if (title) pack.appendChild(h('div', 'stg-pack__h', esc(title)));
+    var mark = document.createComment(' the drawing lives here when it is not staged ');
+    drawing.parentNode.insertBefore(mark, drawing);
+    pack.appendChild(drawing);
+    mark.parentNode.insertBefore(pack, mark.nextSibling);
+    var park = h('div', 'stg-park'); park.hidden = true; box.appendChild(park);
+
+    var wideQ = window.matchMedia('(min-width: 1001px)');
+    var stripQ = window.matchMedia('(max-width: 1000px) and (min-height: 561px)');
+    function host() { return document.getElementById('simHost'); }
+    function owned() { var hs = host(); return !!(hs && hs.contains(box)); }
+    function mode() {
+      if (owned() || !host()) return 'flow';
+      if (wideQ.matches) return 'column';
+      if (stripQ.matches) return 'strip';
+      return 'flow';
+    }
+    function place(on) {
+      var m = mode(), hs = host();
+      if (m === 'flow') {
+        if (pack.previousSibling !== mark) mark.parentNode.insertBefore(pack, mark.nextSibling);
+      } else {
+        var want = on ? hs : park;
+        if (pack.parentNode !== want) { if (want === hs) hs.innerHTML = ''; want.appendChild(pack); }
+      }
+      pack.classList.toggle('stg-pack--strip', m === 'strip');
+      box.classList.toggle('is-staged', m !== 'flow');
+    }
+    var claim = STAGE.add({
+      box: box, rank: 0,
+      able: function () { return mode() !== 'flow'; },
+      watch: function () { return box; },
+      on: function () { place(true); },
+      off: function () { place(false); }
+    });
+    var io = null, LOWER = .35;
+    function reading() {
+      var r = box.getBoundingClientRect(), sc = STAGE.scrollerOf(box);
+      var t = 0, b = window.innerHeight || 800;
+      if (sc) { var q = sc.getBoundingClientRect(); t = q.top; b = q.bottom; }
+      var hs = host(), lead = (mode() === 'strip' && hs) ? hs.getBoundingClientRect().height : 0;
+      return r.bottom > t + lead + 30 && r.top < b - LOWER * (b - t - lead);
+    }
+    function watch() {
+      if (io) { io.disconnect(); io = null; }
+      var m = mode();
+      if (m === 'flow' || !window.IntersectionObserver) { STAGE.want(claim, false); return; }
+      var col = document.querySelector('.platecol');
+      var lead = (m === 'strip' && col) ? Math.round(col.getBoundingClientRect().height) : 0;
+      try {
+        io = new IntersectionObserver(function (es) {
+          if (!es || !es.length) return;
+          if (!box.isConnected) { detach(); return; }
+          STAGE.want(claim, !!es[es.length - 1].isIntersecting);
+        }, { root: STAGE.scrollerOf(box) || null, rootMargin: (-lead - 30) + 'px 0px -' + Math.round(LOWER * 100) + '% 0px', threshold: 0 });
+        io.observe(box);
+      } catch (e) { io = null; }
+    }
+    function mount() { place(STAGE.holding(claim)); watch(); STAGE.want(claim, mode() !== 'flow' && reading()); }
+    function detach() {
+      if (io) { io.disconnect(); io = null; }
+      wideQ.removeEventListener('change', onWide);
+      stripQ.removeEventListener('change', onWide);
+      STAGE.drop(claim);
+    }
+    var onWide = function () { if (box.isConnected) mount(); else detach(); };
+    wideQ.addEventListener('change', onWide);
+    stripQ.addEventListener('change', onWide);
+    var ownReset = box.__onReset;
+    box.__onReset = function () { if (ownReset) ownReset(); detach(); };
+    box.__onMove = mount;
+    requestAnimationFrame(mount);
+  }
 
   /* ---------- stagephoto: a station photograph that stands in the plant's column ----------
      Daniel, on station 12: "make sure that you don't repeat images and then the images maybe show up
