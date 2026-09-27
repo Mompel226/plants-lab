@@ -390,6 +390,8 @@
     paint();
     box.appendChild(h('p', 'widget__note', 'A model, not a measurement — but the shapes are the ones the exam draws, and the rule behind them is the exam’s too: the rate is set by whichever factor is in shortest supply.'));
     box.__onReset = function () { state = { axis: 'light', light: 30, co2: 80, temp: 25, curves: [] }; };
+    /* the graph stands on the left; the sliders, Plot and Clear, the read-out and the key stay here */
+    if (spec.onStage) stageWidget(box, plot, spec.title || 'Which factor is limiting?');
     return box;
   }
 
