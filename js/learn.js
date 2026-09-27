@@ -1069,17 +1069,36 @@
     var pick = h('div', 'st__pick'), before = h('p', 'st__before'),
         wrap = h('div', 'st'), left = h('div', 'st__leaf'), figure = h('div', 'st__fig'),
         cap = h('p', 'st__cap'), right = h('ol', 'st__steps'), res = h('div', 'st__res'),
-        shot = h('figure', 'st__shot');
+        shot = h('figure', 'st__shot'), cmp = h('figure', 'st__cmp');
     left.appendChild(figure); left.appendChild(cap); left.appendChild(shot);
     wrap.appendChild(left); wrap.appendChild(right);
     res.hidden = true;
+    cmp.hidden = true;
 
-    var leaf = LEAVES[0], at = 0, btns = [], steps = [];
+    /* Daniel: once every step is done, comparing the photographs meant starting again. So the
+       class leaves appear together at the end, one photograph per stage, each turned and scaled
+       so the big leaf sits in the same place in all three (the other two were re-placed by hand
+       between photographs, so they line up less exactly). And a step already done can be pressed
+       again to look back at that stage without losing your place. */
+    var CMP = [
+      { img: 'starch-cmp-before', h: 'With their colour' },
+      { img: 'starch-cmp-clear',  h: 'Colour removed' },
+      { img: 'starch-cmp-iodine', h: 'After iodine' }
+    ];
+    cmp.innerHTML = '<div class="st__cmprow">' + CMP.map(function (c, i) {
+      return '<div class="st__cmpcell"><div class="st__cmph"><span class="n">' + (i + 1) + '</span>' + esc(c.h) + '</div>' +
+        '<picture><source srcset="assets/photos/' + c.img + '-900.webp" type="image/webp">' +
+        '<img src="assets/photos/' + c.img + '-900.jpg" width="600" height="714" loading="lazy" alt="The class leaves: ' + esc(c.h.toLowerCase()) + '"></picture></div>';
+    }).join('') + '</div>' +
+      '<figcaption><b>Class practical, the three stages side by side.</b> The big green leaf goes pale in ethanol, then blue-black with iodine: it contained starch. ' +
+      'The yellow leaf stays yellow-orange: no starch. The photographs are turned and scaled so the big leaf lines up. · ' + esc(SHOT_CREDIT) + '</figcaption>';
+
+    var leaf = LEAVES[0], at = 0, view = null, btns = [], steps = [];
 
     LEAVES.forEach(function (l, i) {
       var b = h('button', 'st__leafbtn', '<span>' + esc(l.chip) + '</span><small>' + esc(l.sub) + '</small>');
       b.type = 'button';
-      b.addEventListener('click', function () { leaf = l; at = 0; paint(); });
+      b.addEventListener('click', function () { leaf = l; at = 0; view = null; paint(); });
       btns.push(b); pick.appendChild(b);
     });
 
@@ -1088,8 +1107,9 @@
       var b = h('button', 'st__btn', '<span class="n">' + (i + 1) + '</span>' + esc(s.t)); b.type = 'button';
       var why = h('small', 'st__why', esc(s.why)); why.hidden = true;
       b.addEventListener('click', function () {
-        if (i !== at) { if (i < at) return; toast('Do step ' + (at + 1) + ' first.'); return; }
-        at = i + 1; paint();
+        if (i < at) { view = (view === i + 1 && at !== i + 1) ? null : i + 1; paint(); return; }   /* look back */
+        if (i !== at) { toast('Do step ' + (at + 1) + ' first.'); return; }
+        at = i + 1; view = null; paint();
       });
       li.appendChild(b); li.appendChild(why);
       steps.push({ li: li, why: why }); right.appendChild(li);
@@ -1098,18 +1118,24 @@
     function paint() {
       btns.forEach(function (b, i) { b.classList.toggle('is-on', LEAVES[i] === leaf); });
       before.innerHTML = '<b>Before the test:</b> ' + leaf.before;
-      figure.innerHTML = draw(leaf.k, at);
-      cap.innerHTML = '<b>Your leaf:</b> ' + esc(at === 0 ? leaf.fresh : at === 4 ? leaf.out : CAP[at]);
-      var sh = SHOT[at];
+      var v = view == null ? at : view;
+      figure.innerHTML = draw(leaf.k, v);
+      cap.innerHTML = '<b>Your leaf' + (v < at ? ', after step ' + v : '') + ':</b> ' + esc(v === 0 ? leaf.fresh : v === 4 ? leaf.out : CAP[v]);
+      var sh = SHOT[v];
       shot.innerHTML = '<picture><source srcset="assets/photos/' + sh.img + '-900.webp" type="image/webp">' +
         '<img src="assets/photos/' + sh.img + '-900.jpg" alt="The class practical: ' + esc(sh.cap) + '" loading="lazy"></picture>' +
         '<figcaption><b>Class practical:</b> ' + esc(sh.cap) + ' · ' + esc(SHOT_CREDIT) + '</figcaption>';
-      steps.forEach(function (s, i) { s.li.classList.toggle('is-done', i < at); s.why.hidden = i >= at; });
+      steps.forEach(function (s, i) {
+        s.li.classList.toggle('is-done', i < at);
+        s.li.classList.toggle('is-view', i + 1 === v && v < at);
+        s.why.hidden = i >= at;
+      });
       res.hidden = at < STEPS.length;
+      cmp.hidden = at < STEPS.length;
       if (at === STEPS.length) res.innerHTML = '<b>' + esc(leaf.res) + '</b> ' + leaf.say;
     }
 
-    box.appendChild(pick); box.appendChild(before); box.appendChild(wrap); box.appendChild(res);
+    box.appendChild(pick); box.appendChild(before); box.appendChild(wrap); box.appendChild(res); box.appendChild(cmp);
     paint();
     return box;
   }

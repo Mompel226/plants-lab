@@ -81,6 +81,7 @@ The deck is the PowerPoint in `IGCSE Lessons/Y11/Plants/`, the slide is its numb
 | `starch-boil-*` | Starch practical | 2 |
 | `starch-decolourised-*` | Starch practical | 2 |
 | `starch-iodine-*` | Starch practical — Dr Mompel's own photograph of the class practical | 2 |
+| `starch-cmp-before-*`, `starch-cmp-clear-*`, `starch-cmp-iodine-*` | Starch practical — the same three photographs, each turned and scaled so the big leaf lines up (a similarity fit to the leaves' tips, bases and centres), then cropped to the leaves | 2 |
 | `plant-cell-*` | 6.1 Photosynthesis | 6 |
 | `deficiency-yellow-*` | Topic 6 questions lesson | 12 |
 | `starch-family-*` | Starch practical | 9 |
