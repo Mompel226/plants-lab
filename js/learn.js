@@ -920,7 +920,16 @@
         fresh: 'a green leaf sealed in a bag with soda lime',
         out: 'no blue-black anywhere: orange-brown all over',
         res: 'No starch, although the leaf was in the light the whole time.',
-        say: 'Carbon dioxide is needed. This one needs a second leaf to go with it: another leaf on the same plant, bagged and sealed in exactly the same way but with <b>no soda lime</b> inside. That one turns blue-black. Without it you could argue it was the bag that stopped photosynthesis, not the missing carbon dioxide.' }
+        say: 'Carbon dioxide is needed. This one needs a second leaf to go with it: another leaf on the same plant, bagged and sealed in exactly the same way but with <b>no soda lime</b> inside. That one turns blue-black. Without it you could argue it was the bag that stopped photosynthesis, not the missing carbon dioxide.' },
+
+      /* Not a fifth drawn experiment: Dr Mompel's own class practical, photographed. Its leaves
+         were never kept in the dark — they were picked from plants in the sun — so its photographs
+         must not appear beside the drawn leaves, where a student would read them as the result of
+         the foil, the variegated leaf or the soda lime (Daniel, 27 Sep). */
+      { k: 'real', photo: true, chip: 'New and old leaves', sub: 'the class practical',
+        before: 'This is a real class practical, not one of the drawn experiments. These leaves were <b>not</b> kept in the dark: all three were picked from plants growing in the sun. One is a new green leaf; the other two are old leaves, one red and one yellow, that had lost most of their chlorophyll.',
+        res: 'The new leaf turned blue-black all over; the old leaves turned orange-brown with darker patches.',
+        say: 'The new green leaf was full of starch. The old leaves still held a little: with most of their chlorophyll gone they made little new starch, and before a leaf falls the plant breaks down the starch it holds and carries the sugar away in the phloem. On the yellow leaf the darker patches are where it was still green.' }
     ];
 
     var STEPS = [
@@ -934,22 +943,16 @@
                'pale: the chlorophyll is now in the ethanol',
                'softened again and spread flat, ready for the iodine', ''];
 
-    /* The drawing says what is happening to the leaf you chose; the photograph says what it looks
-       like on the bench. Four photographs of Dr Mompel's class practical, shown in order as the
-       steps are pressed — the leaves before, the ethanol going green in the water bath, the leaves
-       with the colour gone, and the same leaves after iodine.
-       The class leaves are not the four drawn ones, and after iodine they disagree with the default
-       leaf: the drawn control has no starch, the class's green leaf has plenty. So every caption
-       says whose leaf it is about ("Your leaf" under the drawing, "Class practical" under the
-       photograph), and the last photograph says outright that its green leaf contained starch. */
+    /* The class practical's photographs, one per stage, shown in place of the drawing when (and
+       only when) "New and old leaves" is chosen. There is no photograph of the leaves just after
+       boiling in water, so that stage keeps the one before and says so. */
     var SHOT = [
-      { img: 'starch-leaves', cap: 'three leaves before the test: green, red and yellow' },
-      { img: 'starch-leaves', cap: 'three leaves before the test: green, red and yellow' },
-      { img: 'starch-boil',   cap: 'the ethanol going green: that colour is the chlorophyll leaving the leaves' },
-      { img: 'starch-decolourised', cap: 'the same leaves with the colour gone' },
-      { img: 'starch-iodine', cap: 'the same leaves after iodine. The green leaf has turned blue-black all over: it was full of starch. The yellow and red leaves are orange-brown with darker patches: they held a little starch.' }
+      { img: 'starch-leaves', cap: 'One new green leaf and two old leaves, one red and one yellow, all picked in the sun.' },
+      { img: 'starch-leaves', cap: 'Boiled in water, the leaves go soft and limp. This step was not photographed.' },
+      { img: 'starch-boil',   cap: 'Boiling in ethanol, in a water bath: the ethanol turns green because the chlorophyll is leaving the leaves.' },
+      { img: 'starch-decolourised', cap: 'Rinsed: the green is gone. The new leaf is pale, the red leaf almost white, and the yellow leaf keeps its yellow.' },
+      { img: 'starch-iodine', cap: 'After iodine solution.' }
     ];
-    var SHOT_CREDIT = 'From the starch practical slides';
 
     /* one leaf shape, drawn five times over; regions are cut out of it with a clip path so the
        margin of a variegated leaf and the strip under the foil are the same blade, not a
@@ -1069,17 +1072,16 @@
     var pick = h('div', 'st__pick'), before = h('p', 'st__before'),
         wrap = h('div', 'st'), left = h('div', 'st__leaf'), figure = h('div', 'st__fig'),
         cap = h('p', 'st__cap'), right = h('ol', 'st__steps'), res = h('div', 'st__res'),
-        shot = h('figure', 'st__shot'), cmp = h('figure', 'st__cmp');
-    left.appendChild(figure); left.appendChild(cap); left.appendChild(shot);
+        cmp = h('figure', 'st__cmp');
+    left.appendChild(figure); left.appendChild(cap);
     wrap.appendChild(left); wrap.appendChild(right);
     res.hidden = true;
     cmp.hidden = true;
 
-    /* Daniel: once every step is done, comparing the photographs meant starting again. So the
-       class leaves appear together at the end, one photograph per stage, each turned and scaled
-       so the big leaf sits in the same place in all three (the other two were re-placed by hand
-       between photographs, so they line up less exactly). And a step already done can be pressed
-       again to look back at that stage without losing your place. */
+    /* Once the real practical is finished, its three stages appear side by side, so they can be
+       compared without starting again. Each photograph is turned and scaled so the big leaf sits in
+       the same place in all three; the other two leaves were re-placed by hand between the
+       photographs, so they line up less exactly. The words are in the result above the strip. */
     var CMP = [
       { img: 'starch-cmp-before', h: 'With their colour' },
       { img: 'starch-cmp-clear',  h: 'Colour removed' },
@@ -1088,23 +1090,27 @@
     cmp.innerHTML = '<div class="st__cmprow">' + CMP.map(function (c, i) {
       return '<div class="st__cmpcell"><div class="st__cmph"><span class="n">' + (i + 1) + '</span>' + esc(c.h) + '</div>' +
         '<picture><source srcset="assets/photos/' + c.img + '-900.webp" type="image/webp">' +
-        '<img src="assets/photos/' + c.img + '-900.jpg" width="600" height="714" loading="lazy" alt="The class leaves: ' + esc(c.h.toLowerCase()) + '"></picture></div>';
+        '<img src="assets/photos/' + c.img + '-900.jpg" width="600" height="714" loading="lazy" alt="The new and old leaves: ' + esc(c.h.toLowerCase()) + '"></picture></div>';
     }).join('') + '</div>' +
-      /* Daniel, correcting the first version ("the yellow leaf stays yellow-orange: no starch"):
-         the yellow leaf still had green patches, and after iodine those patches are darker; the
-         red leaf goes brown with dark patches. Neither had NO starch: both had a little, fading
-         as the leaf aged. Checked on the photographs before rewording. */
-      '<figcaption><b>Class practical, the three stages side by side.</b> The big green leaf goes pale in ethanol, then blue-black with iodine: it was full of starch. ' +
-      'The yellow and red leaves are old leaves that had already lost most of their chlorophyll. After iodine they are orange-brown with darker patches, not blue-black: they still held a little starch. ' +
-      'On the yellow leaf the darker patches are where it was still green. With little chlorophyll left, an old leaf makes little new starch, and before the leaf falls the plant breaks down the starch it holds and carries the sugar away in the phloem.</figcaption>';
+      '<figcaption>The same three leaves at each stage, side by side.</figcaption>';
 
     var leaf = LEAVES[0], at = 0, view = null, btns = [], steps = [];
 
-    LEAVES.forEach(function (l, i) {
-      var b = h('button', 'st__leafbtn', '<span>' + esc(l.chip) + '</span><small>' + esc(l.sub) + '</small>');
-      b.type = 'button';
-      b.addEventListener('click', function () { leaf = l; at = 0; view = null; paint(); });
-      btns.push(b); pick.appendChild(b);
+    /* two groups, so the difference is plain before anything is pressed: four drawn experiments,
+       each de-starched in the dark first, and one real practical in photographs */
+    [['Drawn experiments', 'each kept in the dark first', LEAVES.filter(function (l) { return !l.photo; })],
+     ['Real photographs', '', LEAVES.filter(function (l) { return l.photo; })]].forEach(function (g) {
+      var grp = h('div', 'st__pickgrp' + (g[2][0] && g[2][0].photo ? ' st__pickgrp--real' : ''));
+      grp.appendChild(h('div', 'st__pickh', esc(g[0]) + (g[1] ? ' <span>· ' + esc(g[1]) + '</span>' : '')));
+      var row = h('div', 'st__pickrow');
+      g[2].forEach(function (l) {
+        var b = h('button', 'st__leafbtn' + (l.photo ? ' st__leafbtn--real' : ''), '<span>' + esc(l.chip) + '</span><small>' + esc(l.sub) + '</small>');
+        b.type = 'button';
+        b.addEventListener('click', function () { leaf = l; at = 0; view = null; paint(); });
+        b.__leaf = l;
+        btns.push(b); row.appendChild(b);
+      });
+      grp.appendChild(row); pick.appendChild(grp);
     });
 
     STEPS.forEach(function (s, i) {
@@ -1121,22 +1127,27 @@
     });
 
     function paint() {
-      btns.forEach(function (b, i) { b.classList.toggle('is-on', LEAVES[i] === leaf); });
+      btns.forEach(function (b) { b.classList.toggle('is-on', b.__leaf === leaf); });
       before.innerHTML = '<b>Before the test:</b> ' + leaf.before;
-      var v = view == null ? at : view;
-      figure.innerHTML = draw(leaf.k, v);
-      cap.innerHTML = '<b>Your leaf' + (v < at ? ', after step ' + v : '') + ':</b> ' + esc(v === 0 ? leaf.fresh : v === 4 ? leaf.out : CAP[v]);
-      var sh = SHOT[v];
-      shot.innerHTML = '<picture><source srcset="assets/photos/' + sh.img + '-900.webp" type="image/webp">' +
-        '<img src="assets/photos/' + sh.img + '-900.jpg" alt="The class practical: ' + esc(sh.cap) + '" loading="lazy"></picture>' +
-        '<figcaption><b>Class practical:</b> ' + esc(sh.cap) + ' · ' + esc(SHOT_CREDIT) + '</figcaption>';
+      var v = view == null ? at : view, back = v < at ? '<b>After step ' + v + ':</b> ' : '';
+      wrap.classList.toggle('st--real', !!leaf.photo);
+      if (leaf.photo) {
+        /* the real practical: its photograph stands where the drawing does */
+        var sh = SHOT[v];
+        figure.innerHTML = '<picture><source srcset="assets/photos/' + sh.img + '-900.webp" type="image/webp">' +
+          '<img class="st__photo" src="assets/photos/' + sh.img + '-900.jpg" alt="' + esc(sh.cap) + '"></picture>';
+        cap.innerHTML = back + esc(sh.cap);
+      } else {
+        figure.innerHTML = draw(leaf.k, v);
+        cap.innerHTML = back + esc(v === 0 ? leaf.fresh : v === 4 ? leaf.out : CAP[v]);
+      }
       steps.forEach(function (s, i) {
         s.li.classList.toggle('is-done', i < at);
         s.li.classList.toggle('is-view', i + 1 === v && v < at);
         s.why.hidden = i >= at;
       });
       res.hidden = at < STEPS.length;
-      cmp.hidden = at < STEPS.length;
+      cmp.hidden = !(leaf.photo && at === STEPS.length);
       if (at === STEPS.length) res.innerHTML = '<b>' + esc(leaf.res) + '</b> ' + leaf.say;
     }
 
