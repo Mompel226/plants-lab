@@ -1555,6 +1555,16 @@ picture{display:block;line-height:0}
   color:var(--red);background:var(--red-tint);border-radius:var(--r-pill);padding:0 6px;vertical-align:1px}
 .ad__chip--ext.is-on .ad__extpill{background:rgba(255,255,255,.2);color:#fff}
 .ad__extnote{display:block;font-size:11.5px;font-weight:700;letter-spacing:.02em;color:var(--red);margin-bottom:2px}
+/* ----- stageWidget: a widget's drawing, standing where the plant is ----- */
+.stg-park[hidden]{display:none}
+.stg-pack__h{display:none}
+.sim > .stg-pack{margin:auto 0;width:100%;display:flex;flex-direction:column;gap:8px}
+.sim > .stg-pack .stg-pack__h{display:block;font-size:11.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#4E6357}
+.sim > .stg-pack svg{display:block;width:100%;height:auto}
+.sim > .stg-pack--strip{height:100%;justify-content:center;margin:0}
+.sim > .stg-pack--strip .stg-pack__h{display:none}
+.sim > .stg-pack--strip svg{max-height:100%}
+
 /* ----- stagephoto: a station picture that stands where the plant is ----- */
 .sph{margin:20px 0}
 .sph__sent{display:block;height:0;overflow:hidden}
