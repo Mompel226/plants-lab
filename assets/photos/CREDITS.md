@@ -78,7 +78,7 @@ The deck is the PowerPoint in `IGCSE Lessons/Y11/Plants/`, the slide is its numb
 | `elodea-lamp-*` | Topic 6–8 revision worksheet | 2 |
 | `variegated-leaves-*` | Starch practical | 4 |
 | `starch-leaves-*` | Starch practical | 2 |
-| `starch-boil-*` | Starch practical | 2 |
+| `starch-boil-*` | Starch practical — turned a quarter-turn clockwise so the tubes stand upright, and cropped to the jug | 2 |
 | `starch-decolourised-*` | Starch practical | 2 |
 | `starch-iodine-*` | Starch practical — Dr Mompel's own photograph of the class practical | 2 |
 | `starch-cmp-before-*`, `starch-cmp-clear-*`, `starch-cmp-iodine-*` | Starch practical — the same three photographs, each turned and scaled so the big leaf lines up (a similarity fit to the leaves' tips, bases and centres), then cropped to the leaves | 2 |
