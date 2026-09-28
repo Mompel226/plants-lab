@@ -4715,8 +4715,8 @@
     style: ['Style', 'Holds the stigma up above the ovary. The pollen tube grows down through it.'],
     ovary: ['Ovary', 'Contains the ovules. After fertilisation it becomes the fruit.'],
     ovule: ['Ovule', 'Contains the female gamete. After fertilisation it becomes a seed.'],
-    nectary: ['Nectary', 'Makes nectar, the sugary reward that keeps insects visiting. Not one of the ten names 0610 asks for.'],
-    receptacle: ['Receptacle', 'The top of the flower stalk, which all the parts are attached to. Not in the 0610 syllabus.']
+    nectary: ['Nectary', 'Makes nectar, the sugary reward that keeps insects visiting. Not one of the ten parts the 0610 syllabus names.'],
+    receptacle: ['Receptacle', 'The top of the flower stalk, which all the parts are attached to. Not one of the ten parts the 0610 syllabus names.']
   };
 
   /* ---------- water: where the charges come from, a polar molecule, hydrogen bonds, cohesion and adhesion
