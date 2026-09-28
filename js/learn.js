@@ -1777,11 +1777,11 @@
       worked = '<div class="po__pop__how"><p><b>Worked example</b> — five trials on one shoot at 20 °C in still air: ' + PO_EXAMPLE.map(function (v) { return v.toFixed(2); }).join(', ') + ' mm/min; mean 2.20.</p>' + poSteps(term, st2, PO_EXAMPLE, 'trials', 'trials') + '</div>' +
                '<p class="po__pop__note">Record two trials of your own under the same conditions and the working is done with your numbers instead.</p>';
     }
-    return '<div class="po__pop__h"><span>' + esc(T.name) + (T.ib ? ' <span class="po__pop__ib">IB content · not asked at IGCSE</span>' : '') + '</span><button type="button" class="po__pop__x" aria-label="Close">✕</button></div>' +
+    return '<div class="po__pop__h"><span>' + esc(T.name) + (T.ib ? ' <span class="po__pop__ib">IB content · beyond IGCSE</span>' : '') + '</span><button type="button" class="po__pop__x" aria-label="Close">✕</button></div>' +
            '<p>' + esc(T.what) + '</p>' +
            '<div class="po__pop__fm">' + PO_FM[term] + '</div><p class="po__pop__key">' + (shootLvl ? PO_KEY[term].replace(/how many trials/g, 'how many shoots').replace(/one trial/g, 'one shoot mean') : PO_KEY[term]) + '</p>' +
            worked +
-           (T.ib ? '<p class="po__pop__note">This is IB Biology content: standard deviation, standard error and confidence intervals are not asked for in IGCSE 0610, which wants the mean. They are what a scientist would put on this graph.</p>' : '');
+           (T.ib ? '<p class="po__pop__note">This is IB Biology content: standard deviation, standard error and confidence intervals are not in the IGCSE 0610 syllabus, which wants the mean. They are what a scientist would put on this graph.</p>' : '');
   }
   /* a bold statistic in the Learn text opens its pop-up under the sentence it is in */
   global.PoStats = { show: function (term, anchor) {
@@ -4716,7 +4716,7 @@
     ovary: ['Ovary', 'Contains the ovules. After fertilisation it becomes the fruit.'],
     ovule: ['Ovule', 'Contains the female gamete. After fertilisation it becomes a seed.'],
     nectary: ['Nectary', 'Makes nectar, the sugary reward that keeps insects visiting. Not one of the ten names 0610 asks for.'],
-    receptacle: ['Receptacle', 'The top of the flower stalk, which all the parts are attached to. Not asked for in 0610.']
+    receptacle: ['Receptacle', 'The top of the flower stalk, which all the parts are attached to. Not in the 0610 syllabus.']
   };
 
   /* ---------- water: where the charges come from, a polar molecule, hydrogen bonds, cohesion and adhesion
@@ -5527,7 +5527,7 @@
     var panel = h('div', 'pt__ib');
     panel.hidden = true;
     panel.innerHTML =
-      '<p class="pt__ibbanner"><b>IB Biology, D3.1.8</b> — how gametes are made inside a pollen grain. Not asked in IGCSE 0610.</p>' +
+      '<p class="pt__ibbanner"><b>IB Biology, D3.1.8</b> — how gametes are made inside a pollen grain. Beyond IGCSE 0610.</p>' +
       '<p>The anther makes pollen grains by <b>meiosis</b>, so every nucleus in a grain is haploid. Inside the young grain, the nucleus then divides by <b>mitosis</b>. This makes two cells:</p>' +
       '<ul><li>a large <b>tube cell</b>, with the <b>tube nucleus</b>. This cell grows the pollen tube;</li>' +
       '<li>a small <b>generative cell</b> inside it. The generative cell divides by mitosis again, to make <b>two male gametes</b>.</li></ul>' +
