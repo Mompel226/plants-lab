@@ -319,5 +319,4 @@
     }).observe(document.body, { subtree: true, childList: true, characterData: true });
   }
   if (document.body) watch(); else document.addEventListener('DOMContentLoaded', watch);
-  window.KeepUnits = { join: join };
 })();

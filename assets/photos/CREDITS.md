@@ -1,17 +1,17 @@
 # Where every picture and video came from
 
-Two kinds of picture are in this lab, and they are credited differently.
+The pictures in this lab come from two places, and they are credited differently.
 
-**The lesson pictures.** Seventy-four of the seventy-nine pictures are the ones Dr Mompel shows in
+**The lesson pictures.** Most of the pictures are the ones Dr Mompel shows in
 class, taken from his own lesson slides for topics 6, 8, 14.5, 16.3 and 18.2 — chosen on purpose,
 so that a student meets the same picture here as on the board. Their original sources were not
 recorded in the slides; they are used here for teaching, under the same terms as in the lesson.
 Each is credited on the page as "from the … lesson slides". One is Dr Mompel's own photograph.
 
-**The micrographs.** Six stained sections are from Wikimedia Commons, all by the Berkshire
-Community College Bioscience Image Library and all CC0, chosen because they are the kind of
-picture the exam gives a student to label. They are centre-cropped to 16 : 9, shown at 900 and
-1400 px wide, JPEG and WebP; the credit is under each one on the page.
+**From Wikimedia Commons.** The stained sections — most by the Berkshire Community College
+Bioscience Image Library, CC0 — were chosen because they are the kind of picture the exam gives
+a student to label; the "Did you know?" and "Read the plant" pictures have tables of their own
+below. Each is shown at 900 and 1400 px wide, JPEG and WebP, and credited under it on the page.
 
 Every base name below stands for four files: `-900.jpg`, `-900.webp`, `-1400.jpg`, `-1400.webp`.
 
@@ -24,12 +24,12 @@ Every base name below stands for four files: `-900.jpg`, `-900.webp`, `-1400.jpg
 | `bark-ring-*` | [AnnelageAnnélationGirdling (adjusted).jpg](https://commons.wikimedia.org/wiki/File:AnnelageAnn%C3%A9lationGirdling_(adjusted).jpg) — a complete ring of bark cut from a trunk, the pale wood left bare | Lamiot, adjusted by Eewilson | CC BY 3.0 |
 | `monocot-bundle-*` | [Monocot Stem Zea (35716063792).jpg](https://commons.wikimedia.org/wiki/File:Monocot_Stem_Zea_(35716063792).jpg) — one vascular bundle of a maize stem, cropped from the wider section | Berkshire Community College Bioscience Image Library | CC0 |
 | `stem-section-*` | [Herbaceous Dicot Stem Collateral Vascular Bundle in Young Helianthus (36834309183).jpg](https://commons.wikimedia.org/wiki/File:Herbaceous_Dicot_Stem_Collateral_Vascular_Bundle_in_Young_Helianthus_(36834309183).jpg) — one vascular bundle of a sunflower stem | Berkshire Community College Bioscience Image Library | CC0 |
-| `xylem-labelled-*`, `phloem-labelled-*` | 8.1 Xylem and phloem — the two halves of one ScienceFacts.net figure, cropped apart | 23 |
 | `leaf-section-*` | [Angiosperm Morphology Mesophyll Arrangement in Ligustrum (36198182664).jpg](https://commons.wikimedia.org/wiki/File:Angiosperm_Morphology_Mesophyll_Arrangement_in_Ligustrum_(36198182664).jpg) — a privet leaf cut across | Berkshire Community College Bioscience Image Library | CC0 |
 | `leaf-stoma-*` | [Angiosperm Morphology Abaxial Epidermis and Guard Cells in Ligustrum Leaf (37033388255).jpg](https://commons.wikimedia.org/wiki/File:Angiosperm_Morphology_Abaxial_Epidermis_and_Guard_Cells_in_Ligustrum_Leaf_(37033388255).jpg) — a stoma in the lower epidermis of a privet leaf | Berkshire Community College Bioscience Image Library | CC0 |
 
 ## From the lesson slides
 
+> `xylem-labelled-*` and `phloem-labelled-*` carry a **ScienceFacts.net** watermark in the picture, so the
 > slide is not its origin. It is credited to ScienceFacts.net on the page, which the
 > watermark establishes.
 
@@ -54,6 +54,7 @@ The deck is the PowerPoint in `IGCSE Lessons/Y11/Plants/`, the slide is its numb
 | `stem-bundle-*` | 8.1 Xylem and phloem | 8 |
 | `tissues-map-*` | 8.1 Xylem and phloem | 18 |
 | `leaf-section-labelled-*` | 8.1 Xylem and phloem | 16 |
+| `xylem-labelled-*`, `phloem-labelled-*` | 8.1 Xylem and phloem — the two halves of one ScienceFacts.net figure, cropped apart | 23 |
 | `xylem-vessel-*` | Topic 6–8 revision worksheet | 1 |
 | `sieve-tube-*` | 8.1 Xylem and phloem | 11 |
 | `sections-outline-*` | 8.1 Xylem and phloem | 19 |
@@ -127,7 +128,7 @@ demonstrations below do the same job better and are properly credited.
 Every video now carries its source **under the player**, where a reader sees it. Where a
 publisher's mark is in the picture it is named, because that is a fact about the file. Where
 nothing was recorded, the credit says *original source not recorded* rather than implying the
-lesson folder is a source — three of the eight still say that, and each is a gap worth closing.
+lesson folder is a source — two of the seven still say that, and each is a gap to close.
 
 > `water-absorption.mp4` carries the same Oxford University Press logo and the same
 > "Animation 10.x" numbering as the potometer practical, so it is very likely from the
@@ -155,7 +156,13 @@ in the page, in the flow of the station, under the sentence each one illustrates
 | [Negative Gravitropism \| Demonstration](https://www.youtube.com/watch?v=Rb55mj8xkxk) | GPhase | Bending to the light |
 | [Pushing Tropism to the Limit with a Spinning Plant](https://www.youtube.com/watch?v=q4E8_K9Udcc) | mortrek | Bending to the light |
 | [Positive Phototropism \| Demonstration](https://www.youtube.com/watch?v=DhITXtENPrU) | GPhase | Bending to the light |
-| [Pushing Tropism to the Limit with a Spinning Plant](https://www.youtube.com/watch?v=q4E8_K9Udcc) | mortrek | Bending to the light | 
+
+They are not copied into the repository, because they are not ours to copy. Two things make the
+embed as light as it can be. The player is **not loaded until somebody presses play**: what sits
+on the page is the film's own still with a play button over it, and the frame is built on the
+click, so a station with two films loads two images rather than two copies of YouTube's player.
+And it loads from **youtube-nocookie.com**, YouTube's own no-tracking host — the same film, and no
+cookie until a student chooses to watch.
 
 ## The drawings
 
@@ -217,7 +224,7 @@ bench, not measured here. What it is scaled to:
 | `dogstail-anthers-*` | [Anthers and stamen.jpg](https://commons.wikimedia.org/wiki/File:Anthers_and_stamen.jpg) — crested dog's-tail, a grass, magnified: the picture behind the word *wind-pollinated*. Resized from 1024 × 768 to 900 × 675, not cropped | Blokenearexeter | Public domain (released by the author) |
 ### "Did you know?" cards (station curiosities)
 
-Thirteen pictures, one per station, downloaded from Wikimedia Commons with Daniel's permission on
+Thirteen pictures — one on each station, and a second on *Built for its place* — downloaded from Wikimedia Commons with Daniel's permission on
 18 September 2026. Each one is credited under its own card as well.
 
 | File | Source | Author | Licence |
@@ -247,10 +254,3 @@ Thirteen pictures, one per station, downloaded from Wikimedia Commons with Danie
 | `lily-stalks-*` | [PNBT Nymphaea alba łodygi 03.07.10 p.jpg](https://commons.wikimedia.org/wiki/File:PNBT_Nymphaea_alba_%C5%82odygi_03.07.10_p.jpg) — water lily stalks seen through clear water: "Long, thin, flexible stem" | Przykuta | CC BY-SA 3.0 |
 
 The two root chips in *Read the plant* are drawn for the lab, not photographed: no photograph shows roots in the soil. The cactus is drawn to scale, with its roots at the depth Nobel measured for the barrel cactus *Ferocactus acanthodes* (about 8 cm on average; *Oecologia* 27: 117–133, 1977). All eight pictures above were downloaded with Daniel's permission on 17 September 2026.
-
-They are not copied into the repository, because they are not ours to copy — the eight local files
-are Daniel's own lesson videos. Two things make the embed as light as it can be. The player is
-**not loaded until somebody presses play**: what sits on the page is the film's own still with a
-play button over it, and the frame is built on the click, so a station with two films loads two
-images rather than two copies of YouTube's player. And it loads from **youtube-nocookie.com**,
-YouTube's own no-tracking host — the same film, and no cookie until a student chooses to watch.
