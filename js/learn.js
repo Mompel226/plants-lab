@@ -6,7 +6,9 @@
      video        one of Dr Mompel's lesson videos, with its poster, played on demand
      germinate    four tubes of seeds: say what each lacks, then see what germinated
      equation     the word equation, and the balanced one behind it
-     limiting     three sliders, one rate: find the factor in shortest supply
+     limitgraph   limiting factors: plot the curves, then work out which factor limits the rate
+     watch        a film on YouTube, loaded only when pressed
+     pondweed     the rate practical, judged on whether the data is any good
      starchtest   the starch test, step by step, with the reason for each step
      indicator    hydrogencarbonate indicator: what goes in the tube decides its colour
      potometer    the potometer practical: set the shoot's conditions, time it, read the bubble, record, graph
@@ -15,13 +17,15 @@
      diagram      the lab's own labelled drawings, part by part (the half-flower)
      pollentube   pollination to fruit: the tube, fertilisation, seeds (with an IB layer)
      adapt        two plants built for hard places, feature by feature
+     labelphoto   a real photograph, labelled the way a drawing is
+     curio        "Did you know?": one strange true thing, beyond the syllabus
+     stagephoto   a station photograph that stands in the plant's column
    Also exported for the questions: svgFor (the drawings), so a hotspot can use one.
    ============================================================ */
 (function (global) {
   'use strict';
   var W = global.Widgets;
   var h = W.h, esc = W.esc, mk = W.mk, head = W.head;
-  function svgEl(html) { var d = document.createElement('div'); d.innerHTML = html; return d.firstElementChild; }
 
   /* ---------- video: a lesson clip, on demand ---------- */
   function video(spec) {
@@ -132,7 +136,7 @@
     eq.appendChild(chip('glucose')); eq.appendChild(h('span', 'eq__op', '+')); eq.appendChild(chip('oxygen'));
     box.appendChild(eq); box.appendChild(note);
     var bal = h('div', 'eq__bal'); bal.hidden = true;
-    bal.innerHTML = '<span class="sup tip" tabindex="0" data-tip="Supplement — Paper 4 (Extended) only">S</span> <span class="eq__f">6CO<sub>2</sub> + 6H<sub>2</sub>O → C<sub>6</sub>H<sub>12</sub>O<sub>6</sub> + 6O<sub>2</sub></span>' +
+    bal.innerHTML = '<span class="sup tip" tabindex="0" data-tip="Supplement — Extended papers (2 and 4) only">S</span> <span class="eq__f">6CO<sub>2</sub> + 6H<sub>2</sub>O → C<sub>6</sub>H<sub>12</sub>O<sub>6</sub> + 6O<sub>2</sub></span>' +
       '<small>Six of each on the left; one glucose and six oxygen on the right. Check it balances: 6 carbons, 12 hydrogens and 18 oxygens on each side.</small>';
     var bt = h('button', 'wbtn wbtn--quiet', 'Show the balanced equation'); bt.type = 'button';
     bt.addEventListener('click', function () { bal.hidden = !bal.hidden; bt.textContent = bal.hidden ? 'Show the balanced equation' : 'Hide the balanced equation'; });
@@ -143,7 +147,7 @@
 
 
   /* ---------- limitgraph: the student plots the curves, then works out what happened ----------
-     The model is the SAME one the sliders above use — Blackman's: the rate is set by whichever
+     The model is Blackman's, the one the sliders in this widget use: the rate is set by whichever
      factor is in shortest supply, rate = min(fLight, fCO2, fTemp). That is what gives the exam's
      shape: a smooth rise while the factor on the x-axis is the limiting one, then a flat plateau
      from the moment something else becomes the limit. Raise the fixed factor and the whole
@@ -162,7 +166,7 @@
       spec.ask || 'Choose what goes along the bottom, set the other two, and plot. Plot again with one of them changed, and compare the two curves. Where the curve does something worth noticing it is marked — try to explain it before you press.',
       'Plot and compare'));
 
-    /* the three responses, 0–1. Identical to the slider widget's, so the two never disagree. */
+    /* the three responses, 0–1 (Blackman: the rate is the smallest of the three). */
     function fL(x) { return 1 - Math.exp(-3.2 * x / 100); }
     function fC(x) { return 1 - Math.exp(-3.2 * x / 100); }
     function fT(t) { return t <= 35 ? Math.max(0, t / 35) : Math.max(0, 1 - (t - 35) / 10); }
@@ -1349,7 +1353,7 @@
   }
   function sha256hex(text) {
     return crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)).then(function (buf) { return Array.prototype.map.call(new Uint8Array(buf), function (b) { return ('0' + b.toString(16)).slice(-2); }).join(''); });
-  }            /* kept while the lab is open: a trip to Practise and back keeps the table */              /* px per mm on the scale; the 0 mm mark; the capillary's radius, mm */
+  }
 
   function poLightF(L) { return .15 + .85 * (1 - Math.exp(-L / 35)) / (1 - Math.exp(-100 / 35)); }
   /* temperature: a straight rise as evaporation and diffusion speed up — next to nothing at 0 °C, twice the 20 °C rate at
@@ -1499,14 +1503,6 @@
   function poIvSaid(s, k) {
     var u = { light: ' %', hum: ' %', temp: ' °C', time: ' min' }[k] || '';
     return poIvValue(s, k) + u;
-  }
-  /* The statistic on show is part of what a table or a figure IS, so it belongs in the title —
-     and the reader can switch it, so the title has to switch with it. One place for the words,
-     so the table title, the second table's title and the figure caption can never disagree. */
-  function poStatSaid(k) {
-    return k === 'sd' ? 'the standard deviation of the trials'
-         : k === 'se' ? 'the standard error of the mean'
-         : k === 'ci' ? 'the 95 % confidence interval of the mean' : null;
   }
   /* A column heading and a sentence want different words for the same variable: the heading is
      "Plant", the sentence is "the effect of SPECIES on…". Two phrasings, one per job. */
@@ -6842,10 +6838,11 @@
     return box;
   }
 
-  /* ---------- curio: one strange true thing about plants, fenced off from the exam ----------
+  /* ---------- curio: one strange true thing about plants, fenced off from the syllabus ----------
      Daniel asked for these: "the world of plants is incredible and there are all these kind of
      weird things". A photograph, a short story in plain sentences, and the paper it comes from.
-     Every card says, in its own head, that it is not on either syllabus. ---------- */
+     Every card says, in its own head, that it is beyond both syllabuses, and that an exam question can
+     still use it (Daniel, 28 Sep 2026: never "not examined"). ---------- */
   function curio(spec) {
     /* ~like this~ is italic. The lab's own _like this_ means "underline this exam word", which is
        not what a scientific name or a journal title wants, and Terms.mark would escape a raw tag. */
@@ -6853,7 +6850,7 @@
     var box = h('section', 'curio' + (spec.shape === 'tall' ? ' curio--tall' : ''));
     box.appendChild(h('div', 'curio__head',
       '<span class="curio__pill">Did you know?</span>' +
-      '<span class="curio__fence">Not in 0610 or the IB guide. Nothing here is examined.</span>'));
+      '<span class="curio__fence">Beyond 0610 and the IB guide — an exam question can still use it.</span>'));
     var body = h('div', 'curio__body');
     if (spec.img) {
       var P = W.picture({ img: spec.img, alt: spec.alt || '' });

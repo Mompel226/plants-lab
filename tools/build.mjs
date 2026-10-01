@@ -4,13 +4,15 @@
      node tools/build.mjs [password]
 
    Reads   ../plants-lab-source/stations.master.js   (has the answers)
+           ../plants-lab-source/past-syllabus.json   (the old-syllabus badges)
    Writes  js/data/stations.js    presentation + salted hashes, NO answers
+           js/data/syllabus.js, js/data/syllabus-older.js   the syllabus text, for the IGCSE 0610 badge
            js/data/glossary.js    the shared definitions
            js/data/photos.js      the pixel size of every picture, and which have a 1400 twin
-           js/engine.js, js/marking.js, js/sync.js, js/widgets.js   copied from labs-shared/engine/
+           js/engine.js, js/marking.js, js/sync.js, js/homework.js, js/syllabus.js, js/widgets.js   copied from labs-shared/engine/
            js/plant.js, js/plant-draw.js                          copied from labs-shared/plant/
            js/signin.js                                           copied from labs-shared/ (one sign-in for the whole site)
-           index.html             every ?v= stamped
+           index.html             every ?v= stamped; version.txt the same stamp
            sw.js                  the offline worker, from labs-shared/sw.template.js
            ../../labs-shared/labs.json   this lab's station and question counts
 
@@ -86,7 +88,7 @@ if (!SHARED) {
   process.exit(1);
 }
 for (const [from, to] of [['engine/engine.js', 'js/engine.js'], ['engine/marking.js', 'js/marking.js'], ['engine/syllabus.js', 'js/syllabus.js'],
-                          ['engine/sync.js', 'js/sync.js'], ['engine/widgets.js', 'js/widgets.js'], ['signin.js', 'js/signin.js'],
+                          ['engine/sync.js', 'js/sync.js'], ['engine/homework.js', 'js/homework.js'], ['engine/widgets.js', 'js/widgets.js'], ['signin.js', 'js/signin.js'],
                           ['plant/plant.js', 'js/plant.js'], ['plant/plant-draw.js', 'js/plant-draw.js']]) {
   copyFileSync(resolve(SHARED, from), resolve(REPO, to));
 }
@@ -407,7 +409,7 @@ console.log(`built ${pub.length} stations, ${nAct} activities`);
 console.log(`  js/data/stations.js   presentation + hashes (no answers)`);
 console.log(`  js/data/glossary.js   ${GLOSSARY.length} shared definitions`);
 console.log(`  js/data/photos.js     ${Object.keys(SIZES).length} picture sizes`);
-console.log(`  shared engine, marking, sync, widgets, plant and plant-draw copied in`);
+console.log(`  shared engine, marking, syllabus, sync, widgets, signin, plant and plant-draw copied in`);
 console.log(`  index.html + version.txt  stamped ${STAMP} (${nStamp} assets)`);
 
 /* ---------- the marking gate ---------- */
