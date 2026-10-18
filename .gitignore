@@ -11,3 +11,7 @@ js/data/keys.enc.js
 # test harnesses: built in the repo so they can load the lab as same-origin, never shipped
 _*.html
 _*.js
+
+# The build and check tools and local settings stay on Daniel's computer, not on GitHub (18 Oct 2026)
+/tools/
+/.claude/
