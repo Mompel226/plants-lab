@@ -13,6 +13,8 @@
      a magnifying glass   a picture opens where you are
      a faint dotted rule  the definition opens where you are
      an arrow             you are taken to another station
+     a dotted rule and ↓  you go down to the word's key-word card in this station: each key word has ONE card
+                          in the lab, in the station that first teaches it (25 Oct 2026)
    The arrow is only for a journey with something at the other end; one arrow per
    destination per station; never a word inside a negative.
    ============================================================ */
@@ -115,17 +117,22 @@
 
   var JUMP = {};
   function jump(list, st) { list.forEach(function (w) { JUMP[w] = st; }); }
+  /* a word leads to the station that holds its key-word card (25 Oct 2026: surface area, chloroplast, potometer and ovule
+     moved with their cards) */
   jump(['germination', 'germinate', 'germinates', 'germinating', 'seedling', 'seedlings', 'radicle', 'plumule', 'testa', 'seed coat', 'cotyledon', 'cotyledons', 'dry mass'], 'seed');
-  jump(['root hair cell', 'root hair cells', 'root hair', 'root hairs', 'root cortex', 'cortex', 'mineral ion', 'mineral ions', 'nitrate ion', 'nitrate ions', 'nitrate', 'magnesium ion', 'magnesium ions', 'magnesium', 'osmosis', 'active transport'], 'root');
+  jump(['root hair cell', 'root hair cells', 'root hair', 'root hairs', 'root cortex', 'cortex', 'mineral ion', 'mineral ions', 'nitrate ion', 'nitrate ions', 'nitrate', 'magnesium ion', 'magnesium ions', 'magnesium', 'osmosis', 'active transport', 'surface area'], 'root');
   jump(['xylem', 'xylem vessel', 'xylem vessels', 'phloem', 'vascular bundle', 'vascular bundles', 'lignin'], 'stem');
-  jump(['stoma', 'stomata', 'guard cell', 'guard cells', 'air space', 'air spaces', 'cuticle', 'epidermis', 'upper epidermis', 'lower epidermis', 'palisade mesophyll', 'spongy mesophyll', 'mesophyll', 'mesophyll cell', 'mesophyll cells', 'palisade cell', 'palisade cells', 'palisade layer', 'surface area'], 'leaf');
-  jump(['photosynthesis', 'photosynthesise', 'photosynthesises', 'chlorophyll', 'chloroplast', 'chloroplasts', 'glucose', 'starch', 'cellulose', 'nectar', 'carbohydrate', 'carbohydrates', 'limiting factor', 'limiting factors', 'iodine solution', 'variegated leaf', 'variegated', 'de-starching', 'de-starched', 'hydrogencarbonate indicator'], 'photosynthesis');
-  jump(['transpiration', 'transpiration pull', 'transpiration stream', 'wilting', 'wilt', 'wilts', 'wilted', 'turgid', 'flaccid', 'humidity', 'potometer', 'water vapour'], 'transpiration');
+  jump(['stoma', 'stomata', 'guard cell', 'guard cells', 'air space', 'air spaces', 'cuticle', 'epidermis', 'upper epidermis', 'lower epidermis', 'palisade mesophyll', 'spongy mesophyll', 'mesophyll', 'mesophyll cell', 'mesophyll cells', 'palisade cell', 'palisade cells', 'palisade layer', 'chloroplast', 'chloroplasts'], 'leaf');
+  jump(['photosynthesis', 'photosynthesise', 'photosynthesises', 'chlorophyll', 'glucose', 'starch', 'cellulose', 'nectar', 'carbohydrate', 'carbohydrates', 'limiting factor', 'limiting factors', 'iodine solution', 'variegated leaf', 'variegated', 'de-starching', 'de-starched', 'hydrogencarbonate indicator'], 'photosynthesis');
+  jump(['transpiration', 'transpiration pull', 'transpiration stream', 'wilting', 'wilt', 'wilts', 'wilted', 'turgid', 'flaccid', 'humidity', 'water vapour'], 'transpiration');
+  jump(['potometer'], 'potometer');
   jump(['translocation', 'source', 'sources', 'sink', 'sinks', 'sucrose', 'amino acid', 'amino acids'], 'translocation');
   jump(['tropism', 'tropisms', 'gravitropism', 'phototropism', 'auxin', 'auxins', 'shoot tip', 'shoot tips', 'cell elongation', 'elongation', 'stimulus', 'stimuli', 'sensitivity'], 'tropisms');
   jump(['flower', 'flowers', 'sepal', 'sepals', 'petal', 'petals', 'stamen', 'stamens', 'filament', 'filaments', 'anther', 'anthers', 'carpel', 'carpels', 'stigma', 'stigmas', 'style', 'ovary', 'ovaries', 'pollen', 'pollen grain', 'pollen grains',
-        'pollination', 'pollinated', 'self-pollination', 'cross-pollination', 'insect-pollinated', 'wind-pollinated', 'gamete', 'gametes', 'male gamete', 'female gamete'], 'flower');
-  jump(['fertilisation', 'fertilised', 'pollen tube', 'ovule', 'ovules', 'seed', 'seeds', 'fruit', 'fruits', 'embryo'], 'fruit');
+        'pollination', 'pollinated', 'self-pollination', 'cross-pollination', 'insect-pollinated', 'wind-pollinated', 'gamete', 'gametes', 'male gamete', 'female gamete', 'ovule', 'ovules'], 'flower');
+  /* "seed" still leads here from other stations, where a seed forms (a sink while it fills); in A seed wakes, which holds its
+     key-word card, the word goes down to the card */
+  jump(['fertilisation', 'fertilised', 'pollen tube', 'seed', 'seeds', 'fruit', 'fruits', 'embryo'], 'fruit');
   jump(['adaptive feature', 'adaptive features', 'xerophyte', 'xerophytes', 'hydrophyte', 'hydrophytes', 'adaptation', 'adaptations'], 'adapted');
 
   /* --------- build one matcher, longest phrase first --------- */
@@ -175,7 +182,14 @@
    'fertilisation', 'pollen tube', 'seed', 'fruit',
    'adaptive feature', 'adaptive features', 'xerophyte', 'hydrophyte'].forEach(function (w) { GOES_THERE[w] = true; });
 
-  var here = null, seen = null, quiet = false, wentTo = null;
+  var here = null, seen = null, quiet = false, wentTo = null, teaching = false;
+  /* this station's key-word cards (the flip cards at the bottom of its Learn tab), by the word in lower case. Each key word
+     has ONE card in the lab, in the station that first teaches it (Daniel, 25 Oct 2026: "please do not repeat keywords"),
+     and in that station the word's first mention leads down to its card ("should then link to the flashcard at the
+     bottom of it"), never away to another station. KW_DONE: the
+     cards a mention has led down to; KW_OFF: the words marked outside What you need to know without using up their
+     way down; UNDER: the words met inside an underlined syllabus phrase */
+  var KW = {}, KW_DONE = {}, KW_OFF = {}, UNDER = {};
   /* The pictures this station is about to put on the page. A magnifier that opens one of
      them shows the reader what is already in front of them — worst where the caption of a
      picture uses the very word, so the word beside the dark dust opens the dark dust. Where
@@ -183,10 +197,14 @@
      to give. */
   var SHOWN = {};
   function setShown(m) { SHOWN = m || {}; }
-  function setStation(id) { here = id; seen = Object.create(null); quiet = false; wentTo = Object.create(null); }
+  function setStation(id) {
+    here = id; seen = Object.create(null); quiet = false; wentTo = Object.create(null); KW = {}; KW_DONE = {}; KW_OFF = {}; UNDER = {};
+    (global.STATIONS || []).forEach(function (s) { if (s.id === id) (s.keywords || []).forEach(function (w) { KW[String(w.term).toLowerCase()] = w.term; }); });
+  }
   /* a widget built afresh (its reset) marks its words as it did the first time: forget what it introduced */
   function unsee(words, jumps) { if (seen) (words || []).forEach(function (w) { delete seen[String(w).toLowerCase()]; }); if (wentTo) (jumps || []).forEach(function (j) { delete wentTo[j]; }); }
   function setQuiet(v) { quiet = !!v; }
+  function teach(v) { teaching = !!v; }
 
   var U0 = '', U1 = '';
   function underlineMarks(escaped) { return escaped.replace(/_([^_\n]{1,240})_/g, U0 + '$1' + U1); }
@@ -250,16 +268,36 @@
       if (NEGATED.test(before)) return m;
       if (wrongSense(low, before, String(whole).slice(at + m.length).replace(/<[^>]*>/g, ''), String(whole).replace(/<[^>]*>/g, ''))) return m;
       var cat = e[1], act = '', cls = '';
-      var first = !quiet && !(seen && seen[low]);
-      if (seen) seen[low] = true;
-      if (!first) return m;
       var ctx = (CONTEXT[here] || {})[low];
-      var def = defined(low);
+      var def = defined(low), card = !e[2] && (KW[low] || (def && KW[def.toLowerCase()]));
+      /* a word whose key-word card is in this station and has not led down to it yet: its first mention in What you
+         need to know (Terms.teach) goes down to the card. Before that, a mention inside an underlined syllabus phrase
+         (never clickable) or anywhere else (a widget, a caption, the card below) comes out as it always did without
+         using up that way down, and a picture opens where it always did */
+      var down = card && !quiet && !KW_DONE[card], keep = false, under = false, inUnder = false;
+      if (down) {
+        var raw = String(whole).slice(0, at);
+        inUnder = raw.lastIndexOf(U0) > raw.lastIndexOf(U1);
+        if (inUnder) UNDER[low] = true;
+        else if (!teaching) {
+          if (KW_OFF[low] || (seen && seen[low])) return m;
+          if (!((ctx || PEEK[low]) && !SHOWN[(ctx || PEEK[low])[0]])) { KW_OFF[low] = card; keep = true; }
+        } else under = !!UNDER[low] && !!def && !KNOWN[def.toLowerCase()];
+      }
+      var first = keep || under || (!quiet && !(seen && seen[low]));
+      if (seen && !keep) seen[low] = true;
+      if (!first) return m;
       var pk0 = ctx || PEEK[low];
-      if (pk0 && !SHOWN[pk0[0]]) {
+      if (pk0 && !SHOWN[pk0[0]] && !under) {     /* a picture an underline used to hide stays hidden */
         var pk = pk0;
         act = ' data-peek="' + pk[0] + '" data-note="' + esc(pk[1]) + '"' + (pk[2] ? ' data-credit="' + esc(pk[2]) + '"' : '') + ' tabindex="0" role="button"';
         cls = ' is-peek';
+      } else if (down && teaching && !inUnder && def && !KNOWN[def.toLowerCase()]) {
+        /* its key-word card is at the bottom of this station: down to it, not away */
+        KW_DONE[card] = true;
+        if (seen) for (var w in KW_OFF) if (KW_OFF[w] === card) seen[w] = true;   /* its other words, as they were */
+        act = ' data-kw="' + esc(card.toLowerCase()) + '" tabindex="0" role="button"';
+        cls = ' is-kw';
       } else if (JUMP[low] === here) {
         return '<b class="t t--' + cat + '">' + m + '</b>';
       } else if (JUMP[low] && GOES_THERE[low] && !(wentTo && wentTo[JUMP[low]])) {
@@ -288,7 +326,7 @@
   }
 
   global.Terms = { setKnown: setKnown, isKnown: isKnown, forgetAll: forgetAll, knownCount: knownCount, mark: mark, legend: legend, unsee: unsee,
-                   CATS: CATS, setStation: setStation, setQuiet: setQuiet, setShown: setShown, PEEK: PEEK, JUMP: JUMP };
+                   CATS: CATS, setStation: setStation, setQuiet: setQuiet, setShown: setShown, teach: teach, PEEK: PEEK, JUMP: JUMP };
 })(window);
 
 /* A number never parts from its unit at a line break — 20 °C, 5 min, 48 mm, 60 %, 4 marks, pH 2 — wherever the page
