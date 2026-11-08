@@ -262,7 +262,9 @@
 
   var WIDGET_CTX = {
     focus: function (gid) { if (window.Plate) window.Plate.focus(gid); },
-    home: function () { if (window.Plate) window.Plate.home(); }
+    home: function () { if (window.Plate) window.Plate.home(); },
+    /* a "Find the …" picture stands in the plant's column while its card is open (learn.js stageFinder) */
+    stageFinder: function (box) { if (window.Learn && window.Learn.stageFinder) window.Learn.stageFinder(box); }
   };
 
   /* ---------- a simulation standing beside the questions ----------

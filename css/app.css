@@ -2174,3 +2174,16 @@ picture{display:block;line-height:0}
   .pw__row--check{grid-template-columns:auto minmax(0,1fr);gap:9px}
   .pw__row--pick{grid-template-columns:minmax(0,1fr) auto auto;gap:7px}
 }
+
+/* ---------- a "Find the …" picture in the plant's column (8 Nov 2026) ----------
+   Daniel: pressing a pin seemed to do nothing, because its name came up below the picture, out of view; "put the image
+   on the left … and then you show on the right" the names. On a wide screen, while its card is open, the picture with
+   its pins stands where the plant is (learn.js stageFinder, the shared finder's box.__split); the names stay in the card
+   in a plain list, each joined to its pressed pin by a line ruled across the page (.pins__over), drawn under the
+   pop-ups. */
+.sim > .fd-pack .finder__left{width:100%}
+.finder.finder--split{display:block}
+.finder__stub{margin:0 0 8px;padding:2px 0 2px 9px;border-left:3px solid #CBB68A;font-size:12.5px;line-height:1.5;color:var(--grey)}
+.finder__stub span{color:#B08A4A;font-size:11px;margin-right:2px}
+.finder__stub[hidden]{display:none}
+.pins__lines.pins__over{position:fixed;left:0;top:0;z-index:30}

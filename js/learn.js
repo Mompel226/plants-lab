@@ -5864,6 +5864,54 @@
     requestAnimationFrame(mount);
   }
 
+  /* ---------- a pin picture (finder) in the plant's column ----------
+     Daniel, 8 Nov 2026: pressing a pin on a "Find the …" picture seemed to do nothing, because its name came up below
+     the picture, out of view; "put the image on the left, and then you click on the left … and then you show on the
+     right the root tip, the seed coat, the root hairs". So on a wide screen, while its card is open, the picture with its
+     pins stands where the plant is, and its names stay in the card on the right, each joined to its pin by a ruled line
+     (the shared finder's box.__split). On a phone, and outside a card, it stays where it is, names beside or under it. */
+  function stageFinder(box) {
+    if (!box || !box.__split) return;
+    var hd = box.querySelector('.widget__h'), title = '';
+    if (hd) { var c = hd.cloneNode(true); Array.prototype.forEach.call(c.querySelectorAll('button, .widget__try'), function (x) { x.remove(); }); title = c.textContent.trim(); }
+    var pack = h('div', 'stg-pack fd-pack');
+    if (title) pack.appendChild(h('div', 'stg-pack__h', esc(title)));
+    var wideQ = window.matchMedia('(min-width: 1001px)');
+    function host() { return document.getElementById('simHost'); }
+    function owned() { var hs = host(); return !!(hs && hs.contains(box)); }
+    function mode() { return !owned() && host() && wideQ.matches ? 'column' : 'flow'; }
+    function place(on) {
+      var hs = host();
+      if (on && mode() === 'column' && hs) {
+        if (pack.parentNode !== hs) { hs.innerHTML = ''; hs.appendChild(pack); }
+        box.__split(pack);
+      } else {
+        box.__split(null);
+        if (pack.parentNode) pack.parentNode.removeChild(pack);
+      }
+    }
+    var claim = STAGE.add({
+      box: box, rank: 0,
+      able: function () { return mode() === 'column'; },
+      watch: function () { return box; },
+      on: function () { place(true); },
+      off: function () { place(false); }
+    });
+    var cw = null;
+    function mount() {
+      if (cw) { cw.stop(); cw = null; }
+      if (mode() !== 'column') { STAGE.want(claim, false); place(false); return; }
+      cw = cardWatch(box, function (v) { STAGE.want(claim, v); });
+      if (cw) claim.card = true; else STAGE.want(claim, false);
+    }
+    function detach() { if (cw) { cw.stop(); cw = null; } wideQ.removeEventListener('change', onWide); STAGE.drop(claim); place(false); }
+    var onWide = function () { if (box.isConnected) mount(); else detach(); };
+    wideQ.addEventListener('change', onWide);
+    var ownReset = box.__onReset;
+    box.__onReset = function () { if (ownReset) ownReset(); detach(); };
+    requestAnimationFrame(mount);
+  }
+
   /* ---------- stagephoto: a station photograph that stands in the plant's column ----------
      Daniel, on station 12: "make sure that you don't repeat images and then the images maybe show up
      on the left. As the students scroll, those images show on the left." So on a wide screen the
@@ -6994,5 +7042,5 @@
    ['curio', curio], ['stagephoto', stagephoto]]
     .forEach(function (m) { W.register(m[0], m[1]); });
 
-  global.Learn = { widget: W.widget, reap: W.reap, svgFor: svgFor, DIAGRAMS: DIAGRAMS, PART_INFO: PART_INFO };
+  global.Learn = { widget: W.widget, reap: W.reap, svgFor: svgFor, DIAGRAMS: DIAGRAMS, PART_INFO: PART_INFO, stageFinder: stageFinder };
 })(window);
