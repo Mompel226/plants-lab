@@ -4552,17 +4552,20 @@
     function look() {
       if (!box.isConnected) { detach(); return; }
       if (mode() === 'flow') return;
-      say(reading());
+      say(cw ? cw.wants() : reading());
     }
 
     /* An observer rather than a scroll handler: it is told when the widget comes level with the
        reader whatever box is doing the scrolling, and it is told at layout changes too, which a
        scroll listener never hears. The band it watches starts BELOW the strip, because on a phone
        the strip covers the top of the page and anything under it is not being read. */
-    var io = null;
+    var io = null, cw = null;
     function watch() {
       if (io) { io.disconnect(); io = null; }
+      if (cw) { cw.stop(); cw = null; }
       var m = mode(); if (m === 'flow' || !window.IntersectionObserver) return;
+      /* in its card: the drawing stands in the column while the card is open (cardWatch) */
+      if ((cw = cardWatch(box, function (v) { say(v); }))) return;
       var col = document.querySelector('.platecol');
       var lead = (m === 'strip' && col) ? Math.round(col.getBoundingClientRect().height) : 0;
       /* One band, fixed. Making it depend on whether the widget was already staged meant
@@ -4608,6 +4611,7 @@
     }
     function detach() {
       if (io) { io.disconnect(); io = null; }
+      if (cw) { cw.stop(); cw = null; }
       if (tick) { cancelAnimationFrame(tick); tick = 0; }
       document.removeEventListener('scroll', onScroll, true);
       window.removeEventListener('resize', onScroll);
@@ -5056,15 +5060,26 @@
     var T4 = A.t1, T5 = A.fuse1 + 1.6, T6 = T5 + 5.6, END = T6 + 6.2;
 
     var STEPS = [
+      /* Each step's words by level (8 Nov 2026, the Inheritance Lab's structure; Daniel: "exactly what is IGCSE and what
+         is IB and what is beyond … It needs to be very, very clear"): `p` is the IGCSE line (0610 16.3.12, Supplement:
+         the pollen tube, its entry into the ovule, then fertilisation); `ib` the IB line, shown with the IB layer; `bey`
+         a line in neither syllabus, shown with the IB layer too (memory plant-reproduction-syllabus-fence). Steps 5 and
+         6 are in the 0610 syllabus until 2015 ("the formation of a seed … and fruit (produced from the ovary wall)",
+         past-syllabus s15-fruit), not 2026–2028: their tag says so, as the station's own badge does. */
       { t: 0, h: 'Pollination', p: 'Pollen grains land on the sticky stigma. In this animation there are three.',
+        /* IB D3.1.8 (SL), checked in the IB Biology guide 2025: "production of gametes inside ovules and pollen grains" */
         ib: 'Each grain contains two cells: a tube cell, with the tube nucleus, and a small generative cell.' },
       { t: A.t0, h: 'The pollen tube grows', p: 'Each grain grows a pollen tube down through the style. A pollen nucleus moves down each tube, near its tip. In most plants this takes hours, or a few days.',
+        /* IB D3.1.8: "pollen development" */
         ib: 'In each tube, the tube nucleus moves near the tip. The generative cell divides by mitosis into two male gametes.' },
       { t: T_STYLE, h: 'Into an ovule', p: 'Each tube enters the ovary, then its own ovule, through a small opening: the micropyle.' },
       { t: T4, h: 'Fertilisation', p: 'In each ovule, a pollen nucleus fuses with the nucleus of the female gamete. The new cell is a zygote.',
-        ib: 'In each ovule, one male gamete fuses with the egg cell. The second fuses with the central cell: double fertilisation, which is beyond IB.' },
-      { t: T5, h: 'The ovule becomes a seed', tag: 'after fertilisation', p: 'The zygote develops into an embryo, and the outside of the ovule becomes the seed coat. Each fertilised ovule becomes one seed.' },
-      { t: T6, h: 'The ovary becomes the fruit', tag: 'after fertilisation', p: 'Over several weeks the ovary develops into the fruit, with the three seeds inside. The style and stigma wither.' }
+        /* IB D3.1.8: "fertilization to produce an embryo". Double fertilisation is in neither the 0610 syllabus nor the
+           IB guide (it never names the central cell, the endosperm or double fertilization): Beyond. */
+        ib: 'In each ovule, one male gamete fuses with the egg cell.',
+        bey: 'The second male gamete fuses with the central cell. Two fusions in one ovule: double fertilisation.' },
+      { t: T5, h: 'The ovule becomes a seed', tag: 'old syllabus \u00b7 until 2015', p: 'The zygote develops into an embryo, and the outside of the ovule becomes the seed coat. Each fertilised ovule becomes one seed.' },
+      { t: T6, h: 'The ovary becomes the fruit', tag: 'old syllabus \u00b7 until 2015', p: 'Over several weeks the ovary develops into the fruit, with the three seeds inside. The style and stigma wither.' }
     ];
     function stepAt(t) { var k = 0; for (var i = 0; i < STEPS.length; i++) if (t >= STEPS[i].t) k = i; return k; }
     function stepEnd(i) { return i + 1 < STEPS.length ? STEPS[i + 1].t : END; }
@@ -5506,17 +5521,26 @@
     fig.appendChild(now);
     var side = h('div', 'pt__side');
     var steps = h('ol', 'pt__steps');
+    /* a step's words, a line per level, each with its mark (the other labs' stepper look: sp__lv) */
+    function lvLine(lv, text, extra) {
+      return '<span class="sp__lv sp__lv--' + lv + (extra ? ' ' + extra : '') + '"><b class="sp__lvt">' + ({ ig: 'IGCSE', ib: 'IB', bey: 'Beyond' })[lv] + '</b> ' + esc(text) + '</span>';
+    }
     STEPS.forEach(function (st, i) {
       var li = h('li', 'pt__step');
       var b = h('button', 'pt__stepb',
         '<span class="pt__num">' + (i + 1) + '</span><span class="pt__txt"><b>' + esc(st.h) + '</b>' +
         (st.tag ? ' <span class="pt__tag">' + esc(st.tag) + '</span>' : '') +
-        '<span class="pt__p">' + esc(st.p) + '</span>' +
-        (st.ib ? '<span class="pt__stepib"><span class="pt__ibchip">IB</span> ' + esc(st.ib) + '</span>' : '') + '</span>');
+        '<span class="pt__p">' + lvLine('ig', st.p) +
+        (st.ib ? lvLine('ib', st.ib, 'pt__stepib') : '') + (st.bey ? lvLine('bey', st.bey, 'pt__stepib') : '') + '</span></span>');
       b.type = 'button';
       b.addEventListener('click', function () { goStep(i); });
       li.appendChild(b); steps.appendChild(li);
     });
+    /* the key to the marks, once, above the steps; IB and Beyond only while the IB layer shows their lines */
+    side.appendChild(h('p', 'sp__legend',
+      '<span class="sp__lv sp__lv--ig"><b class="sp__lvt">IGCSE</b> in the 0610 syllabus: learn these lines</span>' +
+      '<span class="sp__lv sp__lv--ib pt__lgib"><b class="sp__lvt">IB</b> not in the 0610 syllabus; in IB Biology</span>' +
+      '<span class="sp__lv sp__lv--bey pt__lgib"><b class="sp__lvt">Beyond</b> in neither syllabus</span>'));
     side.appendChild(steps);
 
     var more = h('button', 'pt__more'); more.type = 'button'; more.setAttribute('aria-expanded', 'false');
@@ -5568,7 +5592,7 @@
         sg.classList.toggle('is-on', started && i === k);
       });
       count.textContent = started ? 'Step ' + (k + 1) + ' of ' + STEPS.length : STEPS.length + ' steps';
-      var nowText = started ? 'Step ' + (k + 1) + ': ' + STEPS[k].h + '. ' + STEPS[k].p + (ib && STEPS[k].ib ? ' ' + STEPS[k].ib : '') : '';
+      var nowText = started ? 'Step ' + (k + 1) + ': ' + STEPS[k].h + '. IGCSE: ' + STEPS[k].p + (ib && STEPS[k].ib ? ' IB: ' + STEPS[k].ib : '') + (ib && STEPS[k].bey ? ' Beyond: ' + STEPS[k].bey : '') : '';
       if (now.textContent !== nowText) now.textContent = nowText;
       syncPlay();
     }
@@ -5646,6 +5670,7 @@
 
     paintMore();
     paint(0);
+    box.__filmSteps = STEPS.length;            /* its card's heading: "Animation · 6 steps" (app.js filmCard) */
     return box;
   }
 
@@ -5703,6 +5728,17 @@
         if (Math.abs(moved) > 1) sc.scrollTop += moved;
       }
     }
+    /* Two drawings in ONE open card both want the column (Rate and gas exchange: Count the bubbles and the indicator
+       tubes). The arbiter then gives it to the one nearer the middle of the reading area, and looks again as the reader
+       scrolls through the card. Claims that follow the reader (not in a card) are left to their observers. */
+    var tick = 0;
+    function rechoose() {
+      tick = 0;
+      var n = 0;
+      for (var i = 0; i < claims.length; i++) if (claims[i].card && claims[i].wants) n++;
+      if (n > 1) apply();
+    }
+    document.addEventListener('scroll', function () { if (!tick) tick = requestAnimationFrame(rechoose); }, { passive: true, capture: true });
     return {
       add: function (c) { c.wants = false; claims.push(c); return c; },
       drop: function (c) {
@@ -5722,6 +5758,23 @@
       scrollerOf: scrollerOf
     };
   })();
+
+  /* ---------- a drawing in a card: in the column while its card is open ----------
+     In a card (a sentence of What you need to know that opens, or the animation's own card), a drawing stands in the
+     plant's column for as long as its card is open and the widget is shown (Daniel, 4 Nov 2026: "as long as … is open, I
+     should be able to see the animation"; 8 Nov 2026: the Inheritance Lab's structure in every lab), and not while the
+     reader merely scrolls level with it. The Immunity and Circulation Labs' cardWants. Returns { wants(), stop() }, or
+     null when the box is not in a card: then the old rule, level with the reader, still holds. */
+  function cardWatch(box, tell) {
+    var card = box.closest ? box.closest('.xcard') : null;
+    if (!card || !global.MutationObserver) return null;
+    function wants() { return card.classList.contains('is-open') && !box.hidden && !(box.parentNode && box.parentNode.closest && box.parentNode.closest('[hidden]')); }
+    var mo = new MutationObserver(function () { if (box.isConnected) tell(wants()); else mo.disconnect(); });
+    mo.observe(card, { attributes: true, attributeFilter: ['class'] });
+    mo.observe(box, { attributes: true, attributeFilter: ['hidden'] });
+    tell(wants());
+    return { wants: wants, stop: function () { mo.disconnect(); } };
+  }
 
   /* ---------- stageWidget: a widget's drawing stands in the plant's column ----------
      Daniel's rule for every animation (Circulation Lab 25–26 Sep; here, 27 Sep, for Count the
@@ -5769,7 +5822,7 @@
       on: function () { place(true); },
       off: function () { place(false); }
     });
-    var io = null, LOWER = .35;
+    var io = null, cw = null, LOWER = .35;
     function reading() {
       var r = box.getBoundingClientRect(), sc = STAGE.scrollerOf(box);
       var t = 0, b = window.innerHeight || 800;
@@ -5779,8 +5832,10 @@
     }
     function watch() {
       if (io) { io.disconnect(); io = null; }
+      if (cw) { cw.stop(); cw = null; }
       var m = mode();
       if (m === 'flow' || !window.IntersectionObserver) { STAGE.want(claim, false); return; }
+      if ((cw = cardWatch(box, function (v) { STAGE.want(claim, v); }))) { claim.card = true; return; }
       var col = document.querySelector('.platecol');
       var lead = (m === 'strip' && col) ? Math.round(col.getBoundingClientRect().height) : 0;
       try {
@@ -5792,9 +5847,10 @@
         io.observe(box);
       } catch (e) { io = null; }
     }
-    function mount() { place(STAGE.holding(claim)); watch(); STAGE.want(claim, mode() !== 'flow' && reading()); }
+    function mount() { place(STAGE.holding(claim)); watch(); STAGE.want(claim, mode() !== 'flow' && (cw ? cw.wants() : reading())); }
     function detach() {
       if (io) { io.disconnect(); io = null; }
+      if (cw) { cw.stop(); cw = null; }
       wideQ.removeEventListener('change', onWide);
       stripQ.removeEventListener('change', onWide);
       STAGE.drop(claim);
@@ -5858,10 +5914,12 @@
     });
     /* the sentinel is a point at the top of the line that names the picture, and a point does not
        move when the picture leaves the words — so nothing here can chase its own tail */
-    var io = null, INSET = 20;
+    var io = null, cw = null, INSET = 20;
     function watch() {
       if (io) { io.disconnect(); io = null; }
+      if (cw) { cw.stop(); cw = null; }
       if (mode() === 'flow' || !window.IntersectionObserver) { STAGE.want(claim, false); return; }
+      if ((cw = cardWatch(box, function (v) { STAGE.want(claim, v); }))) { claim.card = true; return; }
       try {
         io = new IntersectionObserver(function (es) {
           if (!es || !es.length) return;
@@ -5872,7 +5930,7 @@
       } catch (e) { io = null; }
     }
     function mount() { place(STAGE.holding(claim)); watch(); }
-    function detach() { if (io) { io.disconnect(); io = null; } wideQ.removeEventListener('change', onWide); stripQ.removeEventListener('change', onWide); STAGE.drop(claim); }
+    function detach() { if (io) { io.disconnect(); io = null; } if (cw) { cw.stop(); cw = null; } wideQ.removeEventListener('change', onWide); stripQ.removeEventListener('change', onWide); STAGE.drop(claim); }
     var onWide = function () { if (box.isConnected) mount(); else detach(); };
     wideQ.addEventListener('change', onWide);
     stripQ.addEventListener('change', onWide);
@@ -6783,7 +6841,7 @@
     function mount() {
       place(STAGE.holding(claim));
       watch();
-      STAGE.want(claim, mode() !== 'flow' && reading());
+      STAGE.want(claim, mode() !== 'flow' && (cw ? cw.wants() : reading()));
     }
     box.__onMove = mount;     /* app.js re-runs this after re-parenting the widget */
 
@@ -6798,11 +6856,13 @@
        picture is staged): the same rules the auxin experiments settled on. The band stops a third of
        the way up from the bottom, so opening the station still shows the plant, and the pictures take
        its place only once the reader has scrolled down to the chips. */
-    var io = null, LOWER = .35;
+    var io = null, cw = null, LOWER = .35;
     function watch() {
       if (io) { io.disconnect(); io = null; }
+      if (cw) { cw.stop(); cw = null; }
       var m = mode();
       if (m === 'flow' || !window.IntersectionObserver) { STAGE.want(claim, false); return; }
+      if ((cw = cardWatch(box, function (v) { STAGE.want(claim, v); }))) { claim.card = true; return; }
       var col = document.querySelector('.platecol');
       var lead = (m === 'strip' && col) ? Math.round(col.getBoundingClientRect().height) : 0;
       try {
@@ -6817,6 +6877,7 @@
     }
     function detach() {
       if (io) { io.disconnect(); io = null; }
+      if (cw) { cw.stop(); cw = null; }
       if (live) { live.stop(); live = null; }
       wideQ.removeEventListener('change', onWide);
       stripQ.removeEventListener('change', onWide);

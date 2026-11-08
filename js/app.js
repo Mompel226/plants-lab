@@ -339,8 +339,8 @@
     else if (tab !== 'do' || !sims.length) {
       dropSim();
       if (btn) btn.hidden = true;
-      /* A widget marked onStage keeps its drawing in the column and shows it only while the
-         reader is level with it. Start from the plant and let the widget decide; the heavy
+      /* A widget marked onStage keeps its drawing in the column and shows it only while its card
+         is open (since 8 Nov 2026; before, while the reader was level with it). Start from the plant and let the widget decide; the heavy
          showSim would rebuild the whole station, which the scroll must never do.
 
          A BENCH station must not take showSim either, and for a sharper reason: showSim(false)
@@ -538,20 +538,43 @@
         });
       }
       li.setAttribute('data-i', i);
-      if (offK) offAt[offK].push({ k: typeof b === 'object' && b.near != null ? b.near + 0.5 : i, li: li });
-      else list.appendChild(li);
-      /* the thing to press, drag or count sits under the sentence it belongs to */
-      widgets.filter(function (w) { return w.after === i; }).forEach(function (w) {
+      /* A sentence with a heading is a card: its heading always shows, its words open one card at a time
+         (Daniel, 8 Nov 2026, after the Inheritance Lab: "I would like to apply this system … just to standardize
+         things"; memory explore-dont-scroll). Opening a card shows its part on the plant; a part pressed on the plant
+         opens its card (openGroup). The Circulation Lab's code (docs/LAB-STRUCTURE-PLAN.md, section 4). */
+      if (typeof b === 'object' && b.head) makeCard(li, b.head);
+      /* a film (the pollen tube) stands in a card of its own, before or after its sentence; beside a sentence in the
+         card below What you need to know, it goes into that card with it. A tool marked `outside` (the potometer)
+         stands open under its sentence's card, never inside it: its apparatus is on the bench in the plant's column
+         all the time, so its controls must be there all the time too. */
+      var fb = filmsAt(widgets, 'before', i), fa = filmsAt(widgets, 'after', i);
+      var tools = widgets.filter(function (w) { return !w.film && w.outside && w.after === i; }).map(toolItem).filter(Boolean);
+      if (offK) {
+        var kk = typeof b === 'object' && b.near != null ? b.near + 0.5 : i;
+        fb.forEach(function (g, j) { offAt[offK].push({ k: kk - .01 * (fb.length - j), li: filmCard(g) }); });
+        offAt[offK].push({ k: kk, li: li });
+        tools.forEach(function (t, j) { offAt[offK].push({ k: kk + .001 * (j + 1), li: t }); });
+        fa.forEach(function (g, j) { offAt[offK].push({ k: kk + .01 * (j + 1), li: filmCard(g) }); });
+      } else {
+        fb.forEach(function (g) { list.appendChild(filmCard(g)); });
+        list.appendChild(li);
+        tools.forEach(function (t) { list.appendChild(t); });
+        fa.forEach(function (g) { list.appendChild(filmCard(g)); });
+      }
+      /* the thing to press, drag or count sits under the sentence it belongs to: inside its card, so it shows
+         while the card is open, and only then */
+      widgets.filter(function (w) { return !w.film && !w.outside && w.after === i; }).forEach(function (w) {
         var el = window.Learn.widget(w, WIDGET_CTX);
         if (el && w.anchor && el.setAttribute) el.setAttribute('data-anchor', w.anchor);
         /* A tall, narrow diagram set under the sentence leaves a column of empty paper beside it.
            Put it FIRST instead and let the sentence close round it — css floats it into the
            margin. Everything else still sits under the sentence it belongs to. */
-        if (el && el.classList && el.classList.contains('photo--portrait')) li.insertBefore(el, li.firstChild);
-        else li.appendChild(el);
+        var into = li.__body || li;
+        if (el && el.classList && el.classList.contains('photo--portrait')) into.insertBefore(el, into.firstChild);
+        else into.appendChild(el);
       });
     });
-    widgets.filter(function (w) { return w.after == null; }).forEach(function (w) {
+    widgets.filter(function (w) { return w.after == null && w.before == null; }).forEach(function (w) {
       var el = window.Learn.widget(w, WIDGET_CTX);
       if (el && w.anchor && el.setAttribute) el.setAttribute('data-anchor', w.anchor);
       card.appendChild(el);
@@ -905,9 +928,115 @@
     history.replaceState(null, '', '#' + gid);
     var target = document.querySelector('#panelInner [data-group="' + gid + '"]');
     if (!target) return;
+    /* the part's sentence is a card, or sits inside one: that card opens, and the plant shows the part for as long
+       as it is open (closing it gives the station's view back: makeCard) */
+    var card = target.__open ? target : target.closest('.xcard');
+    if (card && card.__open) card.__open(true, true);
     landOn(target, true);
     target.classList.add('flash');
     setTimeout(function () { target.classList.remove('flash'); }, 2800);
+  }
+
+  /* ---------- a film (a step animation) in a card of its own ----------
+     Daniel, 8 Nov 2026, Inheritance Lab: "put the animation as a different kind of tab that has a different background";
+     "wherever you have a heavy animation … on its own kind of collapsible menu, and then anything else that they need to
+     know … is just text"; then for every lab: "I would like to apply this system … just to standardize things". The
+     card's heading is the film's own title, with its number of steps; it opens and closes like a sentence's card, one open
+     at a time. Spec: { type, film: true, after: i } (or before: i). Films that share a `card` name go into ONE card, in
+     the master's order (none in this lab). The Circulation Lab's code; a film on its own player (pollentube) gives its
+     steps as box.__filmSteps (a number, or a word). */
+  function filmsAt(widgets, side, i) {
+    var out = [], named = {};
+    widgets.filter(function (w) { return w.film && w[side] === i; }).forEach(function (w) {
+      if (!w.card) { out.push([w]); return; }
+      if (!named[w.card]) { named[w.card] = []; out.push(named[w.card]); }
+      named[w.card].push(w);
+    });
+    return out;
+  }
+  function filmCard(ws) {
+    var li = document.createElement('li'), title = '';
+    ws.forEach(function (w) {
+      var el = window.Learn.widget(w, WIDGET_CTX);
+      if (!el) return;
+      if (w.anchor && el.setAttribute) el.setAttribute('data-anchor', w.anchor);
+      li.appendChild(el);
+      if (!title && !el.hidden) {
+        /* the heading's own words, without its buttons (Reset) or its "Press play" */
+        var hd = el.querySelector ? el.querySelector('.widget__h') : null;
+        if (hd) { var c = hd.cloneNode(true); Array.prototype.forEach.call(c.querySelectorAll('.widget__try, button'), function (x) { x.remove(); }); title = c.textContent.trim(); }
+      }
+    });
+    makeCard(li, title || 'Animation');
+    li.classList.add('xcard--film');
+    var t = li.querySelector('.xcard__t');
+    t.insertAdjacentHTML('beforebegin', '<span class="xcard__play" aria-hidden="true">\u25B6</span>');
+    var kind = document.createElement('span'); kind.className = 'xcard__kind';
+    t.appendChild(kind);
+    /* "Animation · N steps", N the steps of the animation shown */
+    function count() {
+      var n = 0, other = null;
+      Array.prototype.forEach.call(li.__body.children, function (el) {
+        if (!el.querySelector || el.hidden || n || other) return;
+        var steps = el.querySelector('.sp__steps');
+        if (steps) n = steps.children.length;
+        else if (typeof el.__filmSteps === 'number') n = el.__filmSteps;
+        else if (el.__filmSteps) other = el.__filmSteps;
+      });
+      kind.textContent = 'Animation' + (n ? ' \u00b7 ' + n + ' steps' : other ? ' \u00b7 ' + other : '');
+    }
+    count();
+    li.addEventListener('film:steps', count);
+    return li;
+  }
+  /* a tool that stays open under its sentence's card (`outside`: the potometer) */
+  function toolItem(w) {
+    var el = window.Learn.widget(w, WIDGET_CTX);
+    if (!el) return null;
+    if (w.anchor && el.setAttribute) el.setAttribute('data-anchor', w.anchor);
+    var li = document.createElement('li');
+    li.className = 'xtool';
+    li.appendChild(el);
+    return li;
+  }
+
+  /* the card that holds an element (or the card itself), opened if it is shut; returns it, or null */
+  function openCardOf(el) {
+    var c = el ? (el.__open ? el : (el.closest ? el.closest('.xcard') : null)) : null;
+    if (c && c.__open && !c.classList.contains('is-open')) c.__open(true);
+    return c;
+  }
+
+  /* ---------- a sentence as a card ----------
+     The heading is a button; the words under it open on a press, one card at a time in the station. Opening one shows
+     its part on the plant (its `group`); closing it, or opening one with no part, gives the station's own view back
+     (Plate.unfocus: the bench is never touched). The Circulation Lab's makeCard. */
+  function makeCard(li, head) {
+    var body = document.createElement('div');
+    body.className = 'xcard__b';
+    while (li.firstChild) body.appendChild(li.firstChild);
+    var btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'xcard__h'; btn.setAttribute('aria-expanded', 'false');
+    btn.innerHTML = '<span class="xcard__t">' + esc(head) + '</span><span class="xcard__a" aria-hidden="true"></span>';
+    li.classList.add('xcard');
+    li.appendChild(btn); li.appendChild(body);
+    body.hidden = true;
+    li.__body = body;
+    li.__open = function (on, fromPicture) {
+      if (on) Array.prototype.forEach.call(document.querySelectorAll('#panelInner .xcard.is-open'), function (o) { if (o !== li && o.__open) o.__open(false, true); });
+      li.classList.toggle('is-open', !!on);
+      body.hidden = !on;
+      btn.setAttribute('aria-expanded', on ? 'true' : 'false');
+      if (fromPicture || !window.Plate) return;
+      var g0 = on ? (li.getAttribute('data-group') || '').split(' ')[0] : '';
+      if (g0) window.Plate.focus(g0);
+      else if (window.Plate.unfocus) window.Plate.unfocus();
+    };
+    btn.addEventListener('click', function () {
+      var on = !li.classList.contains('is-open');
+      li.__open(on);
+      if (on) showWhole(li, true);
+    });
   }
 
   /* Plurals English refuses to make regularly, and which this lab uses constantly. */
@@ -972,6 +1101,9 @@
       if (cameFrom && S[cameFrom]) showBackChip(cameFrom, term);
       return;
     }
+    /* the line found may be inside a card (a sentence's, or the animation's): open it, or the page would land on words
+       nobody can see (8 Nov 2026, the cards) */
+    openCardOf(target);
     /* arriving from another station: there is nothing to animate from, so land instantly */
     landOn(target, cameFrom == null);
     target.classList.add('flash');
@@ -981,11 +1113,17 @@
 
   var backChip = null, whereWeWere = null;
   function jumpTo(el, top) { var prev = el.style.scrollBehavior; el.style.scrollBehavior = 'auto'; el.scrollTop = top; el.style.scrollBehavior = prev || ''; }
-  function markWhereWeAre() { var sc = panelScroller(); whereWeWere = { id: current, top: sc ? sc.scrollTop : 0, tab: tab }; }
+  /* where the reader was, and which card they had open (its place among the station's cards, which a repaint keeps):
+     the way back opens it again, or "← back" would return to a page of closed cards */
+  function markWhereWeAre() {
+    var sc = panelScroller(), cards = document.querySelectorAll('#panelInner .xcard'), was = document.querySelector('#panelInner .xcard.is-open');
+    whereWeWere = { id: current, top: sc ? sc.scrollTop : 0, tab: tab, card: was ? Array.prototype.indexOf.call(cards, was) : -1 };
+  }
   function goBackToMark(id) {
     var w = whereWeWere && whereWeWere.id === id ? whereWeWere : null;
     open(id);
     if (!w) return;
+    if (w.card > -1) openCardOf(document.querySelectorAll('#panelInner .xcard')[w.card]);
     requestAnimationFrame(function () { requestAnimationFrame(function () { var sc = panelScroller(); if (sc) jumpTo(sc, w.top); }); });
   }
   function showBackChip(id, term) {
@@ -1460,6 +1598,7 @@
       if (!b) return;
       var t = document.querySelector('[data-anchor="' + b.getAttribute('data-goto') + '"]');
       if (!t) return;
+      openCardOf(t);                            /* it may stand in a card that is shut */
       t.scrollIntoView({ behavior: 'smooth', block: 'center' });
       t.classList.remove('is-found');
       void t.offsetWidth;                       /* restart the flash if it is clicked twice */

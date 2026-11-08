@@ -80,6 +80,12 @@
        petals fallen and the pod hanging; every other station sees both flowers open */
     var fruiting = ids.indexOf('fruit') >= 0;
     plant.showParts(s.show ? s.show : plant.ALL.filter(function (p) { return fruiting || p !== 'fruit'; }).concat(fruiting ? [] : ['flower']));   /* a station may stand only some parts: the tropisms station shows the seedling */
+    view(st);
+  }
+  /* the station's own view: its parts lit, its name said, the camera on its part. showStation ends with it, and
+     unfocus gives it back after a part was framed (a card closing) without rebuilding anything */
+  function view(st) {
+    var s = spec(st), ids = s.light || [];
     var r = ids.length ? plant.lightMany(ids, plant.G[ids[0]] ? plant.G[ids[0]].colour : null) : (plant.clear(), { colour: null });
     var names = ids.map(function (id) { return plant.G[id] ? plant.G[id].label.toLowerCase() : id; });
     say(st.name, names.length ? names.join(' · ') : 'the whole plant', r.colour);
@@ -92,11 +98,24 @@
   /* one part, named and framed: the student clicked it on the plant or in the text */
   function focus(id) {
     if (!plant || !plant.G[id]) return;
+    /* the bench station (the potometer) shows no plant, so there is no part to frame (the Circulation Lab's rule,
+       8 Nov 2026: there a card naming a part made the way back empty the bench) */
+    if (current && spec(current).bench) return;
     var g = plant.G[id];
     var r = plant.light(id, true);
     say(g.label, g.note || '', r.colour);
     plant.flyTo(plant.boxOf(id, 60), function () { plant.pin(plant.elFor(id), g.label, r.colour); if (whole) whole.hidden = !plant.isZoomed(); });
     if (whole) whole.hidden = false;
+  }
+
+  /* back to the station's own view after a part was framed: a card that names a part has closed, or a card with no
+     part has opened (8 Nov 2026, the sentence cards). Never showStation, which empties the bench; on the bench station,
+     and while a drawing stands in the column, there is nothing to put back. */
+  function unfocus() {
+    if (!plant || !current || spec(current).bench) return;
+    if (col && col.classList.contains('is-sim')) return;
+    if (tag) tag.classList.remove('on');
+    view(current);
   }
 
   /* "Whole plant" pulls the camera all the way back and leaves the station's parts lit */
@@ -141,7 +160,7 @@
      re-runs showStation afterwards deletes it. */
   function showBench(on) { if (bench) bench.hidden = !on; }
 
-  global.Plate = { init: init, showStation: showStation, focus: focus, home: flyHome, showSim: showSim, stageSim: stageSim,
+  global.Plate = { init: init, showStation: showStation, focus: focus, unfocus: unfocus, home: flyHome, showSim: showSim, stageSim: stageSim,
                    showBench: showBench,
                    partsOf: function (st) { return spec(st).light || []; }, plant: function () { return plant; } };
 })(window);
