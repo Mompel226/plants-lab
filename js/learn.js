@@ -5066,13 +5066,13 @@
          a line in neither syllabus, shown with the IB layer too (memory plant-reproduction-syllabus-fence). Steps 5 and
          6 are in the 0610 syllabus until 2015 ("the formation of a seed … and fruit (produced from the ovary wall)",
          past-syllabus s15-fruit), not 2026–2028: their tag says so, as the station's own badge does. */
-      { t: 0, h: 'Pollination', p: 'Pollen grains land on the sticky stigma. In this animation there are three.',
+      { t: 0, still: 3, h: 'Pollination', p: 'Pollen grains land on the sticky stigma. In this animation there are three.',
         /* IB D3.1.8 (SL), checked in the IB Biology guide 2025: "production of gametes inside ovules and pollen grains" */
         ib: 'Each grain contains two cells: a tube cell, with the tube nucleus, and a small generative cell.' },
       { t: A.t0, h: 'The pollen tube grows', p: 'Each grain grows a pollen tube down through the style. A pollen nucleus moves down each tube, near its tip. In most plants this takes hours, or a few days.',
         /* IB D3.1.8: "pollen development" */
         ib: 'In each tube, the tube nucleus moves near the tip. The generative cell divides by mitosis into two male gametes.' },
-      { t: T_STYLE, h: 'Into an ovule', p: 'Each tube enters the ovary, then its own ovule, through a small opening: the micropyle.' },
+      { t: T_STYLE, still: T4 - 2, h: 'Into an ovule', p: 'Each tube enters the ovary, then its own ovule, through a small opening: the micropyle.' },
       { t: T4, h: 'Fertilisation', p: 'In each ovule, a pollen nucleus fuses with the nucleus of the female gamete. The new cell is a zygote.',
         /* IB D3.1.8: "fertilization to produce an embryo". Double fertilisation is in neither the 0610 syllabus nor the
            IB guide (it never names the central cell, the endosperm or double fertilization): Beyond. */
@@ -5456,11 +5456,15 @@
       { tx: 'seeds', side: 'R', t0: T6 + 2.4, t1: END + 9, at: function () { return ovW(1, -13, -8); } }
     ];
     function drawLabels(t) {
-      var cam = S.cam, list = [], lh = FONT * 1.16, gap = 5;
+      var cam = S.cam, list = [], lh = FONT * 1.16, gap = 5, seen = {};
+      /* Reduce motion (Daniel, 9 Nov 2026: "Nothing should disappear"): a step's still names every part named at any
+         moment of the step, where that part is in the still (stillK: the step whose still this is) */
+      var sa = stillK > -1 ? STEPS[stillK].t : null, sz = stillK > -1 ? segEnd(stillK) : null;
       LABELS.forEach(function (lb) {
         if (lb.layer === 'core' && ib) return;
         if (lb.layer === 'ib' && !ib) return;
-        var op = Math.min(seg(t, lb.t0, lb.t0 + .35), 1 - seg(t, lb.t1 - .35, lb.t1));
+        var op = sa != null ? (lb.t0 < sz && lb.t1 > sa && !seen[lb.tx] ? 1 : 0) : Math.min(seg(t, lb.t0, lb.t0 + .35), 1 - seg(t, lb.t1 - .35, lb.t1));
+        if (op > .01) seen[lb.tx] = 1;
         if (op <= .01) return;
         var w = lb.at(), sx = VX + VW / 2 + cam[2] * (w.x - cam[0]), sy = VY + VH / 2 + cam[2] * (w.y - cam[1]);
         var inX = Math.min(sx - VX, VX + VW - sx), inY = Math.min(sy - VY, VY + VH - sy);
@@ -5562,7 +5566,7 @@
       panel.hidden = !ib;
       wrap2.classList.toggle('is-ib', ib);
     }
-    more.addEventListener('click', function () { ib = !ib; paintMore(); render(T); });
+    more.addEventListener('click', function () { ib = !ib; paintMore(); render(stillK > -1 ? stillT(stillK) : T); });
     wrap2.appendChild(fig); wrap2.appendChild(side);
     box.appendChild(wrap2);
     /* under both columns, so the explanation reads at a comfortable width */
@@ -5577,10 +5581,14 @@
        still runs the whole story without stopping, for revision. */
     var T = 0, playing = false, raf = null, last = null, started = false, stopAt = null;
     function segEnd(i) { return i + 1 < STEPS.length ? STEPS[i + 1].t - .02 : END; }
+    /* Reduce motion: the step whose still is drawn (-1: none), Play all's timer, and each step's still time: a moment
+       whose view holds every part the step names (step 1 before the view closes in on the stigma), else its end */
+    var stillK = -1, slideT = null, allMode = false;
+    function stillT(i) { return STEPS[i].still != null ? STEPS[i].still : segEnd(i); }
     function atStepEnd() { return started && !playing && stopAt != null && T >= stopAt - 1e-3; }
     function still() { return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
     function paint(t) {
-      render(t);
+      render(stillK > -1 ? stillT(stillK) : t);
       var k = stepAt(t), done = t >= END - 1e-6;
       Array.prototype.forEach.call(steps.children, function (li, i) {
         li.classList.toggle('is-on', started && i === k);
@@ -5605,11 +5613,20 @@
         : '<span class="pt__ico" aria-hidden="true">▶</span> Resume';
       play.classList.toggle('is-playing', playing);
       play.classList.toggle('is-next', next);
-      all.hidden = still();
     }
     function stop() {
       playing = false;
       if (raf) cancelAnimationFrame(raf); raf = null;
+      if (slideT) { clearTimeout(slideT); slideT = null; }
+    }
+    /* Play all with Reduce motion: each step's still in turn, held for its step's time; nothing moves inside a still */
+    function slides(i) {
+      stillK = i; T = segEnd(i); playing = true; paint(T);
+      slideT = setTimeout(function () {
+        slideT = null;
+        if (!box.isConnected) { stop(); return; }
+        if (i + 1 < STEPS.length) slides(i + 1); else { playing = false; paint(T); }
+      }, Math.max(1500, (stepEnd(i) - STEPS[i].t) * 1000));
     }
     function frame(ts) {
       if (!box.isConnected) { stop(); return; }
@@ -5620,11 +5637,12 @@
       paint(T);
       raf = requestAnimationFrame(frame);
     }
-    /* play from one moment to another, then wait there. With reduced motion there is no
-       movement at all: the step is shown as a still of how it ends. */
-    function run(from, to) {
-      stop(); watchSize(); started = true; stopAt = to;
-      if (still()) { T = to; paint(T); return; }
+    /* play from one moment to another, then wait there. With Reduce motion there is no movement at all: the step is
+       shown as ONE still that names everything the step names (Play all: each step's still in turn). */
+    function run(from, to, whole) {
+      stop(); watchSize(); started = true; stopAt = to; allMode = !!whole;
+      if (still()) { if (whole) slides(stepAt(from)); else { T = to; stillK = stepAt(to); paint(T); } return; }
+      stillK = -1;
       T = from; playing = true; last = null; paint(T);
       raf = requestAnimationFrame(frame);
     }
@@ -5633,11 +5651,11 @@
       if (playing) { stop(); paint(T); return; }
       if (!started || T >= END - 1e-3) { goStep(0); return; }
       if (atStepEnd()) { goStep(stepAt(T) + 1); return; }
-      run(T, stopAt == null ? segEnd(stepAt(T)) : stopAt);          /* resume */
+      run(T, stopAt == null ? segEnd(stepAt(T)) : stopAt, allMode);          /* resume */
     });
     all.addEventListener('click', function () {
       var from = !started || T >= END - 1e-3 ? 0 : atStepEnd() ? STEPS[stepAt(T) + 1].t : T;
-      run(from, END);
+      run(from, END, true);
     });
 
     /* the drawing gets smaller on a phone, so its labels get relatively bigger */
@@ -5662,7 +5680,7 @@
     box.__onReset = function () { stop(); if (ro) { ro.disconnect(); ro = null; } };
     /* for the headless check (_pt.html): jump straight to a frame, with or without the IB layer */
     box.__seek = function (t, withIb) {
-      stop();
+      stop(); stillK = -1;
       if (withIb != null && !!withIb !== ib) { ib = !!withIb; paintMore(); }
       started = t > 0; stopAt = null; T = Math.max(0, Math.min(END, t)); paint(T);
       return { steps: STEPS.map(function (st) { return Math.round(st.t * 100) / 100; }), end: END };
@@ -6264,7 +6282,19 @@
         for (var i4 = 0; i4 < leads.length; i4++) leads[i4].style.strokeWidth = adF(1.2 * k) + 'px';
         for (var i5 = 0; i5 < rulTexts.length; i5++) rulTexts[i5].style.fontSize = adF(10.5 * k) + 'px';
       }
-      return { el: el, w: W, h: H, dur: 14.4, still: 6, render: render, scaleTo: scaleTo };
+      /* Reduce motion (Daniel, 9 Nov 2026: "Nothing should disappear"): ONE still holds the whole story: the end (every
+         name, the deep soak, the water table and the mesquite's water), with the rain falling and the water in the shallow
+         roots, which the end no longer shows */
+      function stillRender() {
+        render(14.4);
+        R.flows.setAttribute('opacity', '1');
+        for (var i6 = 0; i6 < drops.length; i6++) {
+          var yy = ((2 * 560 + DP[i6] * 240) % 240) - 24, xx = DX[i6] - yy * .2;
+          drops[i6].setAttribute('transform', 'translate(' + adF(xx) + ' ' + adF(yy) + ')');
+          drops[i6].setAttribute('opacity', adF(.8 * (yy < surf(xx) - 14 ? 1 : 0)));
+        }
+      }
+      return { el: el, w: W, h: H, dur: 14.4, still: 14.4, stillRender: stillRender, render: render, scaleTo: scaleTo };
     },
 
     /* A water lily in a pond, in section: leaves floating on long stalks, the thick stem (rhizome)
@@ -6512,7 +6542,9 @@
       R.co2tag.setAttribute('x', dn < .5 ? '352' : '440'); R.co2tag.setAttribute('y', dn < .5 ? '100' : '232');
       R.co2tag.setAttribute('opacity', adF(Math.abs(dn - .5) * 2));
     }
-    return { el: el, w: W, h: H, dur: 1e9, loop: true, still: 6.4, render: render,
+    /* Reduce motion: one still cannot hold both halves of the day, so there are two, night and day, and a button between
+       them (the static stand-in for the loop) */
+    return { el: el, w: W, h: H, dur: 1e9, loop: true, still: 6.4, stills: [[6.4, 'Show the day'], [11, 'Show the night']], render: render,
              ref: function (name) {
                if (name === 'chloro') {
                  var right = nearChl.filter(function (p) { return p[0] > 360; }).sort(function (x, y) { return y[1] - x[1]; });
@@ -6556,7 +6588,7 @@
       function margin(w) { return w ? Math.min(150, Math.max(84, Math.ceil(w) + 18)) : 0; }
       /* a picture that carries its own labels wants the whole width: no gutters at all */
       var mL0 = pic.inside ? 0 : margin(need.l), mR0 = pic.inside ? 0 : margin(need.r);
-      var foot = replay ? 32 : 0;                 /* Play again sits UNDER the picture, never on it */
+      var foot = replay || stillB ? 32 : 0;       /* Play again sits UNDER the picture, never on it */
       var room = maxH === Infinity ? Infinity : Math.max(120, maxH - foot);
       var narrow = !pic.inside && (W0 - mL0 - mR0 < 240 || room < 200);
       var mL = narrow ? 0 : mL0, mR = narrow ? 0 : mR0;
@@ -6565,6 +6597,7 @@
       var left = mL + (W0 - mL - mR - wi) / 2;
       G = { left: left, wi: wi, hi: hi, narrow: narrow, W0: W0 };
       if (replay) { replay.style.left = adF(left) + 'px'; replay.style.top = adF(hi + 6) + 'px'; }
+      if (stillB) { stillB.style.left = adF(left) + 'px'; stillB.style.top = adF(hi + 6) + 'px'; }
       if (D && D.scaleTo) D.scaleTo(wi);
       fig.style.height = adF(hi + foot) + 'px';
       fig.classList.toggle('adv__fig--narrow', narrow);
@@ -6665,23 +6698,36 @@
       } else { raf = null; return; }
       raf = requestAnimationFrame(frameFn);
     }
-    function play() {
+    /* with Reduce motion: ONE still holding every part and name (D.stillRender, else D.still), or for a day-and-night
+       loop one still for each half and a button between them (D.stills); a pupil may still choose to play it (force) */
+    var stillAt = 0, forced = false;
+    function showStill() {
+      if (D) {
+        if (D.stills) D.render(D.stills[stillAt][0]); else if (D.stillRender) D.stillRender(); else D.render(D.still != null ? D.still : D.dur);
+        follow(); reveal(1e9, true);
+      } else { reveal(1e9, true); if (fx) fx.still(G, fxEls); }
+      if (stillB) stillB.textContent = D.stills[stillAt][1];
+      if (replay) { replay.hidden = false; replay.textContent = '▶ Play'; }
+    }
+    function play(force) {
       if (raf) cancelAnimationFrame(raf);
-      t0 = null; done = false; if (replay) replay.hidden = true;
-      if (still) {
-        if (D) { D.render(D.still != null ? D.still : D.dur); follow(); reveal(1e9, true); }
-        else { reveal(1e9, true); if (fx) fx.still(G, fxEls); }
-        return;
-      }
+      t0 = null; done = false; if (replay) { replay.hidden = true; replay.textContent = '↻ Play again'; }
+      forced = force === true;
+      if (still && !forced) { showStill(); return; }
       if (!D) reveal(1e9);
       raf = requestAnimationFrame(frameFn);
     }
     function stop() { if (raf) cancelAnimationFrame(raf); raf = null; if (ro) { ro.disconnect(); ro = null; } }
-    var replay = null;
+    var replay = null, stillB = null;
     if (D && !D.loop) {
       replay = h('button', 'adv__replay', '↻ Play again'); replay.type = 'button'; replay.hidden = true;
-      replay.addEventListener('click', play);
+      replay.addEventListener('click', function () { play(true); });
       fig.appendChild(replay);
+    }
+    if (D && D.stills && still) {
+      stillB = h('button', 'adv__replay adv__still', D.stills[0][1]); stillB.type = 'button';
+      stillB.addEventListener('click', function () { stillAt = (stillAt + 1) % D.stills.length; showStill(); });
+      fig.appendChild(stillB);
     }
     if (D) D.render(0);
     layout();
