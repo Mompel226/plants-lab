@@ -33,7 +33,7 @@ the pictures from the lessons, the videos, and questions that say right or wrong
 | 🔬 **A potometer you run** | choose the plant, set light, temperature, humidity, wind, the leaves, the joint at the bung and the time, start the clock and watch the bubble; record runs into a table, get a mean when you repeat one, use a shoot from another plant for a true replicate, and a graph that picks its own axis from what you changed — with as many lines as you like, one table each, to compare a plant against a plant or the fan against still air |
 | 🎯 **Evaluating it** | systematic and random error, accuracy, precision, reliability and validity, in the potometer — taught from the students' own guide and tested in the questions; the results table keeps up to five trials per set of conditions and works out the mean, standard deviation, standard error and a 95 % confidence interval, each explained on a click, with error bars or a confidence band on the graph |
 | 🎞 **Seven lesson videos** | germination, the coloured-flower experiment, water uptake, water transport, the potometer, transport in the stem, photosynthesis — the ones shown in class, built in — plus four films embedded from YouTube (a bean time-lapse and three tropism demonstrations) |
-| 📖 **A shared glossary** | one wording per term, the same in every lab |
+| 📖 **A shared glossary** | one wording per term, the same in every lab; press 한국어, 中文 or 日本語 to see each word's name in Korean, Chinese or Japanese (the definitions stay in English) |
 
 > [!NOTE]
 > **The right answers are stored only as scrambled fingerprints.** The lab can tell a student they
