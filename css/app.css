@@ -11,6 +11,8 @@
   --amber:#A16207; --amber-tint:#FBF3E3;
   --teal:#0F6E8C;  --teal-tint:#E5F0F4;
   --purple:#6B3FA0;--purple-tint:#F1EBF8;
+  --ext:#7243C0; --ext-tint:#EDE8FA; --ext-wash:#F7F4FD; --ext-rule:#C9BAEE; --ext-on:#FFFFFF;
+  /* extension (Daniel, 10 Nov 2026, "One violet"): anything beyond what the reader's own course asks, IB content or beyond the syllabus, in ONE violet; a small word label says which (IB · D3.1.8, Beyond IB, beyond 0610). The summary notes' 7243C0 on EDE8FA; dark: the hub's B388FF, the same hue. Blue is IB only where IB is the reader's own level; grey is Supplement and cross-topic links. --ext-wash: a big box; --ext-tint: a tag or line. The extra pins' list rows double their class (.pins__item.pins__item--extra): the plain .pins__item rules further down painted them green before */
   --red:#B03A2E;   --red-tint:#FAECE9;
   --ink:#1A1A1A;   --grey:#6B6B6B; --line:#C4C4C4;
 
@@ -125,7 +127,7 @@ h1,h2,h3,h4{margin:0;font-weight:700;line-height:1.25}
 }
 .chip__n{display:inline-block;min-width:1.1em;height:1.1em;line-height:1.1em;text-align:center;
   border-radius:50%;background:rgba(255,255,255,.28);margin-right:6px;font-size:.85em}
-.chip--beyond{background:#fff;color:#5A5A5A;border:1.5px dashed #9A9A9A;font-style:italic}
+.chip--beyond{background:var(--ext-tint);color:var(--ext);border:1.5px dashed var(--ext-rule);font-style:italic}
 
 /* tabs */
 /* The tab bar stays put while a long station scrolls. It is fully opaque so
@@ -604,7 +606,7 @@ h1,h2,h3,h4{margin:0;font-weight:700;line-height:1.25}
 /* which tier a word belongs to, said plainly rather than left to be guessed */
 .tier{display:inline-block;vertical-align:middle;margin-left:6px;padding:1px 7px;border-radius:var(--r-pill);
       font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
-.tier--ext{background:#F1EDE3;color:#7A6B52;border:1px dashed #C3B69C}
+.tier--ext{background:var(--ext-tint);color:var(--ext);border:1px dashed var(--ext-rule)}
 .tier--sup{background:#EAF1F6;color:#3E6FA8;border:1px solid #C4D8E8}
 
 /* ---------- Key words, gathered ---------- */
@@ -732,10 +734,10 @@ picture{display:block;line-height:0}
 .examfocus li{font-size:14.5px;color:#3A2E14;margin-bottom:7px;line-height:1.5}
 .examfocus li:last-child{margin-bottom:0}
 .examfocus__tag{color:#8A5A0E}
-/* going further: one list, three kinds of tag. IB in the IB blue of the practicals (--ib), beyond the syllabus in grey;
+/* going further: one list, three kinds of tag. IB and beyond the syllabus in the ONE extension violet (--ext, Daniel 10 Nov 2026; the tag's words say which, beyond in italics), replacing 4 Nov's IB blue and beyond grey;
    two classes, so the plain .later__ref rule further down cannot paint over them */
-.later__ref.later__ref--ib{background:#E7E9F7;color:#2E3A8C;border:1px solid #B9C0E8}
-.later__ref.later__ref--beyond{background:#F1F1EE;color:#5A5A5A;border:1px solid #C9C9C4;font-style:italic}
+.later__ref.later__ref--ib{background:var(--ext-tint);color:var(--ext);border:1px solid var(--ext-rule)}
+.later__ref.later__ref--beyond{background:var(--ext-tint);color:var(--ext);border:1px solid var(--ext-rule);font-style:italic}
 
 /* ---- instant tooltips on the badges (hover, keyboard focus, or a tap) ---- */
 .tip{position:relative;cursor:help}
@@ -926,12 +928,12 @@ picture{display:block;line-height:0}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,255,255,.7)}100%{box-shadow:0 0 0 12px rgba(255,255,255,0)}}
 .pin:hover{background:rgba(20,87,43,.9)}
 .pin.is-found{animation:none;background:#fff;color:var(--green);border-color:var(--green)}
-.pin--extra{background:rgba(90,90,90,.62)} .pin--extra:hover{background:rgba(90,90,90,.9)}
-.pin--extra.is-found{background:#fff;color:#5A5A5A;border-color:#8A8A8A}
-.pins__item--extra.is-found{border-color:#C9C9C4;background:#F4F4F1}
-.pins__item--extra.is-found .n{background:#8A8A8A}
-.pins__item--extra b{color:#5A5A5A}
-.pins__tag{display:inline-block;vertical-align:.06em;margin-left:6px;font-size:10px;font-weight:700;letter-spacing:.03em;color:#7A6B52;background:#F4F0E6;border:1px solid #DCD2BC;border-radius:var(--r-pill);padding:0 6px;line-height:15px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pin--extra{background:rgba(114,67,192,.72)} .pin--extra:hover{background:rgba(114,67,192,.94)}
+.pin--extra.is-found{background:#fff;color:var(--ext);border-color:var(--ext)}
+.pins__item.pins__item--extra.is-found{border-color:var(--ext-rule);background:var(--ext-tint)}
+.pins__item.pins__item--extra.is-found .n{background:var(--ext);color:var(--ext-on)}
+.pins__item.pins__item--extra b{color:var(--ext)}
+.pins__tag{display:inline-block;vertical-align:.06em;margin-left:6px;font-size:10px;font-weight:700;letter-spacing:.03em;color:var(--ext);background:var(--ext-tint);border:1px solid var(--ext-rule);border-radius:var(--r-pill);padding:0 6px;line-height:15px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .finder__list.is-column{position:relative}
 .finder__list.is-column .pins__item{left:0;right:0}
 .pins__item{display:flex;gap:8px;align-items:center;font-size:13px;line-height:1.3;padding:4px 8px 4px 8px;border:1px solid var(--edge);border-radius:var(--r);background:#fff;transition:border-color .15s,background .15s;cursor:pointer;min-height:38px}
@@ -1455,10 +1457,10 @@ picture{display:block;line-height:0}
 .fl__svg [data-part]:hover,.fl__svg [data-part].is-on{filter:drop-shadow(0 0 4px #14572B)}
 .fl__svg [data-part]:focus-visible{outline:none;filter:drop-shadow(0 0 5px #A16207)}
 .fl__lead{stroke:#14572B;stroke-width:.9;fill:none}
-.fl__lead--extra{stroke:#B5B5B5;stroke-dasharray:3 2}
+.fl__lead--extra{stroke:var(--ext);stroke-opacity:.55;stroke-dasharray:3 2}
 .fl__dot{fill:#14572B}
 .fl__lab{font-size:11px;fill:#14572B;font-weight:600}
-.fl__lab--extra{fill:#8A8A8A;font-weight:500;font-style:italic}
+.fl__lab--extra{fill:var(--ext);font-weight:500;font-style:italic}
 .fl__title{font-size:10.5px;fill:#3C3C3C;font-style:italic}
 .fl__info{background:#fff;border:1.5px solid var(--edge);border-radius:var(--r);padding:12px 14px;font-size:14px;line-height:1.5;min-height:90px}
 .fl__info b{font-size:17px;color:var(--k-repro)}
@@ -1508,25 +1510,25 @@ picture{display:block;line-height:0}
 .pt__tag{font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--grey);background:var(--edge-2);border-radius:var(--r-pill);padding:1px 7px;vertical-align:1px;white-space:nowrap}
 .pt__p,.pt__stepib{display:none}
 .pt__step.is-on .pt__p{display:block;margin-top:3px}
-.pt.is-ib .pt__step.is-on .pt__stepib{display:block;margin-top:6px;padding-top:6px;border-top:1px dashed #D3C2EA;color:#4B3A6E;font-size:13px}
+.pt.is-ib .pt__step.is-on .pt__stepib{display:block;margin-top:6px;padding-top:6px;border-top:1px dashed var(--ext-rule);color:var(--ext);font-size:13px}
 .pt__step.is-on .pt__stepb{border-color:var(--k-repro);background:#FBEAF1;color:var(--ink)}
 .pt__step.is-on .pt__num{background:var(--k-repro);color:#fff}
 .pt__step.is-done .pt__stepb{border-color:#A9D6BA;background:var(--green-tint)}
 .pt__step.is-done .pt__num{background:var(--green-2);color:#fff}
-.pt__ibchip{display:inline-block;font-size:9.5px;font-weight:800;letter-spacing:.08em;color:#5A3D8A;background:#EFE8F8;border:1px solid #CDB9E8;border-radius:var(--r-pill);padding:0 6px;vertical-align:1px}
+.pt__ibchip{display:inline-block;font-size:9.5px;font-weight:800;letter-spacing:.08em;color:var(--ext);background:var(--ext-tint);border:1px solid var(--ext-rule);border-radius:var(--r-pill);padding:0 6px;vertical-align:1px}
 .pt__more{font:inherit;font-size:13.5px;font-weight:600;width:100%;margin-top:12px;text-align:left;cursor:pointer;padding:9px 13px;line-height:1.4;
-  border:1.5px dashed #CDB9E8;border-radius:var(--r);background:#FAF7FD;color:#4B3A6E}
-.pt__more:hover{border-style:solid;background:#F3ECFB}
+  border:1.5px dashed var(--ext-rule);border-radius:var(--r);background:var(--ext-wash);color:var(--ext)}
+.pt__more:hover{border-style:solid;background:var(--ext-tint)}
 .pt__more[aria-expanded="true"]{border-style:solid}
-.pt__moreq{font-weight:800;color:#5A3D8A}
-.pt__ib{margin-top:8px;padding:13px 16px;border:1px solid #DCCDEF;border-radius:var(--r);background:#FCFAFE;font-size:13.5px;line-height:1.52;color:#333}
+.pt__moreq{font-weight:800;color:var(--ext)}
+.pt__ib{margin-top:8px;padding:13px 16px;border:1px solid var(--ext-rule);border-radius:var(--r);background:var(--ext-wash);font-size:13.5px;line-height:1.52;color:#333}
 .pt__ib p{margin:0 0 8px}
 .pt__ib ul{margin:0 0 8px;padding-left:20px}
 .pt__ib li{margin:2px 0}
-.pt__ib b{color:#4B3A6E}
-.pt__ibbanner{background:#EFE8F8;color:#4B3A6E;border-radius:var(--r-sm);padding:6px 9px;font-size:12.5px}
-.pt__beyond{margin:10px 0 8px;padding:8px 10px;border-left:3px solid var(--red);background:var(--red-tint);border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:13px}
-.pt__beyond b{color:var(--red)}
+.pt__ib b{color:var(--ext)}
+.pt__ibbanner{background:var(--ext-tint);color:var(--ext);border-radius:var(--r-sm);padding:6px 9px;font-size:12.5px}
+.pt__beyond{margin:10px 0 8px;padding:8px 10px;border-left:3px solid var(--ext);background:var(--ext-tint);border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:13px}
+.pt__beyond b{color:var(--ext)}
 .pt__src{font-size:11.5px;color:#6B6B63;margin:0!important;line-height:1.45}
 
 /* two plants built for hard places */
@@ -1546,13 +1548,13 @@ picture{display:block;line-height:0}
 /* Read the plant: the picture of each feature. It stands in the plant's column (.sim), in the strip
    on a phone, or under the chips of the plant it belongs to. */
 /* an extension chip: dashed, with a small tag, so it never passes for an exam feature */
-.ad__chip--ext{border-style:dashed;border-color:#C9A3B0;background:#FFF8FA}
-.ad__chip--ext:hover{border-color:var(--red)}
-.ad__chip--ext.is-on{background:#8C3B55;border-color:#8C3B55;border-style:solid;color:#fff}
+.ad__chip--ext{border-style:dashed;border-color:var(--ext-rule);background:var(--ext-wash)}
+.ad__chip--ext:hover{border-color:var(--ext)}
+.ad__chip--ext.is-on{background:var(--ext);border-color:var(--ext);border-style:solid;color:var(--ext-on)}
 .ad__extpill{display:inline-block;margin-left:4px;font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
-  color:var(--red);background:var(--red-tint);border-radius:var(--r-pill);padding:0 6px;vertical-align:1px}
+  color:var(--ext);background:var(--ext-tint);border-radius:var(--r-pill);padding:0 6px;vertical-align:1px}
 .ad__chip--ext.is-on .ad__extpill{background:rgba(255,255,255,.2);color:#fff}
-.ad__extnote{display:block;font-size:11.5px;font-weight:700;letter-spacing:.02em;color:var(--red);margin-bottom:2px}
+.ad__extnote{display:block;font-size:11.5px;font-weight:700;letter-spacing:.02em;color:var(--ext);margin-bottom:2px}
 /* ----- stageWidget: a widget's drawing, standing where the plant is ----- */
 .stg-park[hidden]{display:none}
 .stg-pack__h{display:none}
@@ -1612,7 +1614,7 @@ picture{display:block;line-height:0}
 .adv__tag{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border-radius:var(--r-pill);padding:2px 9px}
 .adv__tag--xerophyte{background:#FBF1DC;color:#7A5410;border:1px solid #E2B95F}
 .adv__tag--hydrophyte{background:#E6F2FA;color:#1F5E86;border:1px solid #7FB8DC}
-.adv__tag--ext{background:var(--red-tint);color:var(--red);border:1px solid #E7B7AE}
+.adv__tag--ext{background:var(--ext-tint);color:var(--ext);border:1px solid var(--ext-rule)}
 .adv__title{font-size:16.5px;font-weight:700;color:var(--ink)}
 .adv__fig{position:relative;width:100%}
 .adv__frame{position:absolute;top:0;border-radius:8px;overflow:hidden;background:#fff;
@@ -1758,7 +1760,7 @@ picture{display:block;line-height:0}
 .po__resetall:hover{background:#F7DCC6}
 /* the statistics pop-up: the formula set out, a key to its letters, the working as steps and a table */
 .po__pop__h > span{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
-.po__pop__ib{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#5A3D8A;background:#EFE8F8;border:1px solid #CDB9E8;border-radius:var(--r-pill);padding:1px 8px}
+.po__pop__ib{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ext);background:var(--ext-tint);border:1px solid var(--ext-rule);border-radius:var(--r-pill);padding:1px 8px}
 .po__pop__fm{font-family:"Times New Roman",Times,Georgia,serif;font-size:19px;line-height:1.3;text-align:center;padding:10px 8px;margin:8px 0 6px;background:#fff;border:1px dashed var(--edge);border-radius:var(--r);color:#1F2A1F}
 .po__pop__fm i{font-style:italic}
 .fm__frac{display:inline-block;vertical-align:middle;text-align:center;margin:0 3px}
@@ -2142,31 +2144,31 @@ picture{display:block;line-height:0}
 @keyframes pt-next{0%{box-shadow:0 0 0 0 rgba(27,36,48,.45)}100%{box-shadow:0 0 0 11px rgba(27,36,48,0)}}
 
 /* a step's words in parts, each marked with its level (Daniel, 8 Nov 2026: "exactly what is IGCSE and what is IB and what
-   is beyond … It needs to be very, very clear"): IGCSE in the lab's green, IB in the IB blue (the Going further tags'),
-   beyond both in grey, each a filled tint (memory level-colours-never-blank); the key to them, once, above the steps */
+   is beyond … It needs to be very, very clear"): IGCSE in the lab's green, IB and beyond both in the ONE extension violet
+   (the Going further tags'; Daniel, 10 Nov 2026, "One violet"; the label word says which), each a filled tint (memory level-colours-never-blank); the key to them, once, above the steps */
 .sp__lv{display:block;margin-top:5px;padding:4px 9px 5px;border-radius:7px;border-left:3px solid var(--green-2);background:var(--green-tint);color:var(--ink)}
 .sp__lv:first-child{margin-top:0}
 .sp__lvt{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:1px 7px;border-radius:var(--r-pill);margin-right:3px;vertical-align:1px;background:var(--green);color:#fff}
-.sp__lv--ib{background:#E7E9F7;border-left-color:#2E3A8C}
-.sp__lv--ib .sp__lvt{background:#2E3A8C;color:#E7E9F7}
-.sp__lv--bey{background:#F1F1EE;border-left-color:#C9C9C4}
-.sp__lv--bey .sp__lvt{background:#5A5A5A;color:#fff;font-style:italic}
+.sp__lv--ib{background:var(--ext-tint);border-left-color:var(--ext)}
+.sp__lv--ib .sp__lvt{background:var(--ext);color:var(--ext-on)}
+.sp__lv--bey{background:var(--ext-tint);border-left-color:var(--ext)}
+.sp__lv--bey .sp__lvt{background:var(--ext);color:var(--ext-on);font-style:italic}
 .sp__legend{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px;font-size:12.5px;line-height:1.35}
 .sp__legend .sp__lv{display:inline-block;margin:0;padding:3px 8px}
 .pt:not(.is-ib) .pt__lgib{display:none}
 /* the IB and Beyond lines show with the IB layer, under the IGCSE line of the step on screen */
 .pt .pt__step .pt__p .pt__stepib{display:none}
 .pt.is-ib .pt__step.is-on .pt__p .pt__stepib{display:block;margin-top:5px;padding:4px 9px 5px;border-top:0;font-size:inherit;color:var(--ink)}
-/* the IB layer's button and its panel in the IB blue, not purple; the Beyond-IB box in the beyond grey */
-.pt__ibchip{color:#2E3A8C;background:#E7E9F7;border-color:#B9C0E8}
-.pt__more{border-color:#B9C0E8;background:#F6F7FC;color:#2E3A8C}
-.pt__more:hover{background:#EEF0FA}
-.pt__moreq{color:#2E3A8C}
-.pt__ib{border-color:#C9CEEC;background:#FBFBFE}
-.pt__ib b{color:#2E3A8C}
-.pt__ibbanner{background:#E7E9F7;color:#2E3A8C}
-.pt__beyond{border-left-color:#C9C9C4;background:#F1F1EE}
-.pt__beyond b{color:#5A5A5A}
+/* the IB layer's button and its panel, and the Beyond-IB box, in the ONE extension violet (Daniel, 10 Nov 2026) */
+.pt__ibchip{color:var(--ext);background:var(--ext-tint);border-color:var(--ext-rule)}
+.pt__more{border-color:var(--ext-rule);background:var(--ext-wash);color:var(--ext)}
+.pt__more:hover{background:var(--ext-tint)}
+.pt__moreq{color:var(--ext)}
+.pt__ib{border-color:var(--ext-rule);background:var(--ext-wash)}
+.pt__ib b{color:var(--ext)}
+.pt__ibbanner{background:var(--ext-tint);color:var(--ext)}
+.pt__beyond{border-left-color:var(--ext);background:var(--ext-tint)}
+.pt__beyond b{color:var(--ext)}
 /* on a phone the bubble counter's rows stack, label above its control: two columns of 160 + 120 px did not fit inside a
    card (and stood 24 px out of the page before the cards too) */
 @media (max-width:480px){
