@@ -4,7 +4,7 @@
    · Four inks, one per thing the plant is doing: WATER (blue) for everything the
      xylem and the leaves do with water; FOOD (amber) for photosynthesis and the
      sugar the phloem carries; REPRODUCTION (rose) for the flower, pollen, seed and
-     fruit; GROWTH (violet) for tropisms, hormones and adaptive features.
+     fruit; GROWTH (olive; violet until 11 Nov 2026, when violet came to mean extension) for tropisms, hormones and adaptive features.
    · Green is the app's own colour and means nothing in the text.
    · A word with a definition but no colour of its own carries the quiet dotted rule.
    Same API as the other labs' terms.js, so app.js is the same code.

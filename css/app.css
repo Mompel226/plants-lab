@@ -10,7 +10,8 @@
   --green:#14572B; --green-2:#1E7A3E; --green-tint:#E8F1EA;
   --amber:#A16207; --amber-tint:#FBF3E3;
   --teal:#0F6E8C;  --teal-tint:#E5F0F4;
-  --purple:#6B3FA0;--purple-tint:#F1EBF8;
+  --purple:#3A5F8A;--purple-tint:#EAF0F7;
+  /* --purple keeps its name, but since 11 Nov 2026 it holds the multiple-choice steel blue: violet means extension on every site (Daniel, 10 Nov 2026, "One violet"); he chose this colour on 11 Nov */
   --ext:#7243C0; --ext-tint:#EDE8FA; --ext-wash:#F7F4FD; --ext-rule:#C9BAEE; --ext-on:#FFFFFF;
   /* extension (Daniel, 10 Nov 2026, "One violet"): anything beyond what the reader's own course asks, IB content or beyond the syllabus, in ONE violet; a small word label says which (IB · D3.1.8, Beyond IB, beyond 0610). The summary notes' 7243C0 on EDE8FA; dark: the hub's B388FF, the same hue. Blue is IB only where IB is the reader's own level; grey is Supplement and cross-topic links. --ext-wash: a big box; --ext-tint: a tag or line. The extra pins' list rows double their class (.pins__item.pins__item--extra): the plain .pins__item rules further down painted them green before */
   --red:#B03A2E;   --red-tint:#FAECE9;
@@ -840,7 +841,7 @@ picture{display:block;line-height:0}
    Four inks, one per thing the plant is doing, each dark enough to read on paper (all
    clear WCAG AA on the paper and the card). Green is the app's own colour and carries no
    meaning in the text. */
-:root{ --k-water:#0B6A8C; --k-food:#8A5A0E; --k-repro:#A33569; --k-grow:#5B3FA0; }
+:root{ --k-water:#0B6A8C; --k-food:#8A5A0E; --k-repro:#A33569; --k-grow:#5F6A0F; --k-grow-t:#F1F3E2; }   /* growth olive since 11 Nov 2026 (it was violet; the auxin log and a growth word's hover take --k-grow-t, they had borrowed the violet multiple-choice tint): violet means extension on every site (Daniel, 10 Nov 2026, "One violet"); he chose this colour on 11 Nov */
 .t{font-weight:700}
 .t--water{color:var(--k-water)} .t--food{color:var(--k-food)} .t--repro{color:var(--k-repro)} .t--grow{color:var(--k-grow)}
 .kw dt .t{font-weight:700}
@@ -1030,7 +1031,7 @@ picture{display:block;line-height:0}
 .eq__w{font:inherit;font-size:15.5px;font-weight:700;color:var(--k-food);background:#fff;border:1.5px solid var(--edge);border-radius:var(--r-pill);padding:6px 13px;cursor:pointer;transition:.14s}
 .eq__w:hover,.eq__w.is-on{border-color:var(--k-food);background:var(--amber-tint)}
 .eq__w--cond{font-size:12.5px;padding:2px 9px;color:var(--k-grow)}
-.eq__w--cond:hover,.eq__w--cond.is-on{border-color:var(--k-grow);background:var(--purple-tint)}
+.eq__w--cond:hover,.eq__w--cond.is-on{border-color:var(--k-grow);background:var(--k-grow-t)}
 .eq__op{font-weight:700;color:var(--grey)}
 .eq__arrow{display:inline-flex;flex-direction:column;align-items:center;gap:3px;padding:0 10px}
 .eq__line{font-size:30px;line-height:.9;color:var(--green);letter-spacing:-.06em}
@@ -1830,8 +1831,8 @@ picture{display:block;line-height:0}
 .ax__grp{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
 .ax__grpl{flex:0 0 auto;min-width:148px;font-size:12px;font-weight:700;color:#5A5A5A;letter-spacing:.01em}
 .ax__pills{display:flex;gap:6px;flex-wrap:wrap}
-.ax__log{margin:10px 0 0;padding:11px 13px;list-style:none;background:var(--purple-tint);
-  border:1px solid #D8CBE8;border-radius:var(--r);
+.ax__log{margin:10px 0 0;padding:11px 13px;list-style:none;background:var(--k-grow-t);
+  border:1px solid #D6DBB0;border-radius:var(--r);
   font-size:13.5px;line-height:1.6;color:#3C3C3C;min-height:3.4em}
 .ax__logi{margin:0 0 5px;padding-left:16px;position:relative}
 .ax__logi:last-child{margin-bottom:0}
@@ -1869,10 +1870,10 @@ picture{display:block;line-height:0}
 /* a phrase that opens a short aside */
 .xplain{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;
   text-decoration:underline;text-decoration-style:dashed;text-underline-offset:3px;
-  text-decoration-color:#9A7BC8;text-decoration-thickness:1.4px}
-.xplain:hover,.xplain:focus-visible{color:#6E4E9E}
-.xplain__a{font-size:.72em;font-weight:700;margin-left:3px;color:#6E4E9E;text-decoration:none;
-  display:inline-block;border:1.3px solid #B9A2DC;border-radius:50%;width:1.35em;height:1.35em;
+  text-decoration-color:#8C9AAA;text-decoration-thickness:1.4px}
+.xplain:hover,.xplain:focus-visible{color:#4A5A6A}   /* slate since 11 Nov 2026 (it was violet: violet means extension; Daniel, "Yes, both") */
+.xplain__a{font-size:.72em;font-weight:700;margin-left:3px;color:#4A5A6A;text-decoration:none;
+  display:inline-block;border:1.3px solid #C3CCD6;border-radius:50%;width:1.35em;height:1.35em;
   line-height:1.28em;text-align:center;vertical-align:.12em}
 .xp{position:fixed;inset:0;z-index:60;background:rgba(28,24,20,.5);display:grid;place-items:center;padding:22px}
 .xp__card{background:var(--paper,#FBFAF6);border-radius:var(--r);max-width:640px;width:100%;
