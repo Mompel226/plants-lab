@@ -26,7 +26,7 @@ the pictures from the lessons, the videos, and questions that say right or wrong
 
 |  |  |
 |---|---|
-| 🌱 **12 stations** | a seed wakes · roots and water uptake · xylem and phloem · the leaf · photosynthesis · water up, water out · the potometer · sugar on the move · bending to the light · the flower · from flower to seed · built for its place |
+| 🌱 **12 stations** | a seed wakes · roots and water uptake · xylem and phloem · the leaf · photosynthesis · water up, water out · the potometer · sugar on the move · growing towards the light · the flower · from flower to seed · built for its place |
 | ✍️ **116 questions** | fill the gaps · drag & drop · multiple choice · put in order · match up · sort into groups · **tick a grid** · **click the picture** |
 | 🔬 **The exam's pictures** | a real leaf, root and stem cut across and stained, with the layers to find; a half-flower to label; wheat anthers to point at; a leaf tested for starch |
 | 🧪 **The investigations** | germination, the starch test, limiting factors, a seedling on its side — each one worked through as the exam sets it |

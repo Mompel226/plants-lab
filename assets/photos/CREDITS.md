@@ -153,9 +153,9 @@ in the page, in the flow of the station, under the sentence each one illustrates
 | Video | By | Station |
 |---|---|---|
 | [Bean Time-Lapse — 25 days, soil cross section](https://www.youtube.com/watch?v=w77zPAtVTuI) | GPhase | A seed wakes |
-| [Negative Gravitropism \| Demonstration](https://www.youtube.com/watch?v=Rb55mj8xkxk) | GPhase | Bending to the light |
-| [Pushing Tropism to the Limit with a Spinning Plant](https://www.youtube.com/watch?v=q4E8_K9Udcc) | mortrek | Bending to the light |
-| [Positive Phototropism \| Demonstration](https://www.youtube.com/watch?v=DhITXtENPrU) | GPhase | Bending to the light |
+| [Negative Gravitropism \| Demonstration](https://www.youtube.com/watch?v=Rb55mj8xkxk) | GPhase | Growing towards the light |
+| [Pushing Tropism to the Limit with a Spinning Plant](https://www.youtube.com/watch?v=q4E8_K9Udcc) | mortrek | Growing towards the light |
+| [Positive Phototropism \| Demonstration](https://www.youtube.com/watch?v=DhITXtENPrU) | GPhase | Growing towards the light |
 
 They are not copied into the repository, because they are not ours to copy. Two things make the
 embed as light as it can be. The player is **not loaded until somebody presses play**: what sits
