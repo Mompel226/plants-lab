@@ -85,6 +85,12 @@ is public like every file here and scrambled with a key the page itself carries,
 secret: no other pupil's page fetches it, but someone who unscrambles it by hand could learn which
 options are right.
 
+**The answers for teachers (since 18 November 2026).** `js/data/answers.lock.json` holds this lab's answers and
+explanations, **locked** (AES-256 encryption). The lab's pages never load it. Only the Biology Hub's teacher page opens it,
+when a teacher presses **Show the answers** on Homework analysis, with a key kept in the labs script's settings and on the
+author's computer, never in this repository. Without that key the file cannot be read. How it works, and what it means for a
+school running its own copy: the Biology Hub's README, *Teacher mode, and the teacher page*.
+
 **What is shared with the other labs.** Drawing a question, handling the dragging, the marking,
 the sync between devices, the widgets that the theory pages are built from, the glossary and the
 plant are all kept in one place and copied in whenever a lab is rebuilt, so a fix reaches every
