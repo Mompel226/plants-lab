@@ -15,7 +15,7 @@ by **Dr Daniel Mompel Riera**
 
 </div>
 
-![The Plants Lab: the plant on the left with the leaf lit, the leaf station open on the right](docs/img/screen.jpg)
+![The Plants Lab: the plant on the left at its seed stage, the station A seed wakes open on the right](docs/img/screen.jpg)
 
 ---
 
