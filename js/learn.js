@@ -480,10 +480,6 @@
     }
     function settleFrac() { return Math.min(1, (Date.now() - S.changedAt) / S.settleMs); }
 
-    function touched() {                          /* any change unsettles the plant */
-      if (!S.running) { S.prev = S.prev || { d: S.d, hco3: S.hco3, bath: S.bath, shield: S.shield }; S.changedAt = Date.now(); }
-    }
-
     /* ---- controls ---- */
     var ctl = h('div', 'pw__ctl');
     var C = [
