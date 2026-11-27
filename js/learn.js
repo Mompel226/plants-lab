@@ -1710,7 +1710,7 @@
     mean: { name: 'Mean', ib: false, what: 'Add the trials up and divide by how many there are. It is your best single answer for that set of conditions — the number to plot.' },
     sd:   { name: 'Standard deviation (SD)', ib: true, what: 'How spread out a set of values is around its mean. Which values matters: the trials on ONE shoot show how steady your method is, and the SHOOT MEANS show how much the plants differ. It has the same unit as the values.' },
     se:   { name: 'Standard error (SE)', ib: true, what: 'How well you know the mean itself, not how spread the values are. In this table it is always worked out between SHOOTS — so more shoots make it smaller, and more trials on one shoot barely move it.' },
-    ci:   { name: '95 % confidence interval', ib: true, what: 'The range the true mean is likely to be in, given what you measured. Few values give a wide interval; more narrow it. Do not judge a difference by whether two intervals overlap — that rule is for separate groups, and here the same shoots are measured at every setting.' }
+    ci:   { name: '95 % confidence interval', ib: true, bey: true, what: 'The range the true mean is likely to be in, given what you measured. Few values give a wide interval; more narrow it. Do not judge a difference by whether two intervals overlap — that rule is for separate groups, and here the same shoots are measured at every setting.' }
   };
   /* the formulae, set as a mathematician would set them */
   var PO_FM = {
@@ -1769,11 +1769,11 @@
       worked = '<div class="po__pop__how"><p><b>Worked example</b> — five trials on one shoot at 20 °C in still air: ' + PO_EXAMPLE.map(function (v) { return v.toFixed(2); }).join(', ') + ' mm/min; mean 2.20.</p>' + poSteps(term, st2, PO_EXAMPLE, 'trials', 'trials') + '</div>' +
                '<p class="po__pop__note">Record two trials of your own under the same conditions and the working is done with your numbers instead.</p>';
     }
-    return '<div class="po__pop__h"><span>' + esc(T.name) + (T.ib ? ' <span class="po__pop__ib">IB content · beyond IGCSE</span>' : '') + '</span><button type="button" class="po__pop__x" aria-label="Close">✕</button></div>' +
+    return '<div class="po__pop__h"><span>' + esc(T.name) + (T.ib ? ' <span class="po__pop__ib">' + (T.bey ? 'Beyond IB and IGCSE' : 'IB content · beyond IGCSE') + '</span>' : '') + '</span><button type="button" class="po__pop__x" aria-label="Close">✕</button></div>' +
            '<p>' + esc(T.what) + '</p>' +
            '<div class="po__pop__fm">' + PO_FM[term] + '</div><p class="po__pop__key">' + (shootLvl ? PO_KEY[term].replace(/how many trials/g, 'how many shoots').replace(/one trial/g, 'one shoot mean') : PO_KEY[term]) + '</p>' +
            worked +
-           (T.ib ? '<p class="po__pop__note">This is IB Biology content: standard deviation, standard error and confidence intervals are not in the IGCSE 0610 syllabus, which wants the mean. They are what a scientist would put on this graph.</p>' : '');
+           (T.ib ? '<p class="po__pop__note">' + (T.bey ? 'This is beyond IB Biology as well as IGCSE: IB asks for the standard deviation and the standard error, not confidence intervals. Scientists often put confidence intervals on this graph.' : 'This is IB Biology content: standard deviation and standard error are not in the IGCSE 0610 syllabus, which wants the mean. They are what a scientist would put on this graph.') + '</p>' : '');
   }
   /* a bold statistic in the Learn text opens its pop-up under the sentence it is in */
   global.PoStats = { show: function (term, anchor) {
