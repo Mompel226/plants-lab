@@ -6,6 +6,10 @@
      sugar the phloem carries; REPRODUCTION (rose) for the flower, pollen, seed and
      fruit; GROWTH (olive; violet until 11 Nov 2026, when violet came to mean extension) for tropisms, hormones and adaptive features.
    · Green is the app's own colour and means nothing in the text.
+   · The inks are the words' own: the plant on the left glows in its own colours, one per part (js/plant.js), and those
+     are not the inks. Until 28 Nov 2026 the key said "The colour on the page is the colour the plant lights", which
+     was not true (the roots glow beige, the leaves lime, the seed and the fruit gold); Daniel's yes to removing it,
+     28 Nov 2026 ("Yes, fix all four").
    · A word with a definition but no colour of its own carries the quiet dotted rule.
    Same API as the other labs' terms.js, so app.js is the same code.
 
@@ -317,7 +321,7 @@
   }
 
   function legend() {
-    var out = '<p class="legend__intro">Each ink is one thing the plant is doing. The colour on the page is the colour the plant lights.</p><div class="legend">';
+    var out = '<p class="legend__intro">Each ink is one thing the plant is doing.</p><div class="legend">';
     ['water', 'food', 'repro', 'grow'].forEach(function (c) {
       out += '<span class="legend__i"><b class="t t--' + c + '">' + CATS[c].label + '</b></span>';
     });
